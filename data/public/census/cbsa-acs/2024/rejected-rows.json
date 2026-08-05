@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0.0",
+  "transformation_version": "cbsa-acs-v1",
+  "source_id": "SRC-016",
+  "rejected_rows": [
+    {
+      "row_number": 7,
+      "cbsa_code": "10380",
+      "reasons": [
+        "CBSA 10380 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 31,
+      "cbsa_code": "11260",
+      "reasons": [
+        "CBSA 11260 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 40,
+      "cbsa_code": "11640",
+      "reasons": [
+        "CBSA 11640 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 176,
+      "cbsa_code": "17620",
+      "reasons": [
+        "CBSA 17620 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 177,
+      "cbsa_code": "17640",
+      "reasons": [
+        "CBSA 17640 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 273,
+      "cbsa_code": "21820",
+      "reasons": [
+        "CBSA 21820 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 348,
+      "cbsa_code": "25020",
+      "reasons": [
+        "CBSA 25020 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 372,
+      "cbsa_code": "25900",
+      "reasons": [
+        "CBSA 25900 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 417,
+      "cbsa_code": "27940",
+      "reasons": [
+        "CBSA 27940 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 418,
+      "cbsa_code": "27980",
+      "reasons": [
+        "CBSA 27980 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 423,
+      "cbsa_code": "28180",
+      "reasons": [
+        "CBSA 28180 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 431,
+      "cbsa_code": "28540",
+      "reasons": [
+        "CBSA 28540 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 460,
+      "cbsa_code": "29720",
+      "reasons": [
+        "CBSA 29720 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 524,
+      "cbsa_code": "32420",
+      "reasons": [
+        "CBSA 32420 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 669,
+      "cbsa_code": "38660",
+      "reasons": [
+        "CBSA 38660 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 746,
+      "cbsa_code": "41980",
+      "reasons": [
+        "CBSA 41980 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 853,
+      "cbsa_code": "46520",
+      "reasons": [
+        "CBSA 46520 is not in the validated mainland market universe."
+      ]
+    },
+    {
+      "row_number": 855,
+      "cbsa_code": "46580",
+      "reasons": [
+        "CBSA 46580 is not in the validated mainland market universe."
+      ]
+    }
+  ]
+}

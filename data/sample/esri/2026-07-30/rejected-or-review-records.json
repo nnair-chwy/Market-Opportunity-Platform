@@ -1,0 +1,83 @@
+[
+  {
+    "review_id": "master-duplicate-name-963a4b49ad64",
+    "dataset": "master_site",
+    "record_identifier": "esri-site-8c17ec5b-6f2a-434a-8302-66a168dfad8c,esri-site-8e65ab44-a4d4-4c0a-a057-54345f8a05d1",
+    "issue_code": "duplicate_site_name",
+    "severity": "warning",
+    "reason": "Multiple master-site records share a display name. They remain separate and were not merged.",
+    "disposition": "retain_for_review"
+  },
+  {
+    "review_id": "master-duplicate-name-fc2788f934d5",
+    "dataset": "master_site",
+    "record_identifier": "esri-site-334e0028-ed7f-40b1-8a4d-f99ef01ed624,esri-site-9cb90a65-0016-4893-b3e3-7a3a12301866",
+    "issue_code": "duplicate_site_name",
+    "severity": "warning",
+    "reason": "Multiple master-site records share a display name. They remain separate and were not merged.",
+    "disposition": "retain_for_review"
+  },
+  {
+    "review_id": "trade-unnamed-2",
+    "dataset": "trade_area",
+    "record_identifier": "{169DCA94-2B98-45B4-85A5-F766208DD25F}",
+    "issue_code": "missing_site_name",
+    "severity": "error",
+    "reason": "Trade-area record has no site name and cannot be linked automatically.",
+    "disposition": "quarantine"
+  },
+  {
+    "review_id": "trade-unnamed-3",
+    "dataset": "trade_area",
+    "record_identifier": "{B153C330-E62A-4B01-834E-2681334408D2}",
+    "issue_code": "missing_site_name",
+    "severity": "error",
+    "reason": "Trade-area record has no site name and cannot be linked automatically.",
+    "disposition": "quarantine"
+  },
+  {
+    "review_id": "crosswalk-esri-site-2fd65ede-8564-45b1-9f94-6ba5b6acefbf",
+    "dataset": "crosswalk",
+    "record_identifier": "esri-site-2fd65ede-8564-45b1-9f94-6ba5b6acefbf",
+    "issue_code": "missing_source_trade_area",
+    "severity": "error",
+    "reason": "No supplied trade-area record matches the master-site ESRI ID.",
+    "disposition": "retain_for_review"
+  },
+  {
+    "review_id": "crosswalk-esri-site-8b1bf4d7-5c5c-4d05-9244-de6451b9fdd5",
+    "dataset": "crosswalk",
+    "record_identifier": "esri-site-8b1bf4d7-5c5c-4d05-9244-de6451b9fdd5",
+    "issue_code": "missing_source_trade_area",
+    "severity": "error",
+    "reason": "No supplied trade-area record matches the master-site ESRI ID.",
+    "disposition": "retain_for_review"
+  },
+  {
+    "review_id": "crosswalk-esri-site-96cb8ca6-700e-445a-9f29-b7d9dafd3625",
+    "dataset": "crosswalk",
+    "record_identifier": "esri-site-96cb8ca6-700e-445a-9f29-b7d9dafd3625",
+    "issue_code": "missing_source_trade_area",
+    "severity": "error",
+    "reason": "No supplied trade-area record matches the master-site ESRI ID.",
+    "disposition": "retain_for_review"
+  },
+  {
+    "review_id": "crosswalk-esri-site-7fd28553-2d6c-4ee7-8592-69353c9f848f",
+    "dataset": "crosswalk",
+    "record_identifier": "esri-site-7fd28553-2d6c-4ee7-8592-69353c9f848f",
+    "issue_code": "missing_source_trade_area",
+    "severity": "error",
+    "reason": "No supplied trade-area record matches the master-site ESRI ID.",
+    "disposition": "retain_for_review"
+  },
+  {
+    "review_id": "crosswalk-multiple-esri-site-b4915178-5553-4293-aa9e-38a34cbb217b",
+    "dataset": "crosswalk",
+    "record_identifier": "esri-site-b4915178-5553-4293-aa9e-38a34cbb217b",
+    "issue_code": "multiple_source_trade_areas",
+    "severity": "warning",
+    "reason": "The master-site ESRI ID matches multiple trade-area records.",
+    "disposition": "retain_for_review"
+  }
+]

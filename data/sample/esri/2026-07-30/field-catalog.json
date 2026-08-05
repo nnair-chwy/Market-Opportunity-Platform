@@ -1,0 +1,5907 @@
+[
+  {
+    "field_id": "clinic.account_owner",
+    "dataset": "clinic",
+    "source_field": "account_owner",
+    "business_label": "account owner",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.account_type",
+    "dataset": "clinic",
+    "source_field": "account_type",
+    "business_label": "account type",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.active_clinic_customers",
+    "dataset": "clinic",
+    "source_field": "active_clinic_customers",
+    "business_label": "active clinic customers",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.active_customers_with_shipped_chewy_order_last_365_days",
+    "dataset": "clinic",
+    "source_field": "active_customers_with_shipped_chewy_order_last_365_days",
+    "business_label": "active customers with shipped chewy order last 365 days",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.addr_type",
+    "dataset": "clinic",
+    "source_field": "addr_type",
+    "business_label": "addr type",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.ahn_cd",
+    "dataset": "clinic",
+    "source_field": "ahn_cd",
+    "business_label": "ahn cd",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.anti_chewy_group",
+    "dataset": "clinic",
+    "source_field": "anti_chewy_group",
+    "business_label": "anti chewy group",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.approval_rate",
+    "dataset": "clinic",
+    "source_field": "approval_rate",
+    "business_label": "approval rate",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.authorizations_unlimited_rate",
+    "dataset": "clinic",
+    "source_field": "authorizations_unlimited_rate",
+    "business_label": "authorizations unlimited rate",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.avg_net_sales_per_active_clinic_customer",
+    "dataset": "clinic",
+    "source_field": "avg_net_sales_per_active_clinic_customer",
+    "business_label": "avg net sales per active clinic customer",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.avg_response_hours",
+    "dataset": "clinic",
+    "source_field": "avg_response_hours",
+    "business_label": "avg response hours",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.b2b_clinic_flag",
+    "dataset": "clinic",
+    "source_field": "b2b_clinic_flag",
+    "business_label": "b2b clinic flag",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.b2b_clinic_user_count",
+    "dataset": "clinic",
+    "source_field": "b2b_clinic_user_count",
+    "business_label": "b2b clinic user count",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.b2b_order_deactivation_date",
+    "dataset": "clinic",
+    "source_field": "b2b_order_deactivation_date",
+    "business_label": "b2b order deactivation date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.b2b_order_live_date",
+    "dataset": "clinic",
+    "source_field": "b2b_order_live_date",
+    "business_label": "b2b order live date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.category",
+    "dataset": "clinic",
+    "source_field": "category",
+    "business_label": "category",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.city",
+    "dataset": "clinic",
+    "source_field": "city",
+    "business_label": "city",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.clinic_id",
+    "dataset": "clinic",
+    "source_field": "clinic_id",
+    "business_label": "clinic id",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.clinic_key",
+    "dataset": "clinic",
+    "source_field": "clinic_key",
+    "business_label": "clinic key",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.clinic_pims",
+    "dataset": "clinic",
+    "source_field": "clinic_pims",
+    "business_label": "clinic pims",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.clinic_score_ranking",
+    "dataset": "clinic",
+    "source_field": "clinic_score_ranking",
+    "business_label": "clinic score ranking",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.clinic_type",
+    "dataset": "clinic",
+    "source_field": "clinic_type",
+    "business_label": "clinic type",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.clinicscoretype",
+    "dataset": "clinic",
+    "source_field": "clinicscoretype",
+    "business_label": "clinicscoretype",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.comments",
+    "dataset": "clinic",
+    "source_field": "comments",
+    "business_label": "comments",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.corporate_account_flag",
+    "dataset": "clinic",
+    "source_field": "corporate_account_flag",
+    "business_label": "corporate account flag",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.customer_tier_name",
+    "dataset": "clinic",
+    "source_field": "customer_tier_name",
+    "business_label": "customer tier name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.deactivation_category",
+    "dataset": "clinic",
+    "source_field": "deactivation_category",
+    "business_label": "deactivation category",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.deactivation_created_date",
+    "dataset": "clinic",
+    "source_field": "deactivation_created_date",
+    "business_label": "deactivation created date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.deactivation_description",
+    "dataset": "clinic",
+    "source_field": "deactivation_description",
+    "business_label": "deactivation description",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.deactivation_priority",
+    "dataset": "clinic",
+    "source_field": "deactivation_priority",
+    "business_label": "deactivation priority",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.deactivation_sentiment",
+    "dataset": "clinic",
+    "source_field": "deactivation_sentiment",
+    "business_label": "deactivation sentiment",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.deactivation_sentiment_details",
+    "dataset": "clinic",
+    "source_field": "deactivation_sentiment_details",
+    "business_label": "deactivation sentiment details",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.deactivation_status",
+    "dataset": "clinic",
+    "source_field": "deactivation_status",
+    "business_label": "deactivation status",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.digital_ind",
+    "dataset": "clinic",
+    "source_field": "digital_ind",
+    "business_label": "digital ind",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.do_not_prospect",
+    "dataset": "clinic",
+    "source_field": "do_not_prospect",
+    "business_label": "do not prospect",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.golden_clinic_id",
+    "dataset": "clinic",
+    "source_field": "golden_clinic_id",
+    "business_label": "golden clinic id",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.hin",
+    "dataset": "clinic",
+    "source_field": "hin",
+    "business_label": "hin",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.hin_id",
+    "dataset": "clinic",
+    "source_field": "hin_id",
+    "business_label": "hin id",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.integrated",
+    "dataset": "clinic",
+    "source_field": "integrated",
+    "business_label": "integrated",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.is_strategic",
+    "dataset": "clinic",
+    "source_field": "is_strategic",
+    "business_label": "is strategic",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.last_engagement_date",
+    "dataset": "clinic",
+    "source_field": "last_engagement_date",
+    "business_label": "last engagement date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.latitude",
+    "dataset": "clinic",
+    "source_field": "latitude",
+    "business_label": "latitude",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.lifecycle_status",
+    "dataset": "clinic",
+    "source_field": "lifecycle_status",
+    "business_label": "lifecycle status",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.longitude",
+    "dataset": "clinic",
+    "source_field": "longitude",
+    "business_label": "longitude",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.match_addr",
+    "dataset": "clinic",
+    "source_field": "match_addr",
+    "business_label": "match addr",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.match_type",
+    "dataset": "clinic",
+    "source_field": "match_type",
+    "business_label": "match type",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.name",
+    "dataset": "clinic",
+    "source_field": "name",
+    "business_label": "name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.new_to_healthcare_customers",
+    "dataset": "clinic",
+    "source_field": "new_to_healthcare_customers",
+    "business_label": "new to healthcare customers",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.objectid",
+    "dataset": "clinic",
+    "source_field": "objectid",
+    "business_label": "objectid",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.opt_out_phone",
+    "dataset": "clinic",
+    "source_field": "opt_out_phone",
+    "business_label": "opt out phone",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.parent_account",
+    "dataset": "clinic",
+    "source_field": "parent_account",
+    "business_label": "parent account",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.pbc_end_date",
+    "dataset": "clinic",
+    "source_field": "pbc_end_date",
+    "business_label": "pbc end date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.pbc_start_date",
+    "dataset": "clinic",
+    "source_field": "pbc_start_date",
+    "business_label": "pbc start date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.pct_active_clinic_customers_new_to_healthcare",
+    "dataset": "clinic",
+    "source_field": "pct_active_clinic_customers_new_to_healthcare",
+    "business_label": "pct active clinic customers new to healthcare",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.phone",
+    "dataset": "clinic",
+    "source_field": "phone",
+    "business_label": "phone",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.practice_hub_retail_end_date",
+    "dataset": "clinic",
+    "source_field": "practice_hub_retail_end_date",
+    "business_label": "practice hub retail end date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.practice_hub_retail_start_date",
+    "dataset": "clinic",
+    "source_field": "practice_hub_retail_start_date",
+    "business_label": "practice hub retail start date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.prescriptions_approved",
+    "dataset": "clinic",
+    "source_field": "prescriptions_approved",
+    "business_label": "prescriptions approved",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.prescriptions_count",
+    "dataset": "clinic",
+    "source_field": "prescriptions_count",
+    "business_label": "prescriptions count",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.record_type",
+    "dataset": "clinic",
+    "source_field": "record_type",
+    "business_label": "record type",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.resolved_create_dttm",
+    "dataset": "clinic",
+    "source_field": "resolved_create_dttm",
+    "business_label": "resolved create dttm",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.resolved_hin",
+    "dataset": "clinic",
+    "source_field": "resolved_hin",
+    "business_label": "resolved hin",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.resolved_id",
+    "dataset": "clinic",
+    "source_field": "resolved_id",
+    "business_label": "resolved id",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.response_rate",
+    "dataset": "clinic",
+    "source_field": "response_rate",
+    "business_label": "response rate",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.rhapsody_end_date",
+    "dataset": "clinic",
+    "source_field": "rhapsody_end_date",
+    "business_label": "rhapsody end date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.rhapsody_start_date",
+    "dataset": "clinic",
+    "source_field": "rhapsody_start_date",
+    "business_label": "rhapsody start date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.rolling_365_day_end_date",
+    "dataset": "clinic",
+    "source_field": "rolling_365_day_end_date",
+    "business_label": "rolling 365 day end date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.rolling_365_day_start_date",
+    "dataset": "clinic",
+    "source_field": "rolling_365_day_start_date",
+    "business_label": "rolling 365 day start date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.rx_contact_preference",
+    "dataset": "clinic",
+    "source_field": "rx_contact_preference",
+    "business_label": "rx contact preference",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.score",
+    "dataset": "clinic",
+    "source_field": "score",
+    "business_label": "score",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.score_1",
+    "dataset": "clinic",
+    "source_field": "score_1",
+    "business_label": "score 1",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.solution_name",
+    "dataset": "clinic",
+    "source_field": "solution_name",
+    "business_label": "solution name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.state",
+    "dataset": "clinic",
+    "source_field": "state",
+    "business_label": "state",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.status",
+    "dataset": "clinic",
+    "source_field": "status",
+    "business_label": "status",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.street",
+    "dataset": "clinic",
+    "source_field": "street",
+    "business_label": "street",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.strucdet",
+    "dataset": "clinic",
+    "source_field": "strucdet",
+    "business_label": "strucdet",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.structype",
+    "dataset": "clinic",
+    "source_field": "structype",
+    "business_label": "structype",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.subtype",
+    "dataset": "clinic",
+    "source_field": "subtype",
+    "business_label": "subtype",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.targeted_clinic",
+    "dataset": "clinic",
+    "source_field": "targeted_clinic",
+    "business_label": "targeted clinic",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.territory_name",
+    "dataset": "clinic",
+    "source_field": "territory_name",
+    "business_label": "territory name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.test_clinic_flag",
+    "dataset": "clinic",
+    "source_field": "test_clinic_flag",
+    "business_label": "test clinic flag",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.update_dttm",
+    "dataset": "clinic",
+    "source_field": "update_dttm",
+    "business_label": "update dttm",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.vendor_name",
+    "dataset": "clinic",
+    "source_field": "vendor_name",
+    "business_label": "vendor name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.vet_diet_contact_preference",
+    "dataset": "clinic",
+    "source_field": "vet_diet_contact_preference",
+    "business_label": "vet diet contact preference",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.vet_finder_ind",
+    "dataset": "clinic",
+    "source_field": "vet_finder_ind",
+    "business_label": "vet finder ind",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.via_rate",
+    "dataset": "clinic",
+    "source_field": "via_rate",
+    "business_label": "via rate",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.vias_total",
+    "dataset": "clinic",
+    "source_field": "vias_total",
+    "business_label": "vias total",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "restricted",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.wholesale_end_date",
+    "dataset": "clinic",
+    "source_field": "wholesale_end_date",
+    "business_label": "wholesale end date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.wholesale_start_date",
+    "dataset": "clinic",
+    "source_field": "wholesale_start_date",
+    "business_label": "wholesale start date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "clinic.zip",
+    "dataset": "clinic",
+    "source_field": "zip",
+    "business_label": "zip",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "unknown",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Clinic row values are not required for portfolio readiness.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.address",
+    "dataset": "master_site",
+    "source_field": "Address",
+    "business_label": "Address",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.address_note",
+    "dataset": "master_site",
+    "source_field": "Address Note",
+    "business_label": "Address Note",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.alternate_name",
+    "dataset": "master_site",
+    "source_field": "Alternate Name",
+    "business_label": "Alternate Name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.annual_rent_increases",
+    "dataset": "master_site",
+    "source_field": "Annual Rent Increases",
+    "business_label": "Annual Rent Increases",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.base_rent",
+    "dataset": "master_site",
+    "source_field": "Base Rent",
+    "business_label": "Base Rent",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.brand",
+    "dataset": "master_site",
+    "source_field": "Brand",
+    "business_label": "Brand",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.business_id",
+    "dataset": "master_site",
+    "source_field": "Business ID",
+    "business_label": "Business ID",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.cbsa_households",
+    "dataset": "master_site",
+    "source_field": "CBSA Households",
+    "business_label": "CBSA Households",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.cbsa_id",
+    "dataset": "master_site",
+    "source_field": "CBSA ID",
+    "business_label": "CBSA ID",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.cbsa_name",
+    "dataset": "master_site",
+    "source_field": "CBSA Name",
+    "business_label": "CBSA Name",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.cbsa_size",
+    "dataset": "master_site",
+    "source_field": "CBSA Size",
+    "business_label": "CBSA Size",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.center_ingress_egress",
+    "dataset": "master_site",
+    "source_field": "Center Ingress Egress",
+    "business_label": "Center Ingress Egress",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.center_name",
+    "dataset": "master_site",
+    "source_field": "Center Name",
+    "business_label": "Center Name",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.center_square_foot",
+    "dataset": "master_site",
+    "source_field": "Center Square Foot",
+    "business_label": "Center Square Foot",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.center_type",
+    "dataset": "master_site",
+    "source_field": "Center Type",
+    "business_label": "Center Type",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.city",
+    "dataset": "master_site",
+    "source_field": "City",
+    "business_label": "City",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.clinic_name",
+    "dataset": "master_site",
+    "source_field": "Clinic Name",
+    "business_label": "Clinic Name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.closest_competitor",
+    "dataset": "master_site",
+    "source_field": "Closest Competitor",
+    "business_label": "Closest Competitor",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.closest_competitor_distance",
+    "dataset": "master_site",
+    "source_field": "Closest Competitor Distance",
+    "business_label": "Closest Competitor Distance",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.closest_int_airport_id",
+    "dataset": "master_site",
+    "source_field": "Closest Int Airport ID",
+    "business_label": "Closest Int Airport ID",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.closest_int_airport_name",
+    "dataset": "master_site",
+    "source_field": "Closest Int Airport Name",
+    "business_label": "Closest Int Airport Name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.cotenant_1",
+    "dataset": "master_site",
+    "source_field": "Cotenant 1",
+    "business_label": "Cotenant 1",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.cotenant_2",
+    "dataset": "master_site",
+    "source_field": "Cotenant 2",
+    "business_label": "Cotenant 2",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.cotenant_3",
+    "dataset": "master_site",
+    "source_field": "Cotenant 3",
+    "business_label": "Cotenant 3",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.cotenant_4",
+    "dataset": "master_site",
+    "source_field": "Cotenant 4",
+    "business_label": "Cotenant 4",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.cotenant_5",
+    "dataset": "master_site",
+    "source_field": "Cotenant 5",
+    "business_label": "Cotenant 5",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.county_households",
+    "dataset": "master_site",
+    "source_field": "County Households",
+    "business_label": "County Households",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.county_id",
+    "dataset": "master_site",
+    "source_field": "County ID",
+    "business_label": "County ID",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.county_name",
+    "dataset": "master_site",
+    "source_field": "County Name",
+    "business_label": "County Name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.created_date",
+    "dataset": "master_site",
+    "source_field": "created_date",
+    "business_label": "created_date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.created_user",
+    "dataset": "master_site",
+    "source_field": "created_user",
+    "business_label": "created_user",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.dedicated_parking_spaces",
+    "dataset": "master_site",
+    "source_field": "Dedicated Parking Spaces",
+    "business_label": "Dedicated Parking Spaces",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.design_room_count",
+    "dataset": "master_site",
+    "source_field": "Design Room Count",
+    "business_label": "Design Room Count",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.distance_to_closest_int_airport",
+    "dataset": "master_site",
+    "source_field": "Distance to closest Int Airport",
+    "business_label": "Distance to closest Int Airport",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.dma_households",
+    "dataset": "master_site",
+    "source_field": "DMA Households",
+    "business_label": "DMA Households",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.dma_id",
+    "dataset": "master_site",
+    "source_field": "DMA ID",
+    "business_label": "DMA ID",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.dma_name",
+    "dataset": "master_site",
+    "source_field": "DMA Name",
+    "business_label": "DMA Name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.dma_size",
+    "dataset": "master_site",
+    "source_field": "DMA Size",
+    "business_label": "DMA Size",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.former_tenant",
+    "dataset": "master_site",
+    "source_field": "Former Tenant",
+    "business_label": "Former Tenant",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.green_space",
+    "dataset": "master_site",
+    "source_field": "Green Space",
+    "business_label": "Green Space",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.green_space_location",
+    "dataset": "master_site",
+    "source_field": "Green Space Location",
+    "business_label": "Green Space Location",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.landlord_entity",
+    "dataset": "master_site",
+    "source_field": "Landlord Entity",
+    "business_label": "Landlord Entity",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.landlord_name",
+    "dataset": "master_site",
+    "source_field": "Landlord Name",
+    "business_label": "Landlord Name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.last_edited_date",
+    "dataset": "master_site",
+    "source_field": "last_edited_date",
+    "business_label": "last_edited_date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.last_edited_user",
+    "dataset": "master_site",
+    "source_field": "last_edited_user",
+    "business_label": "last_edited_user",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.latitude",
+    "dataset": "master_site",
+    "source_field": "Latitude",
+    "business_label": "Latitude",
+    "definition_status": "partial",
+    "unit": "decimal_degrees",
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.lease_term",
+    "dataset": "master_site",
+    "source_field": "Lease Term",
+    "business_label": "Lease Term",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.longitude",
+    "dataset": "master_site",
+    "source_field": "Longitude",
+    "business_label": "Longitude",
+    "definition_status": "partial",
+    "unit": "decimal_degrees",
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.main_street_visibility",
+    "dataset": "master_site",
+    "source_field": "Main Street Visibility",
+    "business_label": "Main Street Visibility",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.market_name",
+    "dataset": "master_site",
+    "source_field": "Market Name",
+    "business_label": "Market Name",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.multi_story_building",
+    "dataset": "master_site",
+    "source_field": "Multi-Story Building",
+    "business_label": "Multi-Story Building",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.new_or_existing_build",
+    "dataset": "master_site",
+    "source_field": "New or Existing Build",
+    "business_label": "New or Existing Build",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.open_note",
+    "dataset": "master_site",
+    "source_field": "Open Note",
+    "business_label": "Open Note",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.open_status_note",
+    "dataset": "master_site",
+    "source_field": "Open Status Note",
+    "business_label": "Open Status Note",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.operating_expenses",
+    "dataset": "master_site",
+    "source_field": "Operating Expenses",
+    "business_label": "Operating Expenses",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.parking_type",
+    "dataset": "master_site",
+    "source_field": "Parking Type",
+    "business_label": "Parking Type",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.point_x",
+    "dataset": "master_site",
+    "source_field": "POINT_X",
+    "business_label": "POINT_X",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.point_y",
+    "dataset": "master_site",
+    "source_field": "POINT_Y",
+    "business_label": "POINT_Y",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.pylon_panel",
+    "dataset": "master_site",
+    "source_field": "Pylon Panel",
+    "business_label": "Pylon Panel",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.rent_abatement_days",
+    "dataset": "master_site",
+    "source_field": "Rent Abatement Days",
+    "business_label": "Rent Abatement Days",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.security_deposit",
+    "dataset": "master_site",
+    "source_field": "Security Deposit",
+    "business_label": "Security Deposit",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.sister_cvc_distance",
+    "dataset": "master_site",
+    "source_field": "Sister CVC Distance",
+    "business_label": "Sister CVC Distance",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.sister_cvc_name",
+    "dataset": "master_site",
+    "source_field": "Sister CVC Name",
+    "business_label": "Sister CVC Name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.site_front_size",
+    "dataset": "master_site",
+    "source_field": "Site Front Size",
+    "business_label": "Site Front Size",
+    "definition_status": "partial",
+    "unit": "square_feet",
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.site_name",
+    "dataset": "master_site",
+    "source_field": "Site Name",
+    "business_label": "Site Name",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.site_position",
+    "dataset": "master_site",
+    "source_field": "Site Position",
+    "business_label": "Site Position",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.site_square_feet",
+    "dataset": "master_site",
+    "source_field": "Site Square Foot",
+    "business_label": "Site Square Foot",
+    "definition_status": "partial",
+    "unit": "square_feet",
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.source_esri_id",
+    "dataset": "master_site",
+    "source_field": "ESRI ID",
+    "business_label": "ESRI ID",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.source_global_id",
+    "dataset": "master_site",
+    "source_field": "GlobalID",
+    "business_label": "GlobalID",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.source_open_quarter",
+    "dataset": "master_site",
+    "source_field": "Open Quarter",
+    "business_label": "Open Quarter",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.source_open_status",
+    "dataset": "master_site",
+    "source_field": "Open Status",
+    "business_label": "Open Status",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.source_open_year",
+    "dataset": "master_site",
+    "source_field": "Open Year",
+    "business_label": "Open Year",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.source_site_code",
+    "dataset": "master_site",
+    "source_field": "Site Code",
+    "business_label": "Site Code",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.state",
+    "dataset": "master_site",
+    "source_field": "State",
+    "business_label": "State",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.state_households",
+    "dataset": "master_site",
+    "source_field": "State Households",
+    "business_label": "State Households",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.state_id",
+    "dataset": "master_site",
+    "source_field": "State ID",
+    "business_label": "State ID",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.state_name",
+    "dataset": "master_site",
+    "source_field": "State Name",
+    "business_label": "State Name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.tanm",
+    "dataset": "master_site",
+    "source_field": "TANM",
+    "business_label": "TANM",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.tenant_allowance",
+    "dataset": "master_site",
+    "source_field": "Tenant Allowance",
+    "business_label": "Tenant Allowance",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Excluded by the prototype sensitive-field rule.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.traffic_volume",
+    "dataset": "master_site",
+    "source_field": "Traffic Volume",
+    "business_label": "Traffic Volume",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.usable_site_square_feet",
+    "dataset": "master_site",
+    "source_field": "Usable Site Square Foot",
+    "business_label": "Usable Site Square Foot",
+    "definition_status": "partial",
+    "unit": "square_feet",
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.zip_households",
+    "dataset": "master_site",
+    "source_field": "Zip Households",
+    "business_label": "Zip Households",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.zip_name",
+    "dataset": "master_site",
+    "source_field": "Zip Name",
+    "business_label": "Zip Name",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "master_site.zipcode",
+    "dataset": "master_site",
+    "source_field": "Zipcode",
+    "business_label": "Zipcode",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "point",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review",
+      "current_location"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_0_5",
+    "dataset": "trade_area",
+    "source_field": "Age 0 - 5",
+    "business_label": "Age 0 - 5",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_10_15",
+    "dataset": "trade_area",
+    "source_field": "Age 10 - 15",
+    "business_label": "Age 10 - 15",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_15_20",
+    "dataset": "trade_area",
+    "source_field": "Age 15 - 20",
+    "business_label": "Age 15 - 20",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_18_",
+    "dataset": "trade_area",
+    "source_field": "Age 18+",
+    "business_label": "Age 18+",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_20_25",
+    "dataset": "trade_area",
+    "source_field": "Age 20 - 25",
+    "business_label": "Age 20 - 25",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_25_29",
+    "dataset": "trade_area",
+    "source_field": "Age 25 29",
+    "business_label": "Age 25 29",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_25_30",
+    "dataset": "trade_area",
+    "source_field": "Age 25 - 30",
+    "business_label": "Age 25 - 30",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_30_35",
+    "dataset": "trade_area",
+    "source_field": "Age 30 - 35",
+    "business_label": "Age 30 - 35",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_30_39",
+    "dataset": "trade_area",
+    "source_field": "Age 30 39",
+    "business_label": "Age 30 39",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_35_40",
+    "dataset": "trade_area",
+    "source_field": "Age 35 - 40",
+    "business_label": "Age 35 - 40",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_40_45",
+    "dataset": "trade_area",
+    "source_field": "Age 40 - 45",
+    "business_label": "Age 40 - 45",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_40_49",
+    "dataset": "trade_area",
+    "source_field": "Age 40 49",
+    "business_label": "Age 40 49",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_45_50",
+    "dataset": "trade_area",
+    "source_field": "Age 45 - 50",
+    "business_label": "Age 45 - 50",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_5_10",
+    "dataset": "trade_area",
+    "source_field": "Age 5 - 10",
+    "business_label": "Age 5 - 10",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_50_55",
+    "dataset": "trade_area",
+    "source_field": "Age 50 - 55",
+    "business_label": "Age 50 - 55",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_55_60",
+    "dataset": "trade_area",
+    "source_field": "Age 55 - 60",
+    "business_label": "Age 55 - 60",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_60_65",
+    "dataset": "trade_area",
+    "source_field": "Age 60 - 65",
+    "business_label": "Age 60 - 65",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_65_70",
+    "dataset": "trade_area",
+    "source_field": "Age 65 - 70",
+    "business_label": "Age 65 - 70",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_70_75",
+    "dataset": "trade_area",
+    "source_field": "Age 70 - 75",
+    "business_label": "Age 70 - 75",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_75_80",
+    "dataset": "trade_area",
+    "source_field": "Age 75 - 80",
+    "business_label": "Age 75 - 80",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_80_85",
+    "dataset": "trade_area",
+    "source_field": "Age 80 - 85",
+    "business_label": "Age 80 - 85",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.age_85_",
+    "dataset": "trade_area",
+    "source_field": "Age 85+",
+    "business_label": "Age 85+",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.approved_layer",
+    "dataset": "trade_area",
+    "source_field": "Approved Layer",
+    "business_label": "Approved Layer",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.average_income",
+    "dataset": "trade_area",
+    "source_field": "Average Income",
+    "business_label": "Average income",
+    "definition_status": "partial",
+    "unit": "usd",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.brand",
+    "dataset": "trade_area",
+    "source_field": "Brand",
+    "business_label": "Brand",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.chewy_healthcare_sales",
+    "dataset": "trade_area",
+    "source_field": "Chewy Healthcare Sales",
+    "business_label": "Chewy healthcare sales",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.chewy_online_autoship_customers",
+    "dataset": "trade_area",
+    "source_field": "Chewy Online Autoship Customers",
+    "business_label": "Chewy online autoship customers",
+    "definition_status": "partial",
+    "unit": "count",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.chewy_online_customers",
+    "dataset": "trade_area",
+    "source_field": "Chewy Online Customers",
+    "business_label": "Chewy online customers",
+    "definition_status": "partial",
+    "unit": "count",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.created_date",
+    "dataset": "trade_area",
+    "source_field": "created_date",
+    "business_label": "created_date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.created_user",
+    "dataset": "trade_area",
+    "source_field": "created_user",
+    "business_label": "created_user",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.crime_rank",
+    "dataset": "trade_area",
+    "source_field": "Crime Rank",
+    "business_label": "Crime Rank",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.cvc_customer_percent",
+    "dataset": "trade_area",
+    "source_field": "CVC Customer Percent",
+    "business_label": "CVC customer percent",
+    "definition_status": "partial",
+    "unit": "percent",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "confidential",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.environmental_rank",
+    "dataset": "trade_area",
+    "source_field": "Environmental Rank",
+    "business_label": "Environmental Rank",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.esri_id",
+    "dataset": "trade_area",
+    "source_field": "ESRI_ID",
+    "business_label": "ESRI_ID",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.female_population_percent",
+    "dataset": "trade_area",
+    "source_field": "Female Population Percent",
+    "business_label": "Female Population Percent",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.globalid",
+    "dataset": "trade_area",
+    "source_field": "GlobalID",
+    "business_label": "GlobalID",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.households",
+    "dataset": "trade_area",
+    "source_field": "Households",
+    "business_label": "Households",
+    "definition_status": "partial",
+    "unit": "count",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.households_with_pets",
+    "dataset": "trade_area",
+    "source_field": "Households with Pets",
+    "business_label": "Households with pets",
+    "definition_status": "partial",
+    "unit": "count",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.households_with_pets_index",
+    "dataset": "trade_area",
+    "source_field": "Households with Pets Index",
+    "business_label": "Households with pets index",
+    "definition_status": "partial",
+    "unit": "index",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.income_100_000_150_000",
+    "dataset": "trade_area",
+    "source_field": "Income $100,000 - $150,000",
+    "business_label": "Income $100,000 - $150,000",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.income_15_000_25_000",
+    "dataset": "trade_area",
+    "source_field": "Income $15,000 - $25,000",
+    "business_label": "Income $15,000 - $25,000",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.income_150_000_200_000",
+    "dataset": "trade_area",
+    "source_field": "Income $150,000 - $200,000",
+    "business_label": "Income $150,000 - $200,000",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.income_25_000_35_000",
+    "dataset": "trade_area",
+    "source_field": "Income $25,000 - $35,000",
+    "business_label": "Income $25,000 - $35,000",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.income_35_000_50_000",
+    "dataset": "trade_area",
+    "source_field": "Income $35,000 - $50,000",
+    "business_label": "Income $35,000 - $50,000",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.income_50_000_75_000",
+    "dataset": "trade_area",
+    "source_field": "Income $50,000 - $75,000",
+    "business_label": "Income $50,000 - $75,000",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.income_75_000_100_000",
+    "dataset": "trade_area",
+    "source_field": "Income $75,000 - $100,000",
+    "business_label": "Income $75,000 - $100,000",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.income_greater_than_200_000",
+    "dataset": "trade_area",
+    "source_field": "Income Greater than $200,000",
+    "business_label": "Income Greater than $200,000",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.income_less_than_15_000",
+    "dataset": "trade_area",
+    "source_field": "Income Less Than $15,000",
+    "business_label": "Income Less Than $15,000",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.labor_rank",
+    "dataset": "trade_area",
+    "source_field": "Labor Rank",
+    "business_label": "Labor Rank",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.last_edited_date",
+    "dataset": "trade_area",
+    "source_field": "last_edited_date",
+    "business_label": "last_edited_date",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.last_edited_user",
+    "dataset": "trade_area",
+    "source_field": "last_edited_user",
+    "business_label": "last_edited_user",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.male_population_percent",
+    "dataset": "trade_area",
+    "source_field": "Male Population Percent",
+    "business_label": "Male Population Percent",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.median_age",
+    "dataset": "trade_area",
+    "source_field": "Median Age",
+    "business_label": "Median Age",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.median_age_female",
+    "dataset": "trade_area",
+    "source_field": "Median Age Female",
+    "business_label": "Median Age Female",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.median_age_male",
+    "dataset": "trade_area",
+    "source_field": "Median Age Male",
+    "business_label": "Median Age Male",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.median_income",
+    "dataset": "trade_area",
+    "source_field": "Median Income",
+    "business_label": "Median income",
+    "definition_status": "partial",
+    "unit": "usd",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.open_note",
+    "dataset": "trade_area",
+    "source_field": "Open Note",
+    "business_label": "Open Note",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.percent_income_over_100k",
+    "dataset": "trade_area",
+    "source_field": "Percent Income Over 100k",
+    "business_label": "Income over $100K",
+    "definition_status": "partial",
+    "unit": "percent",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.percent_income_over_75k",
+    "dataset": "trade_area",
+    "source_field": "Percent Income Over 75K",
+    "business_label": "Income over $75K",
+    "definition_status": "partial",
+    "unit": "percent",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.pet_households_per_clinic",
+    "dataset": "trade_area",
+    "source_field": "Pet Households Per Clinic",
+    "business_label": "Pet households per clinic",
+    "definition_status": "partial",
+    "unit": "ratio",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.population",
+    "dataset": "trade_area",
+    "source_field": "Population",
+    "business_label": "Population",
+    "definition_status": "partial",
+    "unit": "count",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.population_growth",
+    "dataset": "trade_area",
+    "source_field": "Population Growth",
+    "business_label": "Population growth",
+    "definition_status": "partial",
+    "unit": "percent",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.shape_leng",
+    "dataset": "trade_area",
+    "source_field": "Shape_Leng",
+    "business_label": "Shape_Leng",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.shape_starea_",
+    "dataset": "trade_area",
+    "source_field": "Shape.STArea()",
+    "business_label": "Shape.STArea()",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.shape_stlength_",
+    "dataset": "trade_area",
+    "source_field": "Shape.STLength()",
+    "business_label": "Shape.STLength()",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.site_name",
+    "dataset": "trade_area",
+    "source_field": "Site Name",
+    "business_label": "Site Name",
+    "definition_status": "partial",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.square_miles",
+    "dataset": "trade_area",
+    "source_field": "Square Miles",
+    "business_label": "Square miles",
+    "definition_status": "partial",
+    "unit": "square_miles",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.system_id",
+    "dataset": "trade_area",
+    "source_field": "System ID",
+    "business_label": "System ID",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.use_status",
+    "dataset": "trade_area",
+    "source_field": "Use Status",
+    "business_label": "Use Status",
+    "definition_status": "unknown",
+    "unit": null,
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Source field is inventoried but source values are excluded."
+    ],
+    "retained_in_fixture": false,
+    "exclusion_reason": "Not required for the approved demo capabilities.",
+    "scoring_eligibility": "none"
+  },
+  {
+    "field_id": "trade_area.veterinary_clinic_count",
+    "dataset": "trade_area",
+    "source_field": "Veterinary Clinic Count",
+    "business_label": "Veterinary clinic count",
+    "definition_status": "partial",
+    "unit": "count",
+    "observed_at": null,
+    "geography": "trade_area",
+    "geography_method": null,
+    "workflow_stages": [
+      "market_research",
+      "candidate_review"
+    ],
+    "sensitivity": "internal",
+    "allowed_use": "internal_demo_evidence_only",
+    "evidence_status": "Reported",
+    "quality_rules": [
+      "Preserve null as missing.",
+      "Retain source field name and snapshot lineage."
+    ],
+    "retained_in_fixture": true,
+    "exclusion_reason": null,
+    "scoring_eligibility": "none"
+  }
+]

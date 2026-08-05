@@ -1,0 +1,7 @@
+phase,origin,data_family_count,examples,availability_status
+Must have,Internal Chewy,13,"Outcomes, clinic history, demand, staffing, candidate economics",Mostly unconfirmed for project use
+Must have,External,6,"Demographics, competition, drive time, real estate, zoning, inspection","Public, local, and commercial mix"
+Validate next,Internal Chewy,5,"Care spend, local costs, cannibalization, research, rejected sites",Definitions and owners required
+Validate next,External,11,"Pet ownership, labor, traffic, mobility, growth, hazards",Coverage and incremental lift required
+Later enrichment,Internal Chewy,1,Brand awareness and CRM engagement,Should not block baseline
+Later enrichment,External,2,Transit or walkability and additional climate context,Use only if locally relevant

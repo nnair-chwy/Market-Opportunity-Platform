@@ -1,0 +1,299 @@
+{
+  "schema_version": "1.0.0",
+  "transformation_version": "cbsa-geometry-v1",
+  "boundary_vintage": "2024",
+  "source_id": "SRC-015",
+  "duplicate_features": [],
+  "unmatched_features": [
+    {
+      "feature_index": 430,
+      "cbsa_code": "10380",
+      "reasons": [
+        "CBSA 10380 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "10380",
+        "NAME": "Aguadilla, PR",
+        "NAMELSAD": "Aguadilla, PR Metro Area",
+        "LSAD": "M1",
+        "ALAND": 769383273,
+        "AWATER": 354396433,
+        "geometry_type": "Polygon"
+      }
+    },
+    {
+      "feature_index": 684,
+      "cbsa_code": "11260",
+      "reasons": [
+        "CBSA 11260 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "11260",
+        "NAME": "Anchorage, AK",
+        "NAMELSAD": "Anchorage, AK Metro Area",
+        "LSAD": "M1",
+        "ALAND": 68412985449,
+        "AWATER": 2066200788,
+        "geometry_type": "MultiPolygon"
+      }
+    },
+    {
+      "feature_index": 690,
+      "cbsa_code": "11640",
+      "reasons": [
+        "CBSA 11640 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "11640",
+        "NAME": "Arecibo, PR",
+        "NAMELSAD": "Arecibo, PR Metro Area",
+        "LSAD": "M1",
+        "ALAND": 613528952,
+        "AWATER": 231467259,
+        "geometry_type": "Polygon"
+      }
+    },
+    {
+      "feature_index": 590,
+      "cbsa_code": "17620",
+      "reasons": [
+        "CBSA 17620 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "17620",
+        "NAME": "Coamo, PR",
+        "NAMELSAD": "Coamo, PR Micro Area",
+        "LSAD": "M2",
+        "ALAND": 290242458,
+        "AWATER": 111134077,
+        "geometry_type": "Polygon"
+      }
+    },
+    {
+      "feature_index": 157,
+      "cbsa_code": "17640",
+      "reasons": [
+        "CBSA 17640 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "17640",
+        "NAME": "Coco, PR",
+        "NAMELSAD": "Coco, PR Micro Area",
+        "LSAD": "M2",
+        "ALAND": 179755401,
+        "AWATER": 115816412,
+        "geometry_type": "Polygon"
+      }
+    },
+    {
+      "feature_index": 340,
+      "cbsa_code": "21820",
+      "reasons": [
+        "CBSA 21820 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "21820",
+        "NAME": "Fairbanks-College, AK",
+        "NAMELSAD": "Fairbanks-College, AK Metro Area",
+        "LSAD": "M1",
+        "ALAND": 18997105007,
+        "AWATER": 259306487,
+        "geometry_type": "Polygon"
+      }
+    },
+    {
+      "feature_index": 353,
+      "cbsa_code": "25020",
+      "reasons": [
+        "CBSA 25020 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "25020",
+        "NAME": "Guayama, PR",
+        "NAMELSAD": "Guayama, PR Metro Area",
+        "LSAD": "M1",
+        "ALAND": 328024208,
+        "AWATER": 235731167,
+        "geometry_type": "Polygon"
+      }
+    },
+    {
+      "feature_index": 508,
+      "cbsa_code": "25900",
+      "reasons": [
+        "CBSA 25900 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "25900",
+        "NAME": "Hilo-Kailua, HI",
+        "NAMELSAD": "Hilo-Kailua, HI Micro Area",
+        "LSAD": "M2",
+        "ALAND": 10433586954,
+        "AWATER": 2739520971,
+        "geometry_type": "Polygon"
+      }
+    },
+    {
+      "feature_index": 835,
+      "cbsa_code": "27940",
+      "reasons": [
+        "CBSA 27940 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "27940",
+        "NAME": "Juneau, AK",
+        "NAMELSAD": "Juneau, AK Micro Area",
+        "LSAD": "M2",
+        "ALAND": 7000540329,
+        "AWATER": 1437614880,
+        "geometry_type": "MultiPolygon"
+      }
+    },
+    {
+      "feature_index": 98,
+      "cbsa_code": "27980",
+      "reasons": [
+        "CBSA 27980 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "27980",
+        "NAME": "Kahului-Wailuku, HI",
+        "NAMELSAD": "Kahului-Wailuku, HI Metro Area",
+        "LSAD": "M1",
+        "ALAND": 3039431893,
+        "AWATER": 3309033240,
+        "geometry_type": "MultiPolygon"
+      }
+    },
+    {
+      "feature_index": 545,
+      "cbsa_code": "28180",
+      "reasons": [
+        "CBSA 28180 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "28180",
+        "NAME": "Kapaa, HI",
+        "NAMELSAD": "Kapaa, HI Micro Area",
+        "LSAD": "M2",
+        "ALAND": 1605377396,
+        "AWATER": 1674359172,
+        "geometry_type": "MultiPolygon"
+      }
+    },
+    {
+      "feature_index": 237,
+      "cbsa_code": "28540",
+      "reasons": [
+        "CBSA 28540 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "28540",
+        "NAME": "Ketchikan, AK",
+        "NAMELSAD": "Ketchikan, AK Micro Area",
+        "LSAD": "M2",
+        "ALAND": 12579808104,
+        "AWATER": 4714991291,
+        "geometry_type": "MultiPolygon"
+      }
+    },
+    {
+      "feature_index": 885,
+      "cbsa_code": "29720",
+      "reasons": [
+        "CBSA 29720 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "29720",
+        "NAME": "Lares, PR",
+        "NAMELSAD": "Lares, PR Micro Area",
+        "LSAD": "M2",
+        "ALAND": 159167733,
+        "AWATER": 485277,
+        "geometry_type": "Polygon"
+      }
+    },
+    {
+      "feature_index": 578,
+      "cbsa_code": "32420",
+      "reasons": [
+        "CBSA 32420 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "32420",
+        "NAME": "Mayagüez, PR",
+        "NAMELSAD": "Mayagüez, PR Metro Area",
+        "LSAD": "M1",
+        "ALAND": 803042988,
+        "AWATER": 892867894,
+        "geometry_type": "MultiPolygon"
+      }
+    },
+    {
+      "feature_index": 433,
+      "cbsa_code": "38660",
+      "reasons": [
+        "CBSA 38660 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "38660",
+        "NAME": "Ponce, PR",
+        "NAMELSAD": "Ponce, PR Metro Area",
+        "LSAD": "M1",
+        "ALAND": 946643089,
+        "AWATER": 447355259,
+        "geometry_type": "MultiPolygon"
+      }
+    },
+    {
+      "feature_index": 175,
+      "cbsa_code": "41980",
+      "reasons": [
+        "CBSA 41980 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "41980",
+        "NAME": "San Juan-Bayamón-Caguas, PR",
+        "NAMELSAD": "San Juan-Bayamón-Caguas, PR Metro Area",
+        "LSAD": "M1",
+        "ALAND": 3724970913,
+        "AWATER": 1457951261,
+        "geometry_type": "MultiPolygon"
+      }
+    },
+    {
+      "feature_index": 263,
+      "cbsa_code": "46520",
+      "reasons": [
+        "CBSA 46520 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "46520",
+        "NAME": "Urban Honolulu, HI",
+        "NAMELSAD": "Urban Honolulu, HI Metro Area",
+        "LSAD": "M1",
+        "ALAND": 1556027675,
+        "AWATER": 4054461969,
+        "geometry_type": "Polygon"
+      }
+    },
+    {
+      "feature_index": 773,
+      "cbsa_code": "46580",
+      "reasons": [
+        "CBSA 46580 is not present in the validated mainland market universe."
+      ],
+      "source_properties": {
+        "GEOID": "46580",
+        "NAME": "Utuado, PR",
+        "NAMELSAD": "Utuado, PR Micro Area",
+        "LSAD": "M2",
+        "ALAND": 294066703,
+        "AWATER": 3979313,
+        "geometry_type": "Polygon"
+      }
+    }
+  ],
+  "rejected_features": [],
+  "missing_market_geometry": []
+}

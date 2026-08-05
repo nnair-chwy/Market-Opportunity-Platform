@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:chewy:clinic-site-evaluator:site-input",
+  "title": "Synthetic clinic candidate input",
+  "type": "object",
+  "required": ["site_id", "site_name", "evaluation_date", "metrics"],
+  "properties": {
+    "site_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "site_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "latitude": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90
+    },
+    "longitude": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180
+    },
+    "evaluation_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/metric"
+      }
+    },
+    "qualitative_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      },
+      "default": []
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constraint"
+      },
+      "default": []
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "required": [
+        "metric_id",
+        "raw_value",
+        "unit",
+        "source_id",
+        "observed_at",
+        "geography",
+        "quality_status",
+        "sensitivity"
+      ],
+      "properties": {
+        "metric_id": {
+          "type": "string"
+        },
+        "raw_value": {
+          "type": ["number", "null"]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "geography": {
+          "$ref": "#/$defs/geography"
+        },
+        "quality_status": {
+          "enum": ["accepted", "warning", "rejected"]
+        },
+        "sensitivity": {
+          "enum": ["public", "internal", "confidential", "restricted"]
+        },
+        "transformation": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "evidence_id",
+        "summary",
+        "source_id",
+        "evidence_status",
+        "observed_at",
+        "geography",
+        "quality_status",
+        "sensitivity"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "evidence_status": {
+          "$ref": "#/$defs/evidenceStatus"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "geography": {
+          "$ref": "#/$defs/geography"
+        },
+        "quality_status": {
+          "enum": ["accepted", "warning", "rejected"]
+        },
+        "sensitivity": {
+          "enum": ["public", "internal", "confidential", "restricted"]
+        },
+        "transformation": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "constraint": {
+      "type": "object",
+      "required": [
+        "constraint_id",
+        "status",
+        "source_id",
+        "evidence_status",
+        "observed_at",
+        "geography",
+        "quality_status",
+        "sensitivity"
+      ],
+      "properties": {
+        "constraint_id": {
+          "type": "string"
+        },
+        "status": {
+          "enum": ["pass", "fail", "unknown"]
+        },
+        "notes": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_status": {
+          "$ref": "#/$defs/evidenceStatus"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "geography": {
+          "$ref": "#/$defs/geography"
+        },
+        "quality_status": {
+          "enum": ["accepted", "warning", "rejected"]
+        },
+        "sensitivity": {
+          "enum": ["public", "internal", "confidential", "restricted"]
+        },
+        "transformation": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidenceStatus": {
+      "enum": ["Confirmed", "Reported", "Derived", "Hypothesis", "Unknown"]
+    },
+    "geography": {
+      "enum": ["point", "radius", "drive_time", "market", "other"]
+    }
+  }
+}

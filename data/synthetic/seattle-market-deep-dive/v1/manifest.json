@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_version": "seattle-market-deep-dive-2026-08-03-v2",
+  "geometry_method_version": "illustrative-geodesic-hubs-v1",
+  "parent_cbsa_code": "42660",
+  "parent_market_name": "Seattle-Tacoma-Bellevue, WA",
+  "reporting_date": "2026-08-03",
+  "submarket_source_id": "SYN-SEATTLE-SUBMARKET-001",
+  "broker_source_id": "SYN-SEATTLE-BROKER-001",
+  "evidence_status": "Hypothesis",
+  "allowed_use": "synthetic_prototype_only",
+  "submarket_count": 7,
+  "broker_profile_count": 4,
+  "public_context_source_ids": ["SRC-014", "SRC-015", "SRC-016"],
+  "limitations": [
+    "Submarket names, assignments, metrics, hubs, and illustrative areas are synthetic demonstration hypotheses.",
+    "Approximate public city-center hubs and generated areas are not approved geographic boundaries and must not be used for calculations.",
+    "Illustrative areas may overlap and are not clipped or partitioned into mutually exclusive coverage.",
+    "Broker profiles are fictional, unverified, and not recommendations.",
+    "Public CBSA context remains market_context_only and is excluded from submarket scoring."
+  ]
+}

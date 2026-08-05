@@ -1,0 +1,17 @@
+{
+  "site_id": "SYN-SITE-003",
+  "site_name": "Synthetic Stale Candidate",
+  "evaluation_date": "2026-07-01",
+  "metrics": [
+    {
+      "metric_id": "demand_index",
+      "raw_value": 71,
+      "unit": "index",
+      "source_id": "SYNTHETIC",
+      "observed_at": "2024-01-01",
+      "geography": "market",
+      "quality_status": "warning",
+      "sensitivity": "internal"
+    }
+  ]
+}

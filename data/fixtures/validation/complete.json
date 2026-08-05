@@ -1,0 +1,55 @@
+{
+  "site_id": "SYN-SITE-001",
+  "site_name": "Synthetic Complete Candidate",
+  "latitude": 35.2,
+  "longitude": -80.8,
+  "evaluation_date": "2026-07-01",
+  "metrics": [
+    {
+      "metric_id": "demand_index",
+      "raw_value": 84,
+      "unit": "index",
+      "source_id": "SYNTHETIC",
+      "observed_at": "2026-06-15",
+      "geography": "market",
+      "quality_status": "accepted",
+      "sensitivity": "internal",
+      "transformation": "Synthetic aggregate generated for validation tests."
+    },
+    {
+      "metric_id": "competitor_count",
+      "raw_value": 0,
+      "unit": "count",
+      "source_id": "SYNTHETIC",
+      "observed_at": "2026-06-20",
+      "geography": "radius",
+      "quality_status": "accepted",
+      "sensitivity": "internal"
+    }
+  ],
+  "qualitative_evidence": [
+    {
+      "evidence_id": "EVID-001",
+      "summary": "Synthetic local-market observation.",
+      "source_id": "SYNTHETIC",
+      "evidence_status": "Hypothesis",
+      "observed_at": "2026-06-18",
+      "geography": "market",
+      "quality_status": "accepted",
+      "sensitivity": "internal"
+    }
+  ],
+  "constraints": [
+    {
+      "constraint_id": "CONSTRAINT-001",
+      "status": "pass",
+      "notes": "Synthetic screening result.",
+      "source_id": "SYNTHETIC",
+      "evidence_status": "Derived",
+      "observed_at": "2026-06-22",
+      "geography": "point",
+      "quality_status": "accepted",
+      "sensitivity": "internal"
+    }
+  ]
+}

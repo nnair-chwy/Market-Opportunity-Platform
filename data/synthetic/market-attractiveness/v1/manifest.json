@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "data_version": "synthetic-market-attractiveness-2026-07-31-v1",
+  "transformation_version": "market-attractiveness-csv-to-json-v2",
+  "evidence_status": "Hypothesis",
+  "allowed_use": "synthetic_prototype_only",
+  "input": {
+    "file": "data/synthetic/market-attractiveness/v1/markets.csv",
+    "sha256": "64a6afc042e2006729731249707e8a574f28c15b4628d33159996db94e78ed6a",
+    "row_count": 917,
+    "column_count": 54
+  },
+  "cbsa_crosswalk": {
+    "file": "data/public/census/cbsa-universe/2023-07/markets.json",
+    "sha256": "80928a66deccc7bbd3d1503226beb0db82adb24df9769099e86ed7de4f4aa724",
+    "source_id": "SRC-014",
+    "delineation_vintage": "2023-07",
+    "method": "exact_cbsa_name_only",
+    "matched_count": 802,
+    "unmatched_count": 115
+  },
+  "output": {
+    "file": "data/synthetic/market-attractiveness/v1/markets.json",
+    "sha256": "ca23f4202d79efa400e1e238fdedccf6d68b1cd76a0b54264aa7e1d0c71ce4de",
+    "market_count": 917,
+    "metropolitan_count": 380,
+    "micropolitan_count": 537
+  },
+  "limitations": [
+    "CBSA codes are attached only when the synthetic name exactly and uniquely matches the versioned SRC-014 universe.",
+    "Unmatched synthetic records retain null CBSA codes and remain unscored on the public map; renamed or changed areas are not inferred.",
+    "All scoring inputs are synthetic prototype evidence.",
+    "The snapshot supports screening demonstrations, not site or lease decisions."
+  ]
+}

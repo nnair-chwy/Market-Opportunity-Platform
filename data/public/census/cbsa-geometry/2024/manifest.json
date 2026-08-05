@@ -1,0 +1,47 @@
+{
+  "manifest_version": "1.0.0",
+  "transformation_version": "cbsa-geometry-v1",
+  "source_id": "SRC-015",
+  "source_url": "https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_cbsa_5m.zip",
+  "source_directory_url": "https://www2.census.gov/geo/tiger/GENZ2024/shp/",
+  "source_sha256": "94b5bdbb8990eabb66e9c1450731858607e2c02489bcf669f546aa477b9caca8",
+  "source_content_type": "application/zip",
+  "retrieved_at": "2026-07-29T18:19:32.607Z",
+  "boundary_vintage": "2024",
+  "scale": "1:5,000,000",
+  "geometry_format": "TopoJSON",
+  "quantization": 100000,
+  "simplification_quantile": 0.08,
+  "missing_geometry_tolerance": 0,
+  "market_universe": {
+    "vintage": "2023-07",
+    "source_id": "SRC-014",
+    "sha256": "80928a66deccc7bbd3d1503226beb0db82adb24df9769099e86ed7de4f4aa724",
+    "market_count": 917
+  },
+  "outputs": [
+    {
+      "path": "data/public/census/cbsa-geometry/2024/geometry-audit.json",
+      "sha256": "7e1eec03c014b7b7d483318ee1895bb77f4e956cca661ca8cef518117b1a32b7",
+      "byte_size": 8131,
+      "record_count": 18
+    },
+    {
+      "path": "data/public/census/cbsa-geometry/2024/markets.topo.json",
+      "sha256": "cd719f21e7501571b1bf82c685f6ac28f50167cd0ad30f09f31820bfa0a767c2",
+      "byte_size": 667059,
+      "record_count": 917
+    }
+  ],
+  "counts": {
+    "total_features": 935,
+    "included_features": 917,
+    "excluded_features": 18,
+    "unmatched_features": 18,
+    "duplicate_features": 0,
+    "rejected_features": 0,
+    "missing_market_geometry": 0,
+    "polygon_features": 873,
+    "multipolygon_features": 44
+  }
+}

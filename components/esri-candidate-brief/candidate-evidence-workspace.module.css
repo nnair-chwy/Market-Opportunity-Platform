@@ -1,0 +1,773 @@
+.workspace {
+  color: #16251f;
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.workspace button,
+.workspace select {
+  font: inherit;
+}
+
+.workspaceHeader,
+.briefHeader,
+.comparison > header,
+.evidenceSection > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.workspaceHeader h1,
+.workspaceHeader p,
+.briefHeader h2,
+.briefHeader p,
+.comparison h2,
+.comparison p,
+.evidenceSection h2,
+.evidenceSection p {
+  margin: 0;
+}
+
+.workspaceHeader h1 {
+  margin: 4px 0 8px;
+  font-size: clamp(1.8rem, 3vw, 2.65rem);
+  letter-spacing: -0.04em;
+}
+
+.workspaceHeader > div:first-child > p:last-child {
+  max-width: 760px;
+  color: #53635c;
+  line-height: 1.55;
+}
+
+.eyebrow {
+  color: #086c58;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.headerBoundary {
+  display: grid;
+  min-width: 275px;
+  gap: 3px;
+  padding: 14px 16px;
+  border: 1px solid #cfe1da;
+  border-radius: 14px;
+  background: #f2f8f5;
+}
+
+.headerBoundary strong {
+  color: #075c4b;
+}
+
+.headerBoundary span {
+  color: #5c6c65;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.modeTabs {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid #d8e1dd;
+  border-radius: 13px;
+  background: #f5f7f6;
+  width: fit-content;
+}
+
+.modeTabs button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #53635c;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.modeTabs button span {
+  display: grid;
+  min-width: 22px;
+  min-height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  background: #e5ece8;
+  font-size: 0.73rem;
+}
+
+.modeTabs .activeTab {
+  background: #fff;
+  color: #075c4b;
+  box-shadow: 0 1px 6px rgb(18 52 42 / 10%);
+}
+
+.disclaimer {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 12px 14px;
+  border-left: 4px solid #66736e;
+  border-radius: 8px;
+  background: #f2f4f3;
+  color: #4e5c56;
+}
+
+.disclaimer strong {
+  color: #273a32;
+  white-space: nowrap;
+}
+
+.briefControls {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) minmax(220px, 0.8fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  border: 1px solid #dce4e0;
+  border-radius: 15px;
+  background: #fff;
+}
+
+.briefControls label {
+  display: grid;
+  gap: 6px;
+}
+
+.briefControls label > span {
+  color: #5c6c65;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.briefControls select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 34px 10px 11px;
+  border: 1px solid #cbd8d2;
+  border-radius: 9px;
+  background: #fff;
+  color: #1d3028;
+}
+
+.actionGroup,
+.comparisonActions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.actionGroup button,
+.comparisonActions button {
+  padding: 10px 12px;
+  border: 1px solid #a9c6bb;
+  border-radius: 9px;
+  background: #f4f9f7;
+  color: #075c4b;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.actionGroup button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.brief,
+.comparison {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid #d5e0db;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 35px rgb(26 58 47 / 7%);
+}
+
+.briefHeader {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e3e9e6;
+}
+
+.briefHeader > div > p {
+  color: #08705b;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.briefHeader h2 {
+  margin: 4px 0 5px;
+  font-size: clamp(1.55rem, 2.5vw, 2.25rem);
+  letter-spacing: -0.035em;
+}
+
+.briefHeader > div > span {
+  color: #5c6c65;
+}
+
+.briefHeader dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.briefHeader dl > div {
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: #f4f7f5;
+}
+
+.briefHeader dt,
+.observation dt {
+  color: #68766f;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.briefHeader dd,
+.observation dd {
+  margin: 3px 0 0;
+  color: #21362d;
+  font-weight: 700;
+}
+
+.stateSummary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stateSummary span {
+  padding: 10px 12px;
+  border: 1px solid #dae3df;
+  border-radius: 9px;
+  background: #fafbfa;
+  color: #4e5c56;
+  text-align: center;
+  font-size: 0.83rem;
+  font-weight: 750;
+}
+
+.evidenceSection {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8e5;
+}
+
+.evidenceSection > header > div {
+  display: flex;
+  gap: 11px;
+}
+
+.evidenceSection > header > div > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 8px;
+  background: #e4f1ec;
+  color: #075c4b;
+  font-weight: 850;
+}
+
+.evidenceSection h2 {
+  font-size: 1.18rem;
+}
+
+.evidenceSection p {
+  margin-top: 3px;
+  max-width: 740px;
+  color: #607068;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.evidenceSection > header > strong {
+  color: #68766f;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.observationGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.observation {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid #dce4e0;
+  border-radius: 11px;
+  background: #fcfdfc;
+}
+
+.observationHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #5e6e66;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.observationHeading small {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #edf1ef;
+  color: #53635c;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+}
+
+.observation > strong {
+  display: block;
+  margin: 8px 0;
+  color: #1a3128;
+  font-size: 1rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.badgeRow {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.badgeRow span {
+  padding: 3px 6px;
+  border: 1px solid #d7e1dc;
+  border-radius: 999px;
+  color: #5c6c65;
+  font-size: 0.66rem;
+  text-transform: capitalize;
+}
+
+.printProvenance {
+  display: none;
+}
+
+.observation details {
+  margin-top: 10px;
+  border-top: 1px solid #e4e9e7;
+  padding-top: 8px;
+}
+
+.observation summary,
+.comparisonWarnings summary,
+.comparison td summary {
+  color: #076552;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.observation dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.observation dl > div {
+  min-width: 0;
+}
+
+.observation dd {
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.observation ul,
+.comparisonWarnings ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #596861;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.missing,
+.unknown,
+.restricted,
+.rejected,
+.stale,
+.conflicting {
+  background: #f8f9f8;
+}
+
+.restricted,
+.rejected {
+  border-style: dashed;
+}
+
+.conflicting {
+  border-width: 2px;
+}
+
+.questionList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: question;
+}
+
+.questionList li {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid #dce4e0;
+  border-radius: 10px;
+  counter-increment: question;
+}
+
+.questionList li strong::before {
+  content: counter(question) ". ";
+  color: #08705b;
+}
+
+.questionList li span,
+.questionList li small {
+  color: #5c6c65;
+  font-size: 0.78rem;
+}
+
+.printFooter {
+  display: grid;
+  gap: 3px;
+  padding-top: 18px;
+  border-top: 2px solid #2b4138;
+  color: #596861;
+  font-size: 0.74rem;
+}
+
+.printFooter strong {
+  color: #1f352c;
+}
+
+.printFooter p {
+  margin: 3px 0 0;
+}
+
+.comparison {
+  gap: 16px;
+}
+
+.comparison > header h2 {
+  margin: 3px 0 4px;
+}
+
+.comparison > header > strong {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #edf4f1;
+  color: #075c4b;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.candidatePicker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #d9e2de;
+  border-radius: 12px;
+}
+
+.candidatePicker legend {
+  padding: 0 6px;
+  color: #52625a;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.candidatePicker label {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 9px;
+  border: 1px solid #e0e6e3;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.candidatePicker label > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.candidatePicker strong,
+.candidatePicker small {
+  overflow-wrap: anywhere;
+}
+
+.candidatePicker small {
+  color: #65746d;
+}
+
+.comparisonWarnings {
+  padding: 10px 12px;
+  border: 1px solid #d8dfdc;
+  border-radius: 10px;
+  background: #f6f8f7;
+}
+
+.tableWrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #dbe3df;
+  border-radius: 12px;
+}
+
+.comparison table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.comparison caption {
+  padding: 10px 12px;
+  color: #5d6c65;
+  text-align: left;
+  font-size: 0.75rem;
+}
+
+.comparison th,
+.comparison td {
+  min-width: 170px;
+  padding: 11px;
+  border-top: 1px solid #e2e8e5;
+  border-right: 1px solid #e2e8e5;
+  text-align: left;
+  vertical-align: top;
+}
+
+.comparison th:first-child {
+  min-width: 195px;
+  background: #f6f8f7;
+}
+
+.comparison thead th {
+  border-top: 0;
+  background: #f2f6f4;
+}
+
+.comparison thead th button {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #075c4b;
+  cursor: pointer;
+  font-weight: 800;
+  text-align: left;
+}
+
+.comparison thead th span,
+.comparison td > span,
+.comparison td > small,
+.comparison td details span {
+  display: block;
+  margin-top: 4px;
+  color: #64736c;
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
+.comparison td > strong {
+  display: block;
+  color: #1d3229;
+  overflow-wrap: anywhere;
+}
+
+.comparison td details {
+  margin-top: 8px;
+}
+
+.comparison td details span {
+  margin-top: 3px;
+}
+
+@media (max-width: 1000px) {
+  .briefControls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actionGroup {
+    grid-column: 1 / -1;
+  }
+
+  .observationGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .candidatePicker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .workspaceHeader,
+  .briefHeader,
+  .comparison > header,
+  .evidenceSection > header {
+    display: grid;
+  }
+
+  .headerBoundary {
+    min-width: 0;
+  }
+
+  .modeTabs {
+    width: 100%;
+  }
+
+  .modeTabs button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .disclaimer {
+    display: grid;
+  }
+
+  .briefControls,
+  .observationGrid,
+  .candidatePicker,
+  .stateSummary,
+  .briefHeader dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .actionGroup {
+    grid-column: auto;
+  }
+
+  .brief,
+  .comparison {
+    padding: 16px;
+  }
+
+  .evidenceSection > header > strong {
+    margin-left: 41px;
+  }
+}
+
+@media print {
+  .workspace {
+    color: #111;
+    display: block;
+    font-size: 9.5pt;
+  }
+
+  .workspaceHeader,
+  .modeTabs,
+  .briefControls,
+  .disclaimer,
+  .candidatePicker,
+  .comparisonActions {
+    display: none !important;
+  }
+
+  .brief,
+  .comparison {
+    display: block;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .briefHeader,
+  .evidenceSection,
+  .comparison > header,
+  .printFooter {
+    break-inside: avoid;
+    margin-bottom: 12pt;
+  }
+
+  .observationGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .observation,
+  .questionList li {
+    break-inside: avoid;
+    background: #fff !important;
+  }
+
+  .observation details {
+    display: block;
+  }
+
+  .observation details > :not(summary),
+  .comparison td details > :not(summary),
+  .comparisonWarnings > :not(summary) {
+    display: block !important;
+  }
+
+  .observation details > summary {
+    list-style: none;
+  }
+
+  .observation details > summary::after {
+    content: " (included)";
+  }
+
+  .printProvenance {
+    display: block;
+    margin-top: 5pt;
+    color: #333;
+    line-height: 1.35;
+  }
+
+  .tableWrap {
+    overflow: visible;
+    border: 0;
+  }
+
+  .comparison table {
+    min-width: 0;
+    table-layout: fixed;
+    font-size: 7.5pt;
+  }
+
+  .comparison th,
+  .comparison td,
+  .comparison th:first-child {
+    min-width: 0;
+    padding: 5pt;
+  }
+
+  .comparisonWarnings {
+    break-inside: avoid;
+  }
+
+  @page {
+    size: landscape;
+    margin: 0.45in;
+  }
+}

@@ -1,0 +1,1005 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Clinic Location Data Collection Blueprint",
+    "description": "A prioritized inventory of internal Chewy and external data needed to evaluate candidate Chewy Vet Care locations and build a defensible prediction model.",
+    "generatedAt": "2026-07-24T19:00:00Z",
+    "charts": [
+      {
+        "id": "collection_scope_chart",
+        "title": "Proposed data families by collection phase",
+        "subtitle": "Counts reflect this planning inventory, not confirmed source availability.",
+        "showDescription": true,
+        "intent": "composition",
+        "question": "How much of the proposed collection scope is internal versus external at each phase?",
+        "rationale": "A grouped bar makes the proposed collection workload visible without implying predictive value.",
+        "type": "bar",
+        "dataset": "collection_scope",
+        "sourceId": "collection_scope_file",
+        "encodings": {
+          "x": {
+            "field": "phase",
+            "type": "ordinal",
+            "label": "Collection phase"
+          },
+          "y": {
+            "field": "data_family_count",
+            "type": "quantitative",
+            "label": "Data families",
+            "format": "number"
+          },
+          "color": {
+            "field": "origin",
+            "type": "nominal",
+            "label": "Origin"
+          },
+          "tooltip": [
+            {
+              "field": "examples",
+              "type": "text",
+              "label": "Examples"
+            },
+            {
+              "field": "availability_status",
+              "type": "text",
+              "label": "Availability"
+            }
+          ]
+        },
+        "valueFormat": "number",
+        "layout": "full",
+        "surface": {
+          "legend": {
+            "visible": true,
+            "position": "top"
+          }
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "internal_inventory_table",
+        "title": "Internal Chewy data inventory",
+        "subtitle": "Collect at clinic-month, candidate-site, or privacy-safe trade-area grain as specified.",
+        "showDescription": true,
+        "dataset": "internal_inventory",
+        "sourceId": "inventory_rows_file",
+        "defaultSort": {
+          "field": "priority_order",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "priority_order",
+            "label": "Order",
+            "type": "number"
+          },
+          {
+            "field": "priority",
+            "label": "Phase",
+            "type": "text"
+          },
+          {
+            "field": "data_family",
+            "label": "Data to collect",
+            "type": "text"
+          },
+          {
+            "field": "model_role",
+            "label": "Role",
+            "type": "text"
+          },
+          {
+            "field": "specific_fields",
+            "label": "Minimum fields",
+            "type": "text"
+          },
+          {
+            "field": "grain_and_window",
+            "label": "Grain and window",
+            "type": "text"
+          },
+          {
+            "field": "likely_owner_or_source",
+            "label": "Likely owner or source",
+            "type": "text"
+          },
+          {
+            "field": "evidence_status",
+            "label": "Current evidence",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "external_inventory_table",
+        "title": "External data inventory",
+        "subtitle": "Public and commercial sources are candidates until access, licensing, coverage, and historical snapshots are validated.",
+        "showDescription": true,
+        "dataset": "external_inventory",
+        "sourceId": "inventory_rows_file",
+        "defaultSort": {
+          "field": "priority_order",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "priority_order",
+            "label": "Order",
+            "type": "number"
+          },
+          {
+            "field": "priority",
+            "label": "Phase",
+            "type": "text"
+          },
+          {
+            "field": "data_family",
+            "label": "Data to collect",
+            "type": "text"
+          },
+          {
+            "field": "model_role",
+            "label": "Role",
+            "type": "text"
+          },
+          {
+            "field": "specific_fields",
+            "label": "Minimum fields",
+            "type": "text"
+          },
+          {
+            "field": "grain_and_window",
+            "label": "Grain and window",
+            "type": "text"
+          },
+          {
+            "field": "candidate_source",
+            "label": "Candidate source",
+            "type": "text"
+          },
+          {
+            "field": "collection_caveat",
+            "label": "Validation needed",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "model_readiness_table",
+        "title": "Model-readiness gates",
+        "subtitle": "Do not move from a deterministic scorecard to prediction until these gates are satisfied.",
+        "showDescription": true,
+        "dataset": "model_readiness",
+        "sourceId": "model_readiness_file",
+        "defaultSort": {
+          "field": "gate_order",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "gate_order",
+            "label": "Order",
+            "type": "number"
+          },
+          {
+            "field": "gate",
+            "label": "Gate",
+            "type": "text"
+          },
+          {
+            "field": "minimum_standard",
+            "label": "Minimum standard",
+            "type": "text"
+          },
+          {
+            "field": "failure_if_missing",
+            "label": "Why it blocks the model",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "inventory_rows_file",
+        "label": "Proposed internal and external data inventory",
+        "path": "reports/location-data-collection-blueprint/artifact.json",
+        "query": {
+          "engine": "duckdb",
+          "sql": "WITH artifact AS (SELECT * FROM read_json_auto('reports/location-data-collection-blueprint/artifact.json')) SELECT 'Internal Chewy' AS origin, item.* FROM artifact, UNNEST(snapshot.datasets.internal_inventory) AS t(item) UNION ALL BY NAME SELECT 'External' AS origin, item.* FROM artifact, UNNEST(snapshot.datasets.external_inventory) AS t(item)",
+          "description": "Read the reviewed internal and external inventory rows embedded in the canonical report artifact.",
+          "executed_at": "2026-07-24T19:00:00Z",
+          "language": "sql",
+          "filters": [
+            "All 38 proposed data families"
+          ],
+          "tables_used": [
+            "reports/location-data-collection-blueprint/artifact.json"
+          ]
+        }
+      },
+      {
+        "id": "model_readiness_file",
+        "label": "Model-readiness gates",
+        "path": "reports/location-data-collection-blueprint/artifact.json",
+        "query": {
+          "engine": "duckdb",
+          "sql": "WITH artifact AS (SELECT * FROM read_json_auto('reports/location-data-collection-blueprint/artifact.json')) SELECT item.* FROM artifact, UNNEST(snapshot.datasets.model_readiness) AS t(item)",
+          "description": "Read the six model-readiness gates embedded in the canonical report artifact.",
+          "executed_at": "2026-07-24T19:00:00Z",
+          "language": "sql",
+          "tables_used": [
+            "reports/location-data-collection-blueprint/artifact.json"
+          ]
+        }
+      },
+      {
+        "id": "collection_scope_file",
+        "label": "Proposed collection-scope summary",
+        "path": "reports/location-data-collection-blueprint/collection-scope.csv",
+        "query": {
+          "engine": "duckdb",
+          "sql": "SELECT phase, origin, data_family_count, examples, availability_status FROM read_csv_auto('reports/location-data-collection-blueprint/collection-scope.csv')",
+          "description": "Read the reviewed planning counts used in the collection-scope chart.",
+          "executed_at": "2026-07-24T19:00:00Z",
+          "language": "sql",
+          "tables_used": [
+            "reports/location-data-collection-blueprint/collection-scope.csv"
+          ]
+        }
+      },
+      {
+        "id": "inventory_synthesis",
+        "label": "Data collection blueprint synthesis",
+        "query": {
+          "description": "Planning inventory synthesized from the repository's source registry, claim ledger, product scope, data contracts, and current official or vendor data-source documentation.",
+          "executed_at": "2026-07-24T19:00:00Z",
+          "language": "research synthesis",
+          "filters": [
+            "Clinic-first Chewy Vet Care location evaluation",
+            "Pre-decision data only for model features",
+            "Synthetic or approved de-identified data until governance is confirmed"
+          ],
+          "metric_definitions": [
+            "Data family count is the number of distinct rows in this planning inventory by origin and collection phase.",
+            "Must have means required to define the target, train a baseline, screen a site, or validate a candidate.",
+            "Validate next means potentially useful after coverage, licensing, historical availability, and incremental predictive value are confirmed.",
+            "Later enrichment means optional data that should not block the first retrospective baseline."
+          ],
+          "tables_used": [
+            "internal_inventory",
+            "external_inventory",
+            "collection_scope"
+          ]
+        }
+      },
+      {
+        "id": "repository_contracts",
+        "label": "Repository product and technical contracts",
+        "path": "docs/technical/data-contracts.md",
+        "query": {
+          "description": "Repository rules for candidate sites, metric observations, scoring configuration, structured results, and model-readiness constraints.",
+          "tables_used": [
+            "PROJECT_CONTEXT.md",
+            "docs/product/mvp-scope.md",
+            "docs/technical/data-contracts.md",
+            "docs/technical/ai-boundaries.md",
+            "docs/research/claim-ledger.md",
+            "docs/product/open-questions.md",
+            "docs/research/source-registry.md"
+          ]
+        }
+      },
+      {
+        "id": "src_001",
+        "label": "SRC-001: Vet Clinic Site Selection",
+        "href": "https://chewyinc.atlassian.net/wiki/spaces/MERCHANALYTICS/pages/5168727192/Vet+Clinic+Site+Selection"
+      },
+      {
+        "id": "src_002",
+        "label": "SRC-002: Vet Care reports and dashboards",
+        "href": "https://chewyinc.atlassian.net/wiki/spaces/VCA/pages/2393179091/Vet+Care+101+Reports+Dashboards"
+      },
+      {
+        "id": "src_003",
+        "label": "SRC-003: Site-selection interview evidence",
+        "href": "https://chewyinc.atlassian.net/wiki/spaces/AUS/pages/5322652451/2026-07-17+Healthcare+Meeting+with+Chris+Lavallee"
+      },
+      {
+        "id": "census_acs",
+        "label": "U.S. Census Bureau American Community Survey",
+        "href": "https://www.census.gov/programs-surveys/acs/data.html"
+      },
+      {
+        "id": "census_lodes",
+        "label": "U.S. Census Bureau LEHD Origin-Destination Employment Statistics",
+        "href": "https://lehd.ces.census.gov/applications/help/onthemap.html"
+      },
+      {
+        "id": "census_cbp",
+        "label": "U.S. Census Bureau County Business Patterns API",
+        "href": "https://www.census.gov/data/developers/data-sets/cbp-zbp/cbp-api.html"
+      },
+      {
+        "id": "bls_oews",
+        "label": "U.S. Bureau of Labor Statistics OEWS",
+        "href": "https://www.bls.gov/oes/tables.htm"
+      },
+      {
+        "id": "fhwa_hpms",
+        "label": "Federal Highway Administration HPMS",
+        "href": "https://www.fhwa.dot.gov/policyinformation/tables/performancenetwork/"
+      },
+      {
+        "id": "fema_hazards",
+        "label": "FEMA flood and natural-hazard data",
+        "href": "https://msc.fema.gov/portal/home"
+      },
+      {
+        "id": "google_places",
+        "label": "Google Maps Places API",
+        "href": "https://developers.google.com/maps/documentation/places/web-service"
+      },
+      {
+        "id": "placer_api",
+        "label": "Placer.ai Location Intelligence API",
+        "href": "https://www.placer.ai/products/api"
+      },
+      {
+        "id": "streetlight_api",
+        "label": "StreetLight traffic and mobility APIs",
+        "href": "https://developer.streetlightdata.com/"
+      },
+      {
+        "id": "costar",
+        "label": "CoStar commercial real-estate data",
+        "href": "https://www.costar.com/products"
+      }
+    ],
+    "blocks": [
+      {
+        "id": "report_title",
+        "type": "markdown",
+        "body": "# Clinic Location Data Collection Blueprint"
+      },
+      {
+        "id": "executive_summary",
+        "type": "markdown",
+        "body": "## Executive Summary\n\n- **Start with the prediction target, not the feature list.** Choose one primary outcome, such as mature-clinic contribution margin or another Finance-approved measure, plus an observation window and maturity rule. Revenue, visits, and registered patients should remain separate outcomes until the business decides which one controls the decision.\n- **The strongest first model depends more on internal history than on exotic external data.** Historical clinic outcomes, opening dates, customer demand, appointment behavior, staffing, site economics, and the original decision-time facts are the core training set. External demographics, competition, mobility, real estate, and labor data add context and candidate coverage.\n- **Use three layers.** Apply hard constraints first, run a transparent deterministic scorecard second, and test a simple regularized predictive model only after retrospective data is usable. AI should explain structured results and missing evidence, not choose weights or approve a site.\n- **Collect historical snapshots.** Every feature must reflect what was knowable before a site opened or before the decision date. Current competitor counts, current reviews, or post-opening demand create leakage if applied to older clinics."
+      },
+      {
+        "id": "target_definition",
+        "type": "markdown",
+        "body": "## The model cannot be \"best\" until success is defined\n\nThe repository correctly treats the outcome as unresolved. Before collecting every possible signal, CVC Analytics and Finance should approve:\n\n1. **Primary target:** one decision-controlling outcome, ideally an economics measure that separates revenue from margin.\n2. **Secondary targets:** appointment volume, unique patients, repeat rate, utilization, and time to break-even.\n3. **Observation window:** for example, performance in months 13 to 24 after opening, not a mixed set of ramping and mature clinics.\n4. **Eligibility rules:** exclude or flag relocations, closures, major construction periods, incomplete months, service-model changes, and exceptional disruptions.\n5. **Prediction point:** define the date at which features are frozen so the model only uses information available to decision-makers at that time.\n\nWith only about 30 to 50 historical clinics anticipated by the existing plan, prefer a small, interpretable model with strong regularization and uncertainty intervals. More features do not automatically create a better prediction."
+      },
+      {
+        "id": "scope_takeaway",
+        "type": "markdown",
+        "body": "## Most must-have work is internal data definition and access\n\nThe proposed inventory contains more internal must-have families because outcomes, maturity, operational capacity, customer demand, and site economics cannot be replaced by public proxies. External enrichment is still important, but much of it should be added only after licensing, historical coverage, geographic consistency, and incremental lift are tested."
+      },
+      {
+        "id": "scope_chart_block",
+        "type": "chart",
+        "chartId": "collection_scope_chart"
+      },
+      {
+        "id": "internal_section",
+        "type": "markdown",
+        "body": "## Internal Chewy data should establish the label, baseline, and addressable demand\n\nCollect privacy-safe aggregates at a consistent trade-area definition. Keep raw customer coordinates and customer-level health information out of the repository. For historical clinics, preserve the feature snapshot that existed before opening rather than joining today's values backward."
+      },
+      {
+        "id": "internal_table_block",
+        "type": "table",
+        "tableId": "internal_inventory_table"
+      },
+      {
+        "id": "external_section",
+        "type": "markdown",
+        "body": "## External data should add market context and candidate-site feasibility\n\nPublic data is best for stable demographic, employment, establishment, roadway, and hazard measures. Commercial data may improve recency and site-level detail, but it must be validated against observed counts and contract terms. A vendor estimate should never be treated as ground truth merely because it is precise."
+      },
+      {
+        "id": "external_table_block",
+        "type": "table",
+        "tableId": "external_inventory_table"
+      },
+      {
+        "id": "model_architecture",
+        "type": "markdown",
+        "body": "## Build a layered evaluator, not one opaque score\n\n1. **Hard-constraint screen:** zoning, required size, parking, access, lease economics, build feasibility, staffing feasibility, regulatory constraints, and unacceptable hazard exposure.\n2. **Deterministic baseline:** versioned metrics, approved normalizations, visible weights, missing-data rules, and sensitivity testing.\n3. **Predictive baseline:** regularized linear or tree-based models tested against a simple mean or peer-market baseline. Use time-aware validation and leave-one-market-out checks where possible.\n4. **Human review:** compare candidates, inspect source evidence, visit the site, document overrides, and record the final decision separately from the system output.\n5. **AI explanation:** summarize strengths, risks, conflicts, and missing evidence from the structured result. AI does not impute missing fields, change weights, or authorize a lease."
+      },
+      {
+        "id": "readiness_section",
+        "type": "markdown",
+        "body": "## Six gates determine whether prediction is defensible\n\nPassing these gates matters more than choosing a sophisticated algorithm. If they fail, use the deterministic scorecard and treat predictions as experimental."
+      },
+      {
+        "id": "readiness_table_block",
+        "type": "table",
+        "tableId": "model_readiness_table"
+      },
+      {
+        "id": "next_steps",
+        "type": "markdown",
+        "body": "## Recommended Next Steps\n\n1. Get written agreement on the primary outcome, maturity window, and decision date.\n2. Ask CVC Analytics for a data dictionary and privacy-safe sample covering historical clinic outcomes and opening timelines.\n3. Ask Real Estate and GIS for the current criteria, hard constraints, candidate-site fields, Esri layer catalog, and approved export path.\n4. Build a source-to-field matrix with owner, grain, date coverage, refresh cadence, sensitivity, join key, and access status for every must-have row.\n5. Run a retrospective data-quality audit before modeling: missingness, time coverage, definition drift, site comparability, geographic joins, and leakage.\n6. Ship the deterministic scorecard with synthetic data first. Add a predictive baseline only if the historical sample and target pass the readiness gates."
+      },
+      {
+        "id": "further_questions",
+        "type": "markdown",
+        "body": "## Further Questions\n\n- Is the existing Vet Clinic Site Selection effort active, and should this evaluator extend it or provide the review interface around it?\n- Which metric does Finance trust as the primary mature-clinic outcome?\n- Which 30 to 50 clinics are comparable enough for retrospective validation?\n- Can Esri layers be exported or queried under an approved license, and are historical layer vintages available?\n- What minimum aggregation and suppression rules are required for customer demand maps?\n- Which hard constraints cause an immediate no-go today, regardless of predicted performance?\n- What evidence would convince the site-selection team that a model adds value over its current process?"
+      },
+      {
+        "id": "caveats",
+        "type": "markdown",
+        "body": "## Caveats and Assumptions\n\n- This is a proposed collection blueprint, not confirmation that any internal dataset, Esri layer, Tableau workbook, API, or vendor license is accessible.\n- Current repository evidence confirms production reporting exists but does not confirm approved row-level access for this project.\n- External sources differ in freshness, sampling, spatial coverage, and licensing. Validate each source against known clinic or market observations.\n- Demographic variables can encode protected-class proxies. Use them for aggregate demand estimation with fairness review, not to exclude communities or automate a final decision.\n- Precise customer coordinates, medical records, credentials, and copied internal reports must not enter Git. Use synthetic or explicitly approved de-identified aggregates until governance is resolved."
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-07-24T19:00:00Z",
+    "status": "ready",
+    "datasets": {
+      "collection_scope": [
+        {
+          "phase": "Must have",
+          "origin": "Internal Chewy",
+          "data_family_count": 13,
+          "examples": "Outcomes, clinic history, demand, staffing, candidate economics",
+          "availability_status": "Mostly unconfirmed for project use"
+        },
+        {
+          "phase": "Must have",
+          "origin": "External",
+          "data_family_count": 6,
+          "examples": "Demographics, competition, drive time, real estate, zoning, inspection",
+          "availability_status": "Public, local, and commercial mix"
+        },
+        {
+          "phase": "Validate next",
+          "origin": "Internal Chewy",
+          "data_family_count": 5,
+          "examples": "Care spend, local costs, cannibalization, research, rejected sites",
+          "availability_status": "Definitions and owners required"
+        },
+        {
+          "phase": "Validate next",
+          "origin": "External",
+          "data_family_count": 11,
+          "examples": "Pet ownership, labor, traffic, mobility, growth, hazards",
+          "availability_status": "Coverage and incremental lift required"
+        },
+        {
+          "phase": "Later enrichment",
+          "origin": "Internal Chewy",
+          "data_family_count": 1,
+          "examples": "Brand awareness and CRM engagement",
+          "availability_status": "Should not block baseline"
+        },
+        {
+          "phase": "Later enrichment",
+          "origin": "External",
+          "data_family_count": 2,
+          "examples": "Transit or walkability and additional climate context",
+          "availability_status": "Use only if locally relevant"
+        }
+      ],
+      "internal_inventory": [
+        {
+          "priority_order": 1,
+          "priority": "Must have",
+          "data_family": "Clinic financial outcomes",
+          "model_role": "Primary target",
+          "specific_fields": "Revenue, gross margin, contribution margin, controllable operating expense, clinic-level P&L adjustments",
+          "grain_and_window": "Clinic-month; opening through at least 24 months; Finance-approved maturity window",
+          "likely_owner_or_source": "CVC Finance and analytics dashboards",
+          "evidence_status": "Outcome is unresolved; production financial reporting is confirmed in SRC-002"
+        },
+        {
+          "priority_order": 2,
+          "priority": "Must have",
+          "data_family": "Appointment and visit outcomes",
+          "model_role": "Secondary target and demand validation",
+          "specific_fields": "Booked, completed, cancelled, no-show, new-client visits, appointment lead time, visit type",
+          "grain_and_window": "Clinic-week or clinic-month from opening onward",
+          "likely_owner_or_source": "CVC appointments and operations reporting",
+          "evidence_status": "Production reporting category confirmed in SRC-002"
+        },
+        {
+          "priority_order": 3,
+          "priority": "Must have",
+          "data_family": "Patient growth and retention",
+          "model_role": "Secondary target",
+          "specific_fields": "Registered patients, active patients, new patients, repeat visit rate, cohort retention",
+          "grain_and_window": "Clinic-month with cohort entry month",
+          "likely_owner_or_source": "CVC customer and clinic reporting",
+          "evidence_status": "Possible outcome named in SRC-001; exact definition unknown"
+        },
+        {
+          "priority_order": 4,
+          "priority": "Must have",
+          "data_family": "Opening, maturity, and disruption timeline",
+          "model_role": "Eligibility and leakage control",
+          "specific_fields": "Decision date, lease date, opening date, relocation, closure, service-model change, construction or outage periods",
+          "grain_and_window": "One event history per clinic",
+          "likely_owner_or_source": "CVC Site Pipeline and clinic operations",
+          "evidence_status": "Site Pipeline is stated source for current dates, but access is unconfirmed"
+        },
+        {
+          "priority_order": 5,
+          "priority": "Must have",
+          "data_family": "Clinic capacity and service mix",
+          "model_role": "Exposure and comparability control",
+          "specific_fields": "Exam rooms, hours, days open, veterinarian shifts, technician coverage, services offered, membership availability",
+          "grain_and_window": "Clinic-month with effective dates",
+          "likely_owner_or_source": "Clinic operations and reporting",
+          "evidence_status": "Operations and memberships reporting categories confirmed in SRC-002"
+        },
+        {
+          "priority_order": 6,
+          "priority": "Must have",
+          "data_family": "Clinic and candidate geography",
+          "model_role": "Join spine",
+          "specific_fields": "Stable site ID, approved point, opening status, market, approved trade-area geometry, evaluation date",
+          "grain_and_window": "Site and versioned evaluation date",
+          "likely_owner_or_source": "Real Estate, GIS, Site Pipeline",
+          "evidence_status": "Existing clinics and geospatial overlays reported in SRC-003; access not confirmed"
+        },
+        {
+          "priority_order": 7,
+          "priority": "Must have",
+          "data_family": "Historical site and physical attributes",
+          "model_role": "Predictive features and hard constraints",
+          "specific_fields": "Square feet, parking, visibility, ingress and egress, co-tenancy, building condition, signage, floor plan, inspection findings",
+          "grain_and_window": "Site snapshot frozen at decision date",
+          "likely_owner_or_source": "Real Estate, broker packages, site visits",
+          "evidence_status": "Physical visits are reported as part of final judgment in SRC-003"
+        },
+        {
+          "priority_order": 8,
+          "priority": "Must have",
+          "data_family": "Chewy customer demand",
+          "model_role": "Core demand feature",
+          "specific_fields": "Active customer households, pet households if approved, order frequency, spend bands, category penetration, growth",
+          "grain_and_window": "Aggregated to tract, hex, or approved drive-time area; 12 to 24 months before decision",
+          "likely_owner_or_source": "Chewy customer analytics and possible CVC Customer Geospatial Analysis",
+          "evidence_status": "Customer dashboards and geospatial analysis are listed, but row-level access and export are unknown"
+        },
+        {
+          "priority_order": 9,
+          "priority": "Must have",
+          "data_family": "Digital veterinary-care intent",
+          "model_role": "Leading demand feature",
+          "specific_fields": "Aggregated vet-care searches, clinic page views, location searches, booking-start events, Rx and health-category intent",
+          "grain_and_window": "Privacy-safe market or trade-area month; 12 to 24 months before decision",
+          "likely_owner_or_source": "Chewy digital analytics",
+          "evidence_status": "Hypothesis; event definitions and geographic joinability are unknown"
+        },
+        {
+          "priority_order": 10,
+          "priority": "Must have",
+          "data_family": "Appointment funnel by market",
+          "model_role": "Demand and conversion feature",
+          "specific_fields": "Eligible audience, clinic page visits, booking starts, bookings, completed visits, channel",
+          "grain_and_window": "Market-week or trade-area month before and after launch",
+          "likely_owner_or_source": "CVC marketing and appointment analytics",
+          "evidence_status": "Launch playbook supports drive-time targeting and booking metrics in SRC-004"
+        },
+        {
+          "priority_order": 11,
+          "priority": "Must have",
+          "data_family": "Marketing exposure and spend",
+          "model_role": "Confounding control",
+          "specific_fields": "Spend, impressions, reach, clicks, booking rate, campaign timing, launch support level",
+          "grain_and_window": "Clinic or market-week from pre-launch through ramp",
+          "likely_owner_or_source": "CVC marketing and CRM",
+          "evidence_status": "Launch marketing measures are confirmed in SRC-004"
+        },
+        {
+          "priority_order": 12,
+          "priority": "Must have",
+          "data_family": "Staffing availability and actual staffing",
+          "model_role": "Hard constraint and capacity feature",
+          "specific_fields": "Veterinarian and technician openings, time to fill, wage offers, applicant flow, vacancy days, scheduled versus filled shifts",
+          "grain_and_window": "Market-month and clinic-month",
+          "likely_owner_or_source": "CVC workforce planning and recruiting",
+          "evidence_status": "A staffing grid or formula is reported in SRC-008; formula and owner remain unknown"
+        },
+        {
+          "priority_order": 13,
+          "priority": "Must have",
+          "data_family": "Candidate economics and deal constraints",
+          "model_role": "Hard constraint and financial feature",
+          "specific_fields": "Asking and negotiated rent, CAM, term, options, TI allowance, buildout estimate, equipment, taxes, insurance, opening timeline",
+          "grain_and_window": "Candidate site and deal version",
+          "likely_owner_or_source": "Real Estate, Finance, broker and construction estimates",
+          "evidence_status": "Required business input; no approved data path documented"
+        },
+        {
+          "priority_order": 14,
+          "priority": "Validate next",
+          "data_family": "Chewy care spending and engagement",
+          "model_role": "Demand enrichment",
+          "specific_fields": "Rx, veterinary diet, health-category, membership, Autoship, and care-related spend or engagement bands",
+          "grain_and_window": "Privacy-safe trade-area month before decision",
+          "likely_owner_or_source": "Chewy commerce and CVC reporting",
+          "evidence_status": "Possible production reporting exists; use only approved aggregated fields"
+        },
+        {
+          "priority_order": 15,
+          "priority": "Validate next",
+          "data_family": "Local clinic operating costs",
+          "model_role": "Economics feature",
+          "specific_fields": "Labor cost, utilities, waste, security, supplies, inventory carrying cost, local vendor cost",
+          "grain_and_window": "Clinic-month and candidate budget",
+          "likely_owner_or_source": "CVC Finance, operations, inventory reporting",
+          "evidence_status": "Inventory and selected financial reporting confirmed in SRC-002; definitions unknown"
+        },
+        {
+          "priority_order": 16,
+          "priority": "Validate next",
+          "data_family": "Network overlap and cannibalization",
+          "model_role": "Incremental demand feature",
+          "specific_fields": "Customer and appointment overlap with existing clinics, drive-time overlap, expected transfer versus net-new demand",
+          "grain_and_window": "Candidate trade area versus existing network",
+          "likely_owner_or_source": "GIS, customer analytics, clinic reporting",
+          "evidence_status": "Network and market comparison views are listed in SRC-002"
+        },
+        {
+          "priority_order": 17,
+          "priority": "Validate next",
+          "data_family": "Local consumer research",
+          "model_role": "Qualitative evidence and hypothesis generation",
+          "specific_fields": "Awareness, trust, switching triggers, perceived availability, price sensitivity, review themes, local context",
+          "grain_and_window": "Market study with field dates and sample metadata",
+          "likely_owner_or_source": "Consumer Insights",
+          "evidence_status": "Atlanta research categories confirmed in SRC-007; do not convert comments directly into scores"
+        },
+        {
+          "priority_order": 18,
+          "priority": "Validate next",
+          "data_family": "Historical decisions and rejected candidates",
+          "model_role": "Selection-bias audit and process learning",
+          "specific_fields": "Candidates considered, rejection reason, score at decision, approved override, site-visit note, final decision",
+          "grain_and_window": "Candidate evaluation event",
+          "likely_owner_or_source": "Real Estate decision records",
+          "evidence_status": "Required to understand selection bias; repository does not confirm a source"
+        },
+        {
+          "priority_order": 19,
+          "priority": "Later enrichment",
+          "data_family": "Brand awareness and CRM engagement",
+          "model_role": "Market-readiness enrichment",
+          "specific_fields": "Awareness survey, email or SMS reach, engagement rate, local brand familiarity",
+          "grain_and_window": "Market-quarter before decision",
+          "likely_owner_or_source": "Consumer Insights and CRM",
+          "evidence_status": "Potentially useful but should not block the first baseline"
+        }
+      ],
+      "external_inventory": [
+        {
+          "priority_order": 1,
+          "priority": "Must have",
+          "data_family": "Population, households, income, age, housing, and vehicle access",
+          "model_role": "Market demand baseline",
+          "specific_fields": "Population and household count, growth, income bands, age mix, household composition, tenure, vehicles, commute",
+          "grain_and_window": "Census tract or block group; latest vintage plus historical vintages matched to decisions",
+          "candidate_source": "U.S. Census Bureau ACS",
+          "collection_caveat": "Carry margins of error; avoid treating demographic proxies as direct pet ownership or eligibility"
+        },
+        {
+          "priority_order": 2,
+          "priority": "Must have",
+          "data_family": "Veterinary competitor locations and offerings",
+          "model_role": "Competition feature",
+          "specific_fields": "Location, chain or independent, hours, emergency or specialty status, services, opening or closure date, ratings and review volume",
+          "grain_and_window": "Point and drive-time trade area; historical snapshot at each decision date",
+          "candidate_source": "Google Places API, state licensing boards, business directories, manual validation",
+          "collection_caveat": "Deduplicate brands and practitioners; current listings cannot stand in for historical competition"
+        },
+        {
+          "priority_order": 3,
+          "priority": "Must have",
+          "data_family": "Road network, drive time, and congestion",
+          "model_role": "Trade-area definition and access feature",
+          "specific_fields": "Off-peak and peak travel times, reachable population and Chewy demand, barriers, major roads, turn restrictions",
+          "grain_and_window": "Candidate-centered 10, 15, 20, and 30 minute isochrones by time of day",
+          "candidate_source": "Approved Esri or routing provider; Census LODES for commute context",
+          "collection_caveat": "The 30-minute launch-marketing radius is not automatically the correct scoring trade area"
+        },
+        {
+          "priority_order": 4,
+          "priority": "Must have",
+          "data_family": "Commercial real-estate supply and lease comparables",
+          "model_role": "Candidate economics and availability",
+          "specific_fields": "Available spaces, asking and effective rent, CAM, lease comps, vacancy, days on market, property type, square feet",
+          "grain_and_window": "Property and submarket snapshot at decision date",
+          "candidate_source": "CoStar, broker data, assessor and parcel records",
+          "collection_caveat": "Licensing and historical snapshot rights must be confirmed; asking rent is not final economics"
+        },
+        {
+          "priority_order": 5,
+          "priority": "Must have",
+          "data_family": "Zoning, permits, licensing, and land-use constraints",
+          "model_role": "Hard constraint",
+          "specific_fields": "Veterinary use allowed, conditional-use process, operating-hour limits, signage, parking, occupancy, animal-use restrictions",
+          "grain_and_window": "Parcel and municipality at evaluation date",
+          "candidate_source": "Municipal zoning maps, planning departments, permit portals, state veterinary regulators",
+          "collection_caveat": "Require legal or real-estate confirmation; machine-readable local coverage will be uneven"
+        },
+        {
+          "priority_order": 6,
+          "priority": "Must have",
+          "data_family": "Independent physical-site diligence",
+          "model_role": "Hard constraint and human review",
+          "specific_fields": "Visibility, ingress and egress, parking counts, ADA access, loading, utilities, HVAC, noise, neighboring uses, build condition",
+          "grain_and_window": "Candidate site inspection with date, reviewer, photos, and exceptions",
+          "candidate_source": "Site visit, engineer, architect, broker, landlord records",
+          "collection_caveat": "Not all decisive facts are model inputs; preserve qualitative evidence separately"
+        },
+        {
+          "priority_order": 7,
+          "priority": "Validate next",
+          "data_family": "Pet ownership and veterinary utilization estimates",
+          "model_role": "Demand enrichment",
+          "specific_fields": "Pet-owning households, species mix, vet visit frequency, preventive-care utilization, insurance penetration",
+          "grain_and_window": "Market or tract estimate with source year and methodology",
+          "candidate_source": "AVMA or approved commercial consumer panels",
+          "collection_caveat": "Validate sample size and modeling method; do not infer pets directly from general demographics"
+        },
+        {
+          "priority_order": 8,
+          "priority": "Validate next",
+          "data_family": "Veterinary establishment density",
+          "model_role": "Competition and market-structure feature",
+          "specific_fields": "Veterinary-services establishments, employment, payroll, size class",
+          "grain_and_window": "County-year, supplemented with point-level competitors",
+          "candidate_source": "U.S. Census County Business Patterns, NAICS 541940",
+          "collection_caveat": "County grain is coarse and published with lag; use as a market control, not a site-level substitute"
+        },
+        {
+          "priority_order": 9,
+          "priority": "Validate next",
+          "data_family": "Veterinarian and technician labor market",
+          "model_role": "Staffing feasibility",
+          "specific_fields": "Employment, wages, location quotient, schools, license counts, postings, vacancy duration",
+          "grain_and_window": "Metro or nonmetro area-year and market-month where available",
+          "candidate_source": "BLS OEWS, state licensing boards, approved job-posting provider",
+          "collection_caveat": "Occupation counts do not equal available hires; compare with internal recruiting outcomes"
+        },
+        {
+          "priority_order": 10,
+          "priority": "Validate next",
+          "data_family": "Vehicle and pedestrian traffic",
+          "model_role": "Visibility and access feature",
+          "specific_fields": "AADT, hourly traffic, turning movement, pedestrian counts, road class, directionality",
+          "grain_and_window": "Adjacent road segment and time period",
+          "candidate_source": "State DOT or FHWA HPMS; StreetLight or local counts",
+          "collection_caveat": "Modeled counts require ground-truth checks; highway volume alone may not represent clinic access"
+        },
+        {
+          "priority_order": 11,
+          "priority": "Validate next",
+          "data_family": "Foot traffic and observed trade areas",
+          "model_role": "Demand and co-tenancy enrichment",
+          "specific_fields": "Visits, unique visitors, dwell time, daypart, origin area, cross-shopping, seasonality",
+          "grain_and_window": "Candidate parcel, center, and analog sites by week or month",
+          "candidate_source": "Placer.ai or another approved mobility provider",
+          "collection_caveat": "Vendor estimates are sampled and modeled; validate stability, privacy, and methodology"
+        },
+        {
+          "priority_order": 12,
+          "priority": "Validate next",
+          "data_family": "Retail co-tenancy and nearby businesses",
+          "model_role": "Complementarity and trip-purpose feature",
+          "specific_fields": "Pet retail, grocery, pharmacy, urgent care, family retail, anchors, vacancies, business openings and closures",
+          "grain_and_window": "Walk, radius, and drive-time buffers at decision date",
+          "candidate_source": "Places API, business directories, commercial real-estate data, field validation",
+          "collection_caveat": "Define hypotheses before selecting categories to avoid indiscriminate feature mining"
+        },
+        {
+          "priority_order": 13,
+          "priority": "Validate next",
+          "data_family": "Population, housing, and employment growth",
+          "model_role": "Forward-demand feature",
+          "specific_fields": "Population and household growth, housing permits, employment growth, worker inflow and outflow, major employers",
+          "grain_and_window": "Tract, county, and commute shed over 3 to 5 years",
+          "candidate_source": "ACS, Census LODES and QWI, local building permits",
+          "collection_caveat": "Separate observed history from forecasts and record forecast vendor or method"
+        },
+        {
+          "priority_order": 14,
+          "priority": "Validate next",
+          "data_family": "Competitor reputation and service availability",
+          "model_role": "Unmet-need enrichment",
+          "specific_fields": "Rating, review volume, recent review topics, wait-time mentions, hours, online booking, service gaps",
+          "grain_and_window": "Competitor-month with review timestamp",
+          "candidate_source": "Licensed review or places data with manual validation",
+          "collection_caveat": "Text may be biased or sparse; AI may summarize but must not silently turn reviews into scores"
+        },
+        {
+          "priority_order": 15,
+          "priority": "Validate next",
+          "data_family": "Flood, natural hazard, and insurance exposure",
+          "model_role": "Risk screen and cost feature",
+          "specific_fields": "Flood zone, expected hazard loss or relative risk, wildfire, wind, heat, business-interruption exposure, insurance estimate",
+          "grain_and_window": "Parcel plus tract or county; latest official layer",
+          "candidate_source": "FEMA Flood Map Service Center and National Risk Index, insurer or engineering diligence",
+          "collection_caveat": "Community risk indices do not replace parcel-level engineering or insurance review"
+        },
+        {
+          "priority_order": 16,
+          "priority": "Validate next",
+          "data_family": "Development pipeline and local planning",
+          "model_role": "Forward supply and demand context",
+          "specific_fields": "Permitted housing, major retail or employment projects, road changes, competitor permits, planned closures",
+          "grain_and_window": "Parcel, municipality, and project timeline",
+          "candidate_source": "Municipal permits, planning agendas, economic-development records, broker research",
+          "collection_caveat": "Planned projects may be cancelled or delayed; maintain status and observation date"
+        },
+        {
+          "priority_order": 17,
+          "priority": "Validate next",
+          "data_family": "Local media cost and market reach",
+          "model_role": "Launch economics and confounding control",
+          "specific_fields": "Paid-search cost, social reach, direct-mail cost, local media inventory, estimated cost per booking",
+          "grain_and_window": "Market-week or market-month",
+          "candidate_source": "Approved advertising platforms and media partners",
+          "collection_caveat": "Marketing cost is partly a planned intervention, so distinguish forecast from realized spend"
+        },
+        {
+          "priority_order": 18,
+          "priority": "Later enrichment",
+          "data_family": "Transit, walkability, and non-auto access",
+          "model_role": "Local access enrichment",
+          "specific_fields": "Transit stops and frequency, sidewalk access, walkability, bike access",
+          "grain_and_window": "Candidate buffer and service schedule",
+          "candidate_source": "Local GTFS feeds, OpenStreetMap, municipal mobility data",
+          "collection_caveat": "Only prioritize where the clinic concept and local travel behavior make it decision-relevant"
+        },
+        {
+          "priority_order": 19,
+          "priority": "Later enrichment",
+          "data_family": "Additional climate and weather context",
+          "model_role": "Operating-risk enrichment",
+          "specific_fields": "Extreme heat, snow, storm frequency, seasonal disruption, utility burden",
+          "grain_and_window": "Local historical normals and event frequency",
+          "candidate_source": "NOAA and local utility or emergency-management data",
+          "collection_caveat": "Avoid double-counting hazards already represented in hard constraints or insurance costs"
+        }
+      ],
+      "model_readiness": [
+        {
+          "gate_order": 1,
+          "gate": "Outcome definition",
+          "minimum_standard": "One primary outcome, secondary outcomes, maturity window, exclusions, and Finance approval",
+          "failure_if_missing": "The model has no stable meaning and cannot be evaluated"
+        },
+        {
+          "gate_order": 2,
+          "gate": "Historical feature snapshot",
+          "minimum_standard": "Features are frozen as of each historical decision date with source vintage recorded",
+          "failure_if_missing": "Current data leaks future information into training"
+        },
+        {
+          "gate_order": 3,
+          "gate": "Comparable clinic cohort",
+          "minimum_standard": "Clinic types, service models, ramp stages, relocations, and disruptions are classified",
+          "failure_if_missing": "Differences in operating model are mistaken for location effects"
+        },
+        {
+          "gate_order": 4,
+          "gate": "Data quality and provenance",
+          "minimum_standard": "Owner, definition, grain, units, freshness, missingness, join coverage, sensitivity, and source ID are documented",
+          "failure_if_missing": "Inputs cannot be reproduced or trusted"
+        },
+        {
+          "gate_order": 5,
+          "gate": "Honest validation",
+          "minimum_standard": "Time-aware holdout, leave-one-market-out check, simple baseline, uncertainty, and sensitivity analysis",
+          "failure_if_missing": "Performance will look better than it generalizes"
+        },
+        {
+          "gate_order": 6,
+          "gate": "Decision and safety boundary",
+          "minimum_standard": "Hard constraints remain deterministic, weights are versioned, human overrides are logged, and prediction is not lease approval",
+          "failure_if_missing": "The system becomes opaque or exceeds its decision rights"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "inventory_rows_file",
+      "label": "Proposed internal and external data inventory",
+      "path": "reports/location-data-collection-blueprint/artifact.json",
+      "query": {
+        "engine": "duckdb",
+        "sql": "WITH artifact AS (SELECT * FROM read_json_auto('reports/location-data-collection-blueprint/artifact.json')) SELECT 'Internal Chewy' AS origin, item.* FROM artifact, UNNEST(snapshot.datasets.internal_inventory) AS t(item) UNION ALL BY NAME SELECT 'External' AS origin, item.* FROM artifact, UNNEST(snapshot.datasets.external_inventory) AS t(item)",
+        "description": "Read the reviewed internal and external inventory rows embedded in the canonical report artifact.",
+        "executed_at": "2026-07-24T19:00:00Z",
+        "language": "sql",
+        "filters": [
+          "All 38 proposed data families"
+        ],
+        "tables_used": [
+          "reports/location-data-collection-blueprint/artifact.json"
+        ]
+      }
+    },
+    {
+      "id": "model_readiness_file",
+      "label": "Model-readiness gates",
+      "path": "reports/location-data-collection-blueprint/artifact.json",
+      "query": {
+        "engine": "duckdb",
+        "sql": "WITH artifact AS (SELECT * FROM read_json_auto('reports/location-data-collection-blueprint/artifact.json')) SELECT item.* FROM artifact, UNNEST(snapshot.datasets.model_readiness) AS t(item)",
+        "description": "Read the six model-readiness gates embedded in the canonical report artifact.",
+        "executed_at": "2026-07-24T19:00:00Z",
+        "language": "sql",
+        "tables_used": [
+          "reports/location-data-collection-blueprint/artifact.json"
+        ]
+      }
+    },
+    {
+      "id": "collection_scope_file",
+      "label": "Proposed collection-scope summary",
+      "path": "reports/location-data-collection-blueprint/collection-scope.csv",
+      "query": {
+        "engine": "duckdb",
+        "sql": "SELECT phase, origin, data_family_count, examples, availability_status FROM read_csv_auto('reports/location-data-collection-blueprint/collection-scope.csv')",
+        "description": "Read the reviewed planning counts used in the collection-scope chart.",
+        "executed_at": "2026-07-24T19:00:00Z",
+        "language": "sql",
+        "tables_used": [
+          "reports/location-data-collection-blueprint/collection-scope.csv"
+        ]
+      }
+    },
+    {
+      "id": "inventory_synthesis",
+      "label": "Data collection blueprint synthesis",
+      "query": {
+        "description": "Planning inventory synthesized from reviewed repository documents and current public or commercial source documentation.",
+        "executed_at": "2026-07-24T19:00:00Z",
+        "language": "research synthesis",
+        "filters": [
+          "Clinic-first location evaluation",
+          "Pre-decision features",
+          "Privacy-safe aggregates"
+        ],
+        "tables_used": [
+          "internal_inventory",
+          "external_inventory",
+          "collection_scope"
+        ]
+      }
+    },
+    {
+      "id": "repository_contracts",
+      "label": "Repository product and technical contracts",
+      "path": "docs/technical/data-contracts.md",
+      "query": {
+        "description": "Repository requirements for deterministic, versioned, testable evaluation with explicit provenance and human decision rights.",
+        "tables_used": [
+          "PROJECT_CONTEXT.md",
+          "docs/product/mvp-scope.md",
+          "docs/technical/data-contracts.md",
+          "docs/technical/ai-boundaries.md",
+          "docs/research/claim-ledger.md",
+          "docs/product/open-questions.md",
+          "docs/research/source-registry.md"
+        ]
+      }
+    }
+  ]
+}

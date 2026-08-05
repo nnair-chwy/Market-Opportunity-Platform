@@ -1,0 +1,53 @@
+{
+  "manifest_version": "1.0.0",
+  "transformation_version": "cbsa-acs-v1",
+  "source_id": "SRC-016",
+  "dataset": "acs/acs5",
+  "dataset_vintage": 2024,
+  "estimate_period": "2020–2024 ACS 5-year estimate",
+  "observed_at": "2024-12-31",
+  "retrieved_at": "2026-07-29T20:17:54.315Z",
+  "source_url": "https://api.census.gov/data/2024/acs/acs5?get=NAME%2CGEO_ID%2CB01003_001E%2CB01003_001EA%2CB11001_001E%2CB11001_001EA%2CB19013_001E%2CB19013_001EA%2CB25001_001E%2CB25001_001EA&for=metropolitan+statistical+area%2Fmicropolitan+statistical+area%3A*",
+  "variables": [
+    "B01003_001E",
+    "B01003_001EA",
+    "B11001_001E",
+    "B11001_001EA",
+    "B19013_001E",
+    "B19013_001EA",
+    "B25001_001E",
+    "B25001_001EA"
+  ],
+  "market_universe": {
+    "path": "data/public/census/cbsa-universe/2023-07/markets.json",
+    "sha256": "80928a66deccc7bbd3d1503226beb0db82adb24df9769099e86ed7de4f4aa724",
+    "record_count": 917
+  },
+  "boundary_geometry": {
+    "path": "data/public/census/cbsa-geometry/2024/markets.topo.json",
+    "sha256": "cd719f21e7501571b1bf82c685f6ac28f50167cd0ad30f09f31820bfa0a767c2",
+    "record_count": 917
+  },
+  "outputs": [
+    {
+      "path": "data/public/census/cbsa-acs/2024/market-context.json",
+      "sha256": "4e04b1b1b3af7a358b748883f5b288ff5f2f7459526a8640f5c7c75405f375a1",
+      "record_count": 917
+    },
+    {
+      "path": "data/public/census/cbsa-acs/2024/rejected-rows.json",
+      "sha256": "fbddee6aaadecc291536324b0e5f7174fc7543a4c7fdfef2f81a179a282de624",
+      "record_count": 18
+    }
+  ],
+  "counts": {
+    "input_rows": 935,
+    "matched_rows": 917,
+    "missing_markets": 0,
+    "rejected_rows": 18,
+    "unmatched_rows": 18
+  },
+  "sensitivity": "public",
+  "allowed_use": "market_context_only",
+  "scoring_weight": "none"
+}

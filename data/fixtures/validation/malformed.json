@@ -1,0 +1,17 @@
+{
+  "site_id": "not a stable id",
+  "site_name": "",
+  "evaluation_date": "2026-02-30",
+  "metrics": [
+    {
+      "metric_id": "demand_index",
+      "raw_value": "84",
+      "unit": "percent",
+      "source_id": "UNKNOWN-SOURCE",
+      "observed_at": "not-a-date",
+      "geography": "postal_code",
+      "quality_status": "maybe",
+      "sensitivity": "secret"
+    }
+  ]
+}

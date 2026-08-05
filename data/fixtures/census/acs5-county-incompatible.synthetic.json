@@ -1,0 +1,18 @@
+[
+  [
+    "NAME",
+    "GEO_ID",
+    "B01003_001E",
+    "B01003_001EA",
+    "state",
+    "county"
+  ],
+  [
+    "Synthetic Wrong County, Tennessee",
+    "0500000US47035",
+    "60000",
+    null,
+    "47",
+    "035"
+  ]
+]

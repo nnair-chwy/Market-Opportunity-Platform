@@ -1,0 +1,28 @@
+{
+  "site_id": "SYN-SITE-004",
+  "site_name": "Synthetic Candidate With Rejected Input",
+  "evaluation_date": "2026-07-01",
+  "metrics": [
+    {
+      "metric_id": "demand_index",
+      "raw_value": 93,
+      "unit": "index",
+      "source_id": "SYNTHETIC",
+      "observed_at": "2026-06-15",
+      "geography": "market",
+      "quality_status": "rejected",
+      "sensitivity": "internal",
+      "transformation": "Synthetic record intentionally marked rejected."
+    },
+    {
+      "metric_id": "competitor_count",
+      "raw_value": 4,
+      "unit": "count",
+      "source_id": "SYNTHETIC",
+      "observed_at": "2026-06-20",
+      "geography": "radius",
+      "quality_status": "accepted",
+      "sensitivity": "internal"
+    }
+  ]
+}

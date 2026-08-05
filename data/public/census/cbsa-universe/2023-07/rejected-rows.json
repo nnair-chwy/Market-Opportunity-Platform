@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "transformation_version": "cbsa-universe-v1",
+  "delineation_vintage": "2023-07",
+  "source_id": "SRC-014",
+  "rejected_rows": []
+}

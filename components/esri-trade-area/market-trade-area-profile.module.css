@@ -1,0 +1,497 @@
+.profile,
+.empty {
+  margin-top: 22px;
+  overflow: hidden;
+  border: 1px solid #cfdce3;
+  border-left: 5px solid #5b4a86;
+  border-radius: 14px;
+  background: #fbfafc;
+}
+
+.empty h2,
+.header h2,
+.metricSection h3,
+.unavailable h3,
+.comparison h3 {
+  margin: 4px 0 6px;
+}
+
+.compactEmpty {
+  border-left-width: 3px;
+  background: #f8f7fa;
+}
+
+.dropdownSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.dropdownSummary::-webkit-details-marker {
+  display: none;
+}
+
+.dropdownSummary h2 {
+  margin: 3px 0 0;
+}
+
+.dropdownSummary:focus-visible {
+  outline: 3px solid rgba(91, 74, 134, 0.28);
+  outline-offset: -3px;
+}
+
+.dropdownChevron {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #f0edf6;
+  color: #5b4a86;
+  font-size: 1.1rem;
+  transition: transform 160ms ease;
+}
+
+.profile[open] .dropdownChevron,
+.empty[open] .dropdownChevron {
+  transform: rotate(180deg);
+}
+
+.dropdownContent {
+  padding: 18px 22px 22px;
+  border-top: 1px solid #e2ddea;
+}
+
+.compactContent {
+  padding: 14px 18px 16px;
+}
+
+.compactEmpty h2 {
+  font-size: 1rem;
+}
+
+.compactEmpty p:last-child {
+  margin: 0;
+  max-width: 840px;
+  font-size: 0.86rem;
+}
+
+.empty p,
+.header p,
+.sectionHeading p {
+  color: #596875;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #5b4a86 !important;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header,
+.controls,
+.identity,
+.sectionHeading,
+.comparisonControls {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.header {
+  align-items: flex-start;
+}
+
+.header > div:first-child {
+  max-width: 760px;
+}
+
+.nonScored {
+  display: grid;
+  min-width: 210px;
+  padding: 13px 15px;
+  border: 1px solid #d8d1e7;
+  border-radius: 10px;
+  background: #f2eff7;
+}
+
+.nonScored strong {
+  color: #49386f;
+}
+
+.nonScored span {
+  color: #6f6680;
+  font-size: 0.76rem;
+}
+
+.boundary {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 14px 16px;
+  border: 1px solid #d8d1e7;
+  border-radius: 10px;
+  background: #f4f1f8;
+}
+
+.boundary strong {
+  color: #49386f;
+}
+
+.boundary span {
+  color: #5c5570;
+}
+
+.controls {
+  align-items: end;
+  display: grid;
+  grid-template-columns: minmax(260px, 1.4fr) minmax(240px, 1fr) auto;
+}
+
+.controls label,
+.comparisonControls label {
+  display: grid;
+  gap: 6px;
+  color: #53636f;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.controls select,
+.comparisonControls select {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid #cbd5dc;
+  border-radius: 9px;
+  background: #fff;
+  color: #1e2f3d;
+  padding: 9px 11px;
+}
+
+.actions,
+.comparisonControls {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button,
+.comparisonControls button,
+.comparison th button {
+  border: 1px solid #5b4a86;
+  border-radius: 8px;
+  background: #fff;
+  color: #49386f;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 9px 11px;
+}
+
+.actions button:focus-visible,
+.comparisonControls button:focus-visible,
+.comparison th button:focus-visible,
+.controls select:focus-visible,
+.comparisonControls select:focus-visible,
+.metric details summary:focus-visible {
+  outline: 3px solid #967fd0;
+  outline-offset: 2px;
+}
+
+.comparisonControls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.identity {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.identity > div {
+  display: grid;
+  gap: 4px;
+  padding: 13px;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #e1dde9;
+}
+
+.identity span,
+.identity small {
+  color: #687580;
+}
+
+.identity span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.warningList,
+.comparisonWarnings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.warningList span,
+.comparisonWarnings span {
+  padding: 7px 9px;
+  border-radius: 7px;
+  background: #fff1d6;
+  color: #765113;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.metricSection,
+.unavailable,
+.comparison {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #ded9e6;
+}
+
+.sectionHeading {
+  align-items: center;
+}
+
+.sectionHeading > span {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border-radius: 7px;
+  background: #eeebf4;
+  color: #5b4a86;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.metric,
+.missingMetric {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid #e0dce7;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.missingMetric {
+  background: #f4f5f6;
+}
+
+.metric > span,
+.missingMetric > span {
+  display: block;
+  min-height: 34px;
+  color: #5e6972;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.metric > strong,
+.missingMetric > strong {
+  display: block;
+  margin: 7px 0 4px;
+  overflow-wrap: anywhere;
+  color: #263949;
+  font-size: 1.1rem;
+}
+
+.metric > small,
+.missingMetric > small {
+  color: #6e7780;
+  text-transform: capitalize;
+}
+
+.metric details,
+.missingMetric details {
+  margin-top: 10px;
+  border-top: 1px solid #e6e8eb;
+  padding-top: 8px;
+}
+
+.metric summary,
+.missingMetric summary {
+  color: #5b4a86;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.metric dl,
+.missingMetric dl {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0;
+}
+
+.metric dl > div,
+.missingMetric dl > div {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 8px;
+}
+
+.metric dt,
+.missingMetric dt {
+  color: #6a747d;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.metric dd,
+.missingMetric dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.metric ul,
+.missingMetric ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #765113;
+}
+
+.unavailable ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unavailable li {
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+  border: 1px dashed #cbd3d8;
+  border-radius: 9px;
+  background: #f5f6f7;
+}
+
+.unavailable li span,
+.unavailable li small {
+  color: #65717a;
+}
+
+.comparisonControls {
+  align-items: end;
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+.comparisonControls label {
+  min-width: min(520px, 100%);
+}
+
+.tableWrap {
+  margin-top: 14px;
+  overflow-x: auto;
+  border: 1px solid #ddd9e5;
+  border-radius: 10px;
+}
+
+.comparison table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.comparison th,
+.comparison td {
+  min-width: 170px;
+  padding: 11px 12px;
+  border-bottom: 1px solid #e4e1e8;
+  text-align: left;
+  vertical-align: top;
+}
+
+.comparison thead th {
+  background: #f3f0f7;
+  color: #463963;
+}
+
+.comparison th button {
+  display: block;
+  margin-top: 8px;
+  padding: 4px 7px;
+  font-size: 0.72rem;
+}
+
+.comparisonEmpty {
+  padding: 18px;
+  border-radius: 9px;
+  background: #f4f5f6;
+  color: #66737d;
+}
+
+@media (max-width: 1100px) {
+  .controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actions {
+    grid-column: 1 / -1;
+  }
+
+  .metricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .profile,
+  .empty {
+    border-left-width: 3px;
+  }
+
+  .dropdownContent {
+    padding: 16px;
+  }
+
+  .header,
+  .boundary,
+  .controls,
+  .identity,
+  .sectionHeading,
+  .comparisonControls,
+  .unavailable ul {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .nonScored {
+    min-width: 0;
+  }
+
+  .actions {
+    display: grid;
+  }
+
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .comparisonControls label {
+    min-width: 0;
+  }
+}

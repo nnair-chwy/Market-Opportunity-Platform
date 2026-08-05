@@ -1,0 +1,46 @@
+[
+  {
+    "broker_profile_id": "sea-demo-broker-cascade",
+    "display_name": "Cascade Tenant Advisory Team",
+    "firm_name": "Cascade Commercial Demo Group",
+    "coverage_labels": ["Seattle", "Eastside", "South King County"],
+    "specialty_labels": ["tenant representation", "retail", "medical office"],
+    "contact_page_placeholder": "demo://cascade-tenant-advisory",
+    "verification_status": "demo_only_unverified",
+    "last_reviewed_at": "2026-08-03",
+    "limitations": ["Fictional demonstration profile. Not a validated contact or recommendation."]
+  },
+  {
+    "broker_profile_id": "sea-demo-broker-sound",
+    "display_name": "Sound Retail Site Team",
+    "firm_name": "Soundside Realty Demo Partners",
+    "coverage_labels": ["Seattle", "Tacoma", "Pierce County"],
+    "specialty_labels": ["retail", "site search", "tenant representation"],
+    "contact_page_placeholder": "demo://sound-retail-site-team",
+    "verification_status": "demo_only_unverified",
+    "last_reviewed_at": "2026-08-03",
+    "limitations": ["Fictional demonstration profile. Not a validated contact or recommendation."]
+  },
+  {
+    "broker_profile_id": "sea-demo-broker-eastlake",
+    "display_name": "Eastlake Healthcare Properties Team",
+    "firm_name": "Eastlake Commercial Demo Advisors",
+    "coverage_labels": ["Eastside", "Renton", "Newcastle"],
+    "specialty_labels": ["healthcare real estate", "medical office", "retail"],
+    "contact_page_placeholder": "demo://eastlake-healthcare-properties",
+    "verification_status": "demo_only_unverified",
+    "last_reviewed_at": "2026-08-03",
+    "limitations": ["Fictional demonstration profile. Not a validated contact or recommendation."]
+  },
+  {
+    "broker_profile_id": "sea-demo-broker-northline",
+    "display_name": "Northline Market Coverage Team",
+    "firm_name": "Northline Demo Brokerage",
+    "coverage_labels": ["North Seattle", "Shoreline", "North Sound"],
+    "specialty_labels": ["tenant representation", "retail", "market research"],
+    "contact_page_placeholder": "demo://northline-market-coverage",
+    "verification_status": "demo_only_unverified",
+    "last_reviewed_at": "2026-08-03",
+    "limitations": ["Fictional demonstration profile. Not a validated contact or recommendation."]
+  }
+]

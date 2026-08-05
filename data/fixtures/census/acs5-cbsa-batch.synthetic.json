@@ -1,0 +1,6 @@
+[
+  ["NAME", "GEO_ID", "B01003_001E", "B01003_001EA", "B11001_001E", "B11001_001EA", "B19013_001E", "B19013_001EA", "B25001_001E", "B25001_001EA", "metropolitan statistical area/micropolitan statistical area"],
+  ["Alpha Metro", "3100000US12345", "1000000", null, "400000", null, "80000", null, "450000", null, "12345"],
+  ["Beta Micro", "3100000US23456", "-666666666", null, "", null, "-888888888", null, "10000", null, "23456"],
+  ["Outside Metro", "3100000US99999", "5000", null, "2000", null, "70000", null, "2500", null, "99999"]
+]

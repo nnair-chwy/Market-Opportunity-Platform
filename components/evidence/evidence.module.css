@@ -1,0 +1,498 @@
+.panel {
+  --evidence-ink: #182230;
+  --evidence-muted: #667085;
+  --evidence-line: #dfe4ea;
+  --evidence-surface: #fff;
+  background: var(--evidence-surface);
+  border: 1px solid var(--evidence-line);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgb(20 35 60 / 6%);
+  color: var(--evidence-ink);
+  overflow: hidden;
+}
+
+.panelHeading {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--evidence-line);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 18px 20px;
+}
+
+.panelHeading h2,
+.qualitativeSection h3,
+.sourceTitle h3,
+.metricSources h3 {
+  margin: 0;
+}
+
+.panelHeading h2 {
+  font-size: 1.05rem;
+}
+
+.panelSubtitle,
+.boundaryNote,
+.emptyState {
+  color: var(--evidence-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+
+.eyebrow {
+  color: #475467;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  margin: 0 0 5px;
+  text-transform: uppercase;
+}
+
+.count {
+  background: #eef1f5;
+  border-radius: 999px;
+  color: #475467;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 5px 9px;
+}
+
+.badgeRow,
+.inlineMetadata {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge,
+.disposition,
+.sensitivity,
+.severity {
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  color: #475467;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 5px 7px;
+  text-transform: capitalize;
+}
+
+.evidenceConfirmed,
+.qualityaccepted,
+.scored,
+.resolved {
+  background: #ecfdf3;
+  border-color: #a6f4c5;
+  color: #067647;
+}
+
+.evidenceReported,
+.evidenceDerived {
+  background: #eff8ff;
+  border-color: #b2ddff;
+  color: #175cd3;
+}
+
+.evidenceHypothesis,
+.qualitywarning,
+.missing,
+.unavailable {
+  background: #fffaeb;
+  border-color: #fedf89;
+  color: #b54708;
+}
+
+.evidenceUnknown,
+.excluded,
+.unscored,
+.unknown {
+  background: #f2f4f7;
+  border-color: #d0d5dd;
+  color: #475467;
+}
+
+.qualityrejected,
+.rejected {
+  background: #fef3f2;
+  border-color: #fecdca;
+  color: #b42318;
+}
+
+.summaryGrid {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0;
+}
+
+.summaryGrid > div {
+  background: #f8fafc;
+  padding: 16px 18px;
+}
+
+.summaryGrid dt {
+  color: var(--evidence-muted);
+  font-size: 0.72rem;
+}
+
+.summaryGrid dd {
+  font-size: 1.4rem;
+  font-weight: 750;
+  margin: 4px 0 0;
+}
+
+.coverageLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 18px 18px;
+}
+
+.coverageLine span {
+  background: #f2f4f7;
+  border-radius: 8px;
+  color: #475467;
+  font-size: 0.75rem;
+  padding: 7px 9px;
+}
+
+.sourceList,
+.warningList,
+.checklist,
+.qualitativeSection ul,
+.metricSources ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sourceList {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.sourceCard {
+  border: 1px solid var(--evidence-line);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.sourceTitle {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.sourceTitle h3 {
+  font-size: 0.94rem;
+  margin-top: 4px;
+}
+
+.sourceTitle a,
+.metricSources a {
+  color: #175cd3;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.sourceId {
+  color: var(--evidence-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+}
+
+.metadataGrid,
+.calculationGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 16px 0 0;
+}
+
+.metadataGrid dt,
+.calculationGrid dt {
+  color: var(--evidence-muted);
+  font-size: 0.68rem;
+}
+
+.metadataGrid dd,
+.calculationGrid dd {
+  font-size: 0.8rem;
+  font-weight: 650;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.freshnessWarning,
+.restrictedNotice,
+.statusReason,
+.unknownSource {
+  border-radius: 9px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+}
+
+.freshnessWarning {
+  background: #fffaeb;
+  color: #93370d;
+}
+
+.restrictedNotice {
+  background: #f2f4f7;
+  color: #344054;
+}
+
+.statusReason,
+.unknownSource {
+  background: #f8fafc;
+  color: #475467;
+}
+
+.boundaryNote,
+.emptyState {
+  margin: 0;
+  padding: 16px 20px;
+}
+
+.boundaryNote {
+  background: #f8fafc;
+  border-bottom: 1px solid var(--evidence-line);
+}
+
+.disclosureList {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.metricDisclosure {
+  border: 1px solid var(--evidence-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.metricDisclosure summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  list-style-position: inside;
+  padding: 14px 16px;
+}
+
+.metricDisclosure summary:hover {
+  background: #f8fafc;
+}
+
+.metricDisclosure summary > span:first-of-type {
+  display: inline-grid;
+  gap: 3px;
+  margin-right: auto;
+}
+
+.metricDisclosure summary small {
+  color: var(--evidence-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.68rem;
+}
+
+.metricDisclosure summary:focus-visible,
+.sourceTitle a:focus-visible,
+.metricSources a:focus-visible {
+  outline: 3px solid #f5a623;
+  outline-offset: 3px;
+}
+
+.metricBody {
+  border-top: 1px solid var(--evidence-line);
+  padding: 16px;
+}
+
+.calculationGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.metricSources {
+  border-top: 1px solid var(--evidence-line);
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.metricSources h3 {
+  font-size: 0.82rem;
+}
+
+.metricSources ul {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.metricSources li {
+  align-items: center;
+  background: #f8fafc;
+  border-radius: 9px;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.76rem;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.qualitativeSection {
+  border-top: 4px solid #d0d5dd;
+  padding: 18px 20px 20px;
+}
+
+.qualitativeSection h3 {
+  font-size: 0.95rem;
+}
+
+.qualitativeSection ul {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.qualitativeSection li {
+  background: #f8fafc;
+  border: 1px solid var(--evidence-line);
+  border-radius: 10px;
+  padding: 13px;
+}
+
+.qualitativeSection li p {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 10px 0 6px;
+}
+
+.qualitativeSection li small {
+  color: var(--evidence-muted);
+  font-size: 0.7rem;
+}
+
+.checklist,
+.warningList {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.checklist li {
+  align-items: flex-start;
+  border: 1px solid var(--evidence-line);
+  border-radius: 10px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto 1fr;
+  padding: 13px;
+}
+
+.checkIcon {
+  align-items: center;
+  border: 1px solid;
+  border-radius: 50%;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.checklistTitle {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.checklist p,
+.warningList p {
+  color: #475467;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 6px 0;
+}
+
+.checklist small,
+.warningList small {
+  color: var(--evidence-muted);
+  display: block;
+  font-size: 0.68rem;
+  margin-top: 3px;
+}
+
+.warningList li {
+  border: 1px solid;
+  border-left-width: 4px;
+  border-radius: 10px;
+  padding: 13px 14px;
+}
+
+.warningList li > div {
+  align-items: center;
+  display: flex;
+  gap: 9px;
+}
+
+.severityerror {
+  background: #fef3f2;
+  border-color: #fda29b;
+}
+
+.severitywarning {
+  background: #fffaeb;
+  border-color: #fec84b;
+}
+
+.severityinfo {
+  background: #eff8ff;
+  border-color: #84caff;
+}
+
+.srOnly {
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@media (max-width: 760px) {
+  .summaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .metadataGrid,
+  .calculationGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sourceTitle {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 460px) {
+  .summaryGrid,
+  .metadataGrid,
+  .calculationGrid {
+    grid-template-columns: 1fr;
+  }
+}

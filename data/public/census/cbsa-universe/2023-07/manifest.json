@@ -1,0 +1,54 @@
+{
+  "manifest_version": "1.0.0",
+  "transformation_version": "cbsa-universe-v1",
+  "source_vintage": "2023-07",
+  "source_id": "SRC-014",
+  "source_landing_page_url": "https://www.census.gov/geographies/reference-files/time-series/demo/metro-micro/delineation-files.html",
+  "retrieved_at": "2026-07-29T17:55:39.903Z",
+  "sources": [
+    {
+      "role": "cbsa_delineation",
+      "url": "https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2023/delineation-files/list1_2023.xlsx",
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "sha256": "952c4b1e78acbb54e6ec9412434b7602fedacbf021736351a63c181bdb753629"
+    },
+    {
+      "role": "principal_cities",
+      "url": "https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2023/delineation-files/list2_2023.xlsx",
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "sha256": "1e1091de28d1ad1423cebf18e7cdb6db4fbf2204fd357bc68c24e8261dcce161"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "data/public/census/cbsa-universe/2023-07/markets.json",
+      "sha256": "80928a66deccc7bbd3d1503226beb0db82adb24df9769099e86ed7de4f4aa724",
+      "record_count": 917
+    },
+    {
+      "path": "data/public/census/cbsa-universe/2023-07/rejected-rows.json",
+      "sha256": "336c037422597c7c664f8d0fde743d61b2cab83938cee40332f9f45add58a41a",
+      "record_count": 0
+    }
+  ],
+  "counts": {
+    "input_delineation_rows": 1915,
+    "input_principal_city_rows": 1294,
+    "output_markets": 917,
+    "metropolitan_markets": 383,
+    "micropolitan_markets": 534,
+    "component_counties": 1834,
+    "principal_cities": 1270,
+    "excluded_markets": 18,
+    "excluded_delineation_rows": 81,
+    "excluded_principal_city_rows": 24,
+    "rejected_rows": 0,
+    "rejected_delineation_rows": 0,
+    "rejected_principal_city_rows": 0
+  },
+  "exclusions_by_state_fips": {
+    "15": 4,
+    "72": 10,
+    "02": 4
+  }
+}
