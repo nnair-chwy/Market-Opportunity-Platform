@@ -58,12 +58,13 @@ function sensitivityLabel(result: MarketAttractivenessResult): string {
   return "Stable";
 }
 
-export function MarketAttractivenessRanking() {
-  const [cohort, setCohort] = useState<MarketCohort>("metropolitan");
+export function MarketAttractivenessRanking({selectedMarketCode="",onChooseMarket,defaultOpen=false}:{selectedMarketCode?:string;onChooseMarket?:(code:string)=>void;defaultOpen?:boolean}={}) {
+  const initialSelection=syntheticMarketAttractivenessResults.find((market)=>market.cbsaCode===selectedMarketCode);
+  const [cohort, setCohort] = useState<MarketCohort>(initialSelection?.cohort??"metropolitan");
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("overall");
-  const [page, setPage] = useState(1);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [page, setPage] = useState(initialSelection?Math.ceil(initialSelection.cohortRank/PAGE_SIZE):1);
+  const [expandedId, setExpandedId] = useState<string | null>(initialSelection?.prototypeMarketId??null);
 
   const cohortCounts = useMemo(
     () => ({
@@ -124,7 +125,7 @@ export function MarketAttractivenessRanking() {
   }
 
   return (
-    <details className={styles.panel}>
+    <details className={styles.panel} open={defaultOpen||undefined}>
       <summary className={styles.summary}>
         <div>
           <div className={styles.eyebrow}>Synthetic screening model</div>
@@ -264,7 +265,7 @@ export function MarketAttractivenessRanking() {
                     market={market}
                     expanded={expanded}
                     onToggle={() =>
-                      setExpandedId(expanded ? null : market.prototypeMarketId)
+                      {setExpandedId(expanded ? null : market.prototypeMarketId);if(market.cbsaCode)onChooseMarket?.(market.cbsaCode);}
                     }
                   />
                 );

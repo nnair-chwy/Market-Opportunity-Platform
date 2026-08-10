@@ -36,3 +36,9 @@ Questions are ordered by their ability to invalidate or materially change the MV
 | OQ-030 | P0 | Which governed measures, directions, weights, and missing-data rules may be used for real submarket prioritization? | Real Estate analytics and metric owners | Submarket scoring |
 | OQ-031 | P1 | Which licensed broker source, verification process, retention policy, and outreach authority apply to real broker research? | Real Estate and data governance | Broker research |
 | OQ-032 | P1 | Which market deep-dive runs and segmentation approvals require durable audit history and access controls? | Product owner and governance | Agent persistence |
+| OQ-033 | P0 | Who owns the shared Evaluation Workspace scope and may approve an `EvaluationDefinition` for production use? | Product, business decision owners, and governance | Product scope and approval authority |
+| OQ-034 | P0 | Which roles may approve each of the three shared human-gate types, and what authority does a process-local response carry? | Business owners, data governance, and model risk | Human-review contract |
+| OQ-035 | P0 | Who owns and approves clinic outcome, maturity, peer-cohort, materiality, and follow-up definitions? | CVC Analytics, Finance, and clinic operations | Clinic-performance evaluation |
+| OQ-036 | P1 | What review, versioning, regression, and retirement process governs Verified Evaluation Library entries? | Product, analytics, engineering, and model risk | Verified evaluation governance |
+| OQ-037 | P1 | Which evaluation plans, evidence receipts, calculation fingerprints, assumption approvals, and action reviews require durable retention and access controls? | Product owner, security, and data governance | Production persistence and audit |
+| OQ-038 | P1 | Which edits to an approved run-local definition require a new definition version, reapproval, and deterministic recomputation? | Product owner and calculation owners | Definition lifecycle |
