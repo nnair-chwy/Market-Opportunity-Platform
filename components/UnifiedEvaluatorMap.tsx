@@ -77,6 +77,8 @@ type UnifiedEvaluatorMapProps = {
     configurationVersion: string;
     configurationFingerprint: string;
   };
+  marketScoreLabel?: string;
+  marketScoreBoundary?: string;
   locations: readonly UnifiedMapLocation[];
   selectedLocationId: string | null;
   seattleDeepDiveOverlay?: SeattleIllustrativeOverlay | null;
@@ -186,6 +188,8 @@ export function UnifiedEvaluatorMap({
   marketCategories,
   marketScores,
   marketScoreMetadata,
+  marketScoreLabel = "Synthetic attractiveness score",
+  marketScoreBoundary = "Synthetic screening only. Not a market recommendation.",
   locations,
   selectedLocationId,
   seattleDeepDiveOverlay = null,
@@ -719,7 +723,7 @@ export function UnifiedEvaluatorMap({
               {selectedMarketCode
                 ? marketScores[selectedMarketCode] === undefined
                   ? "Not scored"
-                  : `Synthetic score ${marketScores[selectedMarketCode].toFixed(1)}`
+                  : `${marketScoreLabel} ${marketScores[selectedMarketCode].toFixed(1)}`
                 : "Choose a market boundary to begin"}
             </small>
             <button
@@ -931,7 +935,7 @@ export function UnifiedEvaluatorMap({
 
         <div
           className={`workflow-map-legend ${workspaceMode === "markets" ? "market-score-legend" : ""}`}
-          aria-label={workspaceMode === "markets" ? "Synthetic attractiveness score legend" : "Location status legend"}
+          aria-label={workspaceMode === "markets" ? `${marketScoreLabel} legend` : "Location status legend"}
         >
           {seattleDeepDiveOverlay ? (
             <>
@@ -942,7 +946,7 @@ export function UnifiedEvaluatorMap({
             </>
           ) : workspaceMode === "markets" ? (
             <>
-              <strong>Synthetic attractiveness score</strong>
+              <strong>{marketScoreLabel}</strong>
               <div className="market-score-gradient" aria-hidden="true" />
               <div className="market-score-scale">
                 <span>Lower 0</span>
@@ -956,7 +960,7 @@ export function UnifiedEvaluatorMap({
               <small>
                 {marketScoreMetadata.configurationVersion} · {marketScoreMetadata.configurationFingerprint}
               </small>
-              <small>Synthetic screening only. Not a market recommendation.</small>
+              <small>{marketScoreBoundary}</small>
             </>
           ) : (
             <>

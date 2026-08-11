@@ -9,22 +9,22 @@ export async function generateMetadata(): Promise<Metadata> {
   const imageUrl = `${protocol}://${host}/og.png`;
 
   return {
-    title: "Clinic Location Evaluator",
+    title: "Evaluation Workspace",
     description:
-      "A transparent, evidence-backed workflow for evaluating candidate Chewy Vet Care locations.",
+      "An adaptable decision agent for governed, deterministic and human-reviewed evaluations.",
     icons: {
       icon: "/favicon.svg",
       shortcut: "/favicon.svg",
     },
     openGraph: {
-      title: "Clinic Location Evaluator",
-      description: "Evidence-backed decision support",
-      images: [{ url: imageUrl, width: 1674, height: 941, alt: "Clinic Location Evaluator map and evidence score interface" }],
+      title: "Evaluation Workspace",
+      description: "Goal to verifiable action packet, within governed boundaries",
+      images: [{ url: imageUrl, width: 1672, height: 941, alt: "Evaluation Workspace contract, plan and evidence canvas" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Clinic Location Evaluator",
-      description: "Evidence-backed decision support",
+      title: "Evaluation Workspace",
+      description: "Governed evidence, deterministic comparison, human review",
       images: [imageUrl],
     },
   };

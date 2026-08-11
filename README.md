@@ -1,28 +1,20 @@
-# Retail and Clinic Location Evaluator
+# Market Intelligence Evaluation Workspace
 
-Clinic-first research and product foundation for a transparent location-evaluation MVP.
-
-The intended workflow takes approved site, market, customer, competitor, demographic, and performance inputs; calculates reproducible metrics; compares candidate locations; and produces an evidence-backed evaluation brief for human review.
-
-This repository now includes an interactive frontend prototype for reviewing the user workflow. It uses public clinic-market references and synthetic candidate data. Production integrations, scoring criteria, shared persistence, and decision authority remain unapproved.
+An adaptable decision agent for geographic questions: ask a market question, inspect the evidence on a map, compare places, and receive a verifiable draft recommendation with missing data and human approvals made explicit.
 
 ## Start here
 
-- [Project context](PROJECT_CONTEXT.md)
-- [MVP scope](docs/product/mvp-scope.md)
-- [Source registry](docs/research/source-registry.md)
-- [Claim ledger](docs/research/claim-ledger.md)
-- [Open questions](docs/product/open-questions.md)
-- [Architecture](docs/technical/architecture.md)
-- [Evaluation plan](docs/evaluation/evaluation-plan.md)
+- [Product source of truth](PRODUCT.md)
+
+Everything under `docs/` is supporting research, testing, or historical decision detail. It is not required reading to understand the product.
 
 ## Current status
 
-- Scope: clinics first
-- Data: synthetic only until access and governance are confirmed
-- Implementation: frontend workflow prototype in review
-- Decision authority: human real-estate and clinic leaders
-- Material dependency: status and ownership of the existing internal site-selection MVP
+- Scope: geographic market intelligence with national-to-local drill-down
+- Connected data: public Census market context; dated AVMA state exploration
+- Demonstration-only data: synthetic Seattle and clinic fixtures
+- Internal data: Snowflake access paths identified but not connected
+- Decision authority: humans retain campaign, real-estate, investment, and operating approval
 
 ## Evidence labels
 

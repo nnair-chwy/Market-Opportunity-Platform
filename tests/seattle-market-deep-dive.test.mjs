@@ -59,18 +59,19 @@ test("illustrative hubs and geodesic areas are valid, deterministic, and non-sco
   });
 });
 
-test("persistent map owns the Seattle overlay and selection contract", async () => {
-  const [page, map] = await Promise.all([
+test("primary workspace owns the synthetic zone and synchronized selection contract", async () => {
+  const [page, workspace, zones] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/UnifiedEvaluatorMap.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/evaluation-workspace/EvaluationWorkspace.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/evaluation/zones.ts", import.meta.url), "utf8"),
   ]);
-  assert.equal((page.match(/<UnifiedEvaluatorMap/g) ?? []).length, 1);
-  assert.match(page, /seattleDeepDiveOpen && selectedMarketCode === "42660"/);
-  assert.match(page, /activeSeattleSubmarketId/);
-  assert.match(map, /SEATTLE_OVERLAY_SOURCE_ID/);
-  assert.match(map, /seattle-illustrative-area-fill/);
-  assert.match(map, /onChooseSeattleSubmarket/);
-  assert.match(map, /illustrative Seattle areas may overlap/i);
+  assert.match(page,/EvaluationWorkspace/);
+  assert.match(workspace,/ZoneMap payload=\{map\} rows=\{rows\} selectedId=\{selected.entityId\} colorField=\{colorField\} hoveredId=\{hoveredId\} onSelect=\{onSelect\}/);
+  assert.match(workspace,/onClick=\{\(\)=>onSelect\(row.entityId\)\}/);
+  assert.match(workspace,/payload\.disclaimer/);
+  assert.match(zones,/synthetic_illustrative_analysis_zone/);
+  assert.match(zones,/clipped-nearest-hub-partition-v1/);
+  assert.match(zones,/triangulate/);
 });
 
 test("Seattle agent pauses before comparison and continues only after confirmation", async () => {
