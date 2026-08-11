@@ -36,3 +36,4 @@ Questions are ordered by their ability to invalidate or materially change the MV
 | OQ-030 | P0 | Which governed measures, directions, weights, and missing-data rules may be used for real submarket prioritization? | Real Estate analytics and metric owners | Submarket scoring |
 | OQ-031 | P1 | Which licensed broker source, verification process, retention policy, and outreach authority apply to real broker research? | Real Estate and data governance | Broker research |
 | OQ-032 | P1 | Which market deep-dive runs and segmentation approvals require durable audit history and access controls? | Product owner and governance | Agent persistence |
+| OQ-033 | P0 | Who owns and approves production ecosystem event sources, verification rules, thresholds, action authority, stop conditions, routing, and outcome measurement? | Market Expansion, Marketing, CVC, data governance, and channel owners | Ecosystem production use |

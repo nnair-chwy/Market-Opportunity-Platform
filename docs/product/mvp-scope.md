@@ -64,6 +64,40 @@ This demonstration does not establish an approved submarket definition, rank
 real Seattle opportunities, verify brokers, authorize outreach, recommend
 market entry, select property, or make a lease decision.
 
+### Synthetic ecosystem ActionPacket demo
+
+The Opportunity Inbox includes one expanded `local-competitor-closure`
+playbook for Seattle CBSA `42660`. Checked-in fictional context and numeric
+signals feed deterministic `advance`, `stop`, or `blocked` policy and a
+versioned ActionPacket. The ecosystem path automatically prepares its analysis,
+course of action, owner, deadline, ordered work, conditions, measurement, and
+guardrails without a human validation or approval step. Optional AI may only
+rewrite the validated packet into concise stakeholder language.
+
+The ActionPacket and Outlook or Slack artifacts are synthetic planning
+previews. They do not send a message, start a campaign, authorize outreach,
+change a clinic or operational system, or establish approved production rules.
+Marketing and Pet Health retain their existing review workflow in this phase.
+
+### Sector workspaces
+
+The Opportunity Inbox uses the national radar as a cross-sector portfolio home
+and provides separate Growth and Marketing, Pet Health, and Market Ecosystem
+workspaces. Each workspace explains its business mandate, implemented playbook,
+candidate future opportunity patterns, accountable function, intended outcome,
+guardrails, current prototype evidence, and planned data dependencies.
+The workspace separates this profile material from a sector-specific active
+opportunity queue. That queue shows evidence blockers on each synthetic finding
+and lists unconnected production dependencies in a distinct readiness section.
+The complete evidence, review, audit, ActionPacket, and simulated communication
+workflow is available directly from that queue. Opening the national register
+is optional portfolio navigation rather than a prerequisite for sector work.
+
+Current inputs must be labeled synthetic or public context. Planned sources
+must remain visibly unconnected and approval-required. A sector workspace does
+not establish access, production ownership, thresholds, or permission to use a
+candidate internal source.
+
 ## First demonstration
 
 The demonstration should use three to five synthetic candidate sites and a small feature set, such as:

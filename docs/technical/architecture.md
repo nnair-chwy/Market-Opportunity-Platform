@@ -194,3 +194,62 @@ selected submarket ID. The browser also renders the transparent comparison,
 fictional broker profiles, activity trail, evidence receipts, and draft packet
 from validated application state. The process-local store is not durable and
 may be lost across runtime instances.
+
+## Opportunity Inbox proof of concept
+
+The Opportunity Inbox is an isolated synthetic workflow under
+`lib/opportunity-inbox`. Zod contracts validate fixture intake. Pure domain
+modules calculate synthetic baseline conditions, evaluate versioned playbooks,
+assemble evidence, and apply lifecycle rules using an injected effective time.
+Operational APIs supply unique run and receipt IDs at the application boundary.
+
+The process-local store implements a replaceable interface and separates active
+from historical opportunities. Replaying the same input is suppressed, later
+evidence in the same deduplication window updates the stable opportunity, and
+expiration preserves history. The existing UI and API routes consume this
+domain layer. They do not connect to real sources or send stakeholder messages.
+
+No model call is required for deterministic discovery. The ecosystem closure
+path validates typed event context and assembles a versioned ActionPacket before
+any wording call. Its deterministic policy owns the disposition, owner,
+deadline, completed analysis, blockers, actions, conditions, outcome, and
+guardrails. The API may then request a structured OpenAI explanation using only
+that packet. Unsupported output and missing provider configuration fail softly
+to deterministic stakeholder language. Marketing and Pet Health keep the
+existing human-review lifecycle.
+
+Ecosystem Outlook and Slack artifacts are simulated previews generated from the
+packet. They bypass the review endpoint but do not change the prepared state,
+send a message, or execute the course of action.
+
+The national Opportunity Radar reuses the complete checked-in public CBSA
+universe and geometry as a provider-neutral SVG. A deterministic projection
+adds synthetic operational scan states without modifying public context or
+feeding any record into the clinic scoring engine. The radar, portfolio metrics,
+stage receipts, activity feed, and opportunity register share market IDs and
+derive from one API snapshot. Selecting a market filters the register and shows
+the retained blocker or suppression reason when no opportunity qualified.
+
+Seattle remains the only market whose synthetic observations run through the
+three sector playbooks. Four named markets demonstrate stale, missing,
+duplicate, and quarantined paths. All other markets receive a scan-complete,
+no-qualifying-signal receipt. This is a visible national operating model, not a
+claim that real nationwide ingestion is running.
+
+Three sector routes sit beneath the national portfolio home:
+`/opportunities/growth-marketing`, `/opportunities/pet-health`, and
+`/opportunities/market-ecosystem`. They share a typed sector catalog and a
+common workspace component while retaining separate mandates, opportunity
+patterns, evidence roadmaps, outcomes, and guardrails. The catalog distinguishes
+checked-in synthetic or public-context inputs from future candidate sources and
+their unresolved dependencies. It is presentation configuration, not an
+integration registry or authorization record.
+
+Each workspace exposes a profile tab and an opportunities-and-blockers tab.
+The latter filters the shared snapshot by sector, derives evidence blockers from
+retained evidence and ActionPacket state, and displays planned-source
+dependencies separately as production activation blockers.
+It also reuses the shared opportunity-detail component and the existing review
+and delivery-preview endpoints. This keeps policy and state transitions
+identical across the sector and national surfaces while allowing the sector
+workspace to own its end-to-end workflow.

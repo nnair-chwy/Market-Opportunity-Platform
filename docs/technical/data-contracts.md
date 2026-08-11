@@ -458,3 +458,71 @@ The process-local run records status, a visible seven-step plan, allowlisted
 tool invocations, evidence receipts, the segmentation request and response,
 blockers, readiness flags, version metadata, and an optional draft packet. A
 comparison-ready state is impossible without a recorded `confirm` response.
+
+## Synthetic Opportunity Inbox
+
+The Opportunity Inbox proof of concept accepts only versioned synthetic events
+for Seattle CBSA `42660`. Source observations are `Hypothesis`; values produced
+by deterministic application rules may be `Derived`. Every accepted event
+retains its source, observation and receipt times, payload version, sensitivity,
+allowed use, quality, freshness, and processing state. Missing values remain
+`null`.
+
+Malformed, rejected, or prohibited events are excluded from playbook evaluation
+and retained as quarantine receipts with stable IDs and explicit reasons.
+Duplicates are retained as separate audit identifiers. Supporting,
+contradicting, missing, stale, rejected, and quarantined states are not
+collapsed.
+
+Each versioned `PlaybookDefinition` declares its synthetic thresholds, required
+metrics, evidence coverage, freshness, deduplication window, cooldown,
+expiration, permitted actions, stakeholder role, outcome definition, and
+guardrails. These definitions have `allowed_use: synthetic_prototype_only` and
+do not approve production rules.
+
+The ecosystem closure fixture also carries typed context observations for
+fictional retailer identity, synthetic location, event type, verification,
+permanence, effective date, source record, geography eligibility, delivery and
+CVC coverage, campaign saturation, inventory constraints, and competitor
+context. Each context observation has a discriminated string, boolean, number,
+or date value plus its own source, evidence status, quality, observation time,
+sensitivity, and allowed use. A reported closure and a verified permanent
+closure are separate facts. Missing typed values remain `null` and `Unknown`.
+
+For `local-competitor-closure`, deterministic application code assembles a
+versioned `ActionPacket`. The packet records the `advance`, `stop`, or `blocked`
+system disposition; prepared course of action; synthetic accountable owner;
+calculated 48-hour deadline; situation; completed analysis; remaining blockers;
+ordered actions; advance and stop conditions; measurable outcome; guardrails;
+assumptions; source IDs; and input, evidence, playbook, packet, and calculation
+versions. `advance` requires every configured condition to pass. A known
+contradiction produces `stop`; absent required evidence produces `blocked`.
+No missing value is imputed.
+
+The ecosystem packet has no human validation or approval gate. That exception
+applies only to automatically preparing synthetic planning artifacts and
+simulated communication previews. It does not authorize a real campaign,
+outreach, operational write, market decision, clinic action, or stakeholder
+message. Marketing and Pet Health opportunities retain their current separate
+human dispositions.
+
+An `Opportunity` preserves stable identity, input and calculation versions,
+the triggering rule result, evidence snapshot, expiration, optional ecosystem
+ActionPacket and explanation, deterministic fallback draft, and sector-specific
+disposition. Process-local storage retains active and historical records but
+may be lost on restart or across runtime instances.
+
+The national monitoring projection covers every market in the checked-in
+`SRC-014` CBSA universe. A `MarketScanStatus` records the market identity,
+operational scan state, opportunity count, explanation, observation time,
+evidence status, allowed use, and scoring eligibility. These records describe
+workflow state only. They must retain `scoringEligibility: none` and must not be
+interpreted as attractiveness, performance, priority, or rank.
+
+`DiscoveryStageReceipt` records deterministic counts for ingest, validation,
+market scan, qualification, and review preparation. `DiscoveryActivityEvent`
+is a compact projection of retained market exceptions and qualifications. The
+portfolio metrics are derived from the same market statuses and active
+opportunities, so the map, pipeline, feed, and register reconcile. Outside
+Seattle, highlighted states are explicitly synthetic workflow examples and do
+not assert real market conditions.
