@@ -1,0 +1,15 @@
+User-provided source deck:
+/Users/nnair/Downloads/CVC_Clinic_Market_and_Location_Discovery_Presentation_20_Minute.pptx
+
+User-provided talk track:
+/Users/nnair/.codex/attachments/8966e16c-c16d-41e9-b955-155a581795f9/pasted-text.txt
+
+Internal repository sources used to keep claims and boundaries accurate:
+/Users/nnair/Documents/Retail and Clinic Location Evaluator/PROJECT_CONTEXT.md
+/Users/nnair/Documents/Retail and Clinic Location Evaluator/docs/product/mvp-scope.md
+/Users/nnair/Documents/Retail and Clinic Location Evaluator/docs/technical/data-contracts.md
+/Users/nnair/Documents/Retail and Clinic Location Evaluator/docs/technical/ai-boundaries.md
+/Users/nnair/Documents/Retail and Clinic Location Evaluator/docs/research/claim-ledger.md
+/Users/nnair/Documents/Retail and Clinic Location Evaluator/docs/product/open-questions.md
+
+No external images or external claims were added.

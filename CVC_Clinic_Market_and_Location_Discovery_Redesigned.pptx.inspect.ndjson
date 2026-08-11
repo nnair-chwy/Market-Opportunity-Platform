@@ -1,0 +1,384 @@
+{"kind":"deck","id":"pr/937spr","name":"Deck"}
+{"kind":"layout","layoutId":"/ppt/slideMasters/slideMaster1.xml","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout1.xml","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/y90nupkv","slide":1,"title":"CHEWY VET CARE","textShapes":6}
+{"kind":"textbox","id":"sh/sryl4zqx","slide":1,"text":"CHEWY VET CARE","textPreview":"CHEWY VET CARE","textChars":14,"textLines":1,"bbox":[64,48,350,30]}
+{"kind":"textbox","id":"sh/547294r6","slide":1,"text":"CVC Clinic Market\nand Location Discovery","textPreview":"CVC Clinic Market | and Location Discovery","textChars":40,"textLines":2,"bbox":[64,150,900,190]}
+{"kind":"textbox","id":"sh/k3yl0zql","slide":1,"text":"A guided path from market signal to the next local decision","textPreview":"A guided path from market signal to the next local decision","textChars":59,"textLines":1,"bbox":[68,380,760,70]}
+{"kind":"textbox","id":"sh/7qp4be9c","slide":1,"text":"VISION + LIVE DEMO","textPreview":"VISION + LIVE DEMO","textChars":18,"textLines":1,"bbox":[68,612,320,30]}
+{"kind":"textbox","id":"sh/65g3298r","slide":1,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[1036,0,244,720]}
+{"kind":"textbox","id":"sh/ts7md4r2","slide":1,"text":"CVC","textPreview":"CVC","textChars":3,"textLines":1,"bbox":[1036,286,244,120]}
+{"kind":"notes","id":"nt/y90nupkv","slide":1,"text":"Today we are showing a smarter way to find and evaluate potential CVC clinic locations.\n\nThe idea begins with a broader question: how can Chewy better understand what is happening in a specific market, identify the areas with the strongest potential, and use those insights to make better local decisions?\n\nWe started with clinic locations, but what we learned has implications well beyond real estate.\n\n[Sources]\nUser-provided presentation script\nPROJECT_CONTEXT.md\ndocs/product/mvp-scope.md"}
+{"kind":"slide","id":"sl/hwbqtkby","slide":2,"title":"WHY THE VISION CHANGED","textShapes":18}
+{"kind":"textbox","id":"sh/do3q9szq","slide":2,"text":"WHY THE VISION CHANGED","textPreview":"WHY THE VISION CHANGED","textChars":22,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/9072xkry","slide":2,"text":"The gap is between the tools","textPreview":"The gap is between the tools","textChars":28,"textLines":1,"bbox":[64,76,990,74]}
+{"kind":"textbox","id":"sh/ozy1ofad","slide":2,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/b29kza94","slide":2,"text":"Maps + files + conversations need one decision trail","textPreview":"Maps + files + conversations need one decision trail","textChars":52,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/a10jqpsj","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/x4r21kru","slide":2,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,220,310,280]}
+{"kind":"textbox","id":"sh/w3i1sfa9","slide":2,"text":"SEE","textPreview":"SEE","textChars":3,"textLines":1,"bbox":[92,246,250,30]}
+{"kind":"textbox","id":"sh/r65knqtk","slide":2,"text":"Maps","textPreview":"Maps","textChars":4,"textLines":1,"bbox":[92,296,250,64]}
+{"kind":"textbox","id":"sh/q5wjelsz","slide":2,"text":"Market context","textPreview":"Market context","textChars":14,"textLines":1,"bbox":[92,388,250,44]}
+{"kind":"textbox","id":"sh/ove9o7yd","slide":2,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[422,220,310,280]}
+{"kind":"textbox","id":"sh/9wnqhczy","slide":2,"text":"CALCULATE","textPreview":"CALCULATE","textChars":9,"textLines":1,"bbox":[450,246,250,30]}
+{"kind":"textbox","id":"sh/mtwrmxg7","slide":2,"text":"Files","textPreview":"Files","textChars":5,"textLines":1,"bbox":[450,296,250,64]}
+{"kind":"textbox","id":"sh/nu58f2hs","slide":2,"text":"Scores + facts","textPreview":"Scores + facts","textChars":14,"textLines":1,"bbox":[450,388,250,44]}
+{"kind":"textbox","id":"sh/wjy9sry9","slide":2,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[780,190,436,340]}
+{"kind":"textbox","id":"sh/xk7qlczu","slide":2,"text":"DECIDE","textPreview":"DECIDE","textChars":6,"textLines":1,"bbox":[816,226,340,30]}
+{"kind":"textbox","id":"sh/ahwrqhgj","slide":2,"text":"One guided\npath","textPreview":"One guided | path","textChars":15,"textLines":2,"bbox":[816,280,340,110]}
+{"kind":"textbox","id":"sh/bip8jmho","slide":2,"text":"Evidence → tradeoffs → next action","textPreview":"Evidence → tradeoffs → next action","textChars":34,"textLines":1,"bbox":[816,430,340,44]}
+{"kind":"textbox","id":"sh/cnupgny5","slide":2,"text":"Connect the work. Preserve the why.","textPreview":"Connect the work. Preserve the why.","textChars":35,"textLines":1,"bbox":[64,566,930,48]}
+{"kind":"notes","id":"nt/hwbqtkby","slide":2,"text":"CVC already has strong mapping and analysis tools. The problem is that the full decision is still spread across maps, spreadsheets, property information, and conversations.\n\nThe hard part is connecting those pieces. Why did we focus on this part of the market? What makes it different from another area? Why did one opportunity move forward? What information is missing?\n\nOur solution creates one guided path through those questions.\n\n[Sources]\nUser-provided presentation script\nPROJECT_CONTEXT.md"}
+{"kind":"slide","id":"sl/ofy9wn61","slide":3,"title":"PRODUCT STATEMENT","textShapes":15}
+{"kind":"textbox","id":"sh/i9w3u58v","slide":3,"text":"PRODUCT STATEMENT","textPreview":"PRODUCT STATEMENT","textChars":17,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/cza94vmx","slide":3,"text":"A guided investigation, not another score","textPreview":"A guided investigation, not another score","textChars":41,"textLines":1,"bbox":[64,76,1110,72]}
+{"kind":"textbox","id":"sh/d0jax03i","slide":3,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/298ryl4v","slide":3,"text":"Evidence-backed workflow | Human-reviewed decisions","textPreview":"Evidence-backed workflow | Human-reviewed decisions","textChars":51,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/3ah8rqlg","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/obq90bml","slide":3,"text":"DISCOVER","textPreview":"DISCOVER","textChars":8,"textLines":1,"bbox":[72,220,300,50]}
+{"kind":"textbox","id":"sh/pcjqtg36","slide":3,"text":"Where to look","textPreview":"Where to look","textChars":13,"textLines":1,"bbox":[72,276,300,70]}
+{"kind":"textbox","id":"sh/m5cra54z","slide":3,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[398,195,8,210]}
+{"kind":"textbox","id":"sh/n6ls3alk","slide":3,"text":"COMPARE","textPreview":"COMPARE","textChars":7,"textLines":1,"bbox":[454,220,300,50]}
+{"kind":"textbox","id":"sh/n2l4fq98","slide":3,"text":"Why it matters","textPreview":"Why it matters","textChars":14,"textLines":1,"bbox":[454,276,320,70]}
+{"kind":"textbox","id":"sh/m1c3mlsn","slide":3,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[806,195,8,210]}
+{"kind":"textbox","id":"sh/943mhgre","slide":3,"text":"REVIEW","textPreview":"REVIEW","textChars":6,"textLines":1,"bbox":[860,220,300,50]}
+{"kind":"textbox","id":"sh/83ulovat","slide":3,"text":"What happens next","textPreview":"What happens next","textChars":17,"textLines":1,"bbox":[860,276,330,100]}
+{"kind":"textbox","id":"sh/v6l4jq94","slide":3,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,482,1152,96]}
+{"kind":"textbox","id":"sh/a5c3ql8z","slide":3,"text":"The output is a clear story of evidence, tradeoffs, and next steps.","textPreview":"The output is a clear story of evidence, tradeoffs, and next steps.","textChars":67,"textLines":1,"bbox":[94,482,1092,96]}
+{"kind":"shape","id":"sh/x8nml0ra","slide":3,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/w7ulsvqp","slide":3,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/ja54na9g","slide":3,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/ofy9wn61","slide":3,"text":"The product is an AI-guided market and location discovery workflow.\n\nIt helps the team move from a large market to a smaller set of promising submarkets, and then to real candidate properties. At each step it gathers the available evidence, runs a consistent analysis, explains the tradeoffs, and prepares the next decision for review.\n\nThe result is not just a score. It is a clear story of where to look, why that area matters, and what the team should investigate next.\n\n[Sources]\nUser-provided presentation script\ndocs/product/mvp-scope.md\ndocs/technical/ai-boundaries.md"}
+{"kind":"slide","id":"sl/jyx0ra1s","slide":4,"title":"THE SCALABLE FUNNEL","textShapes":21}
+{"kind":"textbox","id":"sh/sri9s7q9","slide":4,"text":"THE SCALABLE FUNNEL","textPreview":"THE SCALABLE FUNNEL","textChars":19,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/1cj2d8b6","slide":4,"text":"Narrow the question at every step","textPreview":"Narrow the question at every step","textChars":33,"textLines":1,"bbox":[64,76,1000,70]}
+{"kind":"textbox","id":"sh/0ba143al","slide":4,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/rm1k7yt4","slide":4,"text":"Each level answers a different decision question","textPreview":"Each level answers a different decision question","textChars":48,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/ql8jytsj","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/doj29oba","slide":4,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[90,190,1100,76]}
+{"kind":"textbox","id":"sh/sna103ap","slide":4,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[112,190,54,76]}
+{"kind":"textbox","id":"sh/3ihk3et8","slide":4,"text":"MARKET","textPreview":"MARKET","textChars":6,"textLines":1,"bbox":[172,190,240,76]}
+{"kind":"textbox","id":"sh/ih8ju9sn","slide":4,"text":"Where should we begin?","textPreview":"Where should we begin?","textChars":22,"textLines":1,"bbox":[830,190,330,76]}
+{"kind":"textbox","id":"sh/kbm987y5","slide":4,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[180,288,920,76]}
+{"kind":"textbox","id":"sh/5cva1cfq","slide":4,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[202,288,54,76]}
+{"kind":"textbox","id":"sh/i94r6xgz","slide":4,"text":"SUBMARKET","textPreview":"SUBMARKET","textChars":9,"textLines":1,"bbox":[262,288,240,76]}
+{"kind":"textbox","id":"sh/jadsz2xk","slide":4,"text":"Where is potential concentrated?","textPreview":"Where is potential concentrated?","textChars":32,"textLines":1,"bbox":[740,288,330,76]}
+{"kind":"textbox","id":"sh/w72947yt","slide":4,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[270,386,740,76]}
+{"kind":"textbox","id":"sh/x8vaxsfe","slide":4,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[292,386,54,76]}
+{"kind":"textbox","id":"sh/a5kr2xg3","slide":4,"text":"PROPERTY","textPreview":"PROPERTY","textChars":8,"textLines":1,"bbox":[352,386,240,76]}
+{"kind":"textbox","id":"sh/v6tsv2xo","slide":4,"text":"Is the site workable?","textPreview":"Is the site workable?","textChars":21,"textLines":1,"bbox":[650,386,330,76]}
+{"kind":"textbox","id":"sh/g36tgryd","slide":4,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[360,484,560,76]}
+{"kind":"textbox","id":"sh/h4fa9wfy","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[382,484,54,76]}
+{"kind":"textbox","id":"sh/p0batw72","slide":4,"text":"REVIEW ORDER","textPreview":"REVIEW ORDER","textChars":12,"textLines":1,"bbox":[442,484,240,76]}
+{"kind":"textbox","id":"sh/oz29krqh","slide":4,"text":"What should move first?","textPreview":"What should move first?","textChars":23,"textLines":1,"bbox":[560,484,330,76]}
+{"kind":"shape","id":"sh/3ytsrmpw","slide":4,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/2xkrih8b","slide":4,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/1wbapc7q","slide":4,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/gv29g7q5","slide":4,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/fu9sn2p0","slide":4,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/et0reh8f","slide":4,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/tsrqlc7u","slide":4,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/jyx0ra1s","slide":4,"text":"The workflow narrows the search in four steps.\n\nWe start with markets, identify the strongest submarkets inside them, evaluate available properties, and create a review order.\n\nThe broad market view tells us where to begin. The AI-guided deep dive then turns a large geography into practical areas the team can investigate.\n\n[Sources]\nUser-provided presentation script\ndocs/product/mvp-scope.md"}
+{"kind":"slide","id":"sl/i107q5of","slide":5,"title":"HOW IT WORKS AT SCALE","textShapes":26}
+{"kind":"textbox","id":"sh/5o7mhcju","slide":5,"text":"HOW IT WORKS AT SCALE","textPreview":"HOW IT WORKS AT SCALE","textChars":21,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/dgbulwnm","slide":5,"text":"Screen broadly. Investigate locally.","textPreview":"Screen broadly. Investigate locally.","textChars":36,"textLines":1,"bbox":[64,76,1080,72]}
+{"kind":"textbox","id":"sh/cf2tcr61","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/z2tcnm5s","slide":5,"text":"Approved market universe → focused regional investigation","textPreview":"Approved market universe → focused regional investigation","textChars":57,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/yhkbe1o7","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/l4bupwny","slide":5,"text":"BROAD SCREEN","textPreview":"BROAD SCREEN","textChars":12,"textLines":1,"bbox":[72,190,340,30]}
+{"kind":"textbox","id":"sh/032tgr6d","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[76,394,24,66]}
+{"kind":"textbox","id":"sh/n6dcr65o","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[123,342,24,118]}
+{"kind":"textbox","id":"sh/m5kbi1oj","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[170,376,24,84]}
+{"kind":"textbox","id":"sh/w32dkbuh","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[217,310,24,150]}
+{"kind":"textbox","id":"sh/x4vedgvm","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[264,364,24,96]}
+{"kind":"textbox","id":"sh/ahkvi1cb","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[311,328,24,132]}
+{"kind":"textbox","id":"sh/v2twb6dw","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[358,388,24,72]}
+{"kind":"textbox","id":"sh/k7mxovud","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[405,352,24,108]}
+{"kind":"textbox","id":"sh/58vehgvy","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[452,316,24,144]}
+{"kind":"textbox","id":"sh/i54fmlc7","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[499,370,24,90]}
+{"kind":"textbox","id":"sh/j6dwfqds","slide":5,"text":"Review the approved market list consistently","textPreview":"Review the approved market list consistently","textChars":44,"textLines":1,"bbox":[72,500,500,58]}
+{"kind":"textbox","id":"sh/sb6xsvu9","slide":5,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[642,178,574,396]}
+{"kind":"textbox","id":"sh/tcfel0vu","slide":5,"text":"DEEP DIVE","textPreview":"DEEP DIVE","textChars":9,"textLines":1,"bbox":[686,216,430,30]}
+{"kind":"textbox","id":"sh/hgrmpwj2","slide":5,"text":"Earn the right\nto go deeper","textPreview":"Earn the right | to go deeper","textChars":27,"textLines":2,"bbox":[686,272,440,112]}
+{"kind":"textbox","id":"sh/gfi5grih","slide":5,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[686,430,30,34]}
+{"kind":"textbox","id":"sh/fe94nm1w","slide":5,"text":"Apply hard rules","textPreview":"Apply hard rules","textChars":16,"textLines":1,"bbox":[730,430,350,34]}
+{"kind":"textbox","id":"sh/ud0ne10b","slide":5,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[686,474,30,34]}
+{"kind":"textbox","id":"sh/pkr6tgjy","slide":5,"text":"Compare approved criteria","textPreview":"Compare approved criteria","textChars":25,"textLines":1,"bbox":[730,474,350,34]}
+{"kind":"textbox","id":"sh/4ji5kbid","slide":5,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[686,518,30,34]}
+{"kind":"textbox","id":"sh/3i94r61s","slide":5,"text":"Investigate the region","textPreview":"Investigate the region","textChars":22,"textLines":1,"bbox":[730,518,350,34]}
+{"kind":"shape","id":"sh/2h0ni107","slide":5,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/i107q5of","slide":5,"text":"At scale, the system could regularly review an approved list of markets and highlight the ones that appear most promising under the selected business criteria.\n\nInstead of asking someone to manually study every city, we use the broad screen to decide where deeper work is worth the effort.\n\nOnce a market advances, the AI agent begins a focused regional investigation. That is where the system moves from a national view into local opportunity.\n\n[Sources]\nUser-provided presentation script\ndocs/product/mvp-scope.md\ndocs/product/open-questions.md"}
+{"kind":"slide","id":"sl/x8f69ofe","slide":6,"title":"AI-GUIDED SUBMARKET ANALYSIS","textShapes":23}
+{"kind":"textbox","id":"sh/1k3mhozu","slide":6,"text":"AI-GUIDED SUBMARKET ANALYSIS","textPreview":"AI-GUIDED SUBMARKET ANALYSIS","textChars":28,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/yhg7epsj","slide":6,"text":"The analyst sets the geography before scoring","textPreview":"The analyst sets the geography before scoring","textChars":45,"textLines":1,"bbox":[64,76,1120,72]}
+{"kind":"textbox","id":"sh/zi98nu94","slide":6,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/87ipkzal","slide":6,"text":"Proposal → human confirmation → deterministic comparison → explanation","textPreview":"Proposal → human confirmation → deterministic comparison → explanation","textChars":70,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/98rqt4r6","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/ml07i9sv","slide":6,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,210,250,330]}
+{"kind":"textbox","id":"sh/7m98ru9g","slide":6,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[88,234,60,28]}
+{"kind":"textbox","id":"sh/oryp8fah","slide":6,"text":"PROPOSE","textPreview":"PROPOSE","textChars":7,"textLines":1,"bbox":[88,300,202,44]}
+{"kind":"textbox","id":"sh/pc76hkr2","slide":6,"text":"Practical local areas","textPreview":"Practical local areas","textChars":21,"textLines":1,"bbox":[88,378,202,80]}
+{"kind":"textbox","id":"sh/h4bupgn6","slide":6,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[354,210,250,330]}
+{"kind":"textbox","id":"sh/w32twb6l","slide":6,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[378,234,60,28]}
+{"kind":"textbox","id":"sh/v2tcn650","slide":6,"text":"CONFIRM","textPreview":"CONFIRM","textChars":7,"textLines":1,"bbox":[378,300,202,44]}
+{"kind":"textbox","id":"sh/u1kbu1ov","slide":6,"text":"Human geography gate","textPreview":"Human geography gate","textChars":20,"textLines":1,"bbox":[378,378,202,80]}
+{"kind":"textbox","id":"sh/5svutgni","slide":6,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[644,210,250,330]}
+{"kind":"textbox","id":"sh/47mt0b6x","slide":6,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[668,234,60,28]}
+{"kind":"textbox","id":"sh/j6dcr65c","slide":6,"text":"COMPARE","textPreview":"COMPARE","textChars":7,"textLines":1,"bbox":[668,300,202,44]}
+{"kind":"textbox","id":"sh/i54bylor","slide":6,"text":"Same rules for every area","textPreview":"Same rules for every area","textChars":25,"textLines":1,"bbox":[668,378,202,80]}
+{"kind":"textbox","id":"sh/twfux0ne","slide":6,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[934,210,250,330]}
+{"kind":"textbox","id":"sh/svmt4v6t","slide":6,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[958,234,60,28]}
+{"kind":"textbox","id":"sh/cbe5g3ih","slide":6,"text":"EXPLAIN","textPreview":"EXPLAIN","textChars":7,"textLines":1,"bbox":[958,300,202,44]}
+{"kind":"textbox","id":"sh/dcnm98zm","slide":6,"text":"Strengths, gaps, tradeoffs","textPreview":"Strengths, gaps, tradeoffs","textChars":26,"textLines":1,"bbox":[958,378,202,80]}
+{"kind":"textbox","id":"sh/qpwnet0b","slide":6,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[330,182,298,6]}
+{"kind":"textbox","id":"sh/bq547yhw","slide":6,"text":"ANALYST CHECKPOINT","textPreview":"ANALYST CHECKPOINT","textChars":18,"textLines":1,"bbox":[330,150,298,28]}
+{"kind":"shape","id":"sh/0fy5k3id","slide":6,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/lg76d8zy","slide":6,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/ydgnit07","slide":6,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/zep4byhs","slide":6,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/gju58ji9","slide":6,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/x8f69ofe","slide":6,"text":"This is a key part of the solution.\n\nThe AI agent gathers the approved market information and works through the market one step at a time. It proposes a set of practical submarkets, such as the urban core, nearby growth areas, suburban coverage areas, or other locally meaningful groups.\n\nThe analyst reviews that proposed breakdown before the analysis continues. Once it is confirmed, the system calculates the results for each submarket using the same rules. The agent then studies those results, looks for strengths, gaps, and tradeoffs, and groups the submarkets into clear categories: areas to investigate now, areas that look promising but need more evidence, and areas that are lower priority under the current scenario.\n\nThis turns a large market into a short, explainable list of places where deeper investigation should begin.\n\n[Sources]\nUser-provided presentation script\ndocs/product/mvp-scope.md\ndocs/technical/ai-boundaries.md"}
+{"kind":"slide","id":"sl/gnmp4jqx","slide":7,"title":"WHAT ANALYSTS SEE","textShapes":24}
+{"kind":"textbox","id":"sh/s3ml0v61","slide":7,"text":"WHAT ANALYSTS SEE","textPreview":"WHAT ANALYSTS SEE","textChars":17,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/cb2tkvap","slide":7,"text":"One workspace. One evidence trail.","textPreview":"One workspace. One evidence trail.","textChars":34,"textLines":1,"bbox":[64,76,980,72]}
+{"kind":"textbox","id":"sh/dcbud0ra","slide":7,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/ydkbm5sv","slide":7,"text":"Every result shows inputs, missing evidence, and drivers","textPreview":"Every result shows inputs, missing evidence, and drivers","textChars":56,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/zedcfa9g","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/kzmdova1","slide":7,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[68,208,1120,8]}
+{"kind":"textbox","id":"sh/l0vuh0rm","slide":7,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[68,185,26,54]}
+{"kind":"textbox","id":"sh/eh0ba1sr","slide":7,"text":"MARKET","textPreview":"MARKET","textChars":6,"textLines":1,"bbox":[68,270,300,44]}
+{"kind":"textbox","id":"sh/fi9c369c","slide":7,"text":"Context","textPreview":"Context","textChars":7,"textLines":1,"bbox":[68,320,300,38]}
+{"kind":"textbox","id":"sh/baxkjqlk","slide":7,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[440,185,26,54]}
+{"kind":"textbox","id":"sh/a9ojq5kz","slide":7,"text":"SUBMARKET","textPreview":"SUBMARKET","textChars":9,"textLines":1,"bbox":[440,270,300,44]}
+{"kind":"textbox","id":"sh/xcz2l03q","slide":7,"text":"Why here","textPreview":"Why here","textChars":8,"textLines":1,"bbox":[440,320,300,38]}
+{"kind":"textbox","id":"sh/cbq1sv25","slide":7,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[812,185,26,54]}
+{"kind":"textbox","id":"sh/n6x0fqlo","slide":7,"text":"PROPERTY","textPreview":"PROPERTY","textChars":8,"textLines":1,"bbox":[812,270,300,44]}
+{"kind":"textbox","id":"sh/25ojml43","slide":7,"text":"What is workable","textPreview":"What is workable","textChars":16,"textLines":1,"bbox":[812,320,300,38]}
+{"kind":"textbox","id":"sh/p8fih03e","slide":7,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[68,420,340,132]}
+{"kind":"textbox","id":"sh/o761ov2t","slide":7,"text":"ASK","textPreview":"ASK","textChars":3,"textLines":1,"bbox":[96,438,280,36]}
+{"kind":"textbox","id":"sh/f2d0b6lc","slide":7,"text":"Plain language","textPreview":"Plain language","textChars":14,"textLines":1,"bbox":[96,486,280,44]}
+{"kind":"textbox","id":"sh/eh4jil4r","slide":7,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[454,420,340,132]}
+{"kind":"textbox","id":"sh/id4ju1oz","slide":7,"text":"COMPARE","textPreview":"COMPARE","textChars":7,"textLines":1,"bbox":[482,438,280,36]}
+{"kind":"textbox","id":"sh/jedkn654","slide":7,"text":"Tradeoffs","textPreview":"Tradeoffs","textChars":9,"textLines":1,"bbox":[482,486,280,44]}
+{"kind":"textbox","id":"sh/4fm1wb6p","slide":7,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[840,420,348,132]}
+{"kind":"textbox","id":"sh/50v2pgna","slide":7,"text":"TRACE","textPreview":"TRACE","textChars":5,"textLines":1,"bbox":[868,438,292,36]}
+{"kind":"textbox","id":"sh/q143ylov","slide":7,"text":"Evidence + gaps","textPreview":"Evidence + gaps","textChars":15,"textLines":1,"bbox":[868,486,292,44]}
+{"kind":"shape","id":"sh/r2dkrq5g","slide":7,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/gnmp4jqx","slide":7,"text":"The analyst sees the whole journey in one place.\n\nThey can start with the market, review the submarkets the agent created, see why each area received its category, and then move into actual properties.\n\nFor every submarket or property, the system shows the information used, what is missing, and what drove the result. The analyst can ask follow-up questions in plain language, compare areas, and understand what would need to change for a different result.\n\nThe goal is to make the analysis easier to use, not just faster to produce.\n\n[Sources]\nUser-provided presentation script\ndocs/product/mvp-scope.md\ndocs/technical/data-contracts.md"}
+{"kind":"slide","id":"sl/fu1gfa1s","slide":8,"title":"THREE OUTPUTS STAY SEPARATE","textShapes":17}
+{"kind":"textbox","id":"sh/kfixwbe1","slide":8,"text":"THREE OUTPUTS STAY SEPARATE","textPreview":"THREE OUTPUTS STAY SEPARATE","textChars":27,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/18byd4zy","slide":8,"text":"Three questions. Three different decisions.","textPreview":"Three questions. Three different decisions.","textChars":43,"textLines":1,"bbox":[64,76,1120,72]}
+{"kind":"textbox","id":"sh/g72x4zyd","slide":8,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/ri9g7uhw","slide":8,"text":"A strong signal cannot hide a hard constraint","textPreview":"A strong signal cannot hide a hard constraint","textChars":45,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/6h0fypgb","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/tkby9kzm","slide":8,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[64,220,80,36]}
+{"kind":"textbox","id":"sh/sjix0zy1","slide":8,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,274,324,10]}
+{"kind":"textbox","id":"sh/je9g3ahk","slide":8,"text":"ATTRACTIVE?","textPreview":"ATTRACTIVE?","textChars":11,"textLines":1,"bbox":[64,318,324,68]}
+{"kind":"textbox","id":"sh/id0fu50z","slide":8,"text":"Is the area promising?","textPreview":"Is the area promising?","textChars":22,"textLines":1,"bbox":[64,414,300,56]}
+{"kind":"textbox","id":"sh/o7ydoret","slide":8,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[452,220,80,36]}
+{"kind":"textbox","id":"sh/98rehwve","slide":8,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[452,274,324,10]}
+{"kind":"textbox","id":"sh/m5gvmhwn","slide":8,"text":"WORKABLE?","textPreview":"WORKABLE?","textChars":9,"textLines":1,"bbox":[452,318,324,68]}
+{"kind":"textbox","id":"sh/n6pwfmd8","slide":8,"text":"Can the property operate?","textPreview":"Can the property operate?","textChars":25,"textLines":1,"bbox":[452,414,300,56]}
+{"kind":"textbox","id":"sh/0jydkreh","slide":8,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[840,220,80,36]}
+{"kind":"textbox","id":"sh/1k7edwv2","slide":8,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[840,274,324,10]}
+{"kind":"textbox","id":"sh/ehgvihwr","slide":8,"text":"READY?","textPreview":"READY?","textChars":6,"textLines":1,"bbox":[840,318,324,68]}
+{"kind":"textbox","id":"sh/zipwbmdc","slide":8,"text":"Should it move now?","textPreview":"Should it move now?","textChars":19,"textLines":1,"bbox":[840,414,300,56]}
+{"kind":"notes","id":"nt/fu1gfa1s","slide":8,"text":"We keep three questions separate: Is the area attractive? Is the property workable? And is it ready to pursue now?\n\nKeeping those questions separate prevents a high score from hiding a serious property or timing issue.\n\n[Sources]\nUser-provided presentation script\ndocs/product/mvp-scope.md\ndocs/technical/ai-boundaries.md"}
+{"kind":"slide","id":"sl/udsvah03","slide":9,"title":"SEQUENCING EXAMPLE","textShapes":15}
+{"kind":"textbox","id":"sh/0ru1ozyp","slide":9,"text":"SEQUENCING EXAMPLE","textPreview":"SEQUENCING EXAMPLE","textChars":18,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/1cfmhgne","slide":9,"text":"The highest score can still wait","textPreview":"The highest score can still wait","textChars":32,"textLines":1,"bbox":[64,76,1000,72]}
+{"kind":"textbox","id":"sh/0b65obm9","slide":9,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/nex4jq5k","slide":9,"text":"Viability and readiness determine the queue","textPreview":"Viability and readiness determine the queue","textChars":43,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/mdonql4z","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/9gzml0nq","slide":9,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,200,480,360]}
+{"kind":"textbox","id":"sh/ofq5svm5","slide":9,"text":"PROPERTY A","textPreview":"PROPERTY A","textChars":10,"textLines":1,"bbox":[98,232,400,32]}
+{"kind":"textbox","id":"sh/bih4na5w","slide":9,"text":"HIGH\nSCORE","textPreview":"HIGH | SCORE","textChars":10,"textLines":2,"bbox":[98,300,390,118]}
+{"kind":"textbox","id":"sh/ah8nu54b","slide":9,"text":"Missing evidence\nUnconfirmed constraints","textPreview":"Missing evidence | Unconfirmed constraints","textChars":40,"textLines":2,"bbox":[98,460,390,70]}
+{"kind":"textbox","id":"sh/oza1gfyh","slide":9,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[596,200,620,360]}
+{"kind":"textbox","id":"sh/p0ji9kf2","slide":9,"text":"PROPERTY B","textPreview":"PROPERTY B","textChars":10,"textLines":1,"bbox":[632,232,520,32]}
+{"kind":"textbox","id":"sh/2xsjepgb","slide":9,"text":"MOVES\nFIRST","textPreview":"MOVES | FIRST","textChars":11,"textLines":2,"bbox":[632,300,510,118]}
+{"kind":"textbox","id":"sh/3y107axw","slide":9,"text":"Workable option\nStronger evidence coverage","textPreview":"Workable option | Stronger evidence coverage","textChars":42,"textLines":2,"bbox":[632,460,510,70]}
+{"kind":"textbox","id":"sh/cnu1kzyd","slide":9,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[520,342,104,8]}
+{"kind":"textbox","id":"sh/do3id4fy","slide":9,"text":"QUEUE","textPreview":"QUEUE","textChars":5,"textLines":1,"bbox":[520,306,104,28]}
+{"kind":"shape","id":"sh/qlcjipgn","slide":9,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/bml0buxs","slide":9,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/udsvah03","slide":9,"text":"A strong market or location score does not automatically determine what should move first.\n\nProperty feasibility and execution readiness remain separate. A viable property can move ahead of a higher-scoring option when the higher-scoring option still has unresolved constraints or missing evidence.\n\n[Sources]\nSource presentation\ndocs/product/mvp-scope.md\ndocs/technical/data-contracts.md"}
+{"kind":"slide","id":"sl/m90b6t0r","slide":10,"title":"WHERE THE PROTOTYPE STANDS","textShapes":15}
+{"kind":"textbox","id":"sh/atwbelcn","slide":10,"text":"WHERE THE PROTOTYPE STANDS","textPreview":"WHERE THE PROTOTYPE STANDS","textChars":26,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/xc3mho32","slide":10,"text":"It proves the workflow,\nnot the recommendation.","textPreview":"It proves the workflow, | not the recommendation.","textChars":47,"textLines":2,"bbox":[64,84,1040,136]}
+{"kind":"textbox","id":"sh/cbu58j2h","slide":10,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/zelojyl8","slide":10,"text":"Seattle synthetic demonstration | Human review required","textPreview":"Seattle synthetic demonstration | Human review required","textChars":55,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/ydcnatkn","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/l036l83y","slide":10,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,280,528,300]}
+{"kind":"textbox","id":"sh/kzu5c32t","slide":10,"text":"DEMONSTRATES","textPreview":"DEMONSTRATES","textChars":12,"textLines":1,"bbox":[98,312,450,30]}
+{"kind":"textbox","id":"sh/725onyl4","slide":10,"text":"Market context","textPreview":"Market context","textChars":14,"textLines":1,"bbox":[98,370,420,38]}
+{"kind":"textbox","id":"sh/m1cnetkj","slide":10,"text":"Proposed submarkets","textPreview":"Proposed submarkets","textChars":19,"textLines":1,"bbox":[98,422,420,38]}
+{"kind":"textbox","id":"sh/s7yt4b21","slide":10,"text":"Approval + comparison","textPreview":"Approval + comparison","textChars":21,"textLines":1,"bbox":[98,474,420,38]}
+{"kind":"textbox","id":"sh/d87uxg3m","slide":10,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[624,280,592,300]}
+{"kind":"textbox","id":"sh/q5gb21kb","slide":10,"text":"DOES NOT CLAIM","textPreview":"DOES NOT CLAIM","textChars":14,"textLines":1,"bbox":[660,312,500,30]}
+{"kind":"textbox","id":"sh/r6pcv6lw","slide":10,"text":"National ranking","textPreview":"National ranking","textChars":16,"textLines":1,"bbox":[660,370,500,38]}
+{"kind":"textbox","id":"sh/0bit8b2d","slide":10,"text":"Production geography","textPreview":"Production geography","textChars":20,"textLines":1,"bbox":[660,422,500,38]}
+{"kind":"textbox","id":"sh/1cru1g3y","slide":10,"text":"Real-estate recommendation","textPreview":"Real-estate recommendation","textChars":26,"textLines":1,"bbox":[660,474,500,38]}
+{"kind":"shape","id":"sh/e9gb61k7","slide":10,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/fapcz6ls","slide":10,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/ozitcv29","slide":10,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/p0ru503u","slide":10,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/xwnupgvy","slide":10,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/wvetgbud","slide":10,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/bu5cnqd8","slide":10,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/m90b6t0r","slide":10,"text":"The prototype demonstrates this guided workflow with a Seattle example.\n\nIt can show market context, present proposed submarkets, pause for analyst approval, run a consistent comparison, and explain which areas rise under the demonstration criteria.\n\nIt is not yet a production national ranking or a real-estate recommendation. The current example is designed to prove the workflow before we connect approved business rules and full sensitive production data.\n\n[Sources]\nUser-provided presentation script\ndocs/product/mvp-scope.md\nPROJECT_CONTEXT.md"}
+{"kind":"slide","id":"sl/jetc3ut0","slide":11,"title":"WHAT MUST BE DECIDED NEXT","textShapes":19}
+{"kind":"textbox","id":"sh/y1czalob","slide":11,"text":"WHAT MUST BE DECIDED NEXT","textPreview":"WHAT MUST BE DECIDED NEXT","textChars":25,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/xcryxg7y","slide":11,"text":"Real rankings require four clear rules","textPreview":"Real rankings require four clear rules","textChars":38,"textLines":1,"bbox":[64,76,1050,72]}
+{"kind":"textbox","id":"sh/wbih4b6d","slide":11,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/n69grmpw","slide":11,"text":"Approve the rules before connecting production data","textPreview":"Approve the rules before connecting production data","textChars":51,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/250zy18b","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/98rytw72","slide":11,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[72,390,232,178]}
+{"kind":"textbox","id":"sh/o7ih0r6h","slide":11,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[94,410,54,32]}
+{"kind":"textbox","id":"sh/72t03qp0","slide":11,"text":"MARKET MODEL","textPreview":"MARKET MODEL","textChars":12,"textLines":1,"bbox":[94,472,188,62]}
+{"kind":"textbox","id":"sh/61kzalof","slide":11,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[330,332,232,178]}
+{"kind":"textbox","id":"sh/ofqtgnyt","slide":11,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[352,352,54,32]}
+{"kind":"textbox","id":"sh/9gza9sze","slide":11,"text":"SUBMARKET RULES","textPreview":"SUBMARKET RULES","textChars":15,"textLines":1,"bbox":[352,414,188,62]}
+{"kind":"textbox","id":"sh/mdobedg3","slide":11,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[588,274,232,178]}
+{"kind":"textbox","id":"sh/nehs7iho","slide":11,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[610,294,54,32]}
+{"kind":"textbox","id":"sh/0b6tc3yx","slide":11,"text":"PROPERTY GATE","textPreview":"PROPERTY GATE","textChars":13,"textLines":1,"bbox":[610,356,188,62]}
+{"kind":"textbox","id":"sh/1cfa58zi","slide":11,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[846,216,232,178]}
+{"kind":"textbox","id":"sh/epobatgr","slide":11,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[868,236,54,32]}
+{"kind":"textbox","id":"sh/zaxs3yhc","slide":11,"text":"QUEUE LOGIC","textPreview":"QUEUE LOGIC","textChars":11,"textLines":1,"bbox":[868,298,188,62]}
+{"kind":"textbox","id":"sh/cn6t83y1","slide":11,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[330,590,746,54]}
+{"kind":"textbox","id":"sh/dofa18z6","slide":11,"text":"CLEAR RULES  →  CLEAR DIRECTION","textPreview":"CLEAR RULES  →  CLEAR DIRECTION","textChars":31,"textLines":1,"bbox":[354,590,698,54]}
+{"kind":"shape","id":"sh/tsnip0ny","slide":11,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/87ehgv6d","slide":11,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/7650nq5s","slide":11,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/65wzelo7","slide":11,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/l43ilgn2","slide":11,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/k3uhcb6h","slide":11,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/j2lgjq5w","slide":11,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/jetc3ut0","slide":11,"text":"Before real rankings are credible, the team still needs to approve the market model, submarket definition rules, property feasibility gate, and execution sequencing logic.\n\nThose decisions establish what the system may calculate and how the team interprets the result. The prototype does not resolve them on its own.\n\n[Sources]\nSource presentation\ndocs/product/open-questions.md\ndocs/technical/ai-boundaries.md"}
+{"kind":"slide","id":"sl/8f2psfyx","slide":12,"title":"RESPONSIBLE AI ROLE","textShapes":17}
+{"kind":"textbox","id":"sh/alwbitsn","slide":12,"text":"RESPONSIBLE AI ROLE","textPreview":"RESPONSIBLE AI ROLE","textChars":19,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/1gbm9s3a","slide":12,"text":"AI guides. Code calculates. People decide.","textPreview":"AI guides. Code calculates. People decide.","textChars":42,"textLines":1,"bbox":[64,76,1120,72]}
+{"kind":"textbox","id":"sh/0f2lgnmp","slide":12,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/ra943il8","slide":12,"text":"Transparent decision support, with explicit human gates","textPreview":"Transparent decision support, with explicit human gates","textChars":55,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/q903ad4n","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/dcbm583y","slide":12,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,204,360,390]}
+{"kind":"textbox","id":"sh/sb2lcnmd","slide":12,"text":"AI","textPreview":"AI","textChars":2,"textLines":1,"bbox":[92,232,304,34]}
+{"kind":"textbox","id":"sh/b6d4f2lc","slide":12,"text":"GUIDES","textPreview":"GUIDES","textChars":6,"textLines":1,"bbox":[92,292,304,54]}
+{"kind":"textbox","id":"sh/a543mx4r","slide":12,"text":"Gather\nPropose\nCompare\nExplain","textPreview":"Gather | Propose | Compare | Explain","textChars":30,"textLines":4,"bbox":[92,380,304,160]}
+{"kind":"textbox","id":"sh/wvupgz6t","slide":12,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[460,204,360,390]}
+{"kind":"textbox","id":"sh/xw3q94ne","slide":12,"text":"APP","textPreview":"APP","textChars":3,"textLines":1,"bbox":[488,232,304,34]}
+{"kind":"textbox","id":"sh/atc7epon","slide":12,"text":"CALCULATES","textPreview":"CALCULATES","textChars":10,"textLines":1,"bbox":[488,292,304,54]}
+{"kind":"textbox","id":"sh/bulo7u58","slide":12,"text":"Math\nMaps\nRules\nValidation","textPreview":"Math | Maps | Rules | Validation","textChars":26,"textLines":4,"bbox":[488,380,304,160]}
+{"kind":"textbox","id":"sh/orapcf6h","slide":12,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[856,204,360,390]}
+{"kind":"textbox","id":"sh/9sj65kn2","slide":12,"text":"ANALYST","textPreview":"ANALYST","textChars":7,"textLines":1,"bbox":[884,232,304,34]}
+{"kind":"textbox","id":"sh/mps7a5or","slide":12,"text":"DECIDES","textPreview":"DECIDES","textChars":7,"textLines":1,"bbox":[884,292,304,54]}
+{"kind":"textbox","id":"sh/nq1o3a5w","slide":12,"text":"Confirm\nChallenge\nApprove\nAct","textPreview":"Confirm | Challenge | Approve | Act","textChars":29,"textLines":4,"bbox":[884,380,304,160]}
+{"kind":"shape","id":"sh/0nap8f6l","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/1oj61kn6","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/hkbm5wzu","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/gj25cry9","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/fit436ho","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/uh0na1g3","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/tgrm1wzy","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/sfi58ryd","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/7u94zmhs","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/6t0n6hg7","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/dcv6dgz2","slide":12,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/cbm5kbyh","slide":12,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/8f2psfyx","slide":12,"text":"AI is what makes this feel like a guided investigation instead of a dashboard.\n\nThe agent decides which approved step to take next. It gathers the relevant information, proposes the submarket plan, runs the allowed analysis, compares the results, asks for human input when needed, and writes a clear summary.\n\nThe application still handles the math and map calculations. The analyst approves the proposed submarkets and makes the final decision. So AI drives the process forward without becoming a black box.\n\n[Sources]\nUser-provided presentation script\ndocs/technical/ai-boundaries.md\ndocs/product/mvp-scope.md"}
+{"kind":"slide","id":"sl/hgzapcr6","slide":13,"title":"BEFORE AND AFTER","textShapes":24}
+{"kind":"textbox","id":"sh/9wjyp4bq","slide":13,"text":"BEFORE AND AFTER","textPreview":"BEFORE AND AFTER","textChars":16,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/q50nydsj","slide":13,"text":"Turn handoffs into one decision trace","textPreview":"Turn handoffs into one decision trace","textChars":37,"textLines":1,"bbox":[64,76,1050,72]}
+{"kind":"textbox","id":"sh/bq9orito","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/o3i5w3ad","slide":13,"text":"See what happened, why it happened, and what remains","textPreview":"See what happened, why it happened, and what remains","textChars":52,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/p4r6p8by","slide":13,"text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/21gnuts7","slide":13,"text":"TODAY","textPreview":"TODAY","textChars":5,"textLines":1,"bbox":[64,190,420,30]}
+{"kind":"textbox","id":"sh/32ponyts","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,250,390,72]}
+{"kind":"textbox","id":"sh/gzy5s3a1","slide":13,"text":"Market analysis","textPreview":"Market analysis","textChars":15,"textLines":1,"bbox":[88,250,342,72]}
+{"kind":"textbox","id":"sh/1076lobm","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[124,356,390,72]}
+{"kind":"textbox","id":"sh/hcfy9k3u","slide":13,"text":"Property research","textPreview":"Property research","textChars":17,"textLines":1,"bbox":[148,356,342,72]}
+{"kind":"textbox","id":"sh/gb6x0zm9","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,462,390,72]}
+{"kind":"textbox","id":"sh/vaxg7ulo","slide":13,"text":"Review conversations","textPreview":"Review conversations","textChars":20,"textLines":1,"bbox":[88,462,342,72]}
+{"kind":"textbox","id":"sh/u9ofyp43","slide":13,"text":"HANDOFFS","textPreview":"HANDOFFS","textChars":8,"textLines":1,"bbox":[490,344,150,40]}
+{"kind":"textbox","id":"sh/t8fy5k3i","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[532,388,70,8]}
+{"kind":"textbox","id":"sh/876xwfmx","slide":13,"text":"WITH THE PLATFORM","textPreview":"WITH THE PLATFORM","textChars":17,"textLines":1,"bbox":[682,190,460,30]}
+{"kind":"textbox","id":"sh/7mdg3als","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[682,238,534,310]}
+{"kind":"textbox","id":"sh/6l4fu547","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[718,270,12,12]}
+{"kind":"textbox","id":"sh/lkvy103m","slide":13,"text":"MARKET","textPreview":"MARKET","textChars":6,"textLines":1,"bbox":[756,256,380,40]}
+{"kind":"textbox","id":"sh/kjmxsfm1","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[718,332,12,12]}
+{"kind":"textbox","id":"sh/cnqh8fux","slide":13,"text":"EVIDENCE","textPreview":"EVIDENCE","textChars":8,"textLines":1,"bbox":[756,318,380,40]}
+{"kind":"textbox","id":"sh/xozyhkbi","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[718,394,12,12]}
+{"kind":"textbox","id":"sh/q18f65cr","slide":13,"text":"DECISION","textPreview":"DECISION","textChars":8,"textLines":1,"bbox":[756,380,380,40]}
+{"kind":"textbox","id":"sh/bmhgfatc","slide":13,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[718,456,12,12]}
+{"kind":"textbox","id":"sh/oz6x4vul","slide":13,"text":"NEXT ACTION","textPreview":"NEXT ACTION","textChars":11,"textLines":1,"bbox":[756,442,380,40]}
+{"kind":"shape","id":"sh/p0zyd0b6","slide":13,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/2xof2lcv","slide":13,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/3yxgbqdg","slide":13,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/8vahgzu5","slide":13,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/hgzapcr6","slide":13,"text":"Today, market analysis, property research, and review can feel like separate handoffs.\n\nWith this workflow, they become one connected investigation. The team can see what the agent did, what evidence it used, why an area moved forward, and what still needs to be resolved.\n\nMore importantly, that regional understanding does not have to stop with clinic locations.\n\n[Sources]\nUser-provided presentation script\nPROJECT_CONTEXT.md"}
+{"kind":"slide","id":"sl/6lsnupw7","slide":14,"title":"WHAT WE LEARNED","textShapes":25}
+{"kind":"textbox","id":"sh/bup4rils","slide":14,"text":"WHAT WE LEARNED","textPreview":"WHAT WE LEARNED","textChars":15,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/xc7eds76","slide":14,"text":"Regional insight can travel across the business","textPreview":"Regional insight can travel across the business","textChars":47,"textLines":1,"bbox":[64,76,1120,72]}
+{"kind":"textbox","id":"sh/wbydknq1","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/jepwf2pc","slide":14,"text":"Shared evidence | Sector-specific goals, rules, and measures","textPreview":"Shared evidence | Sector-specific goals, rules, and measures","textChars":60,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/idgvmx8r","slide":14,"text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/5grehs7i","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[626,188,6,150]}
+{"kind":"textbox","id":"sh/kfidonqx","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[434,274,180,6]}
+{"kind":"textbox","id":"sh/zi5c3y98","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[648,274,180,6]}
+{"kind":"textbox","id":"sh/ehwvat8n","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[434,470,180,6]}
+{"kind":"textbox","id":"sh/c3e1gjyd","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[648,470,180,6]}
+{"kind":"textbox","id":"sh/x4ni9ofy","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[626,430,6,150]}
+{"kind":"textbox","id":"sh/a1wze9g7","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[490,314,280,160]}
+{"kind":"textbox","id":"sh/b2507exs","slide":14,"text":"REGIONAL\nSIGNALS","textPreview":"REGIONAL | SIGNALS","textChars":16,"textLines":2,"bbox":[514,330,232,128]}
+{"kind":"textbox","id":"sh/kre1k3y9","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[500,176,260,72]}
+{"kind":"textbox","id":"sh/ls7idofu","slide":14,"text":"MARKETING","textPreview":"MARKETING","textChars":9,"textLines":1,"bbox":[514,176,232,72]}
+{"kind":"textbox","id":"sh/y5wjitgj","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[94,238,300,72]}
+{"kind":"textbox","id":"sh/z650byxo","slide":14,"text":"MERCHANDISING","textPreview":"MERCHANDISING","textChars":13,"textLines":1,"bbox":[108,238,272,72]}
+{"kind":"textbox","id":"sh/0buh8zy5","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[866,238,300,72]}
+{"kind":"textbox","id":"sh/1w3i14fq","slide":14,"text":"SERVICES","textPreview":"SERVICES","textChars":8,"textLines":1,"bbox":[880,238,272,72]}
+{"kind":"textbox","id":"sh/hsvy50re","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[94,432,300,72]}
+{"kind":"textbox","id":"sh/grmxwvqt","slide":14,"text":"PARTNERSHIPS","textPreview":"PARTNERSHIPS","textChars":12,"textLines":1,"bbox":[108,432,272,72]}
+{"kind":"textbox","id":"sh/fqdg3q98","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[866,432,300,72]}
+{"kind":"textbox","id":"sh/up4fal83","slide":14,"text":"OPERATIONS","textPreview":"OPERATIONS","textChars":10,"textLines":1,"bbox":[880,432,272,72]}
+{"kind":"textbox","id":"sh/pwvy90rq","slide":14,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[500,556,260,72]}
+{"kind":"textbox","id":"sh/4vmh0vq5","slide":14,"text":"CLINICS","textPreview":"CLINICS","textChars":7,"textLines":1,"bbox":[514,556,232,72]}
+{"kind":"shape","id":"sh/3udg7q9k","slide":14,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/2t4fyl8z","slide":14,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/d0fydk7m","slide":14,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/cz6h4fq1","slide":14,"bbox":[4,4,1,1]}
+{"kind":"shape","id":"sh/atg3idk7","slide":14,"bbox":[4,4,1,1]}
+{"kind":"notes","id":"nt/6lsnupw7","slide":14,"text":"The biggest lesson from this project is that markets are not interchangeable.\n\nCustomer needs, competition, local events, available services, business density, and growth patterns can look very different from one region to another. A national average can hide those differences.\n\nIf we can identify and explain meaningful regional signals, the same capability could support decisions across marketing, merchandising, services, partnerships, operations, and other parts of the business.\n\n[Sources]\nUser-provided presentation script\ndocs/product/mvp-scope.md"}
+{"kind":"slide","id":"sl/vaxsvy10","slide":15,"title":"LIVE DEMO","textShapes":25}
+{"kind":"textbox","id":"sh/361gvilk","slide":15,"text":"LIVE DEMO","textPreview":"LIVE DEMO","textChars":9,"textLines":1,"bbox":[64,34,560,26]}
+{"kind":"textbox","id":"sh/547mhg3m","slide":15,"text":"Seattle: one guided path from market to next action","textPreview":"Seattle: one guided path from market to next action","textChars":51,"textLines":1,"bbox":[64,76,1120,72]}
+{"kind":"textbox","id":"sh/k3y5ov21","slide":15,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,674,1152,2]}
+{"kind":"textbox","id":"sh/76p4jqls","slide":15,"text":"Synthetic demo | Illustrative submarkets | Not a recommendation","textPreview":"Synthetic demo | Illustrative submarkets | Not a recommendation","textChars":63,"textLines":1,"bbox":[64,684,980,18]}
+{"kind":"textbox","id":"sh/65gnqlk7","slide":15,"text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[1150,684,66,18]}
+{"kind":"textbox","id":"sh/t87ml0ji","slide":15,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[64,218,206,326]}
+{"kind":"textbox","id":"sh/s7y5sv2x","slide":15,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[84,238,60,32]}
+{"kind":"textbox","id":"sh/na5476l8","slide":15,"text":"START","textPreview":"START","textChars":5,"textLines":1,"bbox":[84,318,166,54]}
+{"kind":"textbox","id":"sh/m9c3e1kn","slide":15,"text":"Open Seattle","textPreview":"Open Seattle","textChars":12,"textLines":1,"bbox":[84,418,166,74]}
+{"kind":"textbox","id":"sh/wrm9kvep","slide":15,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[294,218,206,326]}
+{"kind":"textbox","id":"sh/hsvat0fa","slide":15,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[314,238,60,32]}
+{"kind":"textbox","id":"sh/upkrilwj","slide":15,"text":"PROPOSE","textPreview":"PROPOSE","textChars":7,"textLines":1,"bbox":[314,318,166,54]}
+{"kind":"textbox","id":"sh/vqdsrqx4","slide":15,"text":"Review submarkets","textPreview":"Review submarkets","textChars":17,"textLines":1,"bbox":[314,418,166,74]}
+{"kind":"textbox","id":"sh/4vm9ovel","slide":15,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[524,218,206,326]}
+{"kind":"textbox","id":"sh/5wvax0f6","slide":15,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[544,238,60,32]}
+{"kind":"textbox","id":"sh/it4rm5wv","slide":15,"text":"CONFIRM","textPreview":"CONFIRM","textChars":7,"textLines":1,"bbox":[544,318,166,54]}
+{"kind":"textbox","id":"sh/judsvqxg","slide":15,"text":"Approve geography","textPreview":"Approve geography","textChars":17,"textLines":1,"bbox":[544,418,166,74]}
+{"kind":"textbox","id":"sh/0z29cbyh","slide":15,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[754,218,206,326]}
+{"kind":"textbox","id":"sh/l0bqlgf2","slide":15,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[774,238,60,32]}
+{"kind":"textbox","id":"sh/1kjyt83e","slide":15,"text":"COMPARE","textPreview":"COMPARE","textChars":7,"textLines":1,"bbox":[774,318,166,54]}
+{"kind":"textbox","id":"sh/gjax03m9","slide":15,"text":"See drivers + gaps","textPreview":"See drivers + gaps","textChars":18,"textLines":1,"bbox":[774,418,166,74]}
+{"kind":"textbox","id":"sh/fi1grylo","slide":15,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[984,218,206,326]}
+{"kind":"textbox","id":"sh/ehsfyt43","slide":15,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1004,238,60,32]}
+{"kind":"textbox","id":"sh/p8jyx83q","slide":15,"text":"ADVANCE","textPreview":"ADVANCE","textChars":7,"textLines":1,"bbox":[1004,318,166,54]}
+{"kind":"textbox","id":"sh/o7ah4nm5","slide":15,"text":"Open a candidate","textPreview":"Open a candidate","textChars":16,"textLines":1,"bbox":[1004,418,166,74]}
+{"kind":"notes","id":"nt/vaxsvy10","slide":15,"text":"Start the market deep dive\nI will start with Seattle and launch the AI-guided market deep dive. The agent is not receiving an open-ended instruction to find anything it wants. It follows a defined process and uses the information available inside the application.\nDemo action: Open Seattle and start the Market Deep Dive.\n\nGather context and propose submarkets\nThe agent first gathers the market context. It then creates a proposed way to break the market into smaller, practical areas for analysis.\nDemo action: Show the seven proposed Seattle submarkets and the map.\n\nAsk for human confirmation\nBefore scoring anything, the agent pauses. The analyst can confirm the proposed submarkets, reject them, or leave the question unresolved.\nDemo action: Confirm the proposed segmentation.\n\nRun the analysis and create categories\nAfter confirmation, the application runs the same analysis across every submarket. The agent reviews the results and turns them into useful categories. It also explains what drove each result, so the analyst sees more than a ranking.\nDemo action: Run the comparison. Show the priority cards, table, contributions, and missing information.\n\nMove from submarket to properties\nFor the clinic use case, the strongest submarket categories become the starting point for property discovery.\nDemo action: Open a candidate brief or location comparison.\n\nAsk AI and close the demo\nThe analyst can ask AI to explain the result in plain language. The answer stays tied to the information shown here, including missing information and uncertainty.\nDemo action: Show one short AI explanation or generated review brief.\n\n[Sources]\nUser-provided presentation script\ndocs/product/mvp-scope.md\ndocs/technical/ai-boundaries.md"}
+{"kind":"slide","id":"sl/gny5sjyp","slide":16,"title":"THE ASK","textShapes":5}
+{"kind":"textbox","id":"sh/kv2h4rqp","slide":16,"text":"THE ASK","textPreview":"THE ASK","textChars":7,"textLines":1,"bbox":[64,48,300,30]}
+{"kind":"textbox","id":"sh/8z2h8bq1","slide":16,"text":"Pilot the regional\ninsights capability.","textPreview":"Pilot the regional | insights capability.","textChars":39,"textLines":2,"bbox":[64,158,900,180]}
+{"kind":"textbox","id":"sh/9kby1g7m","slide":16,"text":"Choose a few sectors. Reuse the regional evidence.\nKeep each team’s decision rules local.","textPreview":"Choose a few sectors. Reuse the regional evidence. | Keep each team’s decision rules local.","textChars":89,"textLines":2,"bbox":[68,400,800,90]}
+{"kind":"textbox","id":"sh/ytkf2h8j","slide":16,"text":"​","textPreview":"​","textChars":1,"textLines":1,"bbox":[1038,0,242,720]}
+{"kind":"textbox","id":"sh/zutgvm94","slide":16,"text":"CVC","textPreview":"CVC","textChars":3,"textLines":1,"bbox":[1038,290,242,110]}
+{"kind":"notes","id":"nt/gny5sjyp","slide":16,"text":"We started by asking how to make clinic location decisions better. What we learned is bigger: every market has its own combination of customers, competition, needs, and local signals.\n\nOur ask is to treat clinic location discovery as the first use case for a broader regional insights capability.\n\nThe next step is to choose a small number of business sectors and test how the same AI-guided workflow can identify local opportunities for each one. The regional evidence can be shared, while each team applies its own goals, rules, and measures of success.\n\nThe opportunity is not simply to find better clinic locations. It is to help more of Chewy understand what is changing locally, why it matters to their business, and where they should act next.\n\n[Sources]\nUser-provided presentation script\nPROJECT_CONTEXT.md\ndocs/product/mvp-scope.md"}

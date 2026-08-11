@@ -1,0 +1,7 @@
+Communication job: By the end, CVC and Chewy business reviewers should understand the clinic prototype as a governed first use case for a broader regional-insights workflow, and should support a small cross-sector pilot.
+
+Narrative arc: fragmented decision process -> guided funnel -> analyst experience -> decision boundaries -> prototype proof -> responsible AI -> broader opportunity -> demo -> pilot ask.
+
+Visual direction: premium editorial presentation, not dashboard UI. Deep navy canvas, warm white pages, vivid blue as the connective thread, mint for approved/human-reviewed states, coral for limits, and amber for decisions. Large typography, asymmetric compositions, oversized numerals, restrained line work, and simple native-shape diagrams.
+
+Copy rule: one claim per slide; usually 3-7 supporting labels; no visible paragraphs. Full talk track lives in notes.

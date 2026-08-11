@@ -72,6 +72,76 @@ test("fingerprints and sensitivity analysis are reproducible", () => {
   assert.equal(first.configurationLabel, "Synthetic and unapproved");
 });
 
+test("existing clinic fixture remains identical behind typed operators", () => {
+  const analysis = analyzeSandbox(createInitialSandboxDraft());
+
+  assert.deepEqual(
+    analysis.comparisons.map(({ siteId, adjustedResult }) => ({
+      siteId,
+      systemScore: adjustedResult.systemScore,
+      constraintOutcome: adjustedResult.constraintOutcome,
+      eligibleForConsideration: adjustedResult.eligibleForConsideration,
+      contributions: adjustedResult.metricContributions.map(
+        ({ metricId, contribution }) => [metricId, contribution],
+      ),
+    })),
+    [
+      {
+        siteId: "nashville",
+        systemScore: 82.5,
+        constraintOutcome: "passed",
+        eligibleForConsideration: true,
+        contributions: [
+          ["demand", 31.5],
+          ["competition", 14],
+          ["population", 12],
+          ["drive", 17],
+          ["foot", 8],
+        ],
+      },
+      {
+        siteId: "raleigh",
+        systemScore: 71.611111111111,
+        constraintOutcome: "passed",
+        eligibleForConsideration: true,
+        contributions: [
+          ["demand", 31.5],
+          ["competition", 10.222222222222],
+          ["population", 13],
+          ["drive", 16.888888888889],
+          ["foot", null],
+        ],
+      },
+      {
+        siteId: "sacramento",
+        systemScore: 70.4,
+        constraintOutcome: "failed",
+        eligibleForConsideration: false,
+        contributions: [
+          ["demand", 31.15],
+          ["competition", 6.2],
+          ["population", 12.45],
+          ["drive", 12.8],
+          ["foot", 7.8],
+        ],
+      },
+      {
+        siteId: "tampa",
+        systemScore: 73.9,
+        constraintOutcome: "passed",
+        eligibleForConsideration: true,
+        contributions: [
+          ["demand", 29.4],
+          ["competition", 9.8],
+          ["population", 10.8],
+          ["drive", 17],
+          ["foot", 6.9],
+        ],
+      },
+    ],
+  );
+});
+
 test("hard constraints remain separate from preference scoring", () => {
   const baseline = analyzeSandbox(createInitialSandboxDraft());
   const adjustedDraft = createInitialSandboxDraft();

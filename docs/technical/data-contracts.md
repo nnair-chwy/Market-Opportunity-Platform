@@ -138,6 +138,69 @@ The result must preserve:
 
 See `data/schemas/site-input.schema.json` for the synthetic starting contract.
 
+## Shared evaluation workflow
+
+The versioned TypeScript and Zod contracts in `lib/evaluation-contracts.ts`
+define the cross-vertical workflow boundary:
+
+- `QuestionSpec` records the decision question, geography and time scope,
+  eligibility, required evidence, permitted actions, and approval gates.
+- `DecisionGraph` links evidence, deterministic rules, review, artifacts, and
+  permitted draft actions without embedding hidden reasoning.
+- `EvidenceRecord` preserves source IDs, provenance, evidence status,
+  sensitivity, geography, time scope, allowed use, and explicit availability.
+  Missing and unknown evidence retains `null`; schema parsing never imputes a
+  value.
+- `EvaluationContract` contains formulas, thresholds, weights, missing-data
+  rules, capabilities, artifact specifications, and contract approval.
+- `ActionPacket` keeps an AI-proposed interpretation separate from a
+  human-approved interpretation and cannot approve an action while a required
+  gate remains unsatisfied.
+
+Contract version `1.0.0` supports synthetic, draft, and approved states.
+Synthetic records remain limited to `synthetic_prototype_only`. The clinic
+scoring adapter maps the existing deterministic `EvaluationInput` and
+`ScoringConfiguration` into the shared contract without changing scoring
+behavior. These contracts add no persistence and do not authorize a final
+real-estate decision.
+
+### Deterministic operator boundary
+
+The strict contracts in `lib/evaluation-operators.ts` expose versioned
+`normalize_metric`, `join_geography`, `filter_eligible_entities`,
+`compare_cohort`, `calculate_weighted_result`, `run_sensitivity`, and
+`render_artifact` operators. Inputs must parse as structured Zod contracts;
+natural-language instructions and unknown fields are rejected.
+
+Every invocation belongs to exactly one decision layer: market
+attractiveness, submarket opportunity, property feasibility, or execution
+priority. Operators do not combine layers. Numeric inputs retain source, input,
+transformation, formula, normalization, and sensitivity versions. Missing
+values remain explicit and qualitative evidence has no accepted path into
+weighted calculations.
+
+## Workspace capability registry
+
+Registry version `1.0.0` in `lib/capability-registry.ts` declares the executable
+boundary for `census_market_context`, `clinic_performance`,
+`clinic_site_evaluation`, and `local_growth_test`. Each entry records its
+version and status, supported geography grains and outputs, required evidence,
+permitted deterministic operators, approval requirements, and known
+limitations.
+
+Question assessment returns `supported`, `unsupported`, `partially_supported`,
+or `blocked`, plus supported and unsupported outputs and explicit missing
+evidence or approvals. A synthetic capability may execute only for its stated
+prototype use. Planned and unavailable capabilities do not become executable
+because a caller supplies an identifier.
+
+The initial registry marks only public Census market context as connected.
+Clinic performance is unavailable pending an approved aggregate export,
+outcome definition, and owner approval. Clinic site evaluation is synthetic.
+Local growth testing is planned and requires approved, privacy-safe aggregate
+inputs. The registry does not establish a Snowflake, Tableau, Esri, campaign,
+or customer-data connection.
+
 ## Public CBSA market universe
 
 The July 2023 CBSA build creates a versioned mainland market-universe snapshot
@@ -458,71 +521,3 @@ The process-local run records status, a visible seven-step plan, allowlisted
 tool invocations, evidence receipts, the segmentation request and response,
 blockers, readiness flags, version metadata, and an optional draft packet. A
 comparison-ready state is impossible without a recorded `confirm` response.
-
-## Synthetic Opportunity Inbox
-
-The Opportunity Inbox proof of concept accepts only versioned synthetic events
-for Seattle CBSA `42660`. Source observations are `Hypothesis`; values produced
-by deterministic application rules may be `Derived`. Every accepted event
-retains its source, observation and receipt times, payload version, sensitivity,
-allowed use, quality, freshness, and processing state. Missing values remain
-`null`.
-
-Malformed, rejected, or prohibited events are excluded from playbook evaluation
-and retained as quarantine receipts with stable IDs and explicit reasons.
-Duplicates are retained as separate audit identifiers. Supporting,
-contradicting, missing, stale, rejected, and quarantined states are not
-collapsed.
-
-Each versioned `PlaybookDefinition` declares its synthetic thresholds, required
-metrics, evidence coverage, freshness, deduplication window, cooldown,
-expiration, permitted actions, stakeholder role, outcome definition, and
-guardrails. These definitions have `allowed_use: synthetic_prototype_only` and
-do not approve production rules.
-
-The ecosystem closure fixture also carries typed context observations for
-fictional retailer identity, synthetic location, event type, verification,
-permanence, effective date, source record, geography eligibility, delivery and
-CVC coverage, campaign saturation, inventory constraints, and competitor
-context. Each context observation has a discriminated string, boolean, number,
-or date value plus its own source, evidence status, quality, observation time,
-sensitivity, and allowed use. A reported closure and a verified permanent
-closure are separate facts. Missing typed values remain `null` and `Unknown`.
-
-For `local-competitor-closure`, deterministic application code assembles a
-versioned `ActionPacket`. The packet records the `advance`, `stop`, or `blocked`
-system disposition; prepared course of action; synthetic accountable owner;
-calculated 48-hour deadline; situation; completed analysis; remaining blockers;
-ordered actions; advance and stop conditions; measurable outcome; guardrails;
-assumptions; source IDs; and input, evidence, playbook, packet, and calculation
-versions. `advance` requires every configured condition to pass. A known
-contradiction produces `stop`; absent required evidence produces `blocked`.
-No missing value is imputed.
-
-The ecosystem packet has no human validation or approval gate. That exception
-applies only to automatically preparing synthetic planning artifacts and
-simulated communication previews. It does not authorize a real campaign,
-outreach, operational write, market decision, clinic action, or stakeholder
-message. Marketing and Pet Health opportunities retain their current separate
-human dispositions.
-
-An `Opportunity` preserves stable identity, input and calculation versions,
-the triggering rule result, evidence snapshot, expiration, optional ecosystem
-ActionPacket and explanation, deterministic fallback draft, and sector-specific
-disposition. Process-local storage retains active and historical records but
-may be lost on restart or across runtime instances.
-
-The national monitoring projection covers every market in the checked-in
-`SRC-014` CBSA universe. A `MarketScanStatus` records the market identity,
-operational scan state, opportunity count, explanation, observation time,
-evidence status, allowed use, and scoring eligibility. These records describe
-workflow state only. They must retain `scoringEligibility: none` and must not be
-interpreted as attractiveness, performance, priority, or rank.
-
-`DiscoveryStageReceipt` records deterministic counts for ingest, validation,
-market scan, qualification, and review preparation. `DiscoveryActivityEvent`
-is a compact projection of retained market exceptions and qualifications. The
-portfolio metrics are derived from the same market statuses and active
-opportunities, so the map, pipeline, feed, and register reconcile. Outside
-Seattle, highlighted states are explicitly synthetic workflow examples and do
-not assert real market conditions.

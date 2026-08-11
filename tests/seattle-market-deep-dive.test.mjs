@@ -59,14 +59,8 @@ test("illustrative hubs and geodesic areas are valid, deterministic, and non-sco
   });
 });
 
-test("persistent map owns the Seattle overlay and selection contract", async () => {
-  const [page, map] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/UnifiedEvaluatorMap.tsx", import.meta.url), "utf8"),
-  ]);
-  assert.equal((page.match(/<UnifiedEvaluatorMap/g) ?? []).length, 1);
-  assert.match(page, /seattleDeepDiveOpen && selectedMarketCode === "42660"/);
-  assert.match(page, /activeSeattleSubmarketId/);
+test("the Seattle overlay remains available to the underlying market capability", async () => {
+  const map = await readFile(new URL("../components/UnifiedEvaluatorMap.tsx", import.meta.url), "utf8");
   assert.match(map, /SEATTLE_OVERLAY_SOURCE_ID/);
   assert.match(map, /seattle-illustrative-area-fill/);
   assert.match(map, /onChooseSeattleSubmarket/);

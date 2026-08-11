@@ -16,8 +16,6 @@ AI may:
 - summarize validated tool results and draft a source-linked review packet.
 - explain one selected synthetic market result or application-supplied
   differences among two to five same-cohort results selected by the analyst.
-- turn a validated synthetic ecosystem ActionPacket into concise stakeholder
-  language without changing any packet field or policy result.
 
 ## Prohibited uses
 
@@ -39,9 +37,6 @@ AI must not:
 - add or remove markets from a comparison, calculate comparison scores or
   ranks, change weights, or select a preferred market; or
 - create durable workflow state in the process-local prototype.
-- alter an ecosystem ActionPacket disposition, course of action, owner,
-  deadline, condition, outcome, guardrail, value, or source set; or
-- send an ecosystem message or execute the prepared synthetic course of action.
 
 ## Bounded orchestration
 
@@ -82,23 +77,6 @@ AI must not:
 - Server-only credentials, strict schemas, `store: false`, process-local state,
   and controlled failure behavior apply to every model-backed run.
 
-### Ecosystem ActionPacket explanation
-
-- Deterministic code owns typed evidence validation, analysis, the deadline,
-  conditions, `advance`, `stop`, or `blocked` disposition, and packet assembly.
-- The model receives only the validated ActionPacket and presentation
-  instructions. It returns schema-validated headline, summary, unchanged course
-  of action, limitation, and the unchanged complete source-ID set.
-- Numeric statements are checked against packet values. Altered actions,
-  changed sources, invented numbers, invalid structures, timeouts, and provider
-  errors are rejected or downgraded to deterministic fallback language.
-- Missing `OPENAI_API_KEY` produces a visible `not_configured` fallback state.
-  Automated tests do not require provider access.
-- The server-side OpenAI request uses a bounded timeout, one retry, structured
-  output, and `store: false`.
-- This workflow has no human approval gate because it only prepares fictional
-  planning artifacts and simulated previews. It cannot initiate a real action.
-
 ## Prompt input
 
 The explanation service receives only:
@@ -114,9 +92,7 @@ The explanation service receives only:
 
 - Validate all numeric statements against structured input.
 - Require source IDs for factual statements.
-- Label candidate-review and market-comparison text as a draft for human review;
-  label ecosystem ActionPacket language as synthetic prepared wording with no
-  execution authority.
+- Label the text as a draft for human review.
 - Reject unsupported causal or financial claims.
 - Preserve the prompt, model, template, and result versions.
 - Preserve the tool-contract, run-schema, source-snapshot, and approval-receipt

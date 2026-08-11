@@ -44,7 +44,3 @@ next-env.d.ts
 /outputs/
 /work/
 /.cache/
-
-# local presentation build workspaces
-/.deck-build.*/
-/.deck-revision.*/

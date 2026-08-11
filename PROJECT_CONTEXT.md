@@ -1,18 +1,30 @@
 # Project context
 
+## Product direction
+
+This repository is transitioning from a clinic location evaluator to a
+Market Intelligence Evaluation Workspace. The workspace evaluates geographic
+business questions and produces a verifiable decision or next-action packet.
+Clinic market and site evaluation remains the first reusable vertical and
+regression fixture.
+
 ## Problem
 
-Clinic-location evaluation combines geospatial, market, customer, operational, and real-estate evidence. The research indicates that parts of the process can be standardized, but final decisions still require human judgment and sometimes physical site visits.
+Geographic business questions combine market, customer, operational,
+performance, and real-estate evidence at different geographic grains. The
+research indicates that parts of the process can be standardized, but final
+decisions still require accountable business judgment and, for some use
+cases, physical inspection or human approval.
 
 ## Opportunity
 
-Create a repeatable workflow that:
+Create a repeatable question-first workflow that:
 
-1. assembles approved evidence for a candidate site;
-2. calculates transparent location metrics;
-3. compares candidates using approved, versioned criteria;
-4. explains strengths, risks, missing data, and sensitivity to weights; and
-5. preserves provenance for human review.
+1. interprets a geographic business question into a validated evaluation;
+2. assembles approved or explicitly synthetic evidence;
+3. calculates transparent, versioned geographic metrics and comparisons;
+4. explains findings, missing data, contrary evidence, and sensitivity; and
+5. produces a source-linked draft decision or next-action packet for human review.
 
 ## Important overlap
 
@@ -24,14 +36,17 @@ Until overlap and data access are resolved, this repository defines a synthetic-
 
 ## Intended users
 
-- Clinic real-estate and site-selection analysts
-- CVC analytics partners
-- Business reviewers comparing candidate sites
+- Market, growth, clinic, and site-selection analysts
+- CVC analytics and business partners
+- Business reviewers comparing geographic entities or candidate sites
 - Data or engineering partners validating inputs and calculations
 
 ## Human decision boundary
 
-The product prepares evidence and comparisons. It does not approve a site, authorize a lease, determine clinical strategy, or replace physical inspection and expert judgment.
+The product prepares evidence, comparisons, explanations, and draft actions. It
+does not approve spend, campaigns, hiring, leases, clinic openings, or other
+material business actions, and it does not replace physical inspection or
+expert judgment.
 
 ## Research date
 

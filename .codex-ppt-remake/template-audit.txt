@@ -1,0 +1,8 @@
+Source deck: 16-slide, 16:9 PowerPoint with no embedded media, charts, or tables.
+Structure: all visible content is slide-local; layouts and master contain no inherited visual elements.
+Typography: Aptos with Calibri fallbacks. Source titles are 46-66 pt and body copy is mostly 16-24 pt.
+Visual system: white canvas, navy text, bright blue accents, pastel blue/green/yellow/red panels, and a thin source footer.
+Reusable patterns: minimal title slide, three-column comparison, four-step funnel, two-column contrast, role split, demo checklist, dark closing slide.
+Primary issue for this remake: repeated panel grids and explanatory paragraphs make the deck feel document-like and visually uniform.
+Insertion contract: preserve all 16 source slides and their slide/master/layout hierarchy. Restyle slide-local elements in place because the user explicitly requested a completely different format. Reuse existing shapes as the primitive inventory; hide surplus non-placeholder shapes rather than introducing unnecessary objects.
+Placeholders: the source layouts and master contain no inherited visual placeholders. Final OOXML will still be checked for any empty structural placeholders.

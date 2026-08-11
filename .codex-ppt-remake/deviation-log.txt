@@ -1,0 +1,5 @@
+Slides 1-16: intentional full restyle requested by the user. Replace the white/pastel card system with a high-contrast editorial system using deep navy, warm off-white, electric blue, mint, coral, and amber.
+Slides 1-16: reduce visible copy to one claim and a small number of supporting labels. Move the complete user-provided talk track into speaker notes.
+Slides 2, 4-9, 11-15: reposition inherited shapes into larger, flatter visual compositions. The source deck contains enough slide-local shapes to support the new visuals without added media.
+Slides 1, 10, and 16: use full-bleed dark or color fields for deliberate pacing changes.
+Slides 10 and 15: strengthen the synthetic-prototype and human-review boundaries from the repository source documents.
