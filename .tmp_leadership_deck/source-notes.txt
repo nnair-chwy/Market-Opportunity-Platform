@@ -1,0 +1,7 @@
+All visible business claims and presenter notes are based on these local project sources:
+
+- /Users/nnair/Documents/Market Opportunity Platform/presentations/Market_Opportunity_Platform_Leadership_Script.md
+- /Users/nnair/Documents/Market Opportunity Platform/docs/strategy/opportunity-inbox-implementation-plan.md
+- /Users/nnair/Documents/Market Opportunity Platform/lib/opportunity-inbox/sector-catalog.ts
+
+The Seattle examples and all outcomes are explicitly synthetic. No external images or externally sourced claims are used.

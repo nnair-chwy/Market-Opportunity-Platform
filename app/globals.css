@@ -898,6 +898,61 @@
   .map-legend { bottom: 14px; left: 14px; }
 }
 
+/* Interactive question-page map */
+.question-page { background: #f7f9fc; }
+.question-layout { display: block; max-width: none; }
+.question-layout .decision-rail { display: none; }
+.question-layout .decision-content { padding: 56px 5vw 80px; }
+.question-split { align-items: start; display: grid; gap: clamp(32px, 4vw, 64px); grid-template-columns: minmax(0, 1.15fr) minmax(390px, 0.85fr); margin: 0 auto; max-width: 1480px; }
+.question-layout .question-view { max-width: 620px; padding-top: 6px; text-align: left; }
+.question-layout .question-view h1 { font-size: clamp(40px, 4.4vw, 62px); }
+.question-layout .question-card { max-width: none; text-align: left; }
+.question-layout .prompt-grid { justify-content: flex-start; }
+.question-map-section { margin: 0; min-width: 0; }
+.question-map-heading { align-items: end; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 18px; }
+.question-map-heading h2 { color: #17213a; font-size: clamp(25px, 3vw, 34px); letter-spacing: -0.045em; margin: 8px 0 8px; }
+.question-map-heading p { color: #6b7890; font-size: 14px; line-height: 1.5; margin: 0; max-width: 660px; }
+.question-map-actions { align-items: center; display: flex; flex: 0 0 auto; gap: 12px; }
+.map-connection-status { align-items: center; color: #65738a; display: inline-flex; font-size: 11px; gap: 7px; white-space: nowrap; }
+.map-connection-status i { background: #d5a34b; border-radius: 50%; height: 7px; width: 7px; }
+.map-connection-status.ready i { background: #2e9b70; }
+.map-connection-status.fallback i { background: #8190a6; }
+.question-map-frame { background: #dcecf0; border: 1px solid #cbdbe1; border-radius: 16px; box-shadow: 0 18px 46px rgba(42, 73, 91, 0.1); min-height: 470px; overflow: hidden; position: relative; }
+.question-maplibre { height: 470px; width: 100%; }
+.question-maplibre .maplibregl-canvas { outline: 0; }
+.question-maplibre .maplibregl-ctrl-group { border: 1px solid rgba(201, 216, 224, 0.9); box-shadow: 0 3px 10px rgba(41, 65, 77, 0.1); }
+.question-maplibre .maplibregl-ctrl-attrib { background: rgba(255, 255, 255, 0.8); }
+.question-map-fallback { align-items: center; background: #edf3f6; display: flex; height: 470px; justify-content: center; overflow: hidden; position: relative; }
+.question-map-fallback img { filter: grayscale(0.45) sepia(0.1) hue-rotate(150deg) saturate(0.72); max-width: min(950px, 92%); opacity: 0.68; width: 92%; }
+.question-map-fallback p { background: rgba(255, 255, 255, 0.88); border: 1px solid #d5e1e5; border-radius: 9px; bottom: 22px; color: #5d6e7d; font-size: 11px; left: 22px; margin: 0; padding: 9px 11px; position: absolute; }
+.question-map-fallback code { color: #2b5970; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.question-map-fallback .map-marker { z-index: 1; }
+.question-map-legend,
+.question-map-selection { background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(203, 218, 226, 0.95); border-radius: 10px; color: #526579; display: grid; font-size: 11px; gap: 8px; padding: 11px 12px; position: absolute; z-index: 4; }
+.question-map-legend { bottom: 18px; left: 18px; }
+.question-map-legend span { align-items: center; display: flex; gap: 7px; }
+.question-map-legend i { border-radius: 50%; display: inline-block; height: 8px; width: 8px; }
+.question-map-legend small { color: #8795a2; max-width: 220px; }
+.question-map-selection { right: 18px; top: 18px; }
+.question-map-selection strong { color: #273c50; font-size: 11px; }
+.question-map-selection span { color: #2c8e9b; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+.question-map-selection small { color: #8795a2; max-width: 210px; }
+
+@media (max-width: 1100px) {
+  .question-split { grid-template-columns: 1fr; }
+  .question-layout .question-view { max-width: 760px; }
+}
+
+@media (max-width: 720px) {
+  .question-layout .decision-content { padding: 42px 18px 60px; }
+  .question-map-heading { align-items: stretch; flex-direction: column; }
+  .question-map-actions { justify-content: space-between; }
+  .question-map-frame, .question-maplibre, .question-map-fallback { min-height: 360px; }
+  .question-maplibre, .question-map-fallback { height: 360px; }
+  .question-map-selection { left: 18px; right: auto; top: 18px; }
+  .question-map-fallback p { bottom: 18px; left: 18px; right: 18px; }
+}
+
 :root {
   --blue: #1d4ed8;
   --blue-dark: #163fae;

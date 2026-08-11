@@ -83,6 +83,13 @@ test("MapTiler configuration requires an approved style and browser key", () => 
   assert.equal(configured.status, "configured");
   assert.match(configured.styleUrl ?? "", /streets-v4\/style\.json/);
   assert.match(configured.styleUrl ?? "", /key=public-test-key/);
+  assert.equal(
+    resolveMapTilerConfig(
+      "https://api.maptiler.com/maps/streets-v4/style.json?key=embedded-browser-key",
+      undefined,
+    ).status,
+    "configured",
+  );
 });
 
 test("current, potential, and evaluated records stay in isolated map sources", () => {

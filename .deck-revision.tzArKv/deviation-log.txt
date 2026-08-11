@@ -1,0 +1,7 @@
+Slide 1: Reframed the deck title from CVC clinic discovery to the broader platform journey and replaced the CVC badge text with MOP.
+Slide 8: Rewrote the future direction around cross-sector regional opportunity insights, channel modes, and data collection gaps.
+Slide 9: Replaced the clinic market-to-property funnel with a reusable opportunity evidence workflow.
+Slide 10: Replaced the CVC-specific future-state image with a sector-neutral regional opportunity workspace showing online, offline, hybrid, and data-coverage concepts.
+Slide 11: Replaced property-specific validation decisions with platform-wide pilot decisions.
+Slide 12: Reframed the closing ask around one regional opportunity question and expansion across sectors; replaced the CVC badge text with MOP.
+

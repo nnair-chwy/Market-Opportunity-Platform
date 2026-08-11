@@ -28,17 +28,18 @@ test("server-renders the question-to-action-packet workflow", async () => {
   assert.match(html, /Run decision graph/);
   assert.match(html, /Follow the decision graph/);
   assert.match(html, /Saved packets/);
+  assert.match(html, /Explore the geography/);
+  assert.match(html, /question-map-section/);
   assert.match(html, /Review.*Read the action packet/s);
   assert.match(html, /accountable owner makes the business decision/);
-  assert.match(html, /landing-map-backdrop/);
-  assert.match(html, /us-map\.svg/);
   assert.doesNotMatch(html, /smart_toy|space_dashboard|Synthetic prototype|Clinic evaluation|Evaluation workspace/);
   assert.doesNotMatch(html, /UnifiedEvaluatorMap|MarketAttractivenessRanking|CandidateBriefsWorkspace/);
 });
 
 test("keeps the question workflow client-side and stores packet drafts in the browser", async () => {
-  const [workflow, page, layout] = await Promise.all([
+  const [workflow, questionMap, page, layout] = await Promise.all([
     readFile(new URL("../components/decision-workflow/DecisionWorkflowApp.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/decision-workflow/QuestionMap.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   ]);
@@ -53,6 +54,10 @@ test("keeps the question workflow client-side and stores packet drafts in the br
   assert.match(workflow, /actionId/);
   assert.match(workflow, /workspace-map/);
   assert.match(workflow, /Geographic context map/);
+  assert.match(workflow, /QuestionMap/);
+  assert.match(questionMap, /NEXT_PUBLIC_MAPTILER_KEY/);
+  assert.match(questionMap, /api\.maptiler\.com/);
+  assert.match(questionMap, /question-maplibre/);
   assert.match(layout, /Market Intelligence/);
 });
 

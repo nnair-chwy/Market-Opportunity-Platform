@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AskAiPanel } from "@/components/AskAiPanel";
+import { QuestionMap } from "@/components/decision-workflow/QuestionMap";
 import type { AskAiContext } from "@/lib/ai/insights";
 
 type Phase = "question" | "running" | "packet" | "compare" | "saved";
@@ -219,7 +220,7 @@ export function DecisionWorkflowApp() {
   }
 
   return (
-    <main className={`decision-app ${phase === "question" && activeView === "workflow" ? "landing-mode" : "workspace-mode"}`}>
+    <main className={`decision-app ${phase === "question" && activeView === "workflow" ? "question-page" : "workspace-mode"}`}>
       <header className="decision-header">
         <a className="decision-brand" href="#start" aria-label="Market Intelligence home">
           <span className="decision-brand-mark" aria-hidden="true">MI</span>
@@ -233,17 +234,7 @@ export function DecisionWorkflowApp() {
         </div>
       </header>
 
-      {phase === "question" && activeView === "workflow" ? (
-        <div className="landing-map-backdrop" aria-hidden="true">
-          <img src="/us-map.svg" alt="" />
-          <span className="map-marker marker-west" />
-          <span className="map-marker marker-central" />
-          <span className="map-marker marker-east" />
-          <span className="map-marker marker-southeast" />
-        </div>
-      ) : null}
-
-      <div className={`decision-layout ${phase === "question" && activeView === "workflow" ? "landing-layout" : "workspace-layout"}`} id="start">
+      <div className={`decision-layout ${phase === "question" && activeView === "workflow" ? "question-layout" : "workspace-layout"}`} id="start">
         {activeView === "workflow" && phase !== "question" ? (
           <div className="workspace-map" aria-label="Geographic context map">
             <div className="map-toolbar"><span>Regional context</span><button type="button">Layers</button><button type="button">Reset view</button></div>
@@ -272,18 +263,21 @@ export function DecisionWorkflowApp() {
           ) : null}
           {activeView === "workflow" ? <>
           {phase === "question" ? (
-            <section className="question-view" aria-labelledby="question-title">
-              <div className="eyebrow">Start with the decision</div>
-              <h1 id="question-title">What do you need to decide?</h1>
-              <p className="lead">Ask a business question in plain language. The workspace will map the evidence, show its reasoning path, and prepare a draft action packet.</p>
-              <form className="question-card" onSubmit={(event) => { event.preventDefault(); startWorkflow(); }}>
-                <label htmlFor="decision-question">Your question</label>
-                <textarea id="decision-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Example: Which markets should we investigate for future growth?" autoFocus />
-                <div className="question-card-footer"><span>Use a question tied to a decision, owner, or next step.</span><button className="primary-action" type="submit" disabled={!question.trim()}>Run decision graph <span aria-hidden="true">→</span></button></div>
-              </form>
-              <div className="prompt-grid"><button onClick={() => setQuestion("Which markets should we investigate for future growth?")}>Market opportunity</button><button onClick={() => setQuestion("What evidence do we need before comparing candidate locations?")}>Evidence readiness</button><button onClick={() => setQuestion("What should the accountable team investigate next?")}>Next action</button></div>
-              {savedPackets.length ? <div className="recent-packets"><div><strong>Recent action packets</strong><span>{savedPackets.length} saved</span></div>{savedPackets.slice(0, 3).map((packet) => <button key={packet.id} onClick={() => { setQuestion(packet.question); setSelectedActionId(actionOptions[0].id); setPhase("saved"); }}><span>{packet.title}</span><small>{packet.savedAt}</small></button>)}</div> : null}
-            </section>
+            <div className="question-split">
+              <QuestionMap />
+              <section className="question-view" aria-labelledby="question-title">
+                <div className="eyebrow">Start with the decision</div>
+                <h1 id="question-title">What do you need to decide?</h1>
+                <p className="lead">Ask a business question in plain language. The workspace will map the evidence, show its reasoning path, and prepare a draft action packet.</p>
+                <form className="question-card" onSubmit={(event) => { event.preventDefault(); startWorkflow(); }}>
+                  <label htmlFor="decision-question">Your question</label>
+                  <textarea id="decision-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Example: Which markets should we investigate for future growth?" autoFocus />
+                  <div className="question-card-footer"><span>Use a question tied to a decision, owner, or next step.</span><button className="primary-action" type="submit" disabled={!question.trim()}>Run decision graph <span aria-hidden="true">→</span></button></div>
+                </form>
+                <div className="prompt-grid"><button onClick={() => setQuestion("Which markets should we investigate for future growth?")}>Market opportunity</button><button onClick={() => setQuestion("What evidence do we need before comparing candidate locations?")}>Evidence readiness</button><button onClick={() => setQuestion("What should the accountable team investigate next?")}>Next action</button></div>
+                {savedPackets.length ? <div className="recent-packets"><div><strong>Recent action packets</strong><span>{savedPackets.length} saved</span></div>{savedPackets.slice(0, 3).map((packet) => <button key={packet.id} onClick={() => { setQuestion(packet.question); setSelectedActionId(actionOptions[0].id); setPhase("saved"); }}><span>{packet.title}</span><small>{packet.savedAt}</small></button>)}</div> : null}
+              </section>
+            </div>
           ) : null}
 
           {phase === "running" ? (
