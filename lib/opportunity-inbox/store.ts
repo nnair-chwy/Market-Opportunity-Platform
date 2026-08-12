@@ -77,8 +77,8 @@ function snapshot(store: OpportunityStore): OpportunityInboxSnapshot {
   };
 }
 
-export function getOpportunityInboxSnapshot(): OpportunityInboxSnapshot {
-  return snapshot(defaultStore);
+export function getOpportunityInboxSnapshot(options: Pick<OperationalOptions, "store"> = {}): OpportunityInboxSnapshot {
+  return snapshot(options.store ?? defaultStore);
 }
 
 export function runSyntheticDiscovery(
@@ -86,9 +86,9 @@ export function runSyntheticDiscovery(
   options: OperationalOptions = {},
 ) {
   const store = options.store ?? defaultStore;
-  const effectiveAt = options.effectiveAt ?? new Date().toISOString();
   const idFactory = options.idFactory ?? operationalId;
   const batch = validateSignalBatch(getFixtureBatch(batchId));
+  const effectiveAt = options.effectiveAt ?? batch.receivedAt;
   let candidatesExpired = 0;
   for (const current of store.list()) {
     const expired = expireOpportunity(current, effectiveAt);

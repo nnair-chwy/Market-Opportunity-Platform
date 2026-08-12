@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, codex/market-intelligence-platform-migration, codex/integrate-adaptive-evaluation]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Reject generated workspaces
+        run: |
+          if git ls-files | rg '(^|/)(node_modules|\.deck-build\.|\.deck-revision\.|\.tmp_|\.codex-ppt-remake)(/|$)'; then
+            echo "Generated workspace files must not be tracked."
+            exit 1
+          fi
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+      - name: Lint
+        run: pnpm lint
+      - name: Build and test
+        run: pnpm test

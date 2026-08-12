@@ -1,6 +1,0 @@
-Source deck: CVC_Clinic_Market_and_Location_Discovery_Journey_and_Future.pptx
-Structure: 12 widescreen slides using a white, navy, and blue presentation system with pastel evidence categories, thin footer rules, and small page markers.
-Typography: Aptos and Calibri-family fonts as imported. Preserve all existing font sizes, weights, line spacing, insets, alignment, and box geometry.
-Revision scope: keep slides 2 through 7 as the clinic discovery origin and current prototype. Reframe slides 1 and 8 through 12 so the Market Opportunity Platform spans business sectors, regional markets, and online, offline, and hybrid opportunities. Replace the inherited future-home image in its existing frame.
-Placeholder audit: no inherited layout placeholders are present. Keep all non-targeted elements and master/layout structure intact.
-

@@ -16,6 +16,8 @@ AI may:
 - summarize validated tool results and draft a source-linked review packet.
 - explain one selected synthetic market result or application-supplied
   differences among two to five same-cohort results selected by the analyst.
+- propose a schema-constrained question intent that deterministic code compiles
+  against the versioned capability registry.
 
 ## Prohibited uses
 
@@ -37,6 +39,18 @@ AI must not:
 - add or remove markets from a comparison, calculate comparison scores or
   ranks, change weights, or select a preferred market; or
 - create durable workflow state in the process-local prototype.
+- add a capability, choose an undocumented source, calculate map percentiles,
+  change a map comparison set, or provide an approval receipt.
+
+## Adaptive planning
+
+- The planner returns only the constrained intent schema, not an execution plan
+  or hidden reasoning.
+- Deterministic code compiles the intent, assesses registry support, identifies
+  missing evidence and approvals, and prepares visible steps and draft actions.
+- When the model is unavailable or its output fails validation, the application
+  uses the deterministic compiler and keeps the same evidence boundaries.
+- The planner uses server-only credentials and `store: false`.
 
 ## Bounded orchestration
 

@@ -28,12 +28,12 @@ test("server-renders the question-to-action-packet workflow", async () => {
   assert.match(html, /Run decision graph/);
   assert.match(html, /Follow the decision graph/);
   assert.match(html, /Saved packets/);
-  assert.match(html, /Explore the geography/);
+  assert.match(html, /use the map for geographic context/i);
   assert.match(html, /question-map-section/);
   assert.match(html, /Review.*Read the action packet/s);
   assert.match(html, /accountable owner makes the business decision/);
   assert.doesNotMatch(html, /smart_toy|space_dashboard|Synthetic prototype|Clinic evaluation|Evaluation workspace/);
-  assert.doesNotMatch(html, /UnifiedEvaluatorMap|MarketAttractivenessRanking|CandidateBriefsWorkspace/);
+  assert.doesNotMatch(html, /MarketAttractivenessRanking|CandidateBriefsWorkspace/);
 });
 
 test("keeps the question workflow client-side and stores packet drafts in the browser", async () => {

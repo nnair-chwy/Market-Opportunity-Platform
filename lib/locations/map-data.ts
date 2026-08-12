@@ -10,6 +10,20 @@ export type CurrentClinic = {
   sourceUrl: string;
 };
 
+export type FulfillmentCenter = {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  address: string;
+  /** Derived map pin; the street address remains the authoritative location input. */
+  latitude: number;
+  longitude: number;
+  sourceUrls: readonly string[];
+  evidenceStatus: "Confirmed" | "Reported";
+  coordinateStatus: "Derived address geocode";
+};
+
 export const currentClinics: readonly CurrentClinic[] = [
   { id: "fountain-oaks", name: "Fountain Oaks", market: "Atlanta", city: "Atlanta", state: "GA", address: "4920 Roswell Rd NE Ste 48-49, Atlanta, GA 30342", latitude: 33.8895503, longitude: -84.3814993, sourceUrl: "https://www.chewy.com/vet-care/vet-near-me/ga/atlanta/4920-roswell-rd-ne-suites-48-49" },
   { id: "perimeter", name: "Perimeter", market: "Atlanta", city: "Atlanta", state: "GA", address: "4531 Olde Perimeter Way Ste 150, Atlanta, GA 30346", latitude: 33.9295912, longitude: -84.3432497, sourceUrl: "https://www.chewy.com/vet-care/vet-near-me/ga/atlanta/4531-olde-perimeter-way-suite-150" },
@@ -34,4 +48,29 @@ export const currentClinics: readonly CurrentClinic[] = [
   { id: "delray-beach", name: "Delray Beach", market: "South Florida", city: "Delray Beach", state: "FL", address: "1911 S Federal Hwy Ste 200, Delray Beach, FL 33483", latitude: 26.437691, longitude: -80.0717727, sourceUrl: "https://www.chewy.com/vet-care/vet-near-me/fl/delray-beach/1911-south-federal-highway-suite-200" },
   { id: "aventura", name: "Aventura", market: "South Florida", city: "Aventura", state: "FL", address: "2747 NE 193rd St Ste 14, Aventura, FL 33180", latitude: 25.9540636, longitude: -80.1454178, sourceUrl: "https://www.chewy.com/vet-care/vet-near-me/fl/aventura/2747-ne-193rd-st-suite-14" },
   { id: "boynton-beach", name: "Boynton Beach", market: "South Florida", city: "Boynton Beach", state: "FL", address: "1500 Gateway Blvd Ste 150B, Boynton Beach, FL 33426", latitude: 26.5461588, longitude: -80.0874485, sourceUrl: "https://www.chewy.com/vet-care/vet-near-me/fl/boynton-beach/1500-gateway-blvd-suite-150B" },
+  { id: "lutz", name: "Lutz", market: "Tampa", city: "Lutz", state: "FL", address: "17637 Harpers Run, Lutz, FL 33558", latitude: 28.1819, longitude: -82.4615, sourceUrl: "https://www.chewy.com/vet-care/vet-near-me/fl/lutz/17637-harpers-run" },
+];
+
+/**
+ * Public Chewy network context for the map. These are context points only and
+ * must not be treated as clinic candidates, scoring inputs, or fulfillment
+ * optimization targets.
+ */
+export const fulfillmentCenters: readonly FulfillmentCenter[] = [
+  { id: "wilkes-barre", name: "Wilkes-Barre Fulfillment Center", city: "Wilkes-Barre", state: "PA", address: "600 New Commerce Boulevard, Wilkes-Barre, PA 18706", latitude: 41.2237, longitude: -75.9062, sourceUrls: ["https://careers.chewy.com/us/en/c/fulfillment-center-operations-jobs", "https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "goodyear", name: "Goodyear Fulfillment Center", city: "Goodyear", state: "AZ", address: "255 S 143rd Avenue, Goodyear, AZ 85338", latitude: 33.4427, longitude: -112.3667, sourceUrls: ["https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "clayton", name: "Clayton Fulfillment Center", city: "Clayton", state: "IN", address: "1974 Innovation Boulevard, Clayton, IN 46118", latitude: 39.6724, longitude: -86.5142, sourceUrls: ["https://careers.chewy.com/us/en/c/fulfillment-center-operations-jobs", "https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "dallas", name: "Dallas Fulfillment Center", city: "Dallas", state: "TX", address: "7243 Grady Niblo Road, Dallas, TX 75236", latitude: 32.6847, longitude: -96.9769, sourceUrls: ["https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "ocala", name: "Ocala Fulfillment Center", city: "Ocala", state: "FL", address: "3380 NW 35th Avenue Road, Ocala, FL 34475", latitude: 29.2128, longitude: -82.1817, sourceUrls: ["https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "dayton", name: "Dayton Fulfillment Center", city: "Dayton", state: "OH", address: "3280 Lightner Road, Dayton, OH 45377", latitude: 39.8752, longitude: -84.2874, sourceUrls: ["https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "salisbury", name: "Salisbury Fulfillment Center", city: "Salisbury", state: "NC", address: "255 Front Creek Road, Salisbury, NC 28146", latitude: 35.6962, longitude: -80.5795, sourceUrls: ["https://careers.chewy.com/us/en/c/fulfillment-center-operations-jobs", "https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "mount-juliet", name: "Mount Juliet Fulfillment Center", city: "Mount Juliet", state: "TN", address: "1281 Couchville Pike, Mount Juliet, TN 37122", latitude: 36.2001, longitude: -86.5186, sourceUrls: ["https://www.sec.gov/Archives/edgar/data/1766502/000176650224000014/chwy-20240128.htm", "https://chewybenefits.com/wp-content/uploads/2026/03/Chewy-2025-Benefits-Guide_English_25-1204B.pdf"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "jessup", name: "Jessup Fulfillment Center", city: "Jessup", state: "PA", address: "37 Archbald Heights Road, Jessup, PA 18434", latitude: 41.4767, longitude: -75.5688, sourceUrls: ["https://careers.chewy.com/us/en/c/fulfillment-center-operations-jobs", "https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "belton", name: "Belton Fulfillment Center", city: "Belton", state: "MO", address: "15999 S Outer Road, Belton, MO 64012", latitude: 38.7981, longitude: -94.5268, sourceUrls: ["https://careers.chewy.com/us/en/c/fulfillment-center-operations-jobs", "https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "lewisberry", name: "Lewisberry Fulfillment Center", city: "Lewisberry", state: "PA", address: "100 Goodman Drive, Lewisberry, PA 17339", latitude: 40.1718, longitude: -76.8636, sourceUrls: ["https://careers.chewy.com/us/en/c/fulfillment-center-operations-jobs", "https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "reno", name: "Reno Fulfillment Center", city: "Reno", state: "NV", address: "8001 N Virginia Street, Reno, NV 89506", latitude: 39.5736, longitude: -119.8244, sourceUrls: ["https://careers.chewy.com/us/en/c/fulfillment-center-operations-jobs", "https://www.sec.gov/Archives/edgar/data/1766502/000176650224000014/chwy-20240128.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "pittston", name: "Pittston Fulfillment Center", city: "Pittston", state: "PA", address: "360 Research Drive, Pittston, PA 18640", latitude: 41.3169, longitude: -75.7894, sourceUrls: ["https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "louisville", name: "Louisville Fulfillment Center", city: "Louisville", state: "KY", address: "11403 Bluegrass Parkway, Suite 650, Louisville, KY 40299", latitude: 38.1964, longitude: -85.5069, sourceUrls: ["https://www.sec.gov/Archives/edgar/data/1766502/000176650226000034/chwy-20260201.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
+  { id: "houston", name: "Houston Fulfillment Center", city: "Houston", state: "TX", address: "13250 Crosby Road, Houston, TX 77049", latitude: 29.9162, longitude: -95.0565, sourceUrls: ["https://www.houstonchronicle.com/news/real-estate/article/chewy-houston-fulfillment-center-20329296.php"], evidenceStatus: "Reported", coordinateStatus: "Derived address geocode" },
+  { id: "kleinburg", name: "Kleinburg Fulfillment Center", city: "Kleinburg", state: "ON", address: "12333 Airport Road, Kleinburg, Ontario, Canada L7C 2X3", latitude: 43.8556, longitude: -79.6427, sourceUrls: ["https://www.sec.gov/Archives/edgar/data/1766502/000176650224000014/chwy-20240128.htm"], evidenceStatus: "Confirmed", coordinateStatus: "Derived address geocode" },
 ];

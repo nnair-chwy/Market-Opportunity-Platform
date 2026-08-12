@@ -1,6 +1,0 @@
-Local project sources used:
-- /Users/nnair/Documents/Market Opportunity Platform/presentations/Market_Opportunity_Platform_Leadership_Script.md
-- /Users/nnair/Documents/Market Opportunity Platform/docs/strategy/opportunity-inbox-implementation-plan.md
-- /Users/nnair/Documents/Market Opportunity Platform/assets/market-opportunity-platform-home-concept-v2.png
-
-The platform home page is an illustrative concept. Opportunity examples and future-state outcomes remain proposed or synthetic unless explicitly stated otherwise.

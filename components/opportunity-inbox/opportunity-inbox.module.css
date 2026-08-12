@@ -9,7 +9,16 @@
   --marketing: #a96b31;
   --health: #347568;
   --ecosystem: #66708f;
-  background: var(--canvas);
+  --glass-border: color-mix(in srgb, var(--line, #e4e9f1) 72%, #9fc8f2 28%);
+  --glass-focus: var(--blue, #1d4ed8);
+  --glass-shadow: var(--shadow, 0 10px 30px rgba(31, 44, 76, .08));
+  --glass-surface: color-mix(in srgb, var(--paper, #fff) 82%, transparent);
+  --glass-surface-soft: color-mix(in srgb, var(--blue-soft, #edf3ff) 76%, transparent);
+  background:
+    radial-gradient(circle at 86% 5%, rgba(147, 197, 253, .24), transparent 31rem),
+    radial-gradient(circle at 12% 42%, rgba(186, 230, 253, .22), transparent 35rem),
+    linear-gradient(145deg, var(--blue-soft, #edf3ff) 0%, var(--canvas, #f5f7fb) 48%, #e8f4ff 100%);
+  background-attachment: fixed;
   color: var(--ink);
   display: grid;
   font-family: Inter, "Helvetica Neue", Arial, sans-serif;
@@ -543,6 +552,130 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .packetSources { padding: 18px 0 24px; }
 .packetSources p { color: #68767d; font-size: 8px; line-height: 1.6; overflow-wrap: anywhere; }
 .packetSources small { color: #8a959b; font-size: 7px; }
+
+/* Accessible frosted-glass treatment for the opportunity routes. */
+.topbar,
+.radarPanel,
+.pipelinePanel,
+.activityPanel,
+.sectorStrip,
+.register {
+  background: var(--glass-surface);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+  backdrop-filter: blur(18px) saturate(125%);
+}
+
+.topbar {
+  background: color-mix(in srgb, var(--paper, #fff) 76%, transparent);
+  box-shadow: 0 8px 24px rgba(38, 78, 120, .07);
+}
+
+.rail {
+  background:
+    linear-gradient(165deg, rgba(30, 64, 96, .96), rgba(23, 43, 58, .92)),
+    var(--navy);
+  border-right: 1px solid rgba(191, 219, 254, .18);
+  box-shadow: 8px 0 28px rgba(25, 55, 88, .1);
+}
+
+.navigation .activeNav {
+  background: rgba(239, 248, 255, .94);
+  box-shadow: 0 5px 16px rgba(5, 25, 45, .16);
+}
+
+.nationalMetrics {
+  background:
+    linear-gradient(135deg, rgba(29, 78, 116, .96), rgba(31, 67, 96, .9)),
+    var(--navy);
+  border: 1px solid rgba(191, 219, 254, .2);
+  box-shadow: 0 10px 26px rgba(31, 64, 98, .12);
+}
+
+.radarScope,
+.sectorIndex,
+.rowMeta em,
+.stateBadge,
+.evidenceHead,
+.messagePreview,
+.guardrailGrid div {
+  background: var(--glass-surface-soft);
+}
+
+.sectorSummary,
+.opportunityRow {
+  background: color-mix(in srgb, var(--paper, #fff) 76%, transparent);
+}
+
+.sectorSummary:hover,
+.opportunityRow:hover,
+.marketSignals > button:hover,
+.activityPanel button:hover {
+  background: color-mix(in srgb, var(--blue-soft, #edf3ff) 72%, transparent);
+}
+
+.sectorSummary.selectedSector,
+.opportunityRow.selectedRow {
+  background: color-mix(in srgb, var(--blue-soft, #edf3ff) 88%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, .18);
+}
+
+.registerToolbar,
+.evidenceHead,
+.reasonField textarea,
+.reviewActions button,
+.channelActions button {
+  background: color-mix(in srgb, var(--paper, #fff) 68%, var(--blue-soft, #edf3ff) 32%);
+  border-color: var(--glass-border);
+}
+
+.reasonField textarea {
+  box-shadow: inset 0 1px 3px rgba(31, 44, 76, .04);
+}
+
+.evidenceTable,
+.analysisList {
+  background: rgba(255, 255, 255, .34);
+  border-color: var(--glass-border);
+}
+
+.primaryButton,
+.reviewActions .approveButton {
+  background: linear-gradient(135deg, var(--navy), var(--navy-soft));
+  box-shadow: 0 6px 14px rgba(23, 43, 58, .16);
+}
+
+.secondaryButton {
+  background: var(--glass-surface);
+  border-color: var(--glass-border);
+}
+
+.platform :is(a, button, textarea):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--glass-focus) 72%, white);
+  outline-offset: 3px;
+}
+
+.platform :is(a, button):focus-visible {
+  box-shadow: 0 0 0 5px rgba(29, 78, 216, .12);
+}
+
+.platform .marketShape:focus-visible {
+  outline: none;
+  stroke: var(--glass-focus);
+  stroke-width: 3px;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .topbar,
+  .radarPanel,
+  .pipelinePanel,
+  .activityPanel,
+  .sectorStrip,
+  .register {
+    background: color-mix(in srgb, var(--paper, #fff) 94%, var(--blue-soft, #edf3ff) 6%);
+  }
+}
 
 @media (max-width: 1100px) {
   .platform { grid-template-columns: 190px minmax(0, 1fr); }

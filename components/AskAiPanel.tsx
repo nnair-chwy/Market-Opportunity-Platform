@@ -241,7 +241,7 @@ export function AskAiPanel({
                 {context.insights.slice(0, compact ? 3 : 4).map((insight) => (
                   <article
                     className={`ask-ai-insight ${insight.tone ?? "neutral"}`}
-                    key={`${insight.title}-${insight.sourceIds.join("-")}`}
+                    key={`${insight.title}-${insight.detail}-${insight.sourceIds.join("-")}`}
                   >
                     <div>
                       <strong>{insight.title}</strong>
