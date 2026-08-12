@@ -52,3 +52,6 @@
 .packet p:not(.eyebrow), .packet small { color: #d8e9e3; }
 .links { display: flex; flex-wrap: wrap; gap: 9px; }
 @media (max-width: 900px) { .header { display: grid; } .statusCard { min-width: 0; } .runSummary, .layout { grid-template-columns: 1fr; } }
+
+.workspace { --glass-accent: var(--blue, #28644f); --glass-line: rgb(145 190 216 / 52%); color: var(--text, #17201d); }
+.statusCard,.runSummary>div,.panel,.receipts article{background:linear-gradient(145deg,rgb(255 255 255 / 84%),rgb(226 243 253 / 60%));border-color:var(--glass-line);box-shadow:0 16px 40px rgb(42 105 145 / 11%),inset 0 1px rgb(255 255 255 / 85%);backdrop-filter:blur(18px) saturate(125%)}.workspace :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid color-mix(in srgb,var(--glass-accent) 62%,white);outline-offset:2px}

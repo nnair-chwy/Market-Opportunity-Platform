@@ -129,3 +129,29 @@
     grid-template-columns: 1fr;
   }
 }
+
+.workspace {
+  --glass-ink: var(--text, #10213e);
+  --glass-accent: var(--blue, #2458d3);
+  --glass-line: rgb(145 190 216 / 52%);
+  color: var(--glass-ink);
+}
+
+.workspace > header,
+.list article {
+  backdrop-filter: blur(18px) saturate(125%);
+  background: linear-gradient(145deg, rgb(255 255 255 / 84%), rgb(226 243 253 / 60%));
+  border-color: var(--glass-line);
+  box-shadow: 0 16px 40px rgb(42 105 145 / 11%), inset 0 1px rgb(255 255 255 / 85%);
+}
+
+.boundary,
+.list dl div {
+  background: rgb(231 244 252 / 62%);
+  border-color: var(--glass-line);
+}
+
+.workspace :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--glass-accent) 62%, white);
+  outline-offset: 2px;
+}

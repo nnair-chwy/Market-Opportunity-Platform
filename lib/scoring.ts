@@ -5,6 +5,13 @@
  * source references and never enters a calculation.
  */
 
+import {
+  DETERMINISTIC_OPERATOR_VERSION,
+  calculate_weighted_result,
+  filter_eligible_entities,
+  normalize_metric,
+} from "./evaluation-operators.ts";
+
 export const CONFIGURATION_SCHEMA_VERSION = "1.0.0" as const;
 export const CALCULATION_VERSION = "1.0.0" as const;
 export const LINEAR_NORMALIZATION_VERSION = "linear-v1" as const;
@@ -496,14 +503,29 @@ export function normalizeMetric(
     ]);
   }
 
-  const ratio =
-    (value - normalization.inputMin) /
-    (normalization.inputMax - normalization.inputMin);
-  const normalized =
-    definition.direction === "higher-is-better"
-      ? ratio * 100
-      : (1 - ratio) * 100;
-  return round(normalized);
+  return normalize_metric({
+    operatorVersion: DETERMINISTIC_OPERATOR_VERSION,
+    decisionLayer: "property_feasibility",
+    metricId: definition.metricId,
+    rawValue: value,
+    direction:
+      definition.direction === "higher-is-better"
+        ? "higher_is_better"
+        : "lower_is_better",
+    validRange: { ...definition.validRange },
+    normalization: {
+      function: normalization.function,
+      version: normalization.version,
+      inputMin: normalization.inputMin,
+      inputMax: normalization.inputMax,
+      clamp: normalization.clamp,
+    },
+    provenance: {
+      sourceIds: [...definition.sourceIds],
+      inputVersion: definition.normalization.version,
+      transformationVersion: definition.normalization.version,
+    },
+  }).normalizedValue;
 }
 
 function compareConstraint(
@@ -870,43 +892,51 @@ function evaluateBaseline(
     },
   );
 
-  const scoredWeight = preliminary.reduce(
-    (sum, contribution) =>
-      contribution.status === "scored" ? sum + contribution.weight : sum,
-    0,
-  );
-  const blocksScore = preliminary.some(
-    (contribution) =>
-      contribution.missingDataPolicy === "fail-evaluation" &&
-      contribution.status !== "scored" &&
-      contribution.status !== "excluded",
-  );
-  const scoreStatus =
-    scoredWeight > 0 && !blocksScore ? "calculated" : "not-calculated";
-  const metricContributions = preliminary.map((contribution) => {
-    if (
-      scoreStatus === "calculated" &&
-      contribution.status === "scored" &&
-      contribution.normalizedValue !== null
-    ) {
-      return {
-        ...contribution,
-        contribution: round(
-          (contribution.normalizedValue * contribution.weight) / scoredWeight,
-        ),
-      };
-    }
-    return { ...contribution, contribution: null };
+  const weightedResult = calculate_weighted_result({
+    operatorVersion: DETERMINISTIC_OPERATOR_VERSION,
+    decisionLayer: "property_feasibility",
+    formulaVersion: configuration.calculationVersion,
+    expectedWeightTotal: configuration.expectedWeightTotal,
+    metrics: preliminary.map((contribution) => ({
+      metricId: contribution.metricId,
+      normalizedValue: contribution.normalizedValue,
+      weight: contribution.weight,
+      included: contribution.status !== "excluded",
+      state:
+        contribution.status === "scored"
+          ? "available"
+          : contribution.status,
+      missingDataRule:
+        contribution.missingDataPolicy === "fail-evaluation"
+          ? "fail_evaluation"
+          : "exclude_and_renormalize",
+      provenance: {
+        sourceIds: contribution.sourceReference
+          ? [contribution.sourceReference.sourceId]
+          : definitions.get(contribution.metricId)?.sourceIds ?? [],
+        inputVersion: input.inputDataVersion,
+        transformationVersion: contribution.normalizationFunction.version,
+      },
+    })),
   });
-  const systemScore =
-    scoreStatus === "calculated"
-      ? round(
-          metricContributions.reduce(
-            (sum, contribution) => sum + (contribution.contribution ?? 0),
-            0,
-          ),
-        )
-      : null;
+  const scoredWeight = weightedResult.scoredWeight;
+  const scoreStatus =
+    weightedResult.status === "calculated"
+      ? "calculated" as const
+      : "not-calculated" as const;
+  const weightedContributions = new Map(
+    weightedResult.contributions.map((contribution) => [
+      contribution.metricId,
+      contribution.contribution,
+    ]),
+  );
+  const metricContributions = preliminary.map((contribution) => {
+    return {
+      ...contribution,
+      contribution: weightedContributions.get(contribution.metricId) ?? null,
+    };
+  });
+  const systemScore = weightedResult.value;
 
   const missingInputs = metricContributions
     .filter((contribution) => contribution.status === "missing")
@@ -968,17 +998,34 @@ function evaluateBaseline(
     );
   }
 
-  const failedConstraint = constraintResults.some(
-    (result) => result.status === "failed",
-  );
-  const incompleteConstraint = constraintResults.some(
-    (result) => result.status === "missing" || result.status === "rejected",
-  );
-  const constraintOutcome = failedConstraint
-    ? "failed"
-    : incompleteConstraint
-      ? "incomplete"
-      : "passed";
+  const eligibility = filter_eligible_entities({
+    operatorVersion: DETERMINISTIC_OPERATOR_VERSION,
+    decisionLayer: "property_feasibility",
+    policyVersion: configuration.calculationVersion,
+    entities: [{
+      entityId: input.siteId,
+      criteria: constraintResults.map((result) => ({
+        criterionId: result.constraintId,
+        state: result.status,
+        required: true,
+        provenance: {
+          sourceIds: result.sourceReference
+            ? [result.sourceReference.sourceId]
+            : configuration.constraints.find(
+                (constraint) => constraint.constraintId === result.constraintId,
+              )?.sourceIds ?? [],
+          inputVersion: input.inputDataVersion,
+          transformationVersion: configuration.calculationVersion,
+        },
+      })),
+    }],
+  })[0]!.eligibility;
+  const constraintOutcome =
+    eligibility === "ineligible"
+      ? "failed" as const
+      : eligibility === "unknown"
+        ? "incomplete" as const
+        : "passed" as const;
 
   const allSources = [
     ...input.metricObservations.map(

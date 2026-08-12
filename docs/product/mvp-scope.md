@@ -2,16 +2,18 @@
 
 ## Provisional product wedge
 
-Build a transparent market-first decision-support workflow that reviews a
-market before comparing a small set of candidate clinic locations using
-approved structured inputs and producing a reviewable evidence brief.
+Build a transparent, question-first market-intelligence workflow that evaluates
+geographic business questions using approved structured inputs or explicitly
+synthetic fixtures and produces a reviewable evidence or next-action packet.
+Clinic market and site evaluation is the first supported vertical.
 
 This scope is provisional until the owner of the existing internal site-selection plan confirms whether this work should extend, interface with, or stop in favor of that effort.
 
 ## In scope
 
 - Load synthetic candidate-site and metric data
-- Navigate separate Markets and Locations workspaces
+- Navigate a shared evaluation workspace with market and clinic-location
+  vertical views
 - Color public CBSA boundaries from higher to lower synthetic attractiveness
   scores only when an exact `SRC-014` CBSA identifier is available; unmatched
   records remain visibly unscored
@@ -24,6 +26,11 @@ This scope is provisional until the owner of the existing internal site-selectio
 - Preserve a stable parent-market relationship for evaluable locations
 - Block location evaluation until the parent market is Current or Evaluated
 - Keep market workflow state separate from public context and location results
+- Compile a plain-language question into a validated plan against the versioned
+  capability registry, with a deterministic fallback when AI is unavailable
+- Explore one `SRC-016` public measure on a full-width national CBSA map with
+  workflow and metro/micro filters, synchronized selection, percentile scale,
+  and a comparison set of up to five markets
 - Validate required fields, types, ranges, freshness, and provenance
 - Calculate deterministic metric normalizations
 - Apply an explicitly approved and versioned weight configuration
@@ -48,6 +55,10 @@ This scope is provisional until the owner of the existing internal site-selectio
 The Candidate Review Agent prepares evidence for review. It does not resolve
 `CLM-001`, approve production use of `SRC-017`, turn public context into a
 scoring input, or make a site, lease, or opening decision.
+
+The adaptive planner classifies intent only. It cannot add a capability,
+retrieve an undocumented source, calculate a percentile, satisfy an approval
+gate, or authorize a market, site, lease, spend, or clinic-opening decision.
 
 ### Seattle market deep-dive demo
 

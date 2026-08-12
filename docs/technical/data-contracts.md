@@ -138,6 +138,86 @@ The result must preserve:
 
 See `data/schemas/site-input.schema.json` for the synthetic starting contract.
 
+## Shared evaluation workflow
+
+The versioned TypeScript and Zod contracts in `lib/evaluation-contracts.ts`
+define the cross-vertical workflow boundary:
+
+- `QuestionSpec` records the decision question, geography and time scope,
+  eligibility, required evidence, permitted actions, and approval gates.
+- `DecisionGraph` links evidence, deterministic rules, review, artifacts, and
+  permitted draft actions without embedding hidden reasoning.
+- `EvidenceRecord` preserves source IDs, provenance, evidence status,
+  sensitivity, geography, time scope, allowed use, and explicit availability.
+  Missing and unknown evidence retains `null`; schema parsing never imputes a
+  value.
+- `EvaluationContract` contains formulas, thresholds, weights, missing-data
+  rules, capabilities, artifact specifications, and contract approval.
+- `ActionPacket` keeps an AI-proposed interpretation separate from a
+  human-approved interpretation and cannot approve an action while a required
+  gate remains unsatisfied.
+
+Contract version `1.0.0` supports synthetic, draft, and approved states.
+Synthetic records remain limited to `synthetic_prototype_only`. The clinic
+scoring adapter maps the existing deterministic `EvaluationInput` and
+`ScoringConfiguration` into the shared contract without changing scoring
+behavior. These contracts add no persistence and do not authorize a final
+real-estate decision.
+
+### Evaluation plan
+
+`lib/planning/contracts.ts` defines a strict `EvaluationPlan` between the
+question UI and canonical execution boundary. It records the original question,
+proposal method, constrained intent, registry capability, geography grain,
+execution status, evidence boundary, missing evidence and approvals, visible
+steps, and permitted draft actions. The API response must parse this contract
+before it enters application state.
+
+An AI-proposed intent and deterministic fallback both compile through the same
+registry assessment. The plan does not contain executable formulas, source
+credentials, gate receipts, or authority to modify an `EvaluationContract`.
+
+Public map percentiles use `compare_cohort` with one compatible `SRC-016`
+measure and an explicit metro/micro and workflow cohort. Missing values remain
+unranked. The output is `market_context_only` and has no scoring eligibility.
+
+### Deterministic operator boundary
+
+The strict contracts in `lib/evaluation-operators.ts` expose versioned
+`normalize_metric`, `join_geography`, `filter_eligible_entities`,
+`compare_cohort`, `calculate_weighted_result`, `run_sensitivity`, and
+`render_artifact` operators. Inputs must parse as structured Zod contracts;
+natural-language instructions and unknown fields are rejected.
+
+Every invocation belongs to exactly one decision layer: market
+attractiveness, submarket opportunity, property feasibility, or execution
+priority. Operators do not combine layers. Numeric inputs retain source, input,
+transformation, formula, normalization, and sensitivity versions. Missing
+values remain explicit and qualitative evidence has no accepted path into
+weighted calculations.
+
+## Workspace capability registry
+
+Registry version `1.0.0` in `lib/capability-registry.ts` declares the executable
+boundary for `census_market_context`, `clinic_performance`,
+`clinic_site_evaluation`, and `local_growth_test`. Each entry records its
+version and status, supported geography grains and outputs, required evidence,
+permitted deterministic operators, approval requirements, and known
+limitations.
+
+Question assessment returns `supported`, `unsupported`, `partially_supported`,
+or `blocked`, plus supported and unsupported outputs and explicit missing
+evidence or approvals. A synthetic capability may execute only for its stated
+prototype use. Planned and unavailable capabilities do not become executable
+because a caller supplies an identifier.
+
+The initial registry marks only public Census market context as connected.
+Clinic performance is unavailable pending an approved aggregate export,
+outcome definition, and owner approval. Clinic site evaluation is synthetic.
+Local growth testing is planned and requires approved, privacy-safe aggregate
+inputs. The registry does not establish a Snowflake, Tableau, Esri, campaign,
+or customer-data connection.
+
 ## Public CBSA market universe
 
 The July 2023 CBSA build creates a versioned mainland market-universe snapshot

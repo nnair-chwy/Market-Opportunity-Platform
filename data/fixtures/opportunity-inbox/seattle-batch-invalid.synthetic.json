@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "opportunity-inbox-v1",
+  "fixtureVersion": "seattle-opportunity-fixtures-v2",
+  "batchId": "seattle-batch-invalid",
+  "regionId": "cbsa:42660",
+  "regionName": "Seattle-Tacoma-Bellevue, WA",
+  "receivedAt": "2026-08-06T17:00:00.000Z",
+  "events": [
+    {
+      "observationId": "invalid-missing-metric",
+      "dedupeKey": "seattle:invalid:missing-metric",
+      "sector": "marketing",
+      "regionId": "cbsa:42660",
+      "rawValue": 10,
+      "unit": "%",
+      "observedAt": "2026-08-06T16:00:00.000Z",
+      "sourceId": "SYN-INVALID-001",
+      "evidenceStatus": "Hypothesis",
+      "qualityStatus": "accepted",
+      "sensitivity": "internal",
+      "allowedUse": "synthetic_prototype_only",
+      "label": "Malformed synthetic observation"
+    },
+    {
+      "observationId": "invalid-restricted",
+      "dedupeKey": "seattle:invalid:restricted",
+      "sector": "marketing",
+      "regionId": "cbsa:42660",
+      "metricId": "prohibited_demo_field",
+      "rawValue": 1,
+      "unit": "record",
+      "observedAt": "2026-08-06T16:00:00.000Z",
+      "sourceId": "SYN-INVALID-002",
+      "evidenceStatus": "Hypothesis",
+      "qualityStatus": "rejected",
+      "sensitivity": "restricted",
+      "allowedUse": "not_approved",
+      "label": "Prohibited synthetic placeholder"
+    }
+  ]
+}
