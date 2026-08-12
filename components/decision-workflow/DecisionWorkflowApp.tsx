@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AskAiPanel } from "@/components/AskAiPanel";
-import { QuestionMap } from "@/components/decision-workflow/QuestionMap";
 import { AdaptiveMarketWorkspace } from "@/components/decision-workflow/AdaptiveMarketWorkspace";
+import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
 import type { AskAiContext } from "@/lib/ai/insights";
 import { currentClinics, fulfillmentCenters } from "@/lib/locations/map-data";
 import {
@@ -296,31 +296,13 @@ export function DecisionWorkflowApp() {
           ) : null}
           {activeView === "workflow" ? <>
           {phase === "question" ? (
-            <div className="question-stage">
-              <header className="question-stage-header">
-                <div>
-                  <div className="eyebrow">Start with the decision</div>
-                  <h1 id="question-title">What do you need to decide?</h1>
-                  <p className="lead">Ask a business question in plain language, use the map for geographic context, and prepare a reviewable next step.</p>
-                </div>
-                <div className="question-stage-actions">
-                  <button className="header-icon" aria-label="Open saved packets" onClick={() => setActiveView("saved")}>Saved packets <span>{savedPackets.length}</span></button>
-                  <button className="header-icon" onClick={restart}>New question</button>
-                </div>
-              </header>
-              <div className="question-split">
-                <QuestionMap />
-                <section className="question-view" aria-labelledby="question-title">
-                  <form className="question-card" onSubmit={(event) => { event.preventDefault(); void startWorkflow(); }}>
-                    <label htmlFor="decision-question">Your question</label>
-                    <textarea id="decision-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Example: Which markets should we investigate for future growth?" autoFocus />
-                    <div className="question-card-footer"><span>Use a question tied to a decision, owner, or next step.</span><button className="primary-action" type="submit" disabled={!question.trim()}>Run decision graph <span aria-hidden="true">→</span></button></div>
-                  </form>
-                  <div className="prompt-grid"><button onClick={() => setQuestion("Which markets should we investigate for future growth?")}>Market opportunity</button><button onClick={() => setQuestion("What evidence do we need before comparing candidate locations?")}>Evidence readiness</button><button onClick={() => setQuestion("What should the accountable team investigate next?")}>Next action</button></div>
-                  {savedPackets.length ? <div className="recent-packets"><div><strong>Recent action packets</strong><span>{savedPackets.length} saved</span></div>{savedPackets.slice(0, 3).map((packet) => <button key={packet.id} onClick={() => openSavedPacket(packet)}><span>{packet.title}</span><small>{packet.savedAt}</small></button>)}</div> : null}
-                </section>
-              </div>
-            </div>
+            <AdaptiveEvaluationWorkspace
+              question={question}
+              savedPackets={savedPackets}
+              onQuestionChange={setQuestion}
+              onSubmit={() => void startWorkflow()}
+              onOpenSaved={() => setActiveView("saved")}
+            />
           ) : null}
 
           {phase === "running" ? (

@@ -24,22 +24,34 @@ test("server-renders the question-to-action-packet workflow", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>Market Intelligence<\/title>/i);
-  assert.match(html, /What do you need to decide\?/);
-  assert.match(html, /Run decision graph/);
-  assert.match(html, /Follow the decision graph/);
-  assert.match(html, /Saved packets/);
-  assert.match(html, /use the map for geographic context/i);
-  assert.match(html, /question-map-section/);
-  assert.match(html, /Review.*Read the action packet/s);
-  assert.match(html, /accountable owner makes the business decision/);
+  assert.match(html, /Perspective/);
+  assert.match(html, /Pricing/);
+  assert.match(html, /Marketing/);
+  assert.match(html, /CVC/);
+  assert.match(html, /CVC views/);
+  assert.match(html, /Household demand/);
+  assert.match(html, /Household demand context/);
+  assert.match(html, /market context only/i);
+  assert.match(html, /Measure/);
+  assert.match(html, /Workflow/);
+  assert.match(html, /Include micropolitan/);
+  assert.match(html, /Evaluation question/);
+  assert.match(html, /Evaluate/);
+  assert.match(html, /opportunity score/i);
+  assert.match(html, /View A/);
+  assert.match(html, /Single/);
+  assert.match(html, /Compare/);
+  assert.match(html, /Layer/);
+  assert.match(html, /Map view mode/);
   assert.doesNotMatch(html, /smart_toy|space_dashboard|Synthetic prototype|Clinic evaluation|Evaluation workspace/);
   assert.doesNotMatch(html, /MarketAttractivenessRanking|CandidateBriefsWorkspace/);
+  assert.doesNotMatch(html, /universal_score|cross_perspective_score/);
 });
 
 test("keeps the question workflow client-side and stores packet drafts in the browser", async () => {
-  const [workflow, questionMap, page, layout] = await Promise.all([
+  const [workflow, homepage, page, layout] = await Promise.all([
     readFile(new URL("../components/decision-workflow/DecisionWorkflowApp.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/decision-workflow/QuestionMap.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/decision-workflow/AdaptiveEvaluationWorkspace.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   ]);
@@ -53,11 +65,11 @@ test("keeps the question workflow client-side and stores packet drafts in the br
   assert.match(workflow, /AskAiPanel/);
   assert.match(workflow, /actionId/);
   assert.match(workflow, /workspace-map/);
-  assert.match(workflow, /Geographic context map/);
-  assert.match(workflow, /QuestionMap/);
-  assert.match(questionMap, /NEXT_PUBLIC_MAPTILER_KEY/);
-  assert.match(questionMap, /api\.maptiler\.com/);
-  assert.match(questionMap, /question-maplibre/);
+  assert.match(workflow, /AdaptiveEvaluationWorkspace/);
+  assert.match(homepage, /adaptive-question-composer/);
+  assert.match(homepage, /AdaptiveMarketWorkspace/);
+  assert.match(homepage, /mapMode=\{activeMapMode\}/);
+  assert.match(homepage, /data-view-a-control="true"/);
   assert.match(layout, /Market Intelligence/);
 });
 

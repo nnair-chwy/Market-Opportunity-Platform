@@ -16,9 +16,10 @@ test("root renders the new question-first workflow instead of the retired evalua
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /What do you need to decide\?/);
-  assert.match(html, /Run decision graph/);
-  assert.match(html, /Follow the decision graph/);
+  assert.match(html, /Evaluation question/);
+  assert.match(html, /Evaluate/);
+  assert.match(html, /Perspective/);
+  assert.match(html, /Household demand/);
   assert.doesNotMatch(html, /Goal composer|Clinic evaluation|Synthetic fixture|smart_toy/);
 });
 
