@@ -1,15 +1,15 @@
 import type { GeometryCollection, Topology } from "topojson-specification";
-import topologyJson from "@/data/public/census/cbsa-geometry/2024/markets.topo.json";
-import marketUniverseJson from "@/data/public/census/cbsa-universe/2023-07/markets.json";
-import acsSnapshotJson from "@/data/public/census/cbsa-acs/2024/market-context.json";
+import topologyJson from "../../data/public/census/cbsa-geometry/2024/markets.topo.json" with { type: "json" };
+import marketUniverseJson from "../../data/public/census/cbsa-universe/2023-07/markets.json" with { type: "json" };
+import acsSnapshotJson from "../../data/public/census/cbsa-acs/2024/market-context.json" with { type: "json" };
 import {
   createPublicMarketRecords,
   type PublicMarketRecord,
-} from "./cbsa-market-context";
+} from "./cbsa-market-context.ts";
 import {
   createPublicMarketMapGeoJson,
   type PublicMarketMapFeatureCollection,
-} from "./cbsa-market-map";
+} from "./cbsa-market-map.ts";
 import type { CbsaAcsMetricKey, CbsaAcsSnapshot } from "./cbsa-acs";
 import type { CbsaBoundaryProperties } from "./cbsa-geometry";
 import type { CbsaUniverseSnapshot } from "./cbsa-universe";

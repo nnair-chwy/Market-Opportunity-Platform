@@ -4,8 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
 import { DecisionGraphAnimation } from "@/components/decision-workflow/DecisionGraphAnimation";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
+import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { publicMarkets } from "@/lib/data/public-market-ui";
+import {
+  runMarketInvestigation,
+  type InvestigationLead,
+  type MarketInvestigation,
+} from "@/lib/planning/market-investigation";
 import {
   assembleReviewableActionPacket,
   buildSisterFollowUpQuestion,
@@ -21,6 +27,7 @@ import {
   resolveGeographicFocus,
   suggestSisterGeographiesFromPlan,
   type EvaluationPlan,
+  type GeographicFocus,
   type PacketFindingsSummary,
   type SisterGeographySuggestion,
 } from "@/lib/planning";
@@ -34,6 +41,7 @@ type SavedPacket = {
   actionId: string;
   savedAt: string;
   summary?: string;
+  investigation?: MarketInvestigation;
 };
 
 function nowLabel() {
@@ -81,6 +89,8 @@ export function DecisionWorkflowApp() {
   const [packetSummary, setPacketSummary] = useState<PacketFindingsSummary | null>(null);
   const [packetSummaryState, setPacketSummaryState] = useState<"idle" | "loading" | "ready">("idle");
   const [actionDetailsOpen, setActionDetailsOpen] = useState(false);
+  const [investigation, setInvestigation] = useState<MarketInvestigation | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
 
@@ -93,6 +103,24 @@ export function DecisionWorkflowApp() {
     () => (plan ? resolveGeographicFocus(plan, publicMarkets) : null),
     [plan],
   );
+
+  const selectedLead = useMemo(
+    () => investigation?.leads.find((lead) => lead.id === selectedLeadId) ?? investigation?.leads[0] ?? null,
+    [investigation, selectedLeadId],
+  );
+
+  const displayedGeographicFocus = useMemo<GeographicFocus | null>(() => {
+    if (!selectedLead) return geographicFocus;
+    const names = selectedLead.marketIds.map((code) => publicMarkets.find((market) => market.cbsa_code === code)?.cbsa_name ?? code);
+    return {
+      state: "focused",
+      source: "evaluation_result",
+      cbsaCodes: selectedLead.marketIds.slice(0, 5),
+      label: names.join(" compared with "),
+      evidenceStatus: "Derived",
+      message: `Map focus follows the selected analyst lead: ${selectedLead.title}.`,
+    };
+  }, [geographicFocus, selectedLead]);
 
   const sisterGeographies = useMemo(
     () => (plan && geographicFocus?.state === "focused"
@@ -186,6 +214,8 @@ export function DecisionWorkflowApp() {
     setPacketSummary(null);
     setPacketSummaryState("idle");
     setActionDetailsOpen(false);
+    setInvestigation(null);
+    setSelectedLeadId(null);
     setPhase("interpreting");
     try {
       const response = await fetch("/api/evaluation-plans", {
@@ -202,6 +232,9 @@ export function DecisionWorkflowApp() {
         return;
       }
       setPlan(parsed.data.plan);
+      const nextInvestigation = runMarketInvestigation(parsed.data.plan);
+      setInvestigation(nextInvestigation);
+      setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
       setSelectedActionId(proposedActionFromPlan(parsed.data.plan).id);
       setActiveStep(0);
       setPhase("running");
@@ -221,6 +254,8 @@ export function DecisionWorkflowApp() {
     setPacketSummary(null);
     setPacketSummaryState("idle");
     setActionDetailsOpen(false);
+    setInvestigation(null);
+    setSelectedLeadId(null);
     setPhase("question");
   }
 
@@ -233,6 +268,7 @@ export function DecisionWorkflowApp() {
       actionId: selectedAction.id,
       savedAt: nowLabel(),
       summary: packetSummaryFromPlan(plan),
+      investigation: investigation ?? undefined,
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
@@ -244,6 +280,9 @@ export function DecisionWorkflowApp() {
     const restoredPlan = planEvaluation(packet.question);
     setQuestion(packet.question);
     setPlan(restoredPlan);
+    const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
+    setInvestigation(restoredInvestigation);
+    setSelectedLeadId(restoredInvestigation.leads[0]?.id ?? null);
     setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
     setRequestError(null);
     setSisterFollowUpNotice(null);
@@ -268,6 +307,8 @@ export function DecisionWorkflowApp() {
       || savedPackets.some((packet) => packet.question === currentQuestion);
     // Leave saved packets untouched. Do not auto-save or overwrite the current packet.
     setPlan(null);
+    setInvestigation(null);
+    setSelectedLeadId(null);
     setSelectedActionId("");
     setActiveStep(-1);
     setRequestError(null);
@@ -443,10 +484,18 @@ export function DecisionWorkflowApp() {
                 <strong>{plan.originalQuestion}</strong>
               </div>
 
+              {investigation ? (
+                <MarketInvestigationPanel
+                  investigation={investigation}
+                  selectedLeadId={selectedLead?.id ?? null}
+                  onSelectLead={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
+                />
+              ) : null}
+
               <div className="decision-review-primary">
-                {geographicFocus ? (
+                {displayedGeographicFocus ? (
                   <GeographicFocusMap
-                    focus={geographicFocus}
+                    focus={displayedGeographicFocus}
                     modeLabel={geographyModeLabel(plan)}
                   />
                 ) : null}

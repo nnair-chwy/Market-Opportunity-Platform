@@ -21,7 +21,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   const value = question.toLowerCase();
   const clinic = has(value, /\b(clinic|clinics|vet care|veterinary)\b/);
   const performance = clinic && has(value, /\b(performance|peer|underperform|operating)\b/);
-  const growth = has(value, /\b(campaign|advertis|promotion|awareness|growth test)\b/);
+  const growth = has(value, /\b(campaign|advertis|promotion|awareness|growth test|marketing|media|test market|control market|reach)\b/);
   const location = clinic && has(value, /\b(open|opening|location|site|market|where|investigate)\b/) && !performance;
   const vague = has(value, /\bwhat should we do next\b/) || has(value, /\bwhat next\b/);
   const requestedMeasure: PlanningIntent["requestedMeasure"] = performance || growth || vague
