@@ -26,6 +26,28 @@ test("question submission switches to a map and progress split",()=>{
   assert.match(component,/Show evaluation progress/);
 });
 
+test("a broad question pauses on an editable decision brief before analysis",()=>{
+  assert.match(component,/interpretQuestionPrototype/);
+  assert.match(component,/\/api\/question-intents/);
+  assert.match(component,/AbortSignal\.timeout\(10_000\)/);
+  for(const stage of ["Understanding the decision","Checking verified internal guidance","Defining evidence and evaluation logic","Preparing assumptions for review"])assert.match(component,new RegExp(stage));
+  assert.match(component,/Research and validation plan/);
+  assert.match(component,/Confirm what this evaluation should decide/);
+  for(const cue of ["Decision to make","Decision owner","What the agent compares","Actionable geography","Decision period","Success means","Denominator","What happens next","Assumptions to confirm","Still needs confirmation","Decision boundaries","Evidence to look for","Proposed metrics","Comparison rules","Add a source or business context"])assert.match(component,new RegExp(cue));
+  assert.match(component,/unit of analysis—not a data source/);
+  assert.match(component,/Confirm goal and review evidence/);
+  assert.match(component,/review which evidence is available, missing, stale, or incompatible/);
+  assert.match(component,/How much each factor can influence the result/);
+  assert.match(component,/maximum share of the preference score/);
+  assert.match(component,/actual points contributed by every factor/);
+  assert.match(component,/must total 100%/);
+  assert.match(component,/Not weighted:/);
+  assert.match(component,/confirmQuestionIntent/);
+  assert.match(component,/!intentDraft && <form/);
+  assert.match(styles,/\.intentReview\{position:fixed/);
+  assert.match(styles,/inset 5px 0 0 var\(--blue\)/);
+});
+
 test("map supplies swipe and translucent layer comparison",()=>{
   assert.match(overview,/type CompareMode = "single" \| "swipe" \| "blend"/);
   assert.match(overview,/type="range"/);
@@ -33,7 +55,8 @@ test("map supplies swipe and translucent layer comparison",()=>{
   assert.match(overview,/setSplit\(Number\(event\.target\.value\)\)/);
   assert.match(overview,/opacity=\{0\.5\}/);
   assert.match(styles,/\.blendLayer\{z-index:7\}/);
-  assert.match(overview,/Blue and red overlap at 50% opacity/);
+  assert.match(overview,/>Layer<\/button>/);
+  assert.match(overview,/overlapKey/);
   assert.match(overview,/PALETTES\.red/);
 });
 
@@ -44,10 +67,21 @@ test("available map views are governed public context and footprint",()=>{
   assert.match(overview,/publicMarketGeographicArtifact/);
   assert.doesNotMatch(overview,/syntheticMarketSnapshot|SYN-MARKET-ATTRACTIVENESS/);
   assert.match(overview,/viewsForQuestion/);
-  assert.match(overview,/Households \+ income/);
+  for(const cue of ["Audience scale","Pet households","Clinic footprint","Access + pet demand","Affordability context","Income + scale"])assert.match(overview,new RegExp(cue.replace("+","\\+")));
   assert.match(overview,/Suggested views for this evaluation/);
   assert.match(overview,/onClick=\{\(\) => applyView\(view\)\}/);
   assert.match(component,/evaluationQuestion=\{started \? displayQuestion : undefined\}/);
+});
+
+test("department perspective changes map defaults and controls without status copy",()=>{
+  assert.match(overview,/DepartmentPerspective = "marketing" \| "cvc" \| "pricing"/);
+  assert.match(overview,/aria-label="Department perspective"/);
+  for(const cue of ['label: "Marketing"','label: "CVC"','label: "Pricing"'])assert.match(overview,new RegExp(cue));
+  assert.doesNotMatch(overview,/Google Ads geographic performance awaits connection/);
+  assert.doesNotMatch(overview,/pricing evidence is not connected yet/);
+  assert.match(overview,/onLayerChange\(initialView\.primary\)/);
+  assert.match(overview,/setSecondaryLayer\(initialView\.secondary \?\? next\.defaultSecondary\)/);
+  assert.match(overview,/availableLayers\.map/);
 });
 
 test("compact evidence upload remains available",()=>{
