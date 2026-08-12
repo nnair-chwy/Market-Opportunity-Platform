@@ -37,12 +37,19 @@ fabricating a result.
 
 ### 1. Goal composer
 
-- One prominent question box with representative runnable examples.
+- One compact question bar with two representative runnable examples.
 - Optional context, intended decision, receiving team, and time scope.
 - Detection of entity, geography, time range, and question class.
 - Immediate executable, partially executable, or unsupported status.
 - A precise evidence request when blocked.
 - Follow-up questions that preserve the evaluation and selected geography.
+- Do not render a question-specific result map before the user supplies a question.
+
+The entry state may show a separate non-scored national evidence overview beneath
+the composer. It must distinguish clinic footprint, public household context, reported
+pet-ownership context, unavailable governed layers, and user-staged files.
+The local-file drop target stays compact beside the question bar; it is not a separate
+dashboard panel.
 
 ### 2. Decision decomposition
 
@@ -62,6 +69,8 @@ fabricating a result.
 
 ### 4. Geographic evidence map and ranking
 
+- Render only compatible measures identified from the active question. Do not expose
+  a fixed demographic menu as though every measure applies to every decision.
 - Colors driven by the active measure or approved composite calculation.
 - Matching legend, measure, unit, period, and evidence state.
 - National view at the question-appropriate grain and supported local drill-down.
@@ -89,6 +98,9 @@ rationale. A reviewer can correct one step without restarting the evaluation.
 - Lineage from question → contract → evidence → operator → result → correction →
   action.
 - Contrary evidence beside supporting evidence.
+- CSV and Excel files may be staged locally for field matching, but they cannot become
+  map or scoring evidence until geography, measure definition, period, source, sensitivity,
+  and allowed use are reviewed. Staging does not upload, persist, or approve the file.
 
 ### 8. Findings and comparison artifacts
 
@@ -128,13 +140,14 @@ implemented; **Blocked** = waiting for data, definition, permission, or an owner
 | Capability-aware execution | **Partial** | Compile and run only verified executable stages; identify precise blockers. |
 | Evaluation contract | **Partial** | Complete required fields, approval state, editing, and version validation. |
 | Material human gates | **Partial** | Make gates resumable and request only choices that materially change the result. |
-| National geographic map | **Connected for limited Census measures** | Produce a fresh artifact for every supported question and prevent stale results. |
+| National geographic map | **Connected for limited Census/state measures** | A versioned artifact now binds question, measure, ranking, selection, source period and evidence boundary; extend the same receipt to regional/local views. |
 | Synchronized market ranking | **Connected for limited Census measures** | Add validated composites and question-specific cohorts. |
 | Multi-measure crossover | **Partial** | Validate compatibility, normalization, weights, missingness, and sensitivity. |
 | National-to-local drill-down | **Partial; local evidence is synthetic** | Connect governed ZIP, trade-area, and site data with valid hierarchy joins. |
+| Clinic performance evaluation | **Metric definitions and synthetic aggregate contract available; governed feed pending** | The partner branch confirms market-level customer, income, clinic-profile, and clinic-order shapes, but its checked-in snapshot is explicitly synthetic. Preserve clinic-week grain, cohort, denominator, normalization, target, freshness, and source-version metadata when an approved extract lands. Tableau remains a discovery and parity surface, not the durable application backend. |
 | Selected-place panel | **Partial** | Ground follow-up AI and actions in the active evaluation and entity. |
 | Evaluation step canvas | **Partial** | Improve hierarchy and add step-level correction. |
-| Generic artifact renderer | **Partial** | Remove remaining use-case assumptions and finish one artifact schema. |
+| Generic artifact renderer | **Partial — v1 geographic receipt active** | National CBSA and state views share one validated geographic artifact schema; migrate Seattle/local artifacts and generate reports from the same receipt. |
 | Evidence lineage | **Partial** | Persist source/operator versions, corrections, approvals, and actions. |
 | Contrary evidence and sensitivity | **Planned** | Add missingness-impact and scenario/sensitivity operators. |
 | Ask AI about a selected place | **Partial / unreliable** | Bind the exchange to evaluation ID, selected entity, evidence, and artifacts. |
@@ -177,7 +190,7 @@ business action by place.
 | --- | --- | --- | --- |
 | Census ACS and CBSA boundaries | **Connected** | National context, map, cohorts, rankings, and denominators. | Add versioned ZIP/county crosswalks and refresh regression. |
 | Synthetic Seattle and clinic fixtures | **Synthetic only** | Orchestration, drill-down, human-gate, and regression demonstrations. | Retain explicit labels; never use for production recommendations. |
-| Snowflake/dbt/Alation/CDL | **Platform path available; not connected** | Governed internal metrics, definitions, lineage, and read-only execution. | Approve one narrow aggregate view with stable geography and permitted use. |
+| Snowflake/dbt/Alation/CDL | **Synthetic contract available; live platform not connected** | The prototype can render the intended CBSA-level customer, income, clinic-supply, and clinic-order shapes without exposing customer-level data. | Replace `SYN-MARKET-ATTRACTIVENESS-001` with an approved aggregate export or view that preserves stable geography, periods, definitions, lineage, sensitivity, and permitted use. |
 | Local growth campaign evidence | **Partially confirmed internally** | A real geography-to-audience-to-campaign decision. | Obtain one approved historical aggregate fixture and outcome. |
 | Campaign audience/consent evidence | **Internally available; owner unconfirmed** | Governed audience sizing and activation readiness. | Confirm keys, aggregation, consent/suppression rules, and estimate interface. |
 | Regional pricing | **Workflow documented; not connected** | ZIP/SKU monitoring, investigation, and bounded action requests. | Obtain a narrow historical extract and operator/authority contract. |

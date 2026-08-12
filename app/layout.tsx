@@ -9,22 +9,22 @@ export async function generateMetadata(): Promise<Metadata> {
   const imageUrl = `${protocol}://${host}/og.png`;
 
   return {
-    title: "Evaluation Workspace",
+    title: "Market Intelligence Evaluation Workspace",
     description:
-      "An adaptable decision agent for governed, deterministic and human-reviewed evaluations.",
+      "Evidence-backed clinic and market evaluations with visible gaps, lineage, and human decision authority.",
     icons: {
       icon: "/favicon.svg",
       shortcut: "/favicon.svg",
     },
     openGraph: {
-      title: "Evaluation Workspace",
-      description: "Goal to verifiable action packet, within governed boundaries",
+      title: "Market Intelligence Evaluation Workspace",
+      description: "Business question to evidence-backed next action, within governed boundaries",
       images: [{ url: imageUrl, width: 1672, height: 941, alt: "Evaluation Workspace contract, plan and evidence canvas" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Evaluation Workspace",
-      description: "Governed evidence, deterministic comparison, human review",
+      title: "Market Intelligence Evaluation Workspace",
+      description: "Clinic and market evidence, deterministic comparison, human review",
       images: [imageUrl],
     },
   };

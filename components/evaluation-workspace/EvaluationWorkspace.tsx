@@ -1,125 +1,134 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
-import { analysisPlanSchema, marketSelectionNeedsEvidenceRun, needsEvidenceRun, planAnalysisPrototype, proposeDecisionGraphPrototype, validateDecisionGraph, type AnalysisPlan, type DecisionGraph, type DecisionStage, type EvaluationArtifact, type EvaluationDefinition, type EvaluationRun, type VerifiedEvaluation } from "@/lib/evaluation";
-import { MarketLocationArtifact } from "./MarketLocationArtifact";
-import { NationalDogOwnershipArtifact } from "./NationalDogOwnershipArtifact";
+import { analysisPlanSchema, planAnalysisPrototype, type AnalysisPlan } from "@/lib/evaluation";
+import { EvidenceDropField } from "./EvidenceDropField";
+import { WorkspaceOverview, type MapLayerId } from "./WorkspaceOverview";
 import styles from "./evaluation-workspace.module.css";
 
-type Demo={definition:EvaluationDefinition;plannedRun:EvaluationRun;executedRun:EvaluationRun};
-type Props={market:EvaluationRun;site:Demo;clinic:Demo;unsupported:EvaluationRun;library:readonly VerifiedEvaluation[]};
-type DemoKey="market"|"state"|"site"|"clinic"|"unsupported";
-type MetricRow={entityId:string;entityLabel:string;values:Record<string,number|string|null>;metadata:Record<string,unknown>};
-type MetricPayload={rows:MetricRow[];metrics:EvaluationDefinition["metrics"];comparisons:Record<string,number>};
-type ZonePayload={zones:FeatureCollection<Polygon|MultiPolygon,{zone_id:string;label:string;color:string;display_number:number}>;methodVersion:string;disclaimer:string};
+type Props = Record<string, unknown>;
 
-const PRIMARY_STARTERS=[{key:"market" as const,label:"What are the best places for Chewy to open a new clinic?"},{key:"clinic" as const,label:"Which comparable clinics require performance review, and why?"}];
-const FOLLOW_UP_STARTER={key:"site" as const,label:"Within Greater Seattle, how do submarkets compare for deeper clinic site diligence?"};
-function artifact<T>(run:EvaluationRun,type:EvaluationArtifact["type"]){return run.artifacts.find((item)=>item.type===type)?.payload as T|undefined;}
-function positions(geometry:Polygon|MultiPolygon){return geometry.type==="Polygon"?geometry.coordinates.flat():geometry.coordinates.flat(2);}
-function rings(geometry:Polygon|MultiPolygon){return geometry.type==="Polygon"?geometry.coordinates:geometry.coordinates.flatMap((polygon)=>polygon);}
+const DEFAULT_QUESTION = "Where should Chewy investigate clinic opportunity next?";
 
-function scoreColor(value:unknown,field:string){
-  if(typeof value!=="number")return "#8a96a8";
-  if(field!=="overall_score")return value>=75?"#087f72":value>=50?"#3972c9":value>=25?"#d28a18":"#68758a";
-  if(value>=72)return "#087f72";
-  if(value>=62)return "#d28a18";
-  return "#68758a";
+const QUESTION_TO_LAYER: Array<{ pattern: RegExp; layer: MapLayerId }> = [
+  { pattern: /income|spending|afford/i, layer: "income" },
+  { pattern: /pet|dog|owner/i, layer: "pet_ownership" },
+  { pattern: /housing|home/i, layer: "housing" },
+  { pattern: /dens/i, layer: "density" },
+  { pattern: /population|people/i, layer: "population" },
+  { pattern: /household|family/i, layer: "households" },
+];
+
+function suggestedLayer(question: string): MapLayerId {
+  return QUESTION_TO_LAYER.find((candidate) => candidate.pattern.test(question))?.layer ?? "footprint";
 }
 
-function ZoneMap({payload,rows,selectedId,colorField,hoveredId,onSelect,onHover}:{payload:ZonePayload;rows:MetricRow[];selectedId:string;colorField:string;hoveredId:string;onSelect:(id:string)=>void;onHover:(id:string)=>void}){
-  const all=payload.zones.features.flatMap((feature)=>positions(feature.geometry));const xs=all.map((point)=>point[0]),ys=all.map((point)=>point[1]);const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);const width=maxX-minX,height=maxY-minY;
-  const path=(geometry:Polygon|MultiPolygon)=>rings(geometry).map((ring)=>ring.map((point,index)=>`${index?"L":"M"} ${((point[0]-minX)/width)*900} ${((maxY-point[1])/height)*520}`).join(" ")+" Z").join(" ");
-  const byId=new Map(rows.map((row)=>[row.entityId,row]));
-  return <div className={styles.mapWrap}><svg viewBox="0 0 900 520" role="img" aria-label={`Regional evaluation map colored by ${colorField.replaceAll('_',' ')}`}>{payload.zones.features.map((feature)=>{const id=feature.properties.zone_id;const row=byId.get(id);const value=row?.values[colorField];const active=selectedId===id||hoveredId===id;const fill=scoreColor(value,colorField);return <path key={id} d={path(feature.geometry)} fill={fill} fillOpacity={active?0.96:0.7} stroke={active?"#101d3a":"#ffffff"} strokeWidth={active?2.4:1.2} className={selectedId===id?styles.activeZone:""} role="button" tabIndex={0} aria-label={`Select ${feature.properties.label}${typeof value==="number"?`, ${colorField.replaceAll('_',' ')} ${value.toFixed(1)}`:""}`} onMouseEnter={()=>onHover(id)} onMouseLeave={()=>onHover('')} onFocus={()=>onHover(id)} onBlur={()=>onHover('')} onClick={()=>onSelect(id)} onKeyDown={(event)=>{if(event.key==="Enter"||event.key===" ")onSelect(id);}}/>;})}</svg><div className={styles.mapStamp}><strong>Regional result layer</strong><span>{colorField.replaceAll('_',' ')} · {payload.methodVersion}</span></div>{colorField==='overall_score'&&<div className={styles.mapLegend} aria-label="Decision-boundary legend"><span><i className={styles.advanceSwatch}/>Advance ≥72</span><span><i className={styles.deferSwatch}/>Defer 62–71.99</span><span><i className={styles.stopSwatch}/>Stop &lt;62</span></div>}<p>{payload.disclaimer} Fill colors update from the selected computed metric.</p></div>;
+function ProgressRail({ question, plan, loading, onClose }: { question: string; plan: AnalysisPlan; loading: boolean; onClose: () => void }) {
+  const [evidenceStep, setEvidenceStep] = useState<number | null>(null);
+  const evidenceReady = plan.availableMeasures.length > 0;
+  const steps = [
+    { label: "Understand the question", detail: plan.interpretation, status: loading ? "active" : "complete" },
+    { label: "Match compatible evidence", detail: evidenceReady ? plan.availableMeasures.slice(0, 3).join(" · ") : "No compatible governed measure found", status: loading ? "pending" : evidenceReady ? "complete" : "blocked" },
+    { label: "Prepare the map view", detail: `${plan.entityLabel} · ${plan.geographyLabel}`, status: loading ? "pending" : "complete" },
+    { label: "Check decision boundaries", detail: plan.evidenceBoundary, status: loading ? "pending" : plan.missingMeasures.length ? "attention" : "complete" },
+    { label: "Invite analyst follow-up", detail: "Ask another question or compare two evidence views.", status: loading ? "pending" : "waiting" },
+  ] as const;
+  const completed = steps.filter((step) => step.status === "complete").length;
+
+  return <aside className={styles.progressRail} aria-label="Evaluation progress">
+    <button className={styles.closeProgress} type="button" onClick={onClose} aria-label="Close evaluation progress">×</button>
+    <header className={styles.progressHeader}>
+      <div><span>Working question</span><h1>{question}</h1></div>
+      <div className={styles.progressCount}><strong>{loading ? "…" : completed}</strong><small>of {steps.length}<br/>prepared</small></div>
+    </header>
+    <div className={styles.progressBar}><i style={{ width: `${loading ? 18 : (completed / steps.length) * 100}%` }}/></div>
+    <section className={styles.agentStatus}>
+      <span className={loading ? styles.pulseDot : styles.readyDot}/>
+      <div><b>{loading ? "Evaluating the request" : "Map workspace prepared"}</b><small>{loading ? "Matching the question to available evidence…" : plan.calculationSummary}</small></div>
+    </section>
+    <ol className={styles.progressSteps}>
+      {steps.map((step, index) => {
+        const expanded = evidenceStep === index;
+        return <li key={step.label} className={styles[step.status]}>
+          <button type="button" className={styles.stepTrigger} aria-expanded={expanded} aria-controls={`step-evidence-${index}`} onClick={() => setEvidenceStep(expanded ? null : index)}>
+            <span>{step.status === "complete" ? "✓" : index + 1}</span>
+            <div><b>{step.label}</b><p>{step.detail}</p></div>
+            <em>{step.status}</em>
+          </button>
+          {expanded && <section id={`step-evidence-${index}`} className={styles.stepEvidence} aria-label={`Add evidence to ${step.label}`}>
+            <div className={styles.stepEvidenceHeading}><b>Add human context</b><small>Attach evidence or corrections for this step.</small></div>
+            <EvidenceDropField acceptDocuments actionLabel="Add file" dropLabel="Drop a document or data file" initialNotice="Staged for this evaluation only"/>
+          </section>}
+        </li>;
+      })}
+    </ol>
+    {plan.missingMeasures.length > 0 && <section className={styles.gapsCard}>
+      <span>Evidence to connect next</span>
+      {plan.missingMeasures.slice(0, 4).map((gap) => <p key={gap}>{gap}</p>)}
+    </section>}
+    <footer className={styles.boundaryNote}><b>Decision boundary</b><p>{plan.evidenceBoundary}</p></footer>
+  </aside>;
 }
 
-function DefinitionPanel({definition,approved,onApprove,rationale,setRationale}:{definition:EvaluationDefinition;approved:boolean;onApprove:()=>void;rationale:string;setRationale:(value:string)=>void}){
-  const items=[['Decision',definition.decisionSupported],['Owner / receiver',definition.proposedDecisionOwner],['Entity',definition.entityType],['Eligibility',definition.eligibilityRules.map((item)=>item.value).join('; ')],['Geography / time',`${definition.geographicScope} · ${definition.temporalScope}`],['Comparison',`${definition.comparisonType.replace('_',' ')} · ${definition.cohortRules.map((item)=>item.value).join('; ')}`],['Decision boundary',definition.decisionBoundary],['Follow-up',definition.followUpMetric]];
-  return <section className={styles.definition}><div className={styles.approvalHero}><div><span className={styles.kicker}>1 · Confirm</span><h2>{definition.name}</h2><p>Check the area, comparison, and boundary. Then run the evaluation.</p></div><span className={`${styles.statusPill} ${approved?styles.good:styles.wait}`}>{approved?'Approved for this run':'Your approval needed'}</span></div><div className={styles.approvalFacts}><p><b>Area</b>{definition.geographicScope}</p><p><b>Comparison</b>{definition.comparisonType.replace('_',' ')}</p><p><b>Boundary</b>{definition.decisionBoundary.split('. ')[0].replace(/\.$/,'')}.</p></div>{!approved&&<div className={styles.gate}><div><strong>2 · Use these prototype assumptions?</strong><p>This permits a synthetic comparison only. It does not approve a business action or change source evidence.</p></div><input value={rationale} onChange={(event)=>setRationale(event.target.value)} placeholder="Optional note" aria-label="Optional approval rationale"/><button onClick={onApprove}>3 · Run comparison</button></div>}<details className={styles.contractDetails}><summary>View full evaluation contract</summary><div className={styles.definitionGrid}>{items.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</div><div className={styles.metricDefinitions}>{definition.metrics.map((metric)=><div key={metric.id}><strong>{metric.label}</strong><code>{metric.formula}</code><span>{metric.inputFields.join(' + ')} · {metric.sourceIds.join(', ')}</span></div>)}</div><div className={styles.ruleRows}><p><b>Validation</b> {definition.validationRules.map((rule)=>`${rule.type} (${rule.failurePolicy})`).join(' · ')}</p><p><b>Missing data</b> {definition.missingDataPolicy}</p><p><b>Permitted drafts</b> {definition.permittedActions.join(' · ')}</p><p><b>Human gates</b> {definition.requiredHumanGates.join(' · ')}</p></div></details></section>;
-}
+export function EvaluationWorkspace(props: Props) {
+  void props;
+  const [started, setStarted] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [displayQuestion, setDisplayQuestion] = useState(DEFAULT_QUESTION);
+  const [plan, setPlan] = useState<AnalysisPlan>(() => planAnalysisPrototype(DEFAULT_QUESTION));
+  const [loading, setLoading] = useState(false);
+  const [activeLayer, setActiveLayer] = useState<MapLayerId>("footprint");
+  const [progressOpen, setProgressOpen] = useState(true);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [notice, setNotice] = useState("");
+  const prompt = question.trim();
 
-function StepCanvas({run,expanded,setExpanded}:{run:EvaluationRun;expanded:string;setExpanded:(id:string)=>void}){return <section className={styles.plan}><div className={styles.sectionTitle}><div><span className={styles.kicker}>Shared protocol</span><h2>Evaluation plan</h2></div><span className={styles.trace}>Goal → evidence → action</span></div><div className={styles.stepList}>{run.steps.map((step,index)=><button key={step.id} className={`${styles.step} ${expanded===step.id?styles.expanded:''}`} onClick={()=>setExpanded(expanded===step.id?'':step.id)}><span className={`${styles.stepIndex} ${styles[step.status]}`}>{step.status==='completed'?'✓':String(index+1).padStart(2,'0')}</span><span className={styles.stepMain}><span><b>{step.name}</b><em>{step.actor.replace('_',' ')}</em></span><small>{step.purpose}</small>{expanded===step.id&&<span className={styles.stepDetails}><i><b>Input</b>{step.inputs.join(' · ')||'Approved evaluation definition'}</i><i><b>Operator</b>{step.operator||'Bounded interpretation / review'}</i><i><b>Output</b>{step.outputSummary||'Pending execution or review'}</i><i><b>Evidence</b>{step.sourceIds.join(', ')||step.evidenceStatus}</i>{step.warnings.length>0&&<i className={styles.warningText}><b>Needs attention</b>{step.warnings.join(' ')}</i>}</span>}</span><span className={styles.stepState}>{step.status.replace('_',' ')}</span></button>)}</div></section>}
+  const composerLabel = started ? "Ask AI a follow-up" : "Evaluation question";
+  const placeholder = started ? "Ask what differs, what evidence is missing, or what to inspect next…" : "Ask a market, customer, clinic, or geographic question…";
+  const statusText = useMemo(() => loading ? "Matching evidence…" : notice || (started ? "The agent will reconsider the map and evidence plan." : "The map changes to fit the question—not a fixed score."), [loading, notice, started]);
 
-function EvidenceCanvas({run,definition,selectedId,onSelect}:{run:EvaluationRun;definition:EvaluationDefinition;selectedId:string;onSelect:(id:string)=>void}){
-  const metric=artifact<MetricPayload>(run,'metric_table');
-  const map=artifact<ZonePayload>(run,'geographic_layer');
-  const [colorField,setColorField]=useState('overall_score');
-  const [hoveredId,setHoveredId]=useState('');
-  const rows=metric?.rows??[];
-  const selected=rows.find((row)=>row.entityId===selectedId)??rows[0];
-  const action=run.actionPacket;
-  return <section className={styles.evidence}>
-    {map&&selected&&<><div className={styles.visualHeading}><div><span className={styles.kicker}>1 · Look</span><h2>Attractiveness by submarket</h2><p>Darker green areas clear the visible prototype boundary.</p></div><span className={styles.repro}>Greater Seattle · synthetic</span></div><div className={styles.metricToolbar} aria-label="Map color metric"><b>Color by</b>{[{id:'overall_score',label:'Overall score'},...definition.metrics.map((item)=>({id:item.id,label:item.label})),{id:'coverage_percent',label:'Evidence coverage'}].filter((item,index,items)=>items.findIndex((candidate)=>candidate.id===item.id)===index).map((item)=><button key={item.id} className={colorField===item.id?styles.activeMetric:''} onClick={()=>setColorField(item.id)}>{item.label}</button>)}</div><ZoneMap payload={map} rows={rows} selectedId={selected.entityId} colorField={colorField} hoveredId={hoveredId} onSelect={onSelect} onHover={setHoveredId}/></>}
-    <div className={styles.resultGrid}><div className={styles.entityList}><span className={styles.miniLabel}>2 · Select an area</span>{rows.map((row,index)=><button key={row.entityId} className={`${selected?.entityId===row.entityId?styles.selectedEntity:''} ${hoveredId===row.entityId?styles.hoveredEntity:''}`} onMouseEnter={()=>setHoveredId(row.entityId)} onMouseLeave={()=>setHoveredId('')} onFocus={()=>setHoveredId(row.entityId)} onBlur={()=>setHoveredId('')} onClick={()=>onSelect(row.entityId)}><span>{index+1}</span><b>{row.entityLabel}</b><strong>{typeof row.values.overall_score==='number'?row.values.overall_score.toFixed(1):typeof row.values.completed_appointments_peer_difference==='number'?`${row.values.completed_appointments_peer_difference>0?'+':''}${row.values.completed_appointments_peer_difference}`:'—'}</strong></button>)}</div>{selected&&metric&&<div className={styles.selectedDetail}><div className={styles.selectedHeading}><div><span className={styles.miniLabel}>3 · Inspect the selection</span><h3>{selected.entityLabel}</h3></div><strong className={styles.selectedScore}>{typeof selected.values.overall_score==='number'?selected.values.overall_score.toFixed(1):'—'}</strong></div><p>{String(selected.metadata.comparison??'Declared comparison completed.')}</p><details className={styles.resultDetails}><summary>Why this area scored this way</summary><div className={styles.metricTable}>{metric.metrics.map((definitionMetric)=><div key={definitionMetric.id}><span><b>{definitionMetric.label}</b><small>{definitionMetric.formula}</small></span><strong>{selected.values[definitionMetric.id]===null?'Missing':Number(selected.values[definitionMetric.id]).toLocaleString('en-US')}</strong><em>{definitionMetric.sourceIds.join(', ')}</em></div>)}</div><div className={styles.twoSignals}><div><b>Supporting evidence</b>{(selected.metadata.supportingEvidence as string[]|undefined)?.map((item)=><p key={item}>+ {item}</p>)}</div><div><b>Contrary / limiting evidence</b>{(selected.metadata.contraryEvidence as string[]|undefined)?.map((item)=><p key={item}>− {item}</p>)}</div></div></details></div>}</div>{action&&<div className={styles.actionPacket}><div><span className={styles.kicker}>4 · Decide what moves forward</span><h3>{action.finding}</h3><p>{action.requestedNextStep}</p></div><div className={styles.actionFooter}><span>{action.evidenceStatus} · {action.allowedUse}</span><button onClick={()=>navigator.clipboard?.writeText(`${action.finding}\n${action.draftDisposition}\n${action.requestedNextStep}`)}>Copy summary</button></div><details className={styles.actionDetails}><summary>View full action packet</summary><div className={styles.actionFields}><p><b>Draft disposition</b>{action.draftDisposition}</p><p><b>Receiving function</b>{action.receivingFunction}</p><p><b>Requested next step</b>{action.requestedNextStep}</p><p><b>Follow-up metric</b>{action.followUpMetric}</p></div></details></div>}
-  </section>;
-}
-
-function DecisionDecomposition({graph,onOpenStage}:{graph:DecisionGraph;onOpenStage:(stage:DecisionStage)=>void}){
-  const validation=validateDecisionGraph(graph);const current=graph.stages.find((stage)=>stage.stageId===graph.currentStageId)??graph.stages[0];
-  return <section className={styles.decomposition}><header><div><span className={styles.kicker}>How I broke down this decision</span><h2>{graph.ultimateDecision}</h2><p>{graph.questionClassifications.join(' · ')} · {graph.proposalMethod.replaceAll('_',' ')}</p></div><span className={validation.valid?styles.graphValid:styles.graphInvalid}>{validation.valid?'Graph validated':'Needs correction'}</span></header><div className={styles.decompositionSummary}><p><b>Current stage</b>{current.stageQuestion}</p><p><b>Executable now</b>{graph.stages.filter((stage)=>stage.capabilityStatus==='executable'||stage.capabilityStatus==='partially_executable').map((stage)=>stage.entityType).join(' · ')||'None'}</p><p><b>Blocked</b>{graph.stages.filter((stage)=>stage.capabilityStatus==='needs_definition'||stage.capabilityStatus==='needs_evidence'||stage.capabilityStatus==='human_only').map((stage)=>`${stage.entityType}: ${stage.capabilityExplanation}`).join(' ')||'No later stages blocked'}</p></div><ol>{graph.stages.map((stage)=><li key={stage.stageId} className={stage.stageId===graph.currentStageId?styles.currentStage:''}><button onClick={()=>onOpenStage(stage)} disabled={!stage.compiledEvaluationDefinitionId&&stage.stageId!==graph.currentStageId}><span>{stage.sequence}</span><div><b>{stage.stageQuestion}</b><small>{stage.entityType}{stage.parentEntity?` · after ${stage.parentEntity.entityType}`:''}</small><p>{stage.capabilityExplanation}</p></div><em className={styles[stage.capabilityStatus]}>{stage.capabilityStatus.replaceAll('_',' ')}</em></button></li>)}</ol>{graph.unresolvedHumanQuestions.length>0&&<details><summary>{graph.unresolvedHumanQuestions.length} material question{graph.unresolvedHumanQuestions.length===1?'':'s'} need human correction</summary>{graph.unresolvedHumanQuestions.map((item)=><p key={item}>{item}</p>)}</details>}</section>;
-}
-
-function NeedsEvidence({run}:{run:EvaluationRun}){const payload=artifact<{understoodDecision:string;requiredEvidence:string[];absentRequirements:string[];humanInputNeeded:string}>(run,'warning');return <section className={styles.needs}><span className={styles.kicker}>Safe stop · no evaluation executed</span><h2>Needs evidence</h2><h3>{payload?.understoodDecision}</h3><div><article><b>Required evidence & definitions</b>{payload?.requiredEvidence.map((item)=><p key={item}>{item}</p>)}</article><article><b>Absent from the current catalog</b>{payload?.absentRequirements.map((item)=><p key={item}>{item}</p>)}</article></div><strong>{payload?.humanInputNeeded}</strong></section>}
-
-function AnalysisReadout({plan}:{plan:AnalysisPlan}){return <section className={styles.analysisReadout} aria-label="How the question was interpreted"><div><span>{plan.proposalMethod==='ai_proposed'?'AI proposed':'Safe fallback'}</span><strong>{plan.entityLabel}</strong><small>{plan.geographyLabel}</small></div><i>→</i><div><span>Map or result</span><strong>{plan.activeMeasure.replaceAll('_',' ')}</strong><small>{plan.calculationSummary}</small></div><i>→</i><div className={plan.status==='needs_evidence'?styles.planBlocked:styles.planReady}><span>{plan.status.replaceAll('_',' ')}</span><strong>{plan.missingMeasures.length?`${plan.missingMeasures.length} evidence gap${plan.missingMeasures.length===1?'':'s'}`:'Ready to calculate'}</strong><small>{plan.evidenceBoundary}</small></div></section>}
-
-function Library({entries,onOpen}:{entries:readonly VerifiedEvaluation[];onOpen:(question:string)=>void}){return <section className={styles.library}><div className={styles.sectionTitle}><div><span className={styles.kicker}>Regression-tested interpretations</span><h2>Verified Evaluation Library</h2></div><span className={styles.hypothesis}>Prototype verified ≠ business approved</span></div>{entries.map((entry)=><article key={entry.id}><div><b>{entry.verifiedQuestion}</b><p>{entry.approvedInterpretation}</p></div><dl><div><dt>Sources</dt><dd>{entry.sourceIds.join(', ')}</dd></div><div><dt>Comparison</dt><dd>{entry.comparisonRule}</dd></div><div><dt>Expected fixture</dt><dd>{entry.expectedFixtureResult}</dd></div><div><dt>Verification</dt><dd>{entry.verifiedBy} · {entry.verifiedAt} · v{entry.version}</dd></div></dl><button onClick={()=>onOpen(entry.verifiedQuestion)}>Open definition</button></article>)}</section>}
-
-export function EvaluationWorkspace({site,clinic,library}:Props){
-  const [hasStarted,setHasStarted]=useState(false);
-  const [key,setKey]=useState<DemoKey>('market');
-  const [question,setQuestion]=useState('What are the best places for Chewy to open a new clinic?');
-  const [approved,setApproved]=useState(false);
-  const [rationale,setRationale]=useState('');
-  const [expanded,setExpanded]=useState('catalog');
-  const [selectedId,setSelectedId]=useState('');
-  const [showLibrary,setShowLibrary]=useState(false);
-  const [planning,setPlanning]=useState(false);
-  const [plannerNotice,setPlannerNotice]=useState('');
-  const [analysisPlan,setAnalysisPlan]=useState<AnalysisPlan>(()=>planAnalysisPrototype('What are the best places for Chewy to open a new clinic?'));
-  const demo=key==='site'?site:key==='clinic'?clinic:null;
-  const dynamicMarketRun=useMemo(()=>marketSelectionNeedsEvidenceRun(question),[question]);
-  const dynamicUnsupportedRun=useMemo(()=>needsEvidenceRun(question),[question]);
-  const run=demo?(approved?demo.executedRun:demo.plannedRun):key==='market'?dynamicMarketRun:dynamicUnsupportedRun;
-  const selected=useMemo(()=>selectedId||((artifact<MetricPayload>(demo?.executedRun??dynamicUnsupportedRun,'metric_table')?.rows[0]?.entityId)??''),[selectedId,demo,dynamicUnsupportedRun]);
-  const decisionGraph=useMemo(()=>proposeDecisionGraphPrototype(question,analysisPlan),[question,analysisPlan]);
-
-  function start(next:DemoKey,nextQuestion?:string,suppliedPlan?:AnalysisPlan){
-    const resolvedQuestion=nextQuestion??(next==='market'?'What are the best places for Chewy to open a new clinic?':next==='site'?site.definition.originalQuestion:next==='clinic'?clinic.definition.originalQuestion:'How should Chewy change dog-food prices by region?');
-    setKey(next);
-    setQuestion(resolvedQuestion);setAnalysisPlan(suppliedPlan??planAnalysisPrototype(resolvedQuestion));
-    setHasStarted(true);setApproved(false);setRationale('');setSelectedId('');setShowLibrary(false);
+  async function evaluate(value: string) {
+    const nextQuestion = value.trim() || DEFAULT_QUESTION;
+    setDisplayQuestion(nextQuestion);
+    setStarted(true);
+    setProgressOpen(true);
+    setComposerOpen(false);
+    setLoading(true);
+    setNotice("");
+    setActiveLayer(suggestedLayer(nextQuestion));
+    let nextPlan = planAnalysisPrototype(nextQuestion);
+    try {
+      const response = await fetch("/api/evaluation-plans", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question: nextQuestion }) });
+      if (response.ok) {
+        const payload = await response.json() as { plan?: unknown };
+        const parsed = analysisPlanSchema.safeParse(payload.plan);
+        if (parsed.success) nextPlan = parsed.data;
+        else setNotice("Using the governed catalog interpretation.");
+      } else setNotice("Using the governed catalog interpretation.");
+    } catch {
+      setNotice("Using the governed catalog interpretation.");
+    }
+    setPlan(nextPlan);
+    setQuestion("");
+    setLoading(false);
   }
-  function routePlan(plan:AnalysisPlan):DemoKey{return plan.analysisType==='state_pet_ownership'?'state':plan.analysisType==='clinic_performance'?'clinic':plan.analysisType==='site_diligence'?'site':['public_market_context','campaign_opportunity','market_attractiveness'].includes(plan.analysisType)?'market':'unsupported';}
-  async function analyzeAndStart(value:string){
-    setPlanning(true);setPlannerNotice('');
-    let plan=planAnalysisPrototype(value);
-    try{const response=await fetch('/api/evaluation-plans',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:value})});if(response.ok){const payload=await response.json() as {plan?:unknown};const parsed=analysisPlanSchema.safeParse(payload.plan);if(parsed.success)plan=parsed.data;else setPlannerNotice('AI returned an unsupported plan, so the catalog fallback was used.');}else setPlannerNotice('AI planning is unavailable, so the catalog fallback was used.');}catch{setPlannerNotice('AI planning is unavailable, so the catalog fallback was used.');}
-    setPlanning(false);start(routePlan(plan),value,plan);
-  }
-  function submit(event:FormEvent){event.preventDefault();void analyzeAndStart(question);}
-  function openStage(stage:DecisionStage){if(stage.compiledEvaluationDefinitionId===site.definition.evaluationId)start('site',stage.stageQuestion);else if(stage.compiledEvaluationDefinitionId===clinic.definition.evaluationId)start('clinic',stage.stageQuestion);}
 
-  return <main className={styles.shell}>
-    <header className={styles.top}><a href="#goal" className={styles.brand}><span>EW</span><div><b>Evaluation Workspace</b><small>Adaptable decision agent · prototype</small></div></a><div><button onClick={()=>setShowLibrary(!showLibrary)}>Verified library <span>{library.length}</span></button><i>Process-local · governed evidence only</i></div></header>
-    <div className={styles.workspace}>
-      {!hasStarted?<section className={styles.hero} id="goal">
-        <div className={styles.heroIntro}><span className={styles.kicker}>1 · Ask</span><h1>What decision are you trying to make?</h1><p>Ask in plain language. The workspace will show the strongest visual evidence first.</p></div>
-        <div className={styles.composerLayout}>
-          <div className={styles.composerInput}>
-            <form onSubmit={submit}>
-              <label htmlFor="evaluation-goal"><b>Your evaluation goal</b><span>Write the decision as a question. Include the entity, geography, or time window when they matter.</span></label>
-              <textarea id="evaluation-goal" value={question} onChange={(event)=>setQuestion(event.target.value)} aria-label="Your evaluation goal"/>
-              <div className={styles.composerActions}><small>{plannerNotice||'AI proposes the measures and view. The application validates them before calculating.'}</small><button disabled={planning}>{planning?'Planning the evaluation…':'Show me the decision map'}</button></div>
-            </form>
-            <div className={styles.starters}><b>Start with a decision</b>{PRIMARY_STARTERS.map((starter)=><button key={starter.key} onClick={()=>void analyzeAndStart(starter.label)}>{starter.label}<span>Use →</span></button>)}<div className={styles.followUpStarter}><small>Follow-up after selecting a market</small><button onClick={()=>void analyzeAndStart(FOLLOW_UP_STARTER.label)}>{FOLLOW_UP_STARTER.label}<span>Use →</span></button></div><button className={styles.unsupportedStarter} onClick={()=>void analyzeAndStart('How should Chewy change dog-food prices by region?')}>Test a question without governed evidence<span>Use →</span></button></div>
-          </div>
-          <aside className={styles.composerGuide} aria-label="What the workspace will produce"><span>Visual first</span><strong>Map → select → compare</strong><p>Use color to see geographic variation. The workspace separates observed context from business opportunity.</p><a href="#market-context">Explore the map ↓</a></aside>
-        </div>
-      </section>:<section className={styles.decisionHeader} id="goal"><div><span className={styles.kicker}>Current decision</span><h1>{question}</h1><p>{decisionGraph.stages.find((stage)=>stage.stageId===decisionGraph.currentStageId)?.capabilityExplanation}</p></div><button onClick={()=>{setHasStarted(false);setShowLibrary(false);}}>Change goal</button></section>}
-      {showLibrary?<Library entries={library} onOpen={(value)=>void analyzeAndStart(value)}/>:hasStarted?<><AnalysisReadout plan={analysisPlan}/>{plannerNotice&&<p className={styles.plannerNotice}>{plannerNotice}</p>}<div className={styles.visualWorkspace}><div className={styles.activeStage}>{key==='market'?<MarketLocationArtifact key={analysisPlan.planId} plan={analysisPlan} onOpenSeattle={()=>start('site')}/>:key==='state'?<NationalDogOwnershipArtifact plan={analysisPlan}/>:key==='unsupported'?<NeedsEvidence run={dynamicUnsupportedRun}/>:demo&&!approved?<DefinitionPanel definition={demo.definition} approved={approved} onApprove={()=>setApproved(true)} rationale={rationale} setRationale={setRationale}/>:demo?<EvidenceCanvas run={run} definition={demo.definition} selectedId={selected} onSelect={setSelectedId}/>:null}</div><details className={styles.auditLayer}><summary><span>Evaluation details</span><small>{decisionGraph.stages.length} decision stage · visible source and calculation trace</small></summary><DecisionDecomposition graph={decisionGraph} onOpenStage={openStage}/>{key!=='state'&&<StepCanvas run={run} expanded={expanded} setExpanded={setExpanded}/>} {key==='market'&&analysisPlan.missingMeasures.length>0&&<NeedsEvidence run={dynamicMarketRun}/>}</details></div></>:<section className={styles.initialMarketContext} id="market-context"><MarketLocationArtifact key={analysisPlan.planId} plan={analysisPlan} onOpenSeattle={()=>start('site')}/></section>}
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (prompt) void evaluate(prompt);
+  }
+
+  return <main className={`${styles.shell} ${started ? styles.running : styles.landing} ${started && !progressOpen ? styles.progressClosed : ""}`}>
+    <div className={styles.workspaceLayout}>
+      <WorkspaceOverview activeLayer={activeLayer} onLayerChange={setActiveLayer} evaluationQuestion={started ? displayQuestion : undefined}/>
+      {started && progressOpen && <ProgressRail question={displayQuestion} plan={plan} loading={loading} onClose={() => setProgressOpen(false)}/>}
     </div>
+    {started && !progressOpen && <button className={styles.showProgress} type="button" onClick={() => setProgressOpen(true)} aria-label="Show evaluation progress"><span>Progress</span>‹</button>}
+    <form className={styles.floatingComposer} onSubmit={submit}>
+      <label htmlFor="workspace-question">{composerLabel}</label>
+      <div><input id="workspace-question" value={question} onFocus={() => setComposerOpen(true)} onChange={(event) => setQuestion(event.target.value)} placeholder={placeholder} aria-label={composerLabel}/><button disabled={loading || !prompt}>{loading ? <span className={styles.spinner}/> : started ? "Ask AI" : "Evaluate"}<i>→</i></button></div>
+      {composerOpen && <div className={styles.composerEvidence}><EvidenceDropField/><button type="button" onClick={() => setComposerOpen(false)} aria-label="Hide evidence upload">×</button></div>}
+      <small>{statusText}</small>
+    </form>
   </main>;
 }

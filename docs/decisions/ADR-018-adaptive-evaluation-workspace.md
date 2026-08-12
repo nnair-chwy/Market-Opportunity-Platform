@@ -51,6 +51,15 @@ The Evaluation Workspace uses this stable sequence:
 6. Finding, contrary evidence, uncertainty, and missing diligence.
 7. Bounded action packet and final human review.
 
+The entry state is intentionally compact: one question bar and two supported examples.
+No question-specific geographic result appears until a question is submitted. A separate
+non-scored national overview may show available clinic footprint and public context with
+explicit source boundaries and unavailable-layer states. Local-file staging remains a
+small control beside the question bar rather than competing with the evidence map. A geographic artifact may
+offer multiple layers only when those measures were identified in the active question;
+otherwise it shows the single compatible measure and keeps unrelated demographic
+dimensions out of the evaluation.
+
 Add a Verified Evaluation Library that binds a verified question to an
 interpretation, source and metric set, comparison rule, boundary, fixture result,
 verifier label, date, and version. `prototype_test_verified` means regression-tested;
@@ -92,6 +101,35 @@ The zones remain `Hypothesis`, `synthetic_prototype_only`, and explicitly are no
 official neighborhoods, trade areas, or real-estate submarkets. Geometry remains
 separate from metric evidence and has no scoring eligibility.
 
+## Tableau integration boundary
+
+Signed-in discovery of the `Clinic Scoring` workbook confirms that the evaluation
+workspace should preserve metric meaning and lineage rather than reproduce a Tableau
+dashboard. The workbook exposes score inputs for new-to-healthcare rate, clinic net
+sales per active customer, response rate and hours, approval rate, VIA rate,
+unlimited-authorization rate, and contact preference. Its embedded extracts are
+Snowflake-backed, use custom SQL, refresh independently, and include many fields with
+no catalog description.
+
+Tableau is therefore a read-only metric-discovery and parity surface. The durable
+application contract must arrive through a governed aggregate and preserve clinic-week
+grain, clinic and geographic identifiers, cohort rules, denominator and normalization
+versions, target source/presence, source and workbook/view identifiers, metric-definition
+version, period, extraction time, source refresh time, completeness, owner, and
+limitations. Missing targets remain `not_ranked`; the application must not infer or
+silently substitute them.
+
+Review of partner branch `codex/market-intelligence-platform-migration` found an
+existing CBSA-level market-attractiveness snapshot shaped around Snowflake customer,
+ZIP-to-market, household-income, clinic-profile, and clinic-order sources. The checked-in
+artifact is explicitly `Hypothesis` and `synthetic_prototype_only`; it is not evidence of
+a live connection or an approved extract. The national overview may render its aggregate
+customer-demand, income, clinic-supply, and clinic-order measures with that boundary
+visible. It must not label clinic orders as sales or revenue, expose customer-level data,
+or use these views as an approved recommendation. A governed Snowflake integration remains
+deferred until a permitted aggregate export or view with definitions, dates, owners, and
+lineage is available.
+
 ## Consequences
 
 ### Positive
@@ -108,6 +146,12 @@ separate from metric evidence and has no scoring eligibility.
 - Population, households, median income, housing units, and density use one declared
   public-measure catalog, generic map, ranking, market drawer, source summary, and
   evidence boundary. Adding a compatible public measure does not require a new view.
+- National CBSA and state pet-evidence views now compile a validated
+  `geographic-artifact-v1` receipt containing question identity, geography version,
+  measure/source metadata, comparison rule, ranked rows, default selection, allowed
+  use, and evidence boundary. Question identity remounts the view so a new evaluation
+  cannot retain a prior layer, selection, or comparison. Seattle/local artifacts and
+  final reports still need to adopt the same receipt before the renderer is generic.
 - Definitions expose formulas, inputs, sources, rules, restrictions, and versions
   before execution.
 

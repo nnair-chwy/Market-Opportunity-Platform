@@ -18,7 +18,8 @@ test("advertising question executes public context before requesting lift data",
   assert.equal(run.steps.find((step)=>step.name==="Match required evidence")?.status,"completed");
   assert.match(run.steps.find((step)=>step.name==="Match required evidence")?.outputSummary??"",/Confirmed Census.*context matched and rendered/i);
   assert.ok(run.sourceSnapshotVersions.includes("cbsa-acs-2024"));
-  const payload=run.artifacts[0].payload as {humanInputNeeded:string};
+  assert.ok(run.artifacts.some((artifact)=>artifact.type==="geographic_layer"));
+  const payload=run.artifacts.find((artifact)=>artifact.type==="warning")?.payload as {humanInputNeeded:string};
   assert.match(payload.humanInputNeeded,/governed aggregate view.*CBSA.*DMA.*state.*ZIP/i);
 });
 

@@ -64,6 +64,10 @@ export default defineConfig(async ({ command, mode }) => {
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         config: localBindingConfig,
+        // Cloudflare's inspector port probe includes 0.0.0.0, which macOS
+        // Seatbelt rejects. Disable only the optional Worker debugger in Codex;
+        // normal local development keeps the default inspector behavior.
+        inspectorPort: isCodexSeatbeltSandbox ? false : undefined,
       }),
     ],
   };

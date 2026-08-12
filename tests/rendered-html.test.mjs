@@ -17,13 +17,24 @@ async function render() {
 
 test("server-renders the adaptable Evaluation Workspace", async () => {
   const response=await render();assert.equal(response.status,200);assert.match(response.headers.get("content-type")??"",/^text\/html\b/i);const html=await response.text();
-  assert.match(html,/<title>Evaluation Workspace<\/title>/i);
-  assert.match(html,/What decision are you trying to make\?/);
-  assert.match(html,/What are the best places for Chewy to open a new clinic\?/);
-  assert.match(html,/Within Greater Seattle, how do submarkets compare for deeper clinic site diligence\?/);
-  assert.match(html,/Which comparable clinics require performance review, and why\?/);
-  assert.match(html,/What public market context is available for clinic screening\?/);assert.match(html,/Deeper blue = higher national percentile/);assert.match(html,/Highest (?:<!-- -->)?total population/);assert.match(html,/Confirmed public context/);
-  assert.match(html,/Verified library/);
+  assert.match(html,/<title>Market Intelligence Evaluation Workspace<\/title>/i);
+  assert.match(html,/Evaluation question/);
+  assert.match(html,/Ask a market, customer, clinic, or geographic question/);
+  assert.match(html,/Quick views/);
+  assert.match(html,/>Clinics<|Clinics<!--/);
+  assert.match(html,/The map changes to fit the question/);
+  assert.match(html,/National evidence view/);
+  assert.match(html,/Clinic footprint/);
+  assert.match(html,/Population/);
+  assert.match(html,/Households/);
+  assert.match(html,/Household income/);
+  assert.match(html,/Housing units/);
+  assert.match(html,/Density/);
+  assert.match(html,/Pet ownership/);
+  assert.doesNotMatch(html,/Drop CSV or Excel|Local staging only/);
+  assert.match(html,/>Compare<|Compare<!--/);
+  assert.match(html,/>Layer<|Layer<!--/);
+  assert.doesNotMatch(html,/Evaluation definitions|Seattle deep dive|SYN-MARKET-ATTRACTIVENESS-001/);
   assert.doesNotMatch(html,/aria-label="Evaluator workspaces"|>Markets<|>Locations</);
   assert.doesNotMatch(html,/codex-preview|react-loading-skeleton|Starter Project/i);
 });
@@ -37,7 +48,7 @@ test("ships product-specific workspace and social assets", async () => {
   const [page,workspace,layout,packageJson]=await Promise.all([
     readFile(new URL("../app/page.tsx",import.meta.url),"utf8"),readFile(new URL("../components/evaluation-workspace/EvaluationWorkspace.tsx",import.meta.url),"utf8"),readFile(new URL("../app/layout.tsx",import.meta.url),"utf8"),readFile(new URL("../package.json",import.meta.url),"utf8"),access(new URL("../public/og.png",import.meta.url)),
   ]);
-  assert.match(page,/EvaluationWorkspace/);assert.match(page,/buildEvaluationDemos/);assert.match(workspace,/Attractiveness by submarket/);assert.match(workspace,/Decide what moves forward/);assert.match(workspace,/Needs evidence/);assert.match(layout,/Evaluation Workspace/);assert.match(layout,/og\.png/);assert.doesNotMatch(packageJson,/react-loading-skeleton|drizzle/);await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx",import.meta.url)));await assert.rejects(access(new URL("db/index.ts",root)));
+  assert.match(page,/EvaluationWorkspace/);assert.match(page,/buildEvaluationDemos/);assert.match(workspace,/Evaluation progress/);assert.match(workspace,/Match compatible evidence/);assert.match(workspace,/Ask AI a follow-up/);assert.match(layout,/Evaluation Workspace/);assert.match(layout,/og\.png/);assert.doesNotMatch(packageJson,/react-loading-skeleton|drizzle/);await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx",import.meta.url)));await assert.rejects(access(new URL("db/index.ts",root)));
 });
 
 test("primary entry composes demos without use-case workflow branches", async()=>{

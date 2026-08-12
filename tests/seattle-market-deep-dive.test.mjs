@@ -59,16 +59,18 @@ test("illustrative hubs and geodesic areas are valid, deterministic, and non-sco
   });
 });
 
-test("primary workspace owns the synthetic zone and synchronized selection contract", async () => {
-  const [page, workspace, zones] = await Promise.all([
+test("primary workspace keeps legacy synthetic zones out of the map-first entry", async () => {
+  const [page, workspace, overview, zones] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/evaluation-workspace/EvaluationWorkspace.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/evaluation-workspace/WorkspaceOverview.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/evaluation/zones.ts", import.meta.url), "utf8"),
   ]);
   assert.match(page,/EvaluationWorkspace/);
-  assert.match(workspace,/ZoneMap payload=\{map\} rows=\{rows\} selectedId=\{selected.entityId\} colorField=\{colorField\} hoveredId=\{hoveredId\} onSelect=\{onSelect\}/);
-  assert.match(workspace,/onClick=\{\(\)=>onSelect\(row.entityId\)\}/);
-  assert.match(workspace,/payload\.disclaimer/);
+  assert.match(workspace,/WorkspaceOverview/);
+  assert.doesNotMatch(workspace,/ZoneMap|Seattle|synthetic zone/i);
+  assert.match(overview,/publicMarketGeographicArtifact/);
+  assert.match(overview,/Compare/);
   assert.match(zones,/synthetic_illustrative_analysis_zone/);
   assert.match(zones,/clipped-nearest-hub-partition-v1/);
   assert.match(zones,/triangulate/);

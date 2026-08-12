@@ -1,6 +1,7 @@
 export * from "./catalog.ts";
 export * from "./analysis-plan.ts";
 export * from "./geographic-measures.ts";
+export * from "./geographic-artifact.ts";
 export * from "./contracts.ts";
 export * from "./definitions.ts";
 export * from "./decision-graph.ts";
