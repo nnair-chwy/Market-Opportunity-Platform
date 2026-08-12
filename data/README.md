@@ -88,6 +88,28 @@ runtime.
 - Credentials or tokens
 - Raw exports copied from internal dashboards without approval
 
+## Local Snowflake evidence snapshot
+
+`data/approved/snowflake/<snapshot-version>/` is an ignored local destination
+for a sanitized, versioned snapshot built from explicitly authorized internal
+Snowflake CSV exports. Rebuild it with:
+
+```sh
+SNOWFLAKE_EXPORT_DIR=/absolute/path/to/authorized/exports \
+SNOWFLAKE_SNAPSHOT_DIR=data/approved/snowflake/<snapshot-version> \
+pnpm data:build:approved-snowflake-snapshot
+```
+
+The raw CSVs and generated snapshot remain outside Git. The snapshot contains market context, ZIP
+geography, household context, aggregate regional demand, clinic market and
+performance summaries, appointment context, retention baseline, and ZIP metro
+mapping. The manifest records input file names, output hashes, grain, sensitivity,
+allowed use, and unresolved data-quality issues.
+
+Playbooks must consume these outputs through their own typed evidence contract.
+The snapshot does not authorize a universal score or bypass clinic identity,
+outcome, maturity, geography, or owner-review requirements.
+
 Data files added later must document owner, source, observation date, geography, sensitivity, allowed use, and retention.
 
 ## Minimized Esri demo fixture

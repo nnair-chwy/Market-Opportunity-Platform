@@ -164,6 +164,23 @@ scoring adapter maps the existing deterministic `EvaluationInput` and
 behavior. These contracts add no persistence and do not authorize a final
 real-estate decision.
 
+### Evaluation plan
+
+`lib/planning/contracts.ts` defines a strict `EvaluationPlan` between the
+question UI and canonical execution boundary. It records the original question,
+proposal method, constrained intent, registry capability, geography grain,
+execution status, evidence boundary, missing evidence and approvals, visible
+steps, and permitted draft actions. The API response must parse this contract
+before it enters application state.
+
+An AI-proposed intent and deterministic fallback both compile through the same
+registry assessment. The plan does not contain executable formulas, source
+credentials, gate receipts, or authority to modify an `EvaluationContract`.
+
+Public map percentiles use `compare_cohort` with one compatible `SRC-016`
+measure and an explicit metro/micro and workflow cohort. Missing values remain
+unranked. The output is `market_context_only` and has no scoring eligibility.
+
 ### Deterministic operator boundary
 
 The strict contracts in `lib/evaluation-operators.ts` expose versioned

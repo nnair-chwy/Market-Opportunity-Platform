@@ -37,3 +37,5 @@ Current records:
 - [ADR-019: Versioned workspace capability registry](ADR-019-versioned-capability-registry.md)
 - [ADR-020: Typed deterministic evaluation operators](ADR-020-typed-deterministic-operators.md)
 - [ADR-021: Fixture-backed generic evaluation workspace](ADR-021-generic-evaluation-workspace.md)
+- [ADR-022: Snowflake exports enter through canonical evidence adapters](ADR-022-snowflake-canonical-evidence.md)
+- [ADR-023: Integrate adaptive planning without a second evaluation engine](ADR-023-adaptive-planning-and-market-map.md)
