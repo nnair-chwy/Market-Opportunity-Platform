@@ -1,6 +1,0 @@
-Slide 2: rewrote the two problem descriptions to avoid making fragmented data the product story.
-Slide 8: rewrote the future direction from connected data to sector-specific action plans.
-Slide 9: rewrote the future operating model so every opportunity ends in an owned, measurable action plan.
-Slide 10: replaced the inherited illustrative home-page image with the current supplied home-page concept asset while preserving the inherited image frame.
-Slide 11: changed the fifth pilot decision from evidence readiness to business outcome and guardrail measurement.
-Slide 12: changed the ask from proving a generic workflow to proving the action workflow.

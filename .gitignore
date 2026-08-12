@@ -44,3 +44,13 @@ next-env.d.ts
 /outputs/
 /work/
 /.cache/
+
+# local artifact-generation workspaces
+/.codex-ppt-remake/
+/.deck-build.*/
+/.deck-revision.*/
+/.tmp_*/
+
+# generated internal evidence snapshots and audit reports
+/data/approved/snowflake/
+/reports/snowflake-*/

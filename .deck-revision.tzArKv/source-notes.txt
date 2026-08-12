@@ -1,6 +1,0 @@
-Sources and assets:
-- User clarification, August 5, 2026: platform must span business sectors and provide insights on data collection for online and offline opportunities by regional markets.
-- Local transition brief: /Users/nnair/Documents/Market Opportunity Platform/market-opportunity-platform-transition-brief.md
-- Generated illustrative UI concept: /Users/nnair/Documents/Market Opportunity Platform/assets/market-opportunity-platform-home-concept-v2.png
-- The UI concept is synthetic and contains no real rankings, metrics, or current-product claims.
-

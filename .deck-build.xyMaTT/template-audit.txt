@@ -1,7 +1,0 @@
-Source deck: CVC_Clinic_Market_and_Location_Discovery_Journey_and_Future.pptx
-Structure: 12 widescreen slides with slide-local content, consistent white canvas, navy titles, blue section labels, pastel evidence categories, thin footer rule, and small page marker.
-Typography: Aptos and Calibri-family fonts as imported. Existing sizes, spacing, and text-box geometry will be preserved.
-Reusable patterns: title slide; three-column evidence cards; two-column discovery flow; three/four/five-part decision frameworks; demo agenda; future vision; screenshot; closing ask.
-Insertion contract: keep all 12 slides and their order. Rewrite inherited text only on source slides 2 and 3. Preserve all shapes, geometry, fills, lines, page numbers, and image placement. Update speaker notes on slides 2, 3, and 8 only.
-Placeholder audit: the source deck contains no inherited layout placeholders. All visible content is slide-local and must be retained unless explicitly rewritten below.
-
