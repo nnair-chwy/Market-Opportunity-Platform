@@ -156,7 +156,7 @@ function actionsFor(
   if (intent.topic === "market_context") return [context];
 
   if (resultWorkspaceType === "evidence_readiness") {
-    return [{
+    const gates: PlannedAction = {
       id: "resolve-evidence-gates",
       title: "Resolve evidence and approval gates",
       summary: assessment.message,
@@ -168,7 +168,32 @@ function actionsFor(
       nextStep: "Assign owners to each missing evidence item and approval, then rerun the question.",
       outputId: requirementFor(intent).outputId,
       requiresApproval: assessment.missingApprovals.length > 0 || intent.requestedAction === "approve",
-    }];
+    };
+    if ((intent.topic === "local_growth" || intent.topic === "clinic_location") && intent.requestedAction !== "approve") {
+      const clinic = intent.topic === "clinic_location";
+      return [{
+        id: clinic ? "review-cvc-market-leads" : "review-marketing-market-leads",
+        title: clinic ? "Review CVC market investigation leads" : "Review comparable-market investigation leads",
+        summary: clinic
+          ? "Screen published CVC footprint contrasts against compatible public market context, then choose which leads deserve governed validation."
+          : "Screen structurally comparable metros and concentration contrasts, then choose which pairs deserve test-and-control feasibility checks.",
+        owner: clinic ? "CVC Strategy and Real Estate Analytics" : "Marketing Science",
+        timing: "Available now as exploratory context",
+        confidence: "Medium",
+        evidence: clinic
+          ? ["Published CVC clinic footprint", "Validated public Census aggregates", "Compatible CBSA geography"]
+          : ["Validated public Census aggregates", "Compatible CBSA geography", "Deterministic peer screening"],
+        tradeoffs: clinic
+          ? ["Households are not pet demand", "Footprint is not access, capacity, or opportunity"]
+          : ["Structural similarity is not experiment validity", "No customer outcome, media, or conversion evidence is connected"],
+        nextStep: clinic
+          ? "Select a question-specific lead and validate it with pet demand, clinic capacity, veterinary supply, and property feasibility."
+          : "Select a question-specific lead and validate it with pre-period outcomes, customer mix, media history, cost, and contamination checks.",
+        outputId: "market_context_profile",
+        requiresApproval: false,
+      }, gates];
+    }
+    return [gates];
   }
 
   if (intent.topic === "clinic_location") {
@@ -192,6 +217,21 @@ function actionsFor(
       outputId: requirementFor(intent).outputId,
       requiresApproval: assessment.missingApprovals.length > 0 || intent.requestedAction === "approve",
     };
+    if ((geography.mode === "national" || geography.mode === "needs_selection") && intent.requestedAction !== "approve") {
+      return [{
+        id: "review-cvc-market-leads",
+        title: "Review CVC market investigation leads",
+        summary: "Screen published CVC footprint contrasts against compatible public market context, then choose which leads deserve governed validation.",
+        owner: "CVC Strategy and Real Estate Analytics",
+        timing: "Available now as exploratory context",
+        confidence: "Medium",
+        evidence: ["Published CVC clinic footprint", "Validated public Census aggregates", "Compatible CBSA geography"],
+        tradeoffs: ["Households are not pet demand", "Footprint is not access, capacity, or opportunity"],
+        nextStep: "Select a question-specific lead and validate it with pet demand, clinic capacity, veterinary supply, and property feasibility.",
+        outputId: "market_context_profile",
+        requiresApproval: false,
+      }, clinicAction];
+    }
     return geography.mode === "single" || geography.mode === "compare"
       ? [clinicAction, context]
       : [clinicAction];
@@ -204,22 +244,41 @@ export function compileEvaluationPlan(
   question: string,
   intent: PlanningIntent,
   proposalMethod: EvaluationPlan["proposalMethod"] = "deterministic_fallback",
-  perspectiveId: EvaluationPlan["perspectiveId"] = intent.topic === "clinic_location" || intent.topic === "clinic_performance" || /\b(clinic|clinics|cvc|veterinar|vet)\b/i.test(question)
-    ? "cvc"
-    : intent.topic === "local_growth"
-      ? "marketing"
-      : /\b(price|pricing|elasticity|promo)\b/i.test(question)
-        ? "pricing"
-        : "marketing",
+  perspectiveId?: EvaluationPlan["perspectiveId"],
 ): EvaluationPlan {
-  const requirement = requirementFor(intent);
+  const resolvedPerspectiveId: EvaluationPlan["perspectiveId"] = perspectiveId
+    ?? (intent.topic === "clinic_location" || intent.topic === "clinic_performance" || /\b(clinic|clinics|cvc|veterinar|vet)\b/i.test(question)
+      ? "cvc"
+      : intent.topic === "local_growth"
+        ? "marketing"
+        : /\b(price|pricing|elasticity|promo)\b/i.test(question)
+          ? "pricing"
+          : "marketing");
+  const exploratoryQuestion = /\b(comparable|which|where|patterns?|worth investigating|differ)\b/i.test(question);
+  const canAssumeNationalCohort = exploratoryQuestion
+    && intent.requestedPlaces.length === 0
+    && (perspectiveId !== undefined || /\b(marketing|campaign|media|test market|control market|clinic|cvc|veterinar|vet)\b/i.test(question))
+    && (resolvedPerspectiveId === "marketing" || resolvedPerspectiveId === "cvc")
+    && intent.requestedAction !== "approve";
+  const effectiveIntent = planningIntentSchema.parse(canAssumeNationalCohort ? {
+    ...intent,
+    topic: resolvedPerspectiveId === "cvc" ? "clinic_location" : "local_growth",
+    geographyGrain: "cbsa",
+    requestedAction: intent.requestedAction === "describe" ? "investigate" : intent.requestedAction,
+    clarificationRequired: false,
+    clarificationReason: "none",
+    conciseInterpretation: resolvedPerspectiveId === "cvc"
+      ? "Screen national metro markets for question-specific CVC footprint contrasts, then identify the evidence needed to validate each lead."
+      : "Screen national metro markets for structurally comparable peers and regional contrasts, then identify the evidence needed to validate each lead.",
+  } : intent);
+  const requirement = requirementFor(effectiveIntent);
   const assessment = assessCapabilityQuestion({
     question,
     requirements: [requirement],
     availableEvidenceIds: [],
     satisfiedApprovalIds: [],
   });
-  const geography = resolveGeography(intent);
+  const geography = resolveGeography(effectiveIntent);
   const status: EvaluationPlan["status"] = geography.mode === "clarification" || geography.mode === "unavailable"
     ? "blocked"
     : assessment.outcome === "supported"
@@ -228,14 +287,14 @@ export function compileEvaluationPlan(
         ? "partially_executable"
         : "blocked";
   const resultWorkspaceType = deriveResultWorkspaceType({
-    intent,
+    intent: effectiveIntent,
     capabilityId: requirement.capabilityId,
     status,
     geography,
   });
-  const actions = actionsFor(intent, assessment, geography, resultWorkspaceType);
+  const actions = actionsFor(effectiveIntent, assessment, geography, resultWorkspaceType);
   const findings = derivePlanFindings({
-    intent,
+    intent: effectiveIntent,
     proposalMethod,
     capabilityId: requirement.capabilityId,
     status,
@@ -247,12 +306,12 @@ export function compileEvaluationPlan(
   });
 
   return evaluationPlanSchema.parse({
-    planId: `plan-${intent.topic}-${geography.mode}-${requirement.capabilityId}`,
+    planId: `plan-${effectiveIntent.topic}-${geography.mode}-${requirement.capabilityId}`,
     version: "1.0.0",
     originalQuestion: question,
-    perspectiveId,
+    perspectiveId: resolvedPerspectiveId,
     proposalMethod,
-    intent,
+    intent: effectiveIntent,
     capabilityId: requirement.capabilityId,
     geographyGrain: requirement.geographyGrain === "market" ? "cbsa" : requirement.geographyGrain,
     geographyResolution: geography,
@@ -264,7 +323,7 @@ export function compileEvaluationPlan(
     missingEvidence: assessment.missingEvidence,
     missingApprovals: assessment.missingApprovals,
     steps: buildPlanSteps({
-      intent,
+      intent: effectiveIntent,
       capabilityId: requirement.capabilityId,
       status,
       geography,

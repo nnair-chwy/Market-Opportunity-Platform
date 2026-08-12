@@ -69,7 +69,8 @@ function proposalMethodLabel(method: EvaluationPlan["proposalMethod"]) {
   return method === "ai_proposed" ? "AI-proposed intent" : "Deterministic fallback";
 }
 
-function workspaceHeading(plan: EvaluationPlan) {
+function workspaceHeading(plan: EvaluationPlan, investigation?: MarketInvestigation | null) {
+  if (investigation?.leads.length) return "Market investigation review";
   if (plan.resultWorkspaceType === "clarification") return "Clarification required";
   if (plan.resultWorkspaceType === "evidence_readiness") return "Evidence readiness review";
   if (plan.resultWorkspaceType === "clinic_evaluation_surface") return "Bounded clinic evaluation";
@@ -491,7 +492,7 @@ export function DecisionWorkflowApp() {
               <div className="packet-heading">
                 <div>
                   <div className="eyebrow">{phase === "saved" ? "Saved action packet" : "Decision review"}</div>
-                  <h1 id="packet-title">{workspaceHeading(plan)}</h1>
+                  <h1 id="packet-title">{workspaceHeading(plan, investigation)}</h1>
                   <p className="lead">{packetSummaryFromPlan(plan)}</p>
                 </div>
                 <div className="packet-heading-actions">
