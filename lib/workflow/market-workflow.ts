@@ -57,6 +57,7 @@ export const CURRENT_CLINIC_MARKET_IDS: Readonly<Record<string, string>> = {
   Jacksonville: "27260",
   Phoenix: "38060",
   "South Florida": "33100",
+  Tampa: "45300",
 };
 
 export const SYNTHETIC_CANDIDATE_MARKET_IDS: Readonly<

@@ -495,3 +495,30 @@
     min-width: 0;
   }
 }
+
+.profile,
+.empty {
+  --glass-accent: var(--blue, #5b4a86);
+  --glass-line: rgb(145 190 216 / 52%);
+  backdrop-filter: blur(18px) saturate(125%);
+  background: linear-gradient(145deg, rgb(255 255 255 / 84%), rgb(226 243 253 / 60%));
+  border-color: var(--glass-line);
+  box-shadow: 0 18px 44px rgb(42 105 145 / 12%), inset 0 1px rgb(255 255 255 / 86%);
+}
+
+.nonScored,
+.boundary,
+.identity > div,
+.metric,
+.missingMetric,
+.comparison table,
+.comparisonEmpty {
+  background: rgb(239 248 255 / 66%);
+  border-color: rgb(145 190 216 / 46%);
+}
+
+.profile :is(button, a, input, select, textarea, summary):focus-visible,
+.empty :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--glass-accent) 62%, white);
+  outline-offset: 2px;
+}

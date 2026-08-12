@@ -522,3 +522,32 @@
     transition: none;
   }
 }
+
+/* Shared light-blue glass treatment; evidence and workflow colors stay semantic. */
+.navigator {
+  --ink: var(--text, #172033);
+  --line: rgb(146 190 216 / 52%);
+  --surface: rgb(255 255 255 / 72%);
+  --surface-soft: rgb(232 245 253 / 58%);
+  --blue-soft: rgb(220 239 255 / 68%);
+}
+
+.mapCard,
+.listCard,
+.summary,
+.statePanel,
+.emptyState {
+  backdrop-filter: blur(18px) saturate(125%);
+  background: linear-gradient(145deg, rgb(255 255 255 / 82%), rgb(225 243 253 / 62%));
+  border-color: var(--line);
+  box-shadow: 0 18px 44px rgb(42 105 145 / 12%), inset 0 1px rgb(255 255 255 / 82%);
+}
+
+.mapHeading,
+.listHeading {
+  background: rgb(240 249 255 / 48%);
+}
+
+.navigator :is(button, [tabindex]):focus-visible {
+  outline-color: color-mix(in srgb, var(--blue) 72%, white);
+}

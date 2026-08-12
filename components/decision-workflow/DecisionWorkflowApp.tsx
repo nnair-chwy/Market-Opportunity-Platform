@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AskAiPanel } from "@/components/AskAiPanel";
 import { QuestionMap } from "@/components/decision-workflow/QuestionMap";
 import type { AskAiContext } from "@/lib/ai/insights";
+import { currentClinics, fulfillmentCenters } from "@/lib/locations/map-data";
 
 type Phase = "question" | "running" | "packet" | "compare" | "saved";
 
@@ -119,6 +120,12 @@ function statusForStep(index: number, activeStep: number) {
   return "pending";
 }
 
+function mapPoint(latitude: number, longitude: number) {
+  const left = ((longitude + 125) / 59) * 100;
+  const top = ((49.5 - latitude) / 25.5) * 100;
+  return { left: `${Math.min(98, Math.max(2, left))}%`, top: `${Math.min(96, Math.max(4, top))}%` };
+}
+
 export function DecisionWorkflowApp() {
   const [activeView, setActiveView] = useState<"workflow" | "saved">("workflow");
   const [phase, setPhase] = useState<Phase>("question");
@@ -221,26 +228,22 @@ export function DecisionWorkflowApp() {
 
   return (
     <main className={`decision-app ${phase === "question" && activeView === "workflow" ? "question-page" : "workspace-mode"}`}>
-      <header className="decision-header">
-        <a className="decision-brand" href="#start" aria-label="Market Intelligence home">
-          <span className="decision-brand-mark" aria-hidden="true">MI</span>
-          <span><strong>Market Intelligence</strong><small>Decision workspace</small></span>
-        </a>
-        <div className="decision-header-actions">
-          <span className="header-status"><i aria-hidden="true" />Workspace ready</span>
-          <button className={`header-icon ${activeView === "saved" ? "active-tab" : ""}`} aria-label="Open saved packets" onClick={() => setActiveView("saved")}>Saved packets <span>{savedPackets.length}</span></button>
-          <button className="header-icon" onClick={() => { setActiveView("workflow"); setPhase("question"); }}>New question</button>
-          <span className="user-chip">NA</span>
-        </div>
-      </header>
-
       <div className={`decision-layout ${phase === "question" && activeView === "workflow" ? "question-layout" : "workspace-layout"}`} id="start">
         {activeView === "workflow" && phase !== "question" ? (
           <div className="workspace-map" aria-label="Geographic context map">
-            <div className="map-toolbar"><span>Regional context</span><button type="button">Layers</button><button type="button">Reset view</button></div>
+            <div className="map-toolbar"><span>Chewy network context</span><small>Public address-backed locations</small></div>
             <img src="/us-map.svg" alt="Illustrative United States geographic context" />
-            <span className="map-marker marker-west" /><span className="map-marker marker-central" /><span className="map-marker marker-east" /><span className="map-marker marker-southeast" />
-            <div className="map-legend"><span><i className="legend-demand" />Demand context</span><span><i className="legend-site" />Candidate locations</span><small>Map context updates as the question is analyzed.</small></div>
+            <div className="network-context-pins" aria-label="Chewy network location pins">
+              {fulfillmentCenters.filter((center) => center.state !== "ON").map((center) => {
+                const position = mapPoint(center.latitude, center.longitude);
+                return <button key={center.id} type="button" className="network-pin fulfillment-pin" style={position} title={`${center.name}: ${center.address}`} aria-label={`${center.name}, ${center.address}`} />;
+              })}
+              {currentClinics.map((clinic) => {
+                const position = mapPoint(clinic.latitude, clinic.longitude);
+                return <button key={clinic.id} type="button" className="network-pin clinic-pin" style={position} title={`Chewy Vet Care ${clinic.name}: ${clinic.address}`} aria-label={`Chewy Vet Care ${clinic.name}, ${clinic.address}`} />;
+              })}
+            </div>
+            <div className="map-legend"><span><i className="legend-clinic" />Current Chewy Vet Care clinics ({currentClinics.length})</span><span><i className="legend-fulfillment" />U.S. fulfillment centers ({fulfillmentCenters.filter((center) => center.state !== "ON").length})</span><small>Canada is included in the data fixture but outside this U.S. map. Context only, not candidate sites or scoring inputs.</small></div>
           </div>
         ) : null}
         <aside className="decision-rail" aria-label="Workflow progress">
@@ -263,20 +266,30 @@ export function DecisionWorkflowApp() {
           ) : null}
           {activeView === "workflow" ? <>
           {phase === "question" ? (
-            <div className="question-split">
-              <QuestionMap />
-              <section className="question-view" aria-labelledby="question-title">
-                <div className="eyebrow">Start with the decision</div>
-                <h1 id="question-title">What do you need to decide?</h1>
-                <p className="lead">Ask a business question in plain language. The workspace will map the evidence, show its reasoning path, and prepare a draft action packet.</p>
-                <form className="question-card" onSubmit={(event) => { event.preventDefault(); startWorkflow(); }}>
-                  <label htmlFor="decision-question">Your question</label>
-                  <textarea id="decision-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Example: Which markets should we investigate for future growth?" autoFocus />
-                  <div className="question-card-footer"><span>Use a question tied to a decision, owner, or next step.</span><button className="primary-action" type="submit" disabled={!question.trim()}>Run decision graph <span aria-hidden="true">→</span></button></div>
-                </form>
-                <div className="prompt-grid"><button onClick={() => setQuestion("Which markets should we investigate for future growth?")}>Market opportunity</button><button onClick={() => setQuestion("What evidence do we need before comparing candidate locations?")}>Evidence readiness</button><button onClick={() => setQuestion("What should the accountable team investigate next?")}>Next action</button></div>
-                {savedPackets.length ? <div className="recent-packets"><div><strong>Recent action packets</strong><span>{savedPackets.length} saved</span></div>{savedPackets.slice(0, 3).map((packet) => <button key={packet.id} onClick={() => { setQuestion(packet.question); setSelectedActionId(actionOptions[0].id); setPhase("saved"); }}><span>{packet.title}</span><small>{packet.savedAt}</small></button>)}</div> : null}
-              </section>
+            <div className="question-stage">
+              <header className="question-stage-header">
+                <div>
+                  <div className="eyebrow">Start with the decision</div>
+                  <h1 id="question-title">What do you need to decide?</h1>
+                  <p className="lead">Ask a business question in plain language, use the map for geographic context, and prepare a reviewable next step.</p>
+                </div>
+                <div className="question-stage-actions">
+                  <button className="header-icon" aria-label="Open saved packets" onClick={() => setActiveView("saved")}>Saved packets <span>{savedPackets.length}</span></button>
+                  <button className="header-icon" onClick={restart}>New question</button>
+                </div>
+              </header>
+              <div className="question-split">
+                <QuestionMap />
+                <section className="question-view" aria-labelledby="question-title">
+                  <form className="question-card" onSubmit={(event) => { event.preventDefault(); startWorkflow(); }}>
+                    <label htmlFor="decision-question">Your question</label>
+                    <textarea id="decision-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Example: Which markets should we investigate for future growth?" autoFocus />
+                    <div className="question-card-footer"><span>Use a question tied to a decision, owner, or next step.</span><button className="primary-action" type="submit" disabled={!question.trim()}>Run decision graph <span aria-hidden="true">→</span></button></div>
+                  </form>
+                  <div className="prompt-grid"><button onClick={() => setQuestion("Which markets should we investigate for future growth?")}>Market opportunity</button><button onClick={() => setQuestion("What evidence do we need before comparing candidate locations?")}>Evidence readiness</button><button onClick={() => setQuestion("What should the accountable team investigate next?")}>Next action</button></div>
+                  {savedPackets.length ? <div className="recent-packets"><div><strong>Recent action packets</strong><span>{savedPackets.length} saved</span></div>{savedPackets.slice(0, 3).map((packet) => <button key={packet.id} onClick={() => { setQuestion(packet.question); setSelectedActionId(actionOptions[0].id); setPhase("saved"); }}><span>{packet.title}</span><small>{packet.savedAt}</small></button>)}</div> : null}
+                </section>
+              </div>
             </div>
           ) : null}
 
