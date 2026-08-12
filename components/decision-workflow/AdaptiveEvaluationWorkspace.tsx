@@ -247,7 +247,7 @@ export function AdaptiveEvaluationWorkspace({
                 placeholder="Ask a market, customer, clinic, or geographic question..."
               />
               <button className="primary-action" type="submit" disabled={!question.trim()}>
-                Evaluate <span aria-hidden="true">→</span>
+                Run decision graph <span aria-hidden="true">→</span>
               </button>
             </div>
             <small className="adaptive-composer-note">

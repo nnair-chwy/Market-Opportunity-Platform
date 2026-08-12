@@ -81,6 +81,9 @@ const clinicLocations: readonly UnifiedMapLocation[] = currentClinics.map((clini
 
 type AdaptiveMarketWorkspaceProps = {
   initialMetric?: CbsaAcsMetricKey;
+  initialSelectedCode?: string | null;
+  initialComparisonCodes?: readonly string[];
+  selectionPrompt?: string | null;
   opening?: boolean;
   metric?: CbsaAcsMetricKey;
   onMetricChange?: (metric: CbsaAcsMetricKey) => void;
@@ -94,6 +97,9 @@ type AdaptiveMarketWorkspaceProps = {
 
 export function AdaptiveMarketWorkspace({
   initialMetric = "total_population",
+  initialSelectedCode = null,
+  initialComparisonCodes = [],
+  selectionPrompt = null,
   opening = false,
   metric: controlledMetric,
   onMetricChange,
@@ -108,8 +114,8 @@ export function AdaptiveMarketWorkspace({
   const [includeMicropolitanState, setIncludeMicropolitanState] = useState(false);
   const [categoryState, setCategoryState] = useState<WorkflowCategory>("all");
   const [query, setQuery] = useState("");
-  const [selectedCode, setSelectedCode] = useState("42660");
-  const [comparisonCodes, setComparisonCodes] = useState<string[]>([]);
+  const [selectedCode, setSelectedCode] = useState(initialSelectedCode ?? "");
+  const [comparisonCodes, setComparisonCodes] = useState<string[]>(() => [...initialComparisonCodes]);
   const [layerVisibility, setLayerVisibility] = useState(createDefaultLayerVisibility);
   const [unsupportedLayerMessage, setUnsupportedLayerMessage] = useState<string | null>(null);
 
@@ -251,9 +257,7 @@ export function AdaptiveMarketWorkspace({
     [cohort],
   );
   const activeSelectedCode =
-    selectedCode && visibleCodes.has(selectedCode)
-      ? selectedCode
-      : (cohort[0]?.cbsa_code ?? "");
+    selectedCode && visibleCodes.has(selectedCode) ? selectedCode : "";
   const selected = publicMarkets.find((market) => market.cbsa_code === activeSelectedCode) ?? null;
   const selectedRaw = preserveMissingNumeric(selected?.acs?.metrics[metric].raw_value);
   const selectedValue = selectedRaw;
@@ -436,6 +440,22 @@ export function AdaptiveMarketWorkspace({
                     ? `${selectedRank} of ${comparisons.length}`
                     : "Unavailable"}
                 </dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd>{presentation.sourceLabel}</dd>
+              </div>
+            </dl>
+          ) : null}
+          {mapMode === "single" && !selected ? (
+            <dl className="adaptive-single-summary" data-view-a-mode="single">
+              <div>
+                <dt>Active region</dt>
+                <dd>None selected</dd>
+              </div>
+              <div>
+                <dt>{showCensusChoropleth ? metricOption.label : presentation.legend.title}</dt>
+                <dd>Select a market</dd>
               </div>
               <div>
                 <dt>Source</dt>
@@ -729,7 +749,7 @@ export function AdaptiveMarketWorkspace({
               </p>
             </>
           ) : (
-            <p>Select a visible market on the map or list.</p>
+            <p>{selectionPrompt ?? "Select a visible market on the map or list."}</p>
           )}
         </article>
         <article data-comparison-detail="true">

@@ -181,6 +181,66 @@ Public map percentiles use `compare_cohort` with one compatible `SRC-016`
 measure and an explicit metro/micro and workflow cohort. Missing values remain
 unranked. The output is `market_context_only` and has no scoring eligibility.
 
+### Review-page geographic focus
+
+`lib/planning/map-focus.ts` resolves a deterministic review-map focus from the
+validated evaluation plan and approved public CBSA fixtures:
+
+1. Named question geography with available CBSA geometry (`Confirmed`).
+2. Otherwise, for executable national Census-context questions, the top
+   metropolitan market from a deterministic `compare_cohort` on the requested
+   `SRC-016` measure (`Derived`), or an action-packet CBSA identifier when
+   present.
+3. Otherwise a labeled `fallback` state with empty CBSA codes and `Unknown`
+   evidence status. The UI must not invent a substitute location.
+
+The focus contract records `state`, `source`, `cbsaCodes`, `label`,
+`evidenceStatus`, and `message`. The map remains geographic context only and
+has no scoring eligibility.
+
+### Reviewable draft action packet
+
+The decision-review panel presents one proposed draft action packet assembled
+from the validated `EvaluationPlan` and its primary planned action. The browser
+may download that packet as a local markdown document that includes the
+structured packet JSON, original question, geographic focus, evidence boundary,
+missing evidence and approvals, packet version, and calculation or evidence
+versions. The download is review-only: it does not send email, Slack, or any
+external message, and it does not imply approval or execution.
+
+An AI findings summary may restate the validated packet into four draft points:
+what the evidence indicates, why the proposed action is relevant, what the
+accountable owner should do next, and what remains unknown or unapproved. When
+the model is unavailable or fails validation, the application uses a
+deterministic summary of the same structured inputs.
+
+### Sister geographies
+
+`lib/planning/sister-geographies.ts` derives up to three suggested follow-up
+geographies from a validated `EvaluationPlan` and the review-map geographic
+focus already derived from that result, using only the checked-in SRC-014 CBSA
+universe. Eligibility requires a focused CBSA, shared state coverage, and
+matching CBSA type. Suggestions are alphabetical and carry separate
+`shared_state` and `matching_cbsa_type` signals with evidence status and
+explicit uncertainty. The rule creates no composite score and does not claim
+similar demand, population, performance, or opportunity. Selecting “Ask about
+this geography” returns to the question state with a rewritten follow-up
+question and does not auto-save or overwrite the current packet. The section is
+omitted when no eligible candidates exist.
+
+### Opening-page perspectives and regional views
+
+`lib/perspectives/` defines a versioned catalog for Pricing, Marketing, and CVC
+opening perspectives. Each view records perspective ID, view ID, display label,
+namespaced active measure, geography grain, source IDs, evidence status,
+evidence availability, allowed use, scoring eligibility, legend configuration,
+empty or unavailable state, supported question types, comparison and layer
+support, and a deterministic map binding.
+
+Perspective measures remain isolated by namespace. Public Census bindings stay
+`market_context_only` with scoring eligibility `none`. Unavailable views expose
+an explicit empty state and do not impute values or create a universal score.
+
 ### Deterministic operator boundary
 
 The strict contracts in `lib/evaluation-operators.ts` expose versioned

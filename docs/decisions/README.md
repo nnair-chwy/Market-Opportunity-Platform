@@ -39,3 +39,8 @@ Current records:
 - [ADR-021: Fixture-backed generic evaluation workspace](ADR-021-generic-evaluation-workspace.md)
 - [ADR-022: Snowflake exports enter through canonical evidence adapters](ADR-022-snowflake-canonical-evidence.md)
 - [ADR-023: Integrate adaptive planning without a second evaluation engine](ADR-023-adaptive-planning-and-market-map.md)
+- [ADR-024: Perspective-scoped regional views on the opening map](ADR-024-perspective-regional-views.md)
+- [ADR-025: Deterministic geographic focus on the decision review map](ADR-025-review-geographic-focus-map.md)
+- [ADR-025: Review-page draft action packet download and AI summary](ADR-025-reviewable-action-packet-download.md)
+- [ADR-026: Deterministic sister geographies on decision review](ADR-026-deterministic-sister-geographies.md)
+- [ADR-027: Cinematic decision graph animation in the post-question workflow](ADR-027-cinematic-decision-graph-animation.md)

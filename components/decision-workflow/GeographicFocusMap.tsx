@@ -1,0 +1,271 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { FilterSpecification, GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
+import {
+  MAINLAND_MARKET_BOUNDS,
+  PUBLIC_MARKET_MAX_FIT_ZOOM,
+  resolveMapTilerConfig,
+  selectedMarketBounds,
+} from "@/lib/data/cbsa-market-map";
+import { publicMarketMapGeoJson } from "@/lib/data/public-market-ui";
+import type { GeographicFocus } from "@/lib/planning";
+
+const DEFAULT_STYLE_URL = "https://api.maptiler.com/maps/streets-v4/style.json";
+const CBSA_SOURCE_ID = "review-focus-cbsa";
+const CBSA_FILL_LAYER_ID = "review-focus-cbsa-fill";
+const CBSA_OUTLINE_LAYER_ID = "review-focus-cbsa-outline";
+const CBSA_SELECTED_LAYER_ID = "review-focus-cbsa-selected";
+
+type GeographicFocusMapProps = {
+  focus: GeographicFocus;
+  modeLabel: string;
+};
+
+function focusFilter(codes: readonly string[]): FilterSpecification {
+  return [
+    "in",
+    ["get", "cbsa_code"],
+    ["literal", [...codes]],
+  ] as FilterSpecification;
+}
+
+function sourceLabel(source: GeographicFocus["source"]) {
+  switch (source) {
+    case "question_geography":
+      return "From question geography";
+    case "evaluation_result":
+      return "From evaluation result";
+    case "action_plan":
+      return "From action-plan geography";
+    default:
+      return "No reliable geography";
+  }
+}
+
+export function GeographicFocusMap({
+  focus,
+  modeLabel,
+}: GeographicFocusMapProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "basemap_unavailable">("loading");
+  const config = useMemo(
+    () => resolveMapTilerConfig(
+      process.env.NEXT_PUBLIC_MAP_STYLE_URL?.trim() || DEFAULT_STYLE_URL,
+      process.env.NEXT_PUBLIC_MAPTILER_KEY,
+    ),
+    [],
+  );
+  const focusCbsaCodesRef = useRef(focus.cbsaCodes);
+  focusCbsaCodesRef.current = focus.cbsaCodes;
+  const interactiveEnabled = focus.state === "focused";
+
+  useEffect(() => {
+    if (!interactiveEnabled) {
+      mapRef.current?.remove();
+      mapRef.current = null;
+      setLoadState("basemap_unavailable");
+      return;
+    }
+    if (config.status !== "configured") {
+      setLoadState("basemap_unavailable");
+      return;
+    }
+    if (!containerRef.current) {
+      setLoadState("basemap_unavailable");
+      return;
+    }
+
+    const styleUrl = config.styleUrl;
+    let disposed = false;
+    setLoadState("loading");
+
+    async function initialize() {
+      try {
+        const { AttributionControl, Map, NavigationControl } = await import("maplibre-gl");
+        if (disposed || !containerRef.current) return;
+
+        const map = new Map({
+          container: containerRef.current,
+          style: styleUrl,
+          bounds: MAINLAND_MARKET_BOUNDS,
+          fitBoundsOptions: { padding: 36 },
+          maxBounds: MAINLAND_MARKET_BOUNDS,
+          maxZoom: PUBLIC_MARKET_MAX_FIT_ZOOM,
+          renderWorldCopies: false,
+          attributionControl: false,
+        });
+        mapRef.current = map;
+        map.addControl(new NavigationControl({ showCompass: false }), "top-right");
+        map.addControl(new AttributionControl({ compact: true }), "bottom-right");
+
+        map.once("load", () => {
+          if (disposed) return;
+          const initialFocus = focusCbsaCodesRef.current;
+          map.addSource(CBSA_SOURCE_ID, {
+            type: "geojson",
+            data: publicMarketMapGeoJson,
+          });
+          map.addLayer({
+            id: CBSA_FILL_LAYER_ID,
+            type: "fill",
+            source: CBSA_SOURCE_ID,
+            paint: {
+              "fill-color": "#c9d8ef",
+              "fill-opacity": 0.12,
+            },
+          });
+          map.addLayer({
+            id: CBSA_OUTLINE_LAYER_ID,
+            type: "line",
+            source: CBSA_SOURCE_ID,
+            paint: {
+              "line-color": "#8ea3c4",
+              "line-width": 0.35,
+              "line-opacity": 0.35,
+            },
+          });
+          map.addLayer({
+            id: CBSA_SELECTED_LAYER_ID,
+            type: "fill",
+            source: CBSA_SOURCE_ID,
+            filter: initialFocus.length
+              ? focusFilter(initialFocus)
+              : (["==", ["get", "cbsa_code"], ""] as FilterSpecification),
+            paint: {
+              "fill-color": "#3b6fd9",
+              "fill-opacity": 0.28,
+            },
+          });
+          setLoadState("ready");
+        });
+        map.on("error", () => {
+          if (!disposed) setLoadState("basemap_unavailable");
+        });
+      } catch {
+        if (!disposed) setLoadState("basemap_unavailable");
+      }
+    }
+
+    void initialize();
+    return () => {
+      disposed = true;
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, [config, interactiveEnabled]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || loadState !== "ready" || focus.state !== "focused") return;
+
+    const selected = map.getLayer(CBSA_SELECTED_LAYER_ID);
+    if (selected) {
+      map.setFilter(
+        CBSA_SELECTED_LAYER_ID,
+        focus.cbsaCodes.length
+          ? focusFilter(focus.cbsaCodes)
+          : (["==", ["get", "cbsa_code"], ""] as FilterSpecification),
+      );
+    }
+
+    let west = Infinity;
+    let south = Infinity;
+    let east = -Infinity;
+    let north = -Infinity;
+    for (const code of focus.cbsaCodes) {
+      const bounds = selectedMarketBounds(publicMarketMapGeoJson, code);
+      if (!bounds) continue;
+      west = Math.min(west, bounds[0][0]);
+      south = Math.min(south, bounds[0][1]);
+      east = Math.max(east, bounds[1][0]);
+      north = Math.max(north, bounds[1][1]);
+    }
+    if ([west, south, east, north].every(Number.isFinite)) {
+      map.fitBounds(
+        [
+          [west, south],
+          [east, north],
+        ],
+        { padding: 48, duration: 700, maxZoom: PUBLIC_MARKET_MAX_FIT_ZOOM },
+      );
+    }
+
+    const source = map.getSource(CBSA_SOURCE_ID) as GeoJSONSource | undefined;
+    source?.setData(publicMarketMapGeoJson);
+  }, [focus.cbsaCodes, focus.state, loadState]);
+
+  const geographyFallback = focus.state === "fallback";
+  const basemapFallback = interactiveEnabled && loadState === "basemap_unavailable";
+
+  return (
+    <section
+      className="geographic-focus-map"
+      aria-label="Geographic focus map"
+      data-focus-state={focus.state}
+      data-focus-source={focus.source}
+      data-evidence-status={focus.evidenceStatus}
+    >
+      <div className="geographic-focus-toolbar">
+        <div>
+          <span>Geographic focus</span>
+          <strong>{focus.label}</strong>
+          <small className="geographic-focus-evidence">
+            Evidence status: {focus.evidenceStatus}
+            {" · "}
+            {sourceLabel(focus.source)}
+          </small>
+        </div>
+        <small>{modeLabel}</small>
+      </div>
+      <div
+        className="geographic-focus-frame"
+        data-map-frame={geographyFallback || basemapFallback ? "fallback" : "focused"}
+      >
+        {geographyFallback ? (
+          <div
+            className="geographic-focus-fallback"
+            aria-label="Geographic focus unavailable fallback map"
+            data-fallback-reason="unreliable_geography"
+          >
+            <img src="/us-map.svg" alt="" aria-hidden="true" />
+            <div className="geographic-focus-fallback-banner" role="status">
+              <strong>No reliable geographic focus</strong>
+              <span>Context map withheld rather than inventing a location.</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div
+              ref={containerRef}
+              className="geographic-focus-maplibre"
+              hidden={basemapFallback}
+              role="region"
+              aria-label="Focused geographic context map"
+            />
+            {basemapFallback ? (
+              <div
+                className="geographic-focus-fallback"
+                aria-label="Basemap unavailable fallback"
+                data-fallback-reason="basemap_unavailable"
+              >
+                <img src="/us-map.svg" alt="" aria-hidden="true" />
+                <div className="geographic-focus-fallback-banner" role="status">
+                  <strong>Interactive basemap unavailable</strong>
+                  <span>
+                    Focus remains {focus.label}. No substitute market was invented.
+                  </span>
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
+      <p className="geographic-focus-note">{focus.message}</p>
+      <small className="geographic-focus-provenance">
+        Public CBSA context only (SRC-014 / SRC-015 / SRC-016). Geographic context map — not a score, ranking, or recommendation.
+      </small>
+    </section>
+  );
+}

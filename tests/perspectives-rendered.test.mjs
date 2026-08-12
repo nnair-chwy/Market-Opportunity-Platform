@@ -87,12 +87,14 @@ test("opening page stays responsive without horizontal overflow", () => {
   assert.match(css, /@media \(max-width: 1050px\)/);
 });
 
-test("governed planning, packets, Ask AI, and persistence remain wired", () => {
+test("governed planning, packets, AI summary, and persistence remain wired", () => {
   assert.match(workflow, /AdaptiveEvaluationWorkspace/);
   assert.match(workflow, /evaluationPlanResponseSchema\.safeParse/);
-  assert.match(workflow, /planEvaluation\(normalizedQuestion\)/);
+  assert.match(workflow, /setPhase\("interpreting"\)/);
   assert.match(workflow, /Save action packet/);
-  assert.match(workflow, /AskAiPanel/);
+  assert.match(workflow, /Download action packet/);
+  assert.match(workflow, /Findings and proposed action/);
+  assert.doesNotMatch(workflow, /AskAiPanel/);
   assert.match(workflow, /market-intelligence-action-packets/);
   assert.match(workflow, /window\.localStorage\.setItem/);
   assert.match(homepage, /adaptive-question-composer/);

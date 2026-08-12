@@ -1,37 +1,31 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AskAiPanel } from "@/components/AskAiPanel";
-import { AdaptiveMarketWorkspace } from "@/components/decision-workflow/AdaptiveMarketWorkspace";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
-import type { AskAiContext } from "@/lib/ai/insights";
-import { currentClinics, fulfillmentCenters } from "@/lib/locations/map-data";
+import { DecisionGraphAnimation } from "@/components/decision-workflow/DecisionGraphAnimation";
+import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
+import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
+import { publicMarkets } from "@/lib/data/public-market-ui";
 import {
+  assembleReviewableActionPacket,
+  buildSisterFollowUpQuestion,
+  deterministicFindingsAndProposalSummary,
+  downloadReviewableActionPacket,
+  evaluationPlanErrorSchema,
   evaluationPlanResponseSchema,
+  focusPlaceLabelsForRewrite,
+  packetFindingsSummarySchema,
+  packetSummaryFromPlan,
   planEvaluation,
+  proposedActionFromPlan,
+  resolveGeographicFocus,
+  suggestSisterGeographiesFromPlan,
   type EvaluationPlan,
+  type PacketFindingsSummary,
+  type SisterGeographySuggestion,
 } from "@/lib/planning";
 
-type Phase = "question" | "running" | "packet" | "compare" | "saved";
-
-type GraphStep = {
-  id: string;
-  label: string;
-  detail: string;
-  result: string;
-};
-
-type ActionOption = {
-  id: string;
-  title: string;
-  summary: string;
-  owner: string;
-  timing: string;
-  confidence: "High" | "Medium" | "Low";
-  evidence: string[];
-  tradeoffs: string[];
-  nextStep: string;
-};
+type Phase = "question" | "interpreting" | "running" | "packet" | "saved" | "error";
 
 type SavedPacket = {
   id: string;
@@ -39,76 +33,8 @@ type SavedPacket = {
   title: string;
   actionId: string;
   savedAt: string;
+  summary?: string;
 };
-
-const defaultGraphSteps: GraphStep[] = [
-  {
-    id: "interpret",
-    label: "Interpret the question",
-    detail: "Clarifying the decision, geography, and time horizon.",
-    result: "Decision scope identified",
-  },
-  {
-    id: "evidence",
-    label: "Assemble evidence",
-    detail: "Checking available market, customer, operational, and location evidence.",
-    result: "Evidence coverage mapped",
-  },
-  {
-    id: "quality",
-    label: "Check evidence quality",
-    detail: "Separating confirmed inputs, derived outputs, reported context, and gaps.",
-    result: "Quality risks identified",
-  },
-  {
-    id: "compare",
-    label: "Test possible paths",
-    detail: "Comparing the next actions that fit the evidence and decision scope.",
-    result: "Action paths prepared",
-  },
-  {
-    id: "packet",
-    label: "Prepare the action packet",
-    detail: "Turning findings into a source-linked draft for accountable review.",
-    result: "Draft packet ready",
-  },
-];
-
-const defaultActionOptions: ActionOption[] = [
-  {
-    id: "market-review",
-    title: "Run a focused market review",
-    summary: "Validate demand, reach, competition, and local context before narrowing the opportunity.",
-    owner: "Market Insights",
-    timing: "1 to 2 weeks",
-    confidence: "High",
-    evidence: ["Market context is available", "The question can be answered at market level", "The next review has a bounded scope"],
-    tradeoffs: ["Does not establish property feasibility", "Requires agreement on the comparison cohort"],
-    nextStep: "Confirm the markets, measures, and accountable reviewer for the focused review.",
-  },
-  {
-    id: "candidate-review",
-    title: "Open a candidate-location review",
-    summary: "Move from market context into a structured review of candidate sites and physical constraints.",
-    owner: "Real Estate Analytics",
-    timing: "2 to 4 weeks",
-    confidence: "Medium",
-    evidence: ["A parent market can be identified", "Candidate evidence can be organized", "Physical-site diligence is a distinct decision layer"],
-    tradeoffs: ["Needs approved site evidence", "Requires human review of ambiguous location relationships"],
-    nextStep: "Confirm the parent market and load the required candidate evidence before evaluation.",
-  },
-  {
-    id: "data-gap",
-    title: "Resolve the evidence gaps first",
-    summary: "Close the missing definitions, owners, or source approvals that currently limit the decision.",
-    owner: "Decision Owner",
-    timing: "Before prioritization",
-    confidence: "Medium",
-    evidence: ["Some inputs are not yet decision-ready", "Source ownership and approval affect the result", "Missing values should remain explicit"],
-    tradeoffs: ["Delays a comparison", "Creates a stronger audit trail for the next review"],
-    nextStep: "Assign owners and deadlines to each blocker, then rerun the question when resolved.",
-  },
-];
 
 function nowLabel() {
   return new Intl.DateTimeFormat("en-US", {
@@ -126,10 +52,20 @@ function statusForStep(index: number, activeStep: number) {
   return "pending";
 }
 
-function mapPoint(latitude: number, longitude: number) {
-  const left = ((longitude + 125) / 59) * 100;
-  const top = ((49.5 - latitude) / 25.5) * 100;
-  return { left: `${Math.min(98, Math.max(2, left))}%`, top: `${Math.min(96, Math.max(4, top))}%` };
+function proposalMethodLabel(method: EvaluationPlan["proposalMethod"]) {
+  return method === "ai_proposed" ? "AI-proposed intent" : "Deterministic fallback";
+}
+
+function workspaceHeading(plan: EvaluationPlan) {
+  if (plan.resultWorkspaceType === "clarification") return "Clarification required";
+  if (plan.resultWorkspaceType === "evidence_readiness") return "Evidence readiness review";
+  if (plan.resultWorkspaceType === "clinic_evaluation_surface") return "Bounded clinic evaluation";
+  if (plan.resultWorkspaceType === "adaptive_market_workspace") return "Decision review";
+  return "Decision review";
+}
+
+function geographyModeLabel(plan: EvaluationPlan) {
+  return plan.geographyResolution.mode.replaceAll("_", " ");
 }
 
 export function DecisionWorkflowApp() {
@@ -138,40 +74,37 @@ export function DecisionWorkflowApp() {
   const [question, setQuestion] = useState("");
   const [activeStep, setActiveStep] = useState(-1);
   const [plan, setPlan] = useState<EvaluationPlan | null>(null);
-  const [selectedActionId, setSelectedActionId] = useState(defaultActionOptions[0].id);
+  const [selectedActionId, setSelectedActionId] = useState("");
+  const [requestError, setRequestError] = useState<string | null>(null);
   const [savedPackets, setSavedPackets] = useState<SavedPacket[]>([]);
-  const graphSteps = useMemo(() => plan?.steps ?? defaultGraphSteps, [plan]);
-  const actionOptions = useMemo(() => plan?.actions ?? defaultActionOptions, [plan]);
+  const [sisterFollowUpNotice, setSisterFollowUpNotice] = useState<string | null>(null);
+  const [packetSummary, setPacketSummary] = useState<PacketFindingsSummary | null>(null);
+  const [packetSummaryState, setPacketSummaryState] = useState<"idle" | "loading" | "ready">("idle");
+  const [actionDetailsOpen, setActionDetailsOpen] = useState(false);
+  const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
+  const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
 
   const selectedAction = useMemo(
-    () => actionOptions.find((action) => action.id === selectedActionId) ?? actionOptions[0],
-    [actionOptions, selectedActionId],
+    () => actionOptions.find((action) => action.id === selectedActionId) ?? (plan ? proposedActionFromPlan(plan) : undefined),
+    [actionOptions, plan, selectedActionId],
   );
 
-  const packetAiContext = useMemo<AskAiContext>(() => ({
-    id: `packet-${selectedAction.id}`,
-    kind: "market",
-    title: selectedAction.title,
-    subtitle: `${selectedAction.owner} · ${selectedAction.timing}`,
-    overview: `Question: ${question}. Proposed next action: ${selectedAction.summary}`,
-    insights: selectedAction.evidence.map((item) => ({
-      title: "Evidence considered",
-      detail: item,
-      status: "Hypothesis",
-      sourceIds: [],
-      tone: "neutral",
-    })),
-    warnings: selectedAction.tradeoffs,
-    limitations: [
-      "This packet contains proposed next actions, not a final business decision.",
-      "Answer only from the packet context and identify missing information.",
-    ],
-    suggestedQuestions: [
-      "What should the owner verify first?",
-      "What are the main risks in this path?",
-      "What evidence is still missing?",
-    ],
-  }), [question, selectedAction]);
+  const geographicFocus = useMemo(
+    () => (plan ? resolveGeographicFocus(plan, publicMarkets) : null),
+    [plan],
+  );
+
+  const sisterGeographies = useMemo(
+    () => (plan && geographicFocus?.state === "focused"
+      ? suggestSisterGeographiesFromPlan(plan, undefined, geographicFocus.cbsaCodes)
+      : []),
+    [plan, geographicFocus],
+  );
+
+  const reviewablePacket = useMemo(
+    () => (plan && selectedAction ? assembleReviewableActionPacket(plan, selectedAction) : null),
+    [plan, selectedAction],
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -187,7 +120,7 @@ export function DecisionWorkflowApp() {
   }, []);
 
   useEffect(() => {
-    if (phase !== "running") return;
+    if (phase !== "running" || !graphSteps.length) return;
     const timer = window.setInterval(() => {
       setActiveStep((current) => {
         if (current >= graphSteps.length - 1) {
@@ -201,27 +134,80 @@ export function DecisionWorkflowApp() {
     return () => window.clearInterval(timer);
   }, [graphSteps.length, phase]);
 
-  async function startWorkflow() {
-    if (!question.trim()) return;
-    const normalizedQuestion = question.trim();
-    const fallbackPlan = planEvaluation(normalizedQuestion);
-    setPlan(fallbackPlan);
-    setSelectedActionId(fallbackPlan.actions[0].id);
-    setActiveStep(0);
-    setPhase("running");
+  useEffect(() => {
+    if ((phase !== "packet" && phase !== "saved") || !plan || !selectedAction) {
+      setPacketSummary(null);
+      setPacketSummaryState("idle");
+      return;
+    }
+    let cancelled = false;
+    setPacketSummaryState("loading");
+    setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
+    void (async () => {
+      try {
+        const response = await fetch("/api/evaluation-plans/summary", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ plan, actionId: selectedAction.id }),
+        });
+        const payload: unknown = await response.json();
+        const parsed = packetFindingsSummarySchema.safeParse(
+          payload && typeof payload === "object" && "summary" in payload
+            ? (payload as { summary: unknown }).summary
+            : payload,
+        );
+        if (cancelled) return;
+        if (parsed.success) {
+          setPacketSummary(parsed.data);
+        } else {
+          setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
+        }
+        setPacketSummaryState("ready");
+      } catch {
+        if (cancelled) return;
+        setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
+        setPacketSummaryState("ready");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, plan, selectedAction]);
+
+  async function startWorkflow(nextQuestion = question) {
+    if (!nextQuestion.trim()) return;
+    const normalizedQuestion = nextQuestion.trim();
+    setQuestion(normalizedQuestion);
+    setPlan(null);
+    setSelectedActionId("");
+    setRequestError(null);
+    setActiveStep(-1);
+    setSisterFollowUpNotice(null);
+    setPacketSummary(null);
+    setPacketSummaryState("idle");
+    setActionDetailsOpen(false);
+    setPhase("interpreting");
     try {
       const response = await fetch("/api/evaluation-plans", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ question: normalizedQuestion }),
       });
-      const parsed = evaluationPlanResponseSchema.safeParse(await response.json());
-      if (parsed.success) {
-        setPlan(parsed.data.plan);
-        setSelectedActionId(parsed.data.plan.actions[0].id);
+      const payload: unknown = await response.json();
+      const parsed = evaluationPlanResponseSchema.safeParse(payload);
+      if (!response.ok || !parsed.success) {
+        const error = evaluationPlanErrorSchema.safeParse(payload);
+        setRequestError(error.success ? error.data.message : "The evaluation plan request failed. Retry or edit the question.");
+        setPhase("error");
+        return;
       }
+      setPlan(parsed.data.plan);
+      setSelectedActionId(proposedActionFromPlan(parsed.data.plan).id);
+      setActiveStep(0);
+      setPhase("running");
     } catch {
-      // The validated deterministic plan remains active when AI planning is unavailable.
+      setRequestError("The evaluation plan service is unavailable. Retry or edit the question.");
+      setPhase("error");
     }
   }
 
@@ -229,17 +215,24 @@ export function DecisionWorkflowApp() {
     setQuestion("");
     setPlan(null);
     setActiveStep(-1);
-    setSelectedActionId(defaultActionOptions[0].id);
+    setSelectedActionId("");
+    setRequestError(null);
+    setSisterFollowUpNotice(null);
+    setPacketSummary(null);
+    setPacketSummaryState("idle");
+    setActionDetailsOpen(false);
     setPhase("question");
   }
 
   function savePacket() {
+    if (!plan || !selectedAction) return;
     const packet: SavedPacket = {
       id: `packet-${Date.now().toString(36)}`,
-      question: question.trim(),
+      question: plan.originalQuestion,
       title: selectedAction.title,
       actionId: selectedAction.id,
       savedAt: nowLabel(),
+      summary: packetSummaryFromPlan(plan),
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
@@ -251,91 +244,319 @@ export function DecisionWorkflowApp() {
     const restoredPlan = planEvaluation(packet.question);
     setQuestion(packet.question);
     setPlan(restoredPlan);
-    setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : restoredPlan.actions[0].id);
+    setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
+    setRequestError(null);
+    setSisterFollowUpNotice(null);
     setActiveView("workflow");
     setPhase("saved");
   }
 
+  function askAboutSisterGeography(suggestion: SisterGeographySuggestion) {
+    if (!plan) return;
+    const currentQuestion = plan.originalQuestion;
+    const currentPhase = phase;
+    const focusLabels = [
+      ...focusPlaceLabelsForRewrite(plan),
+      ...(geographicFocus?.label ? [geographicFocus.label] : []),
+    ];
+    const followUp = buildSisterFollowUpQuestion(
+      currentQuestion,
+      focusLabels,
+      suggestion,
+    );
+    const retained = currentPhase === "saved"
+      || savedPackets.some((packet) => packet.question === currentQuestion);
+    // Leave saved packets untouched. Do not auto-save or overwrite the current packet.
+    setPlan(null);
+    setSelectedActionId("");
+    setActiveStep(-1);
+    setRequestError(null);
+    setPacketSummary(null);
+    setPacketSummaryState("idle");
+    setQuestion(followUp);
+    setSisterFollowUpNotice(
+      retained
+        ? `Create a new action packet for ${suggestion.cbsaName}. The previous packet remains in Saved action packets and was not changed.`
+        : `Create a new action packet for ${suggestion.cbsaName}. The previous packet was not saved or overwritten; save packets explicitly when you want to keep them.`,
+    );
+    setActiveView("workflow");
+    setPhase("question");
+  }
+
+  const showPacket = phase === "packet" || phase === "saved";
+  const isQuestionPage = activeView === "workflow" && phase === "question";
+  const isAnimationPage = activeView === "workflow" && (phase === "interpreting" || phase === "running");
+  const isResultPage = activeView === "workflow" && showPacket;
+  const isErrorPage = activeView === "workflow" && phase === "error";
+  const pagePhase = activeView === "saved"
+    ? "saved-list"
+    : isQuestionPage
+      ? "question"
+      : isAnimationPage
+        ? "animation"
+        : isResultPage
+          ? "result"
+          : isErrorPage
+            ? "error"
+            : "workspace";
+  const workspaceLayoutClass = isQuestionPage
+    ? "question-layout"
+    : isAnimationPage
+      ? "animation-page-layout"
+      : "workspace-layout packet-workspace-layout result-page-layout";
+
   return (
-    <main className={`decision-app ${phase === "question" && activeView === "workflow" ? "question-page" : "workspace-mode"}`}>
-      <div className={`decision-layout ${phase === "question" && activeView === "workflow" ? "question-layout" : `workspace-layout ${phase === "running" ? "map-workspace-layout" : "packet-workspace-layout"}`}`} id="start">
-        {activeView === "workflow" && phase === "running" ? (
-          <div className="workspace-map" aria-label="Geographic context map">
-            <div className="map-toolbar"><span>Chewy network context</span><small>Public address-backed locations</small></div>
-            <img src="/us-map.svg" alt="Illustrative United States geographic context" />
-            <div className="network-context-pins" aria-label="Chewy network location pins">
-              {fulfillmentCenters.filter((center) => center.state !== "ON").map((center) => {
-                const position = mapPoint(center.latitude, center.longitude);
-                return <button key={center.id} type="button" className="network-pin fulfillment-pin" style={position} title={`${center.name}: ${center.address}`} aria-label={`${center.name}, ${center.address}`} />;
-              })}
-              {currentClinics.map((clinic) => {
-                const position = mapPoint(clinic.latitude, clinic.longitude);
-                return <button key={clinic.id} type="button" className="network-pin clinic-pin" style={position} title={`Chewy Vet Care ${clinic.name}: ${clinic.address}`} aria-label={`Chewy Vet Care ${clinic.name}, ${clinic.address}`} />;
-              })}
-            </div>
-            <div className="map-legend"><span><i className="legend-clinic" />Current Chewy Vet Care clinics ({currentClinics.length})</span><span><i className="legend-fulfillment" />U.S. fulfillment centers ({fulfillmentCenters.filter((center) => center.state !== "ON").length})</span><small>Canada is included in the data fixture but outside this U.S. map. Context only, not candidate sites or scoring inputs.</small></div>
-          </div>
-        ) : null}
+    <main
+      className={`decision-app ${isQuestionPage ? "question-page" : "workspace-mode"} page-phase-${pagePhase}`}
+      data-page-phase={pagePhase}
+    >
+      <div className={`decision-layout ${workspaceLayoutClass}`} id="start">
         <aside className="decision-rail" aria-label="Workflow progress">
           <div className="rail-kicker">Decision workflow</div>
           <h2>From question to action</h2>
           <p>Move from a business question to a reviewable next step.</p>
           <ol className="rail-steps">
-            <li className={phase === "question" ? "current" : phase === "running" || phase === "packet" || phase === "compare" || phase === "saved" ? "complete" : ""}><span>1</span><div><strong>Ask</strong><small>State the decision</small></div></li>
-            <li className={phase === "running" ? "current" : phase === "packet" || phase === "compare" || phase === "saved" ? "complete" : ""}><span>2</span><div><strong>Trace</strong><small>Follow the decision graph</small></div></li>
-            <li className={phase === "packet" || phase === "compare" || phase === "saved" ? "current" : ""}><span>3</span><div><strong>Review</strong><small>Read the action packet</small></div></li>
-            <li className={phase === "compare" || phase === "saved" ? "current" : ""}><span>4</span><div><strong>Compare</strong><small>Choose the next path</small></div></li>
-            <li className={phase === "saved" ? "current complete" : ""}><span>5</span><div><strong>Save</strong><small>Keep the reviewable draft</small></div></li>
+            <li className={phase === "question" ? "current" : "complete"}><span>1</span><div><strong>Ask</strong><small>State the decision</small></div></li>
+            <li className={phase === "interpreting" || phase === "running" ? "current" : showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Trace</strong><small>Follow the decision graph</small></div></li>
+            <li className={showPacket && phase !== "saved" ? "current" : phase === "saved" ? "complete" : ""}><span>3</span><div><strong>Review</strong><small>Read the action packet</small></div></li>
+            <li className={phase === "saved" ? "current complete" : ""}><span>4</span><div><strong>Save</strong><small>Keep the reviewable draft</small></div></li>
           </ol>
           <div className="rail-note"><strong>Decision boundary</strong><p>The workspace prepares evidence and next actions. An accountable owner makes the business decision.</p></div>
         </aside>
 
-        <section className="decision-content">
-          {activeView === "saved" ? (
-            <SavedPacketsView packets={savedPackets} onOpen={openSavedPacket} onStart={() => { setActiveView("workflow"); setPhase("question"); }} />
-          ) : null}
-          {activeView === "workflow" ? <>
-          {phase === "question" ? (
+        {activeView === "saved" ? (
+          <section className="decision-content">
+            <SavedPacketsView packets={savedPackets} onOpen={openSavedPacket} onStart={() => { setActiveView("workflow"); setPhase("question"); setSisterFollowUpNotice(null); }} />
+          </section>
+        ) : null}
+
+        {isQuestionPage ? (
+          <section className="decision-content">
+            {sisterFollowUpNotice ? (
+              <div className="sister-follow-up-notice" role="status">
+                <strong>New geography follow-up</strong>
+                <p>{sisterFollowUpNotice}</p>
+              </div>
+            ) : null}
             <AdaptiveEvaluationWorkspace
               question={question}
               savedPackets={savedPackets}
-              onQuestionChange={setQuestion}
+              onQuestionChange={(value) => {
+                setQuestion(value);
+                if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
+              }}
               onSubmit={() => void startWorkflow()}
               onOpenSaved={() => setActiveView("saved")}
             />
-          ) : null}
+          </section>
+        ) : null}
 
-          {phase === "running" ? (
-            <section className="graph-view" aria-labelledby="graph-title" aria-live="polite">
-              <div className="eyebrow">Decision graph in progress</div>
-              <h1 id="graph-title">Tracing the question</h1>
-              <p className="lead">The workspace is making the decision path visible. Each step is bounded by the available evidence and review rules.</p>
+        {isAnimationPage ? (
+          <section
+            className="animation-page"
+            aria-label="Decision graph animation"
+            data-plan-request-state={phase === "interpreting" ? "pending" : "ready"}
+            data-proposal-method={plan?.proposalMethod}
+          >
+            <div className="workspace-decision-graph" aria-label="Decision graph canvas">
+              <DecisionGraphAnimation
+                activeStep={activeStep}
+                phase="running"
+                question={question || plan?.originalQuestion || ""}
+                selectedActionId={selectedActionId}
+                steps={graphSteps}
+                actions={actionOptions.map((action) => ({ id: action.id, title: action.title }))}
+              />
+            </div>
+            <aside className="animation-page-status" aria-live="polite">
+              {phase === "interpreting" ? (
+                <>
+                  <div className="eyebrow">Interpreting question</div>
+                  <h1 id="interpreting-title">Building the decision graph</h1>
+                  <p>Waiting for the validated evaluation plan. No result page is shown until the graph finishes.</p>
+                  <div className="question-ribbon"><span>Your question</span><strong>{question}</strong></div>
+                  <div className="graph-footer"><span className="progress-pulse" aria-hidden="true" />Calling /api/evaluation-plans</div>
+                </>
+              ) : null}
+              {phase === "running" && plan ? (
+                <>
+                  <div className="eyebrow">Decision graph in progress</div>
+                  <h1 id="graph-title">Tracing the validated plan</h1>
+                  <p className="plan-method-ribbon" data-proposal-method={plan.proposalMethod}>
+                    {proposalMethodLabel(plan.proposalMethod)} · {plan.capabilityId.replaceAll("_", " ")} · {plan.status.replaceAll("_", " ")}
+                  </p>
+                  <ol className="animation-step-list">
+                    {graphSteps.map((step, index) => (
+                      <li className={statusForStep(index, activeStep)} key={step.id}>
+                        <strong>{step.label}</strong>
+                        <span>{activeStep > index ? step.result : activeStep === index ? "Working" : "Pending"}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="graph-footer">
+                    <span className="progress-pulse" aria-hidden="true" />
+                    {graphSteps[activeStep]?.label ?? "Preparing the decision graph"}
+                  </div>
+                </>
+              ) : null}
+            </aside>
+          </section>
+        ) : null}
+
+        {isErrorPage ? (
+          <section className="decision-content">
+            <section className="graph-view plan-error-view" aria-labelledby="plan-error-title" role="alert" data-plan-request-state="error">
+              <div className="eyebrow">Plan request failed</div>
+              <h1 id="plan-error-title">The evaluation plan could not be loaded</h1>
+              <p className="lead">{requestError}</p>
               <div className="question-ribbon"><span>Your question</span><strong>{question}</strong></div>
-              <div className="graph-canvas">
-                <div className="graph-line" aria-hidden="true" />
-                {graphSteps.map((step, index) => <article className={`graph-node ${statusForStep(index, activeStep)}`} key={step.id}><span className="graph-node-index">{index + 1}</span><div><strong>{step.label}</strong><p>{step.detail}</p>{activeStep > index ? <small><i aria-hidden="true" />{step.result}</small> : activeStep === index ? <small className="working"><i aria-hidden="true" />Working</small> : null}</div></article>)}
+              <div className="packet-heading-actions">
+                <button className="primary-action" onClick={() => void startWorkflow(question)}>Retry</button>
+                <button className="secondary-action" onClick={restart}>Edit question</button>
               </div>
-              <div className="graph-footer"><span className="progress-pulse" aria-hidden="true" />{graphSteps[activeStep]?.label ?? "Preparing the decision graph"}</div>
             </section>
-          ) : null}
+          </section>
+        ) : null}
 
-          {phase === "packet" || phase === "compare" || phase === "saved" ? (
-            <section className="packet-view" aria-labelledby="packet-title">
-              <div className="packet-heading"><div><div className="eyebrow">{phase === "saved" ? "Saved action packet" : "Findings and next actions"}</div><h1 id="packet-title">A reviewable path forward</h1><p className="lead">The decision graph found several possible next actions. Compare them before saving the packet.</p></div><div className="packet-heading-actions"><span className="draft-pill">{phase === "saved" ? "Saved draft" : "Draft for review"}</span><button className="secondary-action" onClick={restart}>New question</button></div></div>
-              <div className="packet-question"><span>Question</span><strong>{question}</strong></div>
-              {plan ? <div className="plan-boundary" role="status"><strong>{plan.status.replaceAll("_", " ")}</strong><span>{plan.evidenceBoundary}</span>{plan.missingEvidence.length ? <small>Missing evidence: {plan.missingEvidence.join("; ")}</small> : null}{plan.missingApprovals.length ? <small>Missing approval: {plan.missingApprovals.join("; ")}</small> : null}</div> : null}
-              <AdaptiveMarketWorkspace initialMetric={plan?.intent.requestedMeasure === "none" ? "total_population" : plan?.intent.requestedMeasure ?? "total_population"} />
-              <div className="finding-grid"><article><span>Finding</span><strong>The question is actionable at the market and evidence level.</strong><p>A next step can be prepared, but the current result does not approve spend, a site, a lease, or a market decision.</p></article><article><span>Constraint</span><strong>Evidence and ownership still matter.</strong><p>Each action keeps its dependencies and unresolved diligence visible for the accountable reviewer.</p></article><article><span>Output</span><strong>Three governed action paths</strong><p>Choose the path that best matches the decision owner’s immediate need.</p></article></div>
-              <div className="packet-body">
-                <div className="action-packet-card"><div className="section-label">Proposed action packet</div><h2>{selectedAction.title}</h2><p>{selectedAction.summary}</p><dl><div><dt>Owner</dt><dd>{selectedAction.owner}</dd></div><div><dt>Timing</dt><dd>{selectedAction.timing}</dd></div><div><dt>Confidence</dt><dd><span className={`confidence ${selectedAction.confidence.toLowerCase()}`}>{selectedAction.confidence}</span></dd></div><div><dt>Next step</dt><dd>{selectedAction.nextStep}</dd></div></dl><div className="packet-evidence"><strong>Evidence considered</strong>{selectedAction.evidence.map((item) => <span key={item}><i aria-hidden="true">✓</i>{item}</span>)}</div><div className="packet-evidence tradeoffs"><strong>Tradeoffs to review</strong>{selectedAction.tradeoffs.map((item) => <span key={item}><i aria-hidden="true">!</i>{item}</span>)}</div><div className="packet-card-footer"><span>Draft status: accountable review required</span><button className="primary-action" onClick={savePacket}>{phase === "saved" ? "Saved" : "Save action packet"} <span aria-hidden="true">✓</span></button></div></div>
-                <aside className="action-options"><div className="section-label">Compare possible actions</div><p>Select an action to update the packet.</p>{actionOptions.map((action) => <button className={`action-option ${selectedAction.id === action.id ? "selected" : ""}`} key={action.id} onClick={() => { setSelectedActionId(action.id); setPhase("compare"); }}><span className="action-option-radio" aria-hidden="true" /><div><strong>{action.title}</strong><small>{action.owner} · {action.timing}</small><p>{action.summary}</p></div><span className={`confidence ${action.confidence.toLowerCase()}`}>{action.confidence}</span></button>)}</aside>
+        {isResultPage && plan && selectedAction ? (
+          <section className="decision-content result-page">
+            <section
+              className="packet-view decision-review"
+              aria-labelledby="packet-title"
+              data-result-workspace={plan.resultWorkspaceType}
+              data-action-count={plan.actions.length}
+            >
+              <div className="packet-heading">
+                <div>
+                  <div className="eyebrow">{phase === "saved" ? "Saved action packet" : "Decision review"}</div>
+                  <h1 id="packet-title">{workspaceHeading(plan)}</h1>
+                  <p className="lead">{packetSummaryFromPlan(plan)}</p>
+                </div>
+                <div className="packet-heading-actions">
+                  <span className="draft-pill">{phase === "saved" ? "Saved draft" : "Draft for review"}</span>
+                  <button className="secondary-action" onClick={restart}>New question</button>
+                </div>
               </div>
-              <div className="packet-disclosure"><span>Decision record</span><p>This packet contains findings, evidence boundaries, and proposed next actions. It is not a final recommendation. Saved packets remain in this browser for this workspace.</p></div>
-              <AskAiPanel className="packet-ai-panel" context={packetAiContext} emptyTitle="Ask about this packet" emptyMessage="Ask a question about the proposed actions, evidence, risks, or missing information." />
+
+              <div className="question-ribbon packet-question">
+                <span>Your question</span>
+                <strong>{plan.originalQuestion}</strong>
+              </div>
+
+              <div className="decision-review-primary">
+                {geographicFocus ? (
+                  <GeographicFocusMap
+                    focus={geographicFocus}
+                    modeLabel={geographyModeLabel(plan)}
+                  />
+                ) : null}
+
+                <div className="decision-review-side">
+                  <div className="action-packet-card">
+                    <div className="section-label">Draft action packet</div>
+                    <p className="action-packet-governance-note">
+                      Draft for accountable review. This packet does not approve a market, site, lease, or spend decision.
+                    </p>
+                    <h2>{selectedAction.title}</h2>
+                    <p>{selectedAction.summary}</p>
+
+                    <section
+                      className="packet-findings"
+                      aria-labelledby="findings-summary-title"
+                      data-summary-state={packetSummaryState}
+                    >
+                      <div className="section-label" id="findings-summary-title">Findings and proposed action</div>
+                      {packetSummary ? (
+                        <>
+                          <p className="packet-ai-summary-notice">{packetSummary.draftOnlyNotice}</p>
+                          <ol className="packet-ai-summary-list">
+                            <li><strong>What the evidence indicates</strong><p>{packetSummary.evidenceIndicates}</p></li>
+                            <li><strong>Why the proposed action is relevant</strong><p>{packetSummary.whyActionRelevant}</p></li>
+                            <li><strong>What the owner should do next</strong><p>{packetSummary.ownerNextStep}</p></li>
+                            <li><strong>What remains unknown</strong><p>{packetSummary.remainsUnknown}</p></li>
+                          </ol>
+                          <small className="packet-findings-meta">
+                            Summary origin: {packetSummary.origin.replaceAll("_", " ")}
+                            {packetSummary.modelVersion ? ` · model ${packetSummary.modelVersion}` : ""}
+                            {" · "}prompt {packetSummary.promptVersion}
+                          </small>
+                        </>
+                      ) : (
+                        <p className="packet-findings-loading">Preparing the draft findings summary from the validated packet.</p>
+                      )}
+                    </section>
+
+                    <details
+                      className="packet-action-details"
+                      open={actionDetailsOpen}
+                      onToggle={(event) => setActionDetailsOpen(event.currentTarget.open)}
+                    >
+                      <summary>Action details</summary>
+                      <dl>
+                        <div><dt>Owner</dt><dd>{selectedAction.owner}</dd></div>
+                        <div><dt>Timing</dt><dd>{selectedAction.timing}</dd></div>
+                        <div><dt>Confidence</dt><dd><span className={`confidence ${selectedAction.confidence.toLowerCase()}`}>{selectedAction.confidence}</span></dd></div>
+                        <div><dt>Next step</dt><dd>{selectedAction.nextStep}</dd></div>
+                      </dl>
+                      <div className="packet-evidence">
+                        <strong>Evidence considered</strong>
+                        {selectedAction.evidence.map((item) => (
+                          <span key={item}><i aria-hidden="true">✓</i>{item}</span>
+                        ))}
+                      </div>
+                      <div className="packet-evidence tradeoffs">
+                        <strong>Tradeoffs to review</strong>
+                        {selectedAction.tradeoffs.map((item) => (
+                          <span key={item}><i aria-hidden="true">!</i>{item}</span>
+                        ))}
+                      </div>
+                      {(plan.missingEvidence.length > 0 || plan.missingApprovals.length > 0) ? (
+                        <div className="packet-missing-gates">
+                          {plan.missingEvidence.length ? (
+                            <small>Missing evidence: {plan.missingEvidence.join("; ")}</small>
+                          ) : null}
+                          {plan.missingApprovals.length ? (
+                            <small>Missing approvals: {plan.missingApprovals.join("; ")}</small>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </details>
+
+                    <div className="packet-card-footer">
+                      <div className="packet-card-actions">
+                        <button
+                          className="secondary-action"
+                          type="button"
+                          onClick={() => {
+                            if (reviewablePacket) downloadReviewableActionPacket(reviewablePacket);
+                          }}
+                        >
+                          Download action packet
+                        </button>
+                        <button className="primary-action" onClick={savePacket}>
+                          {phase === "saved" ? "Saved" : "Save action packet"} <span aria-hidden="true">✓</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <SisterGeographiesSection
+                suggestions={sisterGeographies}
+                onAskAbout={askAboutSisterGeography}
+              />
+
+              <div className="packet-disclosure">
+                <span>Decision record</span>
+                <p>
+                  This packet contains findings, evidence boundaries, and proposed next actions. It is not a final real-estate or business decision.
+                  Saved packets remain in this browser for this workspace. Downloading the packet does not approve or send it externally.
+                </p>
+              </div>
             </section>
-          ) : null}
-          </> : null}
-        </section>
+          </section>
+        ) : null}
       </div>
     </main>
   );
@@ -356,7 +577,7 @@ function SavedPacketsView({
       <div className="saved-packets-heading">
         <div>
           <h1 id="saved-packets-title">Saved action packets</h1>
-          <p className="lead">Open any packet to review its findings, compare its action paths, or ask a packet-scoped question.</p>
+          <p className="lead">Open any packet to review its findings or ask a packet-scoped question.</p>
         </div>
         <button className="primary-action" onClick={onStart}>Start a new question <span aria-hidden="true">→</span></button>
       </div>
@@ -371,7 +592,11 @@ function SavedPacketsView({
           ))}
         </div>
       ) : (
-        <div className="saved-packets-empty"><strong>No saved packets yet</strong><p>Run a question, compare the available action paths, and save the packet when it is ready for review.</p><button className="secondary-action" onClick={onStart}>Ask a question</button></div>
+        <div className="saved-packets-empty">
+          <strong>No saved packets yet</strong>
+          <p>Run a question and save the packet when it is ready for review.</p>
+          <button className="secondary-action" onClick={onStart}>Ask a question</button>
+        </div>
       )}
     </section>
   );

@@ -45,11 +45,15 @@ test("View A Single Compare and Layer controls are wired on the opening page", (
 
 test("adaptive homepage transition retains the governed plan and action-packet workflow", () => {
   assert.match(workflow, /evaluationPlanResponseSchema\.safeParse/);
-  assert.match(workflow, /planEvaluation\(normalizedQuestion\)/);
+  assert.match(workflow, /setPhase\("interpreting"\)/);
   assert.match(workflow, /setPhase\("running"\)/);
   assert.match(workflow, /setPhase\("packet"\)/);
   assert.match(workflow, /Save action packet/);
-  assert.match(workflow, /AskAiPanel/);
+  assert.match(workflow, /Download action packet/);
+  assert.match(workflow, /Findings and proposed action/);
+  assert.doesNotMatch(workflow, /AskAiPanel/);
+  assert.match(workflow, /data-proposal-method/);
+  assert.match(workflow, /data-result-workspace/);
 });
 
 test("the root cannot import AdaptiveMarketWorkspace without rendering the adaptive homepage", () => {
