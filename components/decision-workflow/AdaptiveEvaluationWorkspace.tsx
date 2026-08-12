@@ -23,11 +23,27 @@ type SavedPacketPreview = {
   savedAt: string;
 };
 
+const starterQuestions: Record<PerspectiveId, readonly [string, string]> = {
+  cvc: [
+    "What clinic footprint patterns are worth investigating?",
+    "Which comparable metros have different CVC footprints, and what should we validate next?",
+  ],
+  marketing: [
+    "What regional marketing patterns are worth investigating?",
+    "Which comparable metros could support a test-and-control feasibility check?",
+  ],
+  pricing: [
+    "What regional pricing patterns are worth investigating?",
+    "Where might customer response to price or promotion differ, and what evidence would test it?",
+  ],
+};
+
 type AdaptiveEvaluationWorkspaceProps = {
   question: string;
   savedPackets: SavedPacketPreview[];
   onQuestionChange: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: (perspectiveId: PerspectiveId) => void;
+  onPerspectiveChange: (perspectiveId: PerspectiveId) => void;
   onOpenSaved: () => void;
 };
 
@@ -36,6 +52,7 @@ export function AdaptiveEvaluationWorkspace({
   savedPackets,
   onQuestionChange,
   onSubmit,
+  onPerspectiveChange,
   onOpenSaved,
 }: AdaptiveEvaluationWorkspaceProps) {
   const [perspectiveId, setPerspectiveId] = useState<PerspectiveId>("cvc");
@@ -78,12 +95,13 @@ export function AdaptiveEvaluationWorkspace({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit();
+    onSubmit(perspectiveId);
   }
 
   function choosePerspective(next: PerspectiveId) {
     setPerspectiveId(next);
     setPerspectiveOpen(false);
+    onPerspectiveChange(next);
     const nextView = getPerspectiveView(next, activeViews[next]);
     setMapMode((current) =>
       coerceSupportedMapMode(current, resolveMapPresentation(nextView)),
@@ -249,6 +267,13 @@ export function AdaptiveEvaluationWorkspace({
               <button className="primary-action" type="submit" disabled={!question.trim()}>
                 Run decision graph <span aria-hidden="true">→</span>
               </button>
+            </div>
+            <div className="adaptive-starter-questions" aria-label={`${activePerspective.label} example questions`}>
+              {starterQuestions[perspectiveId].map((starter) => (
+                <button key={starter} type="button" onClick={() => onQuestionChange(starter)}>
+                  {starter}
+                </button>
+              ))}
             </div>
             <small className="adaptive-composer-note">
               The map changes to fit the question, not a fixed score.

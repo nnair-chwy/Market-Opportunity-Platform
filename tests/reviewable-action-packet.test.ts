@@ -8,6 +8,7 @@ import {
   proposedActionFromPlan,
   reviewableActionPacketSchema,
 } from "../lib/planning/index.ts";
+import { answerInvestigationFollowUp, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
 import { explainFindingsAndProposal } from "../lib/planning/packet-ai-summary.ts";
 
 test("reviewable action packet preserves action fields and provenance for download", () => {
@@ -62,4 +63,24 @@ test("packet AI summary falls back when the model is unavailable", async () => {
   assert.equal(summary.origin, "deterministic_fallback");
   assert.equal(summary.state, "provider_error");
   assert.match(summary.whyActionRelevant, /Explore governed market context|Inspect the resolved market context|Compare resolved markets/i);
+});
+
+test("reviewable packet carries the exact analyst screening and lead follow-up", () => {
+  const plan = planEvaluation("Which comparable markets differ most in CVC footprint—and why?", "cvc");
+  const investigation = runMarketInvestigation(plan);
+  const lead = investigation.leads[0];
+  const followUps = [{
+    id: "follow-up-1",
+    leadId: lead.id,
+    question: "What should I validate next?",
+    answer: answerInvestigationFollowUp(lead, "What should I validate next?"),
+  }];
+  const packet = assembleReviewableActionPacket(plan, proposedActionFromPlan(plan), "2026-08-12T19:00:00.000Z", investigation, followUps);
+  assert.equal(packet.analysisAppendix?.originalQuestion, plan.originalQuestion);
+  assert.equal(packet.analysisAppendix?.leads.length, 6);
+  assert.equal(packet.analysisAppendix?.followUps[0].question, followUps[0].question);
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Analyst screening/);
+  assert.match(document, /Question-specific leads/);
+  assert.match(document, /Lead-scoped follow-ups/);
 });

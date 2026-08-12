@@ -7,8 +7,11 @@ import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFoc
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { publicMarkets } from "@/lib/data/public-market-ui";
+import type { PerspectiveId } from "@/lib/perspectives";
 import {
+  answerInvestigationFollowUp,
   runMarketInvestigation,
+  type InvestigationFollowUp,
   type InvestigationLead,
   type MarketInvestigation,
 } from "@/lib/planning/market-investigation";
@@ -42,6 +45,8 @@ type SavedPacket = {
   savedAt: string;
   summary?: string;
   investigation?: MarketInvestigation;
+  perspectiveId?: PerspectiveId;
+  followUps?: InvestigationFollowUp[];
 };
 
 function nowLabel() {
@@ -91,6 +96,8 @@ export function DecisionWorkflowApp() {
   const [actionDetailsOpen, setActionDetailsOpen] = useState(false);
   const [investigation, setInvestigation] = useState<MarketInvestigation | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [perspectiveId, setPerspectiveId] = useState<PerspectiveId>("cvc");
+  const [investigationFollowUps, setInvestigationFollowUps] = useState<InvestigationFollowUp[]>([]);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
 
@@ -130,8 +137,10 @@ export function DecisionWorkflowApp() {
   );
 
   const reviewablePacket = useMemo(
-    () => (plan && selectedAction ? assembleReviewableActionPacket(plan, selectedAction) : null),
-    [plan, selectedAction],
+    () => (plan && selectedAction
+      ? assembleReviewableActionPacket(plan, selectedAction, new Date().toISOString(), investigation ?? undefined, investigationFollowUps)
+      : null),
+    [investigation, investigationFollowUps, plan, selectedAction],
   );
 
   useEffect(() => {
@@ -202,7 +211,7 @@ export function DecisionWorkflowApp() {
     };
   }, [phase, plan, selectedAction]);
 
-  async function startWorkflow(nextQuestion = question) {
+  async function startWorkflow(nextQuestion = question, nextPerspectiveId: PerspectiveId = perspectiveId) {
     if (!nextQuestion.trim()) return;
     const normalizedQuestion = nextQuestion.trim();
     setQuestion(normalizedQuestion);
@@ -216,12 +225,13 @@ export function DecisionWorkflowApp() {
     setActionDetailsOpen(false);
     setInvestigation(null);
     setSelectedLeadId(null);
+    setInvestigationFollowUps([]);
     setPhase("interpreting");
     try {
       const response = await fetch("/api/evaluation-plans", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: normalizedQuestion }),
+        body: JSON.stringify({ question: normalizedQuestion, perspectiveId: nextPerspectiveId }),
       });
       const payload: unknown = await response.json();
       const parsed = evaluationPlanResponseSchema.safeParse(payload);
@@ -256,6 +266,7 @@ export function DecisionWorkflowApp() {
     setActionDetailsOpen(false);
     setInvestigation(null);
     setSelectedLeadId(null);
+    setInvestigationFollowUps([]);
     setPhase("question");
   }
 
@@ -269,6 +280,8 @@ export function DecisionWorkflowApp() {
       savedAt: nowLabel(),
       summary: packetSummaryFromPlan(plan),
       investigation: investigation ?? undefined,
+      perspectiveId: plan.perspectiveId,
+      followUps: investigationFollowUps,
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
@@ -277,12 +290,14 @@ export function DecisionWorkflowApp() {
   }
 
   function openSavedPacket(packet: SavedPacket) {
-    const restoredPlan = planEvaluation(packet.question);
+    const restoredPlan = planEvaluation(packet.question, packet.perspectiveId);
     setQuestion(packet.question);
     setPlan(restoredPlan);
+    setPerspectiveId(restoredPlan.perspectiveId);
     const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
     setInvestigation(restoredInvestigation);
     setSelectedLeadId(restoredInvestigation.leads[0]?.id ?? null);
+    setInvestigationFollowUps(packet.followUps ?? []);
     setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
     setRequestError(null);
     setSisterFollowUpNotice(null);
@@ -309,6 +324,7 @@ export function DecisionWorkflowApp() {
     setPlan(null);
     setInvestigation(null);
     setSelectedLeadId(null);
+    setInvestigationFollowUps([]);
     setSelectedActionId("");
     setActiveStep(-1);
     setRequestError(null);
@@ -386,7 +402,12 @@ export function DecisionWorkflowApp() {
                 setQuestion(value);
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
               }}
-              onSubmit={() => void startWorkflow()}
+              onSubmit={(nextPerspectiveId) => void startWorkflow(question, nextPerspectiveId)}
+              onPerspectiveChange={(nextPerspectiveId) => {
+                setPerspectiveId(nextPerspectiveId);
+                setQuestion("");
+                setSisterFollowUpNotice(null);
+              }}
               onOpenSaved={() => setActiveView("saved")}
             />
           </section>
@@ -489,6 +510,16 @@ export function DecisionWorkflowApp() {
                   investigation={investigation}
                   selectedLeadId={selectedLead?.id ?? null}
                   onSelectLead={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
+                  followUps={investigationFollowUps.filter((turn) => turn.leadId === selectedLead?.id)}
+                  onAskFollowUp={(followUpQuestion) => {
+                    if (!selectedLead) return;
+                    setInvestigationFollowUps((turns) => [...turns, {
+                      id: `follow-up-${Date.now().toString(36)}`,
+                      leadId: selectedLead.id,
+                      question: followUpQuestion.trim(),
+                      answer: answerInvestigationFollowUp(selectedLead, followUpQuestion),
+                    }]);
+                  }}
                 />
               ) : null}
 
@@ -497,6 +528,11 @@ export function DecisionWorkflowApp() {
                   <GeographicFocusMap
                     focus={displayedGeographicFocus}
                     modeLabel={geographyModeLabel(plan)}
+                    contextMetric={investigation?.perspectiveId === "marketing"
+                      ? "population_density"
+                      : investigation?.perspectiveId === "pricing"
+                        ? "median_household_income"
+                        : "household_count"}
                   />
                 ) : null}
 

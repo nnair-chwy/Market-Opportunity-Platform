@@ -204,6 +204,13 @@ export function compileEvaluationPlan(
   question: string,
   intent: PlanningIntent,
   proposalMethod: EvaluationPlan["proposalMethod"] = "deterministic_fallback",
+  perspectiveId: EvaluationPlan["perspectiveId"] = intent.topic === "clinic_location" || intent.topic === "clinic_performance" || /\b(clinic|clinics|cvc|veterinar|vet)\b/i.test(question)
+    ? "cvc"
+    : intent.topic === "local_growth"
+      ? "marketing"
+      : /\b(price|pricing|elasticity|promo)\b/i.test(question)
+        ? "pricing"
+        : "marketing",
 ): EvaluationPlan {
   const requirement = requirementFor(intent);
   const assessment = assessCapabilityQuestion({
@@ -243,6 +250,7 @@ export function compileEvaluationPlan(
     planId: `plan-${intent.topic}-${geography.mode}-${requirement.capabilityId}`,
     version: "1.0.0",
     originalQuestion: question,
+    perspectiveId,
     proposalMethod,
     intent,
     capabilityId: requirement.capabilityId,
@@ -268,6 +276,6 @@ export function compileEvaluationPlan(
   });
 }
 
-export function planEvaluation(question: string) {
-  return compileEvaluationPlan(question, inferPlanningIntent(question));
+export function planEvaluation(question: string, perspectiveId?: EvaluationPlan["perspectiveId"]) {
+  return compileEvaluationPlan(question, inferPlanningIntent(question), "deterministic_fallback", perspectiveId);
 }

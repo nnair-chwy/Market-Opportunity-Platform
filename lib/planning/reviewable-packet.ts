@@ -6,6 +6,7 @@ import {
   type EvaluationPlan,
   type PlannedAction,
 } from "./contracts.ts";
+import type { InvestigationFollowUp, MarketInvestigation } from "./market-investigation.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
 export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
@@ -20,6 +21,7 @@ export const reviewableActionPacketSchema = z.object({
   generatedAt: z.string().trim().min(1),
   proposalMethod: evaluationPlanSchema.shape.proposalMethod,
   originalQuestion: evaluationPlanSchema.shape.originalQuestion,
+  perspectiveId: evaluationPlanSchema.shape.perspectiveId,
   geographicFocus: z.object({
     mode: evaluationPlanSchema.shape.geographyResolution.shape.mode,
     message: z.string().trim().min(1),
@@ -38,6 +40,45 @@ export const reviewableActionPacketSchema = z.object({
   }).strict(),
   action: plannedActionSchema,
   findings: evaluationPlanSchema.shape.findings,
+  analysisAppendix: z.object({
+    version: z.literal("1.0.0"),
+    planId: z.string().trim().min(1),
+    originalQuestion: evaluationPlanSchema.shape.originalQuestion,
+    perspectiveId: evaluationPlanSchema.shape.perspectiveId,
+    geography: z.literal("CBSA"),
+    period: z.string().trim().min(1),
+    readiness: z.object({
+      label: z.enum(["Partial answer", "Context only"]),
+      summary: z.string().trim().min(1),
+      missing: z.array(z.string().trim().min(1)),
+    }).strict(),
+    toolsRun: z.array(z.string().trim().min(1)),
+    measuresExamined: z.array(z.string().trim().min(1)),
+    comparisonsExamined: z.number().int().nonnegative(),
+    leads: z.array(z.object({
+      id: z.string().trim().min(1),
+      marketIds: z.array(z.string().trim().min(1).max(5)).max(5),
+      title: z.string().trim().min(1),
+      observation: z.string().trim().min(1),
+      businessMeaning: z.string().trim().min(1),
+      method: z.string().trim().min(1),
+      sampleSize: z.number().int().nonnegative(),
+      strength: z.string().trim().min(1),
+      challenge: z.string().trim().min(1),
+      nextEvidence: z.string().trim().min(1),
+    }).strict()).max(10),
+    rejectedPatterns: z.array(z.string().trim().min(1)),
+    limitations: z.array(z.string().trim().min(1)),
+    sourceIds: z.array(z.string().trim().min(1)),
+    allowedUse: z.literal("market_context_only"),
+    scoringEligibility: z.literal("none"),
+    followUps: z.array(z.object({
+      id: z.string().trim().min(1),
+      leadId: z.string().trim().min(1),
+      question: z.string().trim().min(1),
+      answer: z.string().trim().min(1),
+    }).strict()),
+  }).strict().optional(),
 }).strict();
 
 export type ReviewableActionPacket = z.infer<typeof reviewableActionPacketSchema>;
@@ -83,10 +124,16 @@ export function assembleReviewableActionPacket(
   plan: EvaluationPlan,
   action: PlannedAction = proposedActionFromPlan(plan),
   generatedAt = new Date().toISOString(),
+  investigation?: MarketInvestigation,
+  followUps: InvestigationFollowUp[] = [],
 ): ReviewableActionPacket {
   const placeLabels = plan.geographyResolution.places
     .map((place) => place.cbsaName ?? place.requestedName)
     .filter(Boolean);
+
+  if (investigation && (investigation.planId !== plan.planId || investigation.originalQuestion !== plan.originalQuestion)) {
+    throw new Error("The investigation does not belong to this evaluation plan.");
+  }
 
   return reviewableActionPacketSchema.parse({
     packetKind: "draft_action_packet",
@@ -99,6 +146,7 @@ export function assembleReviewableActionPacket(
     generatedAt,
     proposalMethod: plan.proposalMethod,
     originalQuestion: plan.originalQuestion,
+    perspectiveId: plan.perspectiveId,
     geographicFocus: {
       mode: plan.geographyResolution.mode,
       message: plan.geographyResolution.message,
@@ -117,6 +165,7 @@ export function assembleReviewableActionPacket(
     },
     action,
     findings: plan.findings,
+    analysisAppendix: investigation ? { ...investigation, followUps } : undefined,
   });
 }
 
@@ -134,6 +183,42 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     ? packet.geographicFocus.selectedCbsaCodes.join(", ")
     : "None selected";
 
+  const analysisSections = packet.analysisAppendix ? [
+    "## Analyst screening",
+    `- Perspective: ${packet.analysisAppendix.perspectiveId}`,
+    `- Coverage: ${packet.analysisAppendix.comparisonsExamined.toLocaleString()} comparisons screened; ${packet.analysisAppendix.leads.length} review leads kept`,
+    `- Period: ${packet.analysisAppendix.period}`,
+    `- Measures examined: ${packet.analysisAppendix.measuresExamined.join("; ")}`,
+    `- Process: ${packet.analysisAppendix.toolsRun.join(" → ")}`,
+    `- Readiness: ${packet.analysisAppendix.readiness.label} — ${packet.analysisAppendix.readiness.summary}`,
+    `- Source IDs: ${packet.analysisAppendix.sourceIds.join(", ")}`,
+    "",
+    "### Question-specific leads",
+    ...packet.analysisAppendix.leads.flatMap((lead, index) => [
+      `#### ${index + 1}. ${lead.title}`,
+      `- Observation: ${lead.observation}`,
+      `- Why it matters: ${lead.businessMeaning}`,
+      `- Method: ${lead.method}`,
+      `- Strength: ${lead.strength} (n=${lead.sampleSize})`,
+      `- Boundary: ${lead.challenge}`,
+      `- Evidence to check next: ${lead.nextEvidence}`,
+      "",
+    ]),
+    "### Rejected patterns and limitations",
+    bulletList(packet.analysisAppendix.rejectedPatterns, "None listed"),
+    "",
+    bulletList(packet.analysisAppendix.limitations, "None listed"),
+    "",
+    ...(packet.analysisAppendix.followUps.length ? [
+      "### Lead-scoped follow-ups",
+      ...packet.analysisAppendix.followUps.flatMap((turn) => [
+        `- Question: ${turn.question}`,
+        `- Answer: ${turn.answer}`,
+      ]),
+      "",
+    ] : []),
+  ] : [];
+
   return [
     "# Draft action packet (reviewable)",
     "",
@@ -150,6 +235,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "",
     "## Original question",
     packet.originalQuestion,
+    `Perspective: ${packet.perspectiveId}`,
     "",
     "## Geographic focus",
     `- Mode: ${packet.geographicFocus.mode.replaceAll("_", " ")}`,
@@ -189,6 +275,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "### Tradeoffs",
     bulletList(action.tradeoffs, "None listed"),
     "",
+    ...analysisSections,
     "## Structured findings",
     ...packet.findings.flatMap((finding) => [
       `### ${finding.title}`,

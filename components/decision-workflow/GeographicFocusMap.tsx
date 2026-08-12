@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FilterSpecification, GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
+import type { FilterSpecification, GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent } from "maplibre-gl";
 import {
   MAINLAND_MARKET_BOUNDS,
   PUBLIC_MARKET_MAX_FIT_ZOOM,
@@ -9,6 +9,7 @@ import {
   selectedMarketBounds,
 } from "@/lib/data/cbsa-market-map";
 import { publicMarketMapGeoJson } from "@/lib/data/public-market-ui";
+import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
 import type { GeographicFocus } from "@/lib/planning";
 
 const DEFAULT_STYLE_URL = "https://api.maptiler.com/maps/streets-v4/style.json";
@@ -16,11 +17,36 @@ const CBSA_SOURCE_ID = "review-focus-cbsa";
 const CBSA_FILL_LAYER_ID = "review-focus-cbsa-fill";
 const CBSA_OUTLINE_LAYER_ID = "review-focus-cbsa-outline";
 const CBSA_SELECTED_LAYER_ID = "review-focus-cbsa-selected";
+const CBSA_PERCENTILE_LAYER_ID = "review-focus-cbsa-percentile";
+
+type PercentileBand = "all" | "top_1" | "top_5" | "top_10" | "bottom_10";
 
 type GeographicFocusMapProps = {
   focus: GeographicFocus;
   modeLabel: string;
+  contextMetric?: CbsaAcsMetricKey;
 };
+
+const METRIC_LABELS: Record<CbsaAcsMetricKey, string> = {
+  total_population: "Population",
+  household_count: "Households",
+  median_household_income: "Median household income",
+  housing_unit_count: "Housing units",
+  population_density: "Population density",
+};
+
+function percentileFilter(metric: CbsaAcsMetricKey, band: PercentileBand, values: number[]): FilterSpecification {
+  if (band === "all" || values.length === 0) return ["==", ["get", "cbsa_code"], ""] as FilterSpecification;
+  const thresholdAt = (share: number) => values[Math.max(0, Math.min(values.length - 1, Math.floor((values.length - 1) * share)))];
+  if (band === "bottom_10") return ["<=", ["get", metric], thresholdAt(0.1)] as FilterSpecification;
+  const share = band === "top_1" ? 0.99 : band === "top_5" ? 0.95 : 0.9;
+  return [">=", ["get", metric], thresholdAt(share)] as FilterSpecification;
+}
+
+function percentileRank(value: number, values: number[]) {
+  const atOrBelow = values.filter((item) => item <= value).length;
+  return Math.max(1, Math.round((atOrBelow / values.length) * 100));
+}
 
 function focusFilter(codes: readonly string[]): FilterSpecification {
   return [
@@ -46,10 +72,16 @@ function sourceLabel(source: GeographicFocus["source"]) {
 export function GeographicFocusMap({
   focus,
   modeLabel,
+  contextMetric = "household_count",
 }: GeographicFocusMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "basemap_unavailable">("loading");
+  const [percentileBand, setPercentileBand] = useState<PercentileBand>("all");
+  const metricValues = useMemo(() => publicMarketMapGeoJson.features
+    .map((item) => item.properties[contextMetric])
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value))
+    .sort((left, right) => left - right), [contextMetric]);
   const config = useMemo(
     () => resolveMapTilerConfig(
       process.env.NEXT_PUBLIC_MAP_STYLE_URL?.trim() || DEFAULT_STYLE_URL,
@@ -83,7 +115,7 @@ export function GeographicFocusMap({
 
     async function initialize() {
       try {
-        const { AttributionControl, Map, NavigationControl } = await import("maplibre-gl");
+        const { AttributionControl, Map, NavigationControl, Popup } = await import("maplibre-gl");
         if (disposed || !containerRef.current) return;
 
         const map = new Map({
@@ -127,6 +159,16 @@ export function GeographicFocusMap({
             },
           });
           map.addLayer({
+            id: CBSA_PERCENTILE_LAYER_ID,
+            type: "fill",
+            source: CBSA_SOURCE_ID,
+            filter: percentileFilter(contextMetric, "all", metricValues),
+            paint: {
+              "fill-color": "#f29d49",
+              "fill-opacity": 0.38,
+            },
+          });
+          map.addLayer({
             id: CBSA_SELECTED_LAYER_ID,
             type: "fill",
             source: CBSA_SOURCE_ID,
@@ -139,6 +181,21 @@ export function GeographicFocusMap({
             },
           });
           setLoadState("ready");
+        });
+        map.on("mouseenter", CBSA_FILL_LAYER_ID, () => { map.getCanvas().style.cursor = "pointer"; });
+        map.on("mouseleave", CBSA_FILL_LAYER_ID, () => { map.getCanvas().style.cursor = ""; });
+        map.on("click", CBSA_FILL_LAYER_ID, (event: MapLayerMouseEvent) => {
+          const properties = event.features?.[0]?.properties;
+          const value = Number(properties?.[contextMetric]);
+          if (!properties || !Number.isFinite(value)) return;
+          const percentile = percentileRank(value, metricValues);
+          const popup = document.createElement("div");
+          const title = document.createElement("strong");
+          title.textContent = String(properties.cbsa_name ?? "Selected market");
+          const detail = document.createElement("p");
+          detail.textContent = `${METRIC_LABELS[contextMetric]}: ${formatMetricValue(contextMetric, value)} · ${percentile >= 50 ? `top ${101 - percentile}%` : `bottom ${percentile}%`} of markets`;
+          popup.append(title, detail);
+          new Popup({ closeButton: true, offset: 8 }).setLngLat(event.lngLat).setDOMContent(popup).addTo(map);
         });
         map.on("error", () => {
           if (!disposed) setLoadState("basemap_unavailable");
@@ -154,7 +211,13 @@ export function GeographicFocusMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [config, interactiveEnabled]);
+  }, [config, contextMetric, interactiveEnabled, metricValues]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || loadState !== "ready" || !map.getLayer(CBSA_PERCENTILE_LAYER_ID)) return;
+    map.setFilter(CBSA_PERCENTILE_LAYER_ID, percentileFilter(contextMetric, percentileBand, metricValues));
+  }, [contextMetric, loadState, metricValues, percentileBand]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -217,7 +280,19 @@ export function GeographicFocusMap({
             {sourceLabel(focus.source)}
           </small>
         </div>
-        <small>{modeLabel}</small>
+        <div className="geographic-focus-controls">
+          <small>{modeLabel}</small>
+          <label>
+            <span>{METRIC_LABELS[contextMetric]} range</span>
+            <select value={percentileBand} onChange={(event) => setPercentileBand(event.target.value as PercentileBand)}>
+              <option value="all">Selected lead only</option>
+              <option value="top_1">Top 1%</option>
+              <option value="top_5">Top 5%</option>
+              <option value="top_10">Top 10%</option>
+              <option value="bottom_10">Bottom 10%</option>
+            </select>
+          </label>
+        </div>
       </div>
       <div
         className="geographic-focus-frame"
@@ -268,4 +343,9 @@ export function GeographicFocusMap({
       </small>
     </section>
   );
+}
+
+function formatMetricValue(metric: CbsaAcsMetricKey, value: number) {
+  if (metric === "median_household_income") return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: metric === "population_density" ? 1 : 0 }).format(value);
 }

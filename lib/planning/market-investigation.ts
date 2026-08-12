@@ -38,6 +38,13 @@ export type MarketInvestigation = {
   scoringEligibility: "none";
 };
 
+export type InvestigationFollowUp = {
+  id: string;
+  leadId: string;
+  question: string;
+  answer: string;
+};
+
 type MarketRow = {
   id: string;
   name: string;
@@ -263,11 +270,17 @@ function contextOnlyInvestigation(plan: EvaluationPlan, rows: MarketRow[]): Mark
 
 export function runMarketInvestigation(plan: EvaluationPlan): MarketInvestigation {
   const rows = marketRows();
-  if (plan.intent.topic === "clinic_location" || /\b(clinic|clinics|cvc|veterinar|vet)\b/i.test(plan.originalQuestion)) {
+  if (plan.perspectiveId === "cvc") {
     return cvcInvestigation(plan, rows);
   }
-  if (plan.intent.topic === "local_growth" || /\b(marketing|audience|campaign|test|control|media|reach)\b/i.test(plan.originalQuestion)) {
+  if (plan.perspectiveId === "marketing") {
     return marketingInvestigation(plan, rows);
   }
   return contextOnlyInvestigation(plan, rows);
+}
+
+export function answerInvestigationFollowUp(lead: InvestigationLead, question: string) {
+  const normalizedQuestion = question.trim();
+  if (!normalizedQuestion) return "";
+  return `${lead.observation} ${lead.businessMeaning} Important boundary: ${lead.challenge} Best next check: ${lead.nextEvidence}`;
 }

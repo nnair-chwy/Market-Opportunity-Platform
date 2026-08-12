@@ -1,20 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import type { InvestigationLead, MarketInvestigation } from "@/lib/planning/market-investigation";
+import type { InvestigationFollowUp, InvestigationLead, MarketInvestigation } from "@/lib/planning/market-investigation";
 
 type MarketInvestigationPanelProps = {
   investigation: MarketInvestigation;
   selectedLeadId: string | null;
   onSelectLead: (lead: InvestigationLead) => void;
+  followUps: InvestigationFollowUp[];
+  onAskFollowUp: (question: string) => void;
 };
 
 export function MarketInvestigationPanel({
   investigation,
   selectedLeadId,
   onSelectLead,
+  followUps,
+  onAskFollowUp,
 }: MarketInvestigationPanelProps) {
   const [showAll, setShowAll] = useState(false);
+  const [followUpQuestion, setFollowUpQuestion] = useState("");
   const visibleLeads = showAll ? investigation.leads : investigation.leads.slice(0, 3);
 
   return (
@@ -68,6 +73,36 @@ export function MarketInvestigationPanel({
         <button className="secondary-action market-investigation-more" type="button" onClick={() => setShowAll((open) => !open)}>
           {showAll ? "Show strongest 3" : `Show all ${investigation.leads.length} leads`}
         </button>
+      ) : null}
+
+      {selectedLeadId ? (
+        <section className="market-investigation-chat" aria-label="Lead follow-up">
+          <div className="section-label">Ask about the selected lead</div>
+          {followUps.length ? (
+            <ol>
+              {followUps.map((turn) => (
+                <li key={turn.id}>
+                  <p><strong>Sheila</strong>{turn.question}</p>
+                  <p><strong>Analyst</strong>{turn.answer}</p>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+          <form onSubmit={(event) => {
+            event.preventDefault();
+            if (!followUpQuestion.trim()) return;
+            onAskFollowUp(followUpQuestion);
+            setFollowUpQuestion("");
+          }}>
+            <input
+              value={followUpQuestion}
+              onChange={(event) => setFollowUpQuestion(event.target.value)}
+              placeholder="Ask why this lead matters or what evidence would validate it..."
+              aria-label="Question about selected lead"
+            />
+            <button className="primary-action" type="submit" disabled={!followUpQuestion.trim()}>Ask</button>
+          </form>
+        </section>
       ) : null}
 
       <details className="market-investigation-boundaries">
