@@ -3,10 +3,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { parseCsv, integerOrNull, normalizeZip, numberOrNull } from "../lib/adapters/snowflake-csv/parser.ts";
 
-const inputDir = process.env.SNOWFLAKE_EXPORT_DIR?.trim();
-if (!inputDir) {
-  throw new Error("Set SNOWFLAKE_EXPORT_DIR to the directory containing the approved CSV exports.");
+function requiredInputDirectory(): string {
+  const value = process.env.SNOWFLAKE_EXPORT_DIR?.trim();
+  if (!value) throw new Error("Set SNOWFLAKE_EXPORT_DIR to the directory containing the approved CSV exports.");
+  return value;
 }
+const inputDir = requiredInputDirectory();
 const outputDir = resolve(process.env.SNOWFLAKE_SNAPSHOT_DIR ?? "data/approved/snowflake/latest");
 const acsPath = resolve("data/public/census/cbsa-acs/2024/market-context.json");
 const siteIdentitiesPath = resolve("data/sample/esri/2026-07-30/site-identities.json");
@@ -59,7 +61,8 @@ function jsonRows(rows: unknown[]): string {
 
 async function readInput(name: keyof typeof inputFiles) {
   const file = inputFiles[name];
-  return { file, text: await readFile(resolve(inputDir, file), "utf8"), rows: parseCsv(await readFile(resolve(inputDir, file), "utf8")) };
+  const text = await readFile(resolve(inputDir, file), "utf8");
+  return { file, text, rows: parseCsv(text) };
 }
 
 async function writeOutput(name: string, content: string, rowCount: number, grain: string, allowedUse = "approved_internal_decision_support"): Promise<OutputFile> {

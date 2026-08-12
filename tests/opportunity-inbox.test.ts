@@ -14,7 +14,6 @@ import {
   outcomeObservationSchema,
   PLAYBOOKS,
   playbookDefinitionSchema,
-  resetOpportunityInboxForTests,
   reviewOpportunity,
   runPlaybooks,
   runSyntheticDiscovery,
@@ -187,24 +186,24 @@ test("ActionPacket explanation falls back for missing configuration, timeout, an
 });
 
 test("replaying the same batch does not create duplicate opportunities", () => {
-  resetOpportunityInboxForTests();
-  const first = runSyntheticDiscovery();
-  const second = runSyntheticDiscovery();
+  const store = createInMemoryOpportunityStore();
+  const first = runSyntheticDiscovery(undefined, { store });
+  const second = runSyntheticDiscovery(undefined, { store });
 
   assert.equal(first.run.candidatesCreated, 3);
   assert.equal(second.run.candidatesCreated, 0);
   assert.equal(second.run.candidatesSuppressed, 3);
-  assert.equal(getOpportunityInboxSnapshot().opportunities.length, 3);
+  assert.equal(getOpportunityInboxSnapshot({ store }).opportunities.length, 3);
 });
 
 test("human approval is required before a simulated delivery preview", () => {
-  resetOpportunityInboxForTests();
-  const { snapshot } = runSyntheticDiscovery();
+  const store = createInMemoryOpportunityStore();
+  const { snapshot } = runSyntheticDiscovery(undefined, { store });
   const opportunity = snapshot.opportunities.find((item) => item.sector === "marketing");
   assert.ok(opportunity);
 
   assert.throws(
-    () => createDeliveryPreview(opportunity.opportunityId, { channel: "outlook" }),
+    () => createDeliveryPreview(opportunity.opportunityId, { channel: "outlook" }, { store }),
     /Approve the opportunity/,
   );
 
@@ -212,12 +211,12 @@ test("human approval is required before a simulated delivery preview", () => {
     action: "approve",
     reason: "Synthetic evidence is complete for the demonstration.",
     reviewer: "Test reviewer",
-  });
+  }, { store });
   assert.equal(reviewed.state, "approved_for_routing");
 
   const delivered = createDeliveryPreview(opportunity.opportunityId, {
     channel: "outlook",
-  });
+  }, { store });
   assert.equal(delivered.opportunity.state, "routed");
   assert.equal(delivered.receipt.status, "simulated");
   assert.match(delivered.receipt.message, /was not sent/);

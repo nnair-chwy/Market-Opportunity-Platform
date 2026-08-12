@@ -23,6 +23,7 @@ export const Provenance = z.object({
   sensitivity: Sensitivity,
   allowedUse: z.string().min(1),
 });
+export type ProvenanceRecord = z.infer<typeof Provenance>;
 
 export const MarketContextRecord = z.object({
   marketId: z.string().min(1),

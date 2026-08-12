@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   actionPacketSchema,
+  approveActionPacket,
   aiInterpretationSchema,
   createClinicEvaluationContract,
   evaluationContractSchema,
@@ -218,6 +219,49 @@ test("requires human review before an action packet can be approved", () => {
     }).success,
     false,
   );
+
+  assert.throws(() => approveActionPacket(awaitingReview, {
+    actionId: "record-clinic-decision",
+    receipts: [{
+      gateId: "clinic-final-decision-review",
+      approvedBy: "reviewer-a",
+      approvedAt: "2026-08-10T21:00:00.000Z",
+      reviewerRole: "AI agent",
+    }],
+  }), /requires role/i);
+
+  const approved = approveActionPacket(awaitingReview, {
+    actionId: "record-clinic-decision",
+    receipts: [{
+      gateId: "clinic-final-decision-review",
+      approvedBy: "reviewer-a",
+      approvedAt: "2026-08-10T21:00:00.000Z",
+      reviewerRole: contract.approvalGates[0].requiredRole,
+    }],
+  });
+  assert.equal(approved.status, "approved_for_permitted_action");
+  assert.equal(approved.actions[0].status, "approved");
+});
+
+test("rejects an action packet that references a gate outside the packet", () => {
+  const contract = createClinicEvaluationContract(clinicInput(), clinicConfiguration());
+  const packet = {
+    packetId: "packet-gate-bypass",
+    packetVersion: "packet-v1",
+    contractId: contract.contractId,
+    contractRevision: contract.contractRevision,
+    status: "awaiting_human_review" as const,
+    generatedAt: "2026-08-10T20:00:00.000Z",
+    evidence: contract.evidence,
+    missingEvidenceIds: [],
+    proposedAiInterpretation: null,
+    humanApprovedInterpretation: null,
+    actions: [{ actionId: "record-clinic-decision", status: "proposed" as const, proposedBy: "ai" as const, rationale: "Attempt a direct gate bypass.", approvalGateIds: ["missing-gate"] }],
+    approvalGates: contract.approvalGates,
+    artifactIds: ["clinic-review-packet"],
+    sourceIds: contract.sourceIds,
+  };
+  assert.equal(actionPacketSchema.safeParse(packet).success, false);
 });
 
 test("does not allow human approval metadata inside an AI proposal", () => {

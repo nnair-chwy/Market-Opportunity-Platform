@@ -426,6 +426,18 @@ export const actionPacketSchema = z.object({
   artifactIds: z.array(identifierSchema),
   sourceIds: z.array(sourceIdSchema),
 }).strict().superRefine((packet, context) => {
+  const gateIds = new Set(packet.approvalGates.map((gate) => gate.gateId));
+  if (gateIds.size !== packet.approvalGates.length) {
+    context.addIssue({ code: "custom", path: ["approvalGates"], message: "Approval gate identifiers must be unique." });
+  }
+  packet.actions.forEach((action, index) => {
+    if (action.approvalGateIds.some((gateId) => !gateIds.has(gateId))) {
+      context.addIssue({ code: "custom", path: ["actions", index, "approvalGateIds"], message: "Actions must reference approval gates contained in the packet." });
+    }
+    if (action.status === "approved" && action.approvalGateIds.length === 0) {
+      context.addIssue({ code: "custom", path: ["actions", index, "approvalGateIds"], message: "An approved action requires an explicit approval gate." });
+    }
+  });
   const pendingGate = packet.approvalGates.some((gate) => gate.status !== "satisfied");
   const approvedAction = packet.actions.some((action) => action.status === "approved");
   if (approvedAction && pendingGate) {
@@ -439,6 +451,42 @@ export const actionPacketSchema = z.object({
   }
 });
 export type ActionPacket = z.infer<typeof actionPacketSchema>;
+
+export const actionPacketApprovalRequestSchema = z.object({
+  actionId: identifierSchema,
+  receipts: z.array(z.object({
+    gateId: identifierSchema,
+    approvedBy: identifierSchema,
+    approvedAt: z.iso.datetime(),
+    reviewerRole: z.string().trim().min(1).max(180),
+  }).strict()).min(1),
+}).strict();
+
+export function approveActionPacket(
+  packetInput: ActionPacket,
+  requestInput: z.input<typeof actionPacketApprovalRequestSchema>,
+): ActionPacket {
+  const packet = actionPacketSchema.parse(packetInput);
+  const request = actionPacketApprovalRequestSchema.parse(requestInput);
+  const action = packet.actions.find((item) => item.actionId === request.actionId);
+  if (!action) throw new Error("The requested action is not present in the action packet.");
+  if (action.approvalGateIds.length === 0) throw new Error("The requested action has no explicit approval gate.");
+  const receipts = new Map(request.receipts.map((receipt) => [receipt.gateId, receipt]));
+  if (receipts.size !== request.receipts.length) throw new Error("Approval receipts must use unique gate identifiers.");
+  const approvalGates = packet.approvalGates.map((gate) => {
+    const receipt = receipts.get(gate.gateId);
+    if (!receipt) throw new Error(`Approval gate "${gate.gateId}" is still required.`);
+    if (!action.approvalGateIds.includes(gate.gateId)) throw new Error(`Approval gate "${gate.gateId}" is outside the requested action.`);
+    if (receipt.reviewerRole !== gate.requiredRole) throw new Error(`Approval gate "${gate.gateId}" requires role "${gate.requiredRole}".`);
+    return { ...gate, status: "satisfied" as const, approvedBy: receipt.approvedBy, approvedAt: receipt.approvedAt };
+  });
+  return actionPacketSchema.parse({
+    ...packet,
+    status: "approved_for_permitted_action",
+    actions: packet.actions.map((item) => item.actionId === action.actionId ? { ...item, status: "approved" as const } : item),
+    approvalGates,
+  });
+}
 
 function clinicGeography(value: string): z.infer<typeof geographyScopeSchema> {
   return {

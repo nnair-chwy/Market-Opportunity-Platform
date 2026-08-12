@@ -3,7 +3,7 @@ import {
   ClinicPerformanceRecord,
   DemandRecord,
   MarketContextRecord,
-  Provenance,
+  type ProvenanceRecord,
   ZipMarketRecord,
 } from "../../snowflake-canonical/index.ts";
 import { parseCsv, booleanOrNull, integerOrNull, normalizeZip, numberOrNull } from "./parser.ts";
@@ -35,7 +35,7 @@ function baseProvenance(
   geography: string,
   grain: string,
   qualityStatus: "accepted" | "warning" | "rejected" = "accepted",
-): Provenance {
+): ProvenanceRecord {
   return {
     sourceId,
     sourceFile,

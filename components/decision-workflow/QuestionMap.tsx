@@ -60,6 +60,7 @@ export function QuestionMap() {
       setLoadState("fallback");
       return;
     }
+    const configuredStyleUrl = config.styleUrl;
 
     let disposed = false;
 
@@ -70,7 +71,7 @@ export function QuestionMap() {
 
         const map = new Map({
           container: containerRef.current,
-          style: config.styleUrl,
+          style: configuredStyleUrl,
           bounds: MAINLAND_MARKET_BOUNDS,
           fitBoundsOptions: { padding: 42 },
           maxBounds: MAINLAND_MARKET_BOUNDS,
