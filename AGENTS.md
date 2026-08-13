@@ -7,11 +7,12 @@ This repository is a clinic-first, evidence-backed prototype for evaluating cand
 Before changing product behavior, read:
 
 1. `PROJECT_CONTEXT.md`
-2. `docs/product/mvp-scope.md`
-3. `docs/technical/data-contracts.md`
-4. `docs/technical/ai-boundaries.md`
-5. `docs/research/claim-ledger.md`
-6. `docs/product/open-questions.md`
+2. `docs/research/agent-data-source-guide.md`
+3. `docs/product/mvp-scope.md`
+4. `docs/technical/data-contracts.md`
+5. `docs/technical/ai-boundaries.md`
+6. `docs/research/claim-ledger.md`
+7. `docs/product/open-questions.md`
 
 ## Working rules
 
