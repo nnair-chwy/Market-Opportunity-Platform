@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
+import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
 import { DecisionGraphAnimation } from "@/components/decision-workflow/DecisionGraphAnimation";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { PerspectiveId } from "@/lib/perspectives";
+import { buildAnalysisBrief, type AnalysisBrief } from "@/lib/planning/analysis-brief";
 import {
   answerInvestigationFollowUp,
   runMarketInvestigation,
@@ -47,6 +49,7 @@ type SavedPacket = {
   investigation?: MarketInvestigation;
   perspectiveId?: PerspectiveId;
   followUps?: InvestigationFollowUp[];
+  analysisBrief?: AnalysisBrief;
 };
 
 function nowLabel() {
@@ -99,6 +102,7 @@ export function DecisionWorkflowApp() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [perspectiveId, setPerspectiveId] = useState<PerspectiveId>("cvc");
   const [investigationFollowUps, setInvestigationFollowUps] = useState<InvestigationFollowUp[]>([]);
+  const [analysisBrief, setAnalysisBrief] = useState<AnalysisBrief | null>(null);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
 
@@ -139,9 +143,9 @@ export function DecisionWorkflowApp() {
 
   const reviewablePacket = useMemo(
     () => (plan && selectedAction
-      ? assembleReviewableActionPacket(plan, selectedAction, new Date().toISOString(), investigation ?? undefined, investigationFollowUps)
+      ? assembleReviewableActionPacket(plan, selectedAction, new Date().toISOString(), investigation ?? undefined, investigationFollowUps, analysisBrief ?? undefined)
       : null),
-    [investigation, investigationFollowUps, plan, selectedAction],
+    [analysisBrief, investigation, investigationFollowUps, plan, selectedAction],
   );
 
   useEffect(() => {
@@ -227,6 +231,7 @@ export function DecisionWorkflowApp() {
     setInvestigation(null);
     setSelectedLeadId(null);
     setInvestigationFollowUps([]);
+    setAnalysisBrief(null);
     setPhase("interpreting");
     try {
       const response = await fetch("/api/evaluation-plans", {
@@ -245,6 +250,7 @@ export function DecisionWorkflowApp() {
       setPlan(parsed.data.plan);
       const nextInvestigation = runMarketInvestigation(parsed.data.plan);
       setInvestigation(nextInvestigation);
+      setAnalysisBrief(buildAnalysisBrief(parsed.data.plan, nextInvestigation));
       setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
       setSelectedActionId(proposedActionFromPlan(parsed.data.plan).id);
       setActiveStep(0);
@@ -268,6 +274,7 @@ export function DecisionWorkflowApp() {
     setInvestigation(null);
     setSelectedLeadId(null);
     setInvestigationFollowUps([]);
+    setAnalysisBrief(null);
     setPhase("question");
   }
 
@@ -283,6 +290,7 @@ export function DecisionWorkflowApp() {
       investigation: investigation ?? undefined,
       perspectiveId: plan.perspectiveId,
       followUps: investigationFollowUps,
+      analysisBrief: analysisBrief ?? undefined,
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
@@ -299,6 +307,7 @@ export function DecisionWorkflowApp() {
     setInvestigation(restoredInvestigation);
     setSelectedLeadId(restoredInvestigation.leads[0]?.id ?? null);
     setInvestigationFollowUps(packet.followUps ?? []);
+    setAnalysisBrief(packet.analysisBrief ?? buildAnalysisBrief(restoredPlan, restoredInvestigation));
     setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
     setRequestError(null);
     setSisterFollowUpNotice(null);
@@ -326,6 +335,7 @@ export function DecisionWorkflowApp() {
     setInvestigation(null);
     setSelectedLeadId(null);
     setInvestigationFollowUps([]);
+    setAnalysisBrief(null);
     setSelectedActionId("");
     setActiveStep(-1);
     setRequestError(null);
@@ -505,6 +515,10 @@ export function DecisionWorkflowApp() {
                 <span>Your question</span>
                 <strong>{plan.originalQuestion}</strong>
               </div>
+
+              {analysisBrief ? (
+                <AnalysisBriefPanel brief={analysisBrief} onConfirm={setAnalysisBrief} />
+              ) : null}
 
               {investigation ? (
                 <MarketInvestigationPanel

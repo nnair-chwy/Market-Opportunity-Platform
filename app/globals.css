@@ -1000,6 +1000,80 @@
 .workspace-layout .action-packet-card { padding: 18px; }
 
 .decision-review .packet-question { margin-top: 16px; }
+.analysis-brief-panel {
+  background: linear-gradient(105deg, #f4f8ff 0, #fbfcfe 48%, #f8fafc 100%);
+  border: 1px solid #d7e1ef;
+  border-left: 5px solid #3f73d8;
+  border-radius: 15px;
+  margin-top: 16px;
+  padding: 18px;
+}
+.analysis-brief-header { align-items: start; display: flex; gap: 18px; justify-content: space-between; }
+.analysis-brief-header h2 { color: #172842; font-size: 22px; margin: 4px 0 5px; }
+.analysis-brief-header p { color: #62728a; font-size: 12px; line-height: 1.5; margin: 0; }
+.analysis-brief-actions { align-items: center; display: flex; flex: 0 0 auto; gap: 8px; }
+.analysis-brief-status { border: 1px solid; border-radius: 999px; font-size: 10px; font-weight: 800; padding: 7px 9px; text-transform: uppercase; }
+.analysis-brief-status.proposed { background: #fff6dc; border-color: #e4c56c; color: #7d5a08; }
+.analysis-brief-status.confirmed { background: #e9f7f0; border-color: #9ed1ba; color: #216a4e; }
+.analysis-brief-frame { display: grid; gap: 14px; grid-template-columns: minmax(260px, .78fr) minmax(0, 1.5fr); margin-top: 15px; }
+.analysis-brief-question,
+.analysis-brief-considerations { background: rgba(255,255,255,.84); border: 1px solid #e0e7f0; border-radius: 12px; padding: 14px; }
+.analysis-brief-question > span { color: #748197; font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.analysis-brief-question > p { color: #4f6079; font-size: 11px; line-height: 1.45; margin: 5px 0 13px; }
+.analysis-brief-question label { display: grid; gap: 5px; }
+.analysis-brief-question label strong,
+.analysis-brief-assumptions > strong { color: #31435f; font-size: 11px; }
+.analysis-brief-question textarea,
+.analysis-brief-row input,
+.analysis-brief-row textarea,
+.analysis-brief-assumptions textarea { background: #fff; border: 1px solid #cbd8e9; border-radius: 8px; box-sizing: border-box; color: #263954; font: inherit; line-height: 1.45; padding: 8px 9px; resize: vertical; width: 100%; }
+.analysis-brief-rewrite { color: #1e3b66 !important; font-size: 14px !important; font-weight: 750; line-height: 1.45 !important; margin: 0 !important; }
+.analysis-brief-question dl { border-bottom: 1px solid #e4e9f0; border-top: 1px solid #e4e9f0; display: grid; gap: 7px; margin: 14px 0; padding: 11px 0; }
+.analysis-brief-question dl div { display: flex; gap: 12px; justify-content: space-between; }
+.analysis-brief-question dt { color: #7a879a; font-size: 10px; }
+.analysis-brief-question dd { color: #344762; font-size: 10px; font-weight: 700; margin: 0; text-align: right; }
+.analysis-brief-assumptions ul { color: #5c6c83; display: grid; font-size: 10px; gap: 5px; line-height: 1.45; margin: 7px 0 0; padding-left: 17px; }
+.analysis-brief-assumptions textarea { font-size: 10px; margin-top: 6px; }
+.analysis-brief-consideration-heading { align-items: start; display: flex; gap: 14px; justify-content: space-between; }
+.analysis-brief-consideration-heading div { display: grid; gap: 2px; }
+.analysis-brief-consideration-heading strong { color: #263954; font-size: 12px; }
+.analysis-brief-consideration-heading div span { color: #77859a; font-size: 10px; }
+.analysis-brief-consideration-heading > span { background: #edf2f8; border-radius: 999px; color: #53647c; font-size: 9px; font-weight: 800; padding: 6px 8px; white-space: nowrap; }
+.analysis-brief-consideration-heading > span.valid { background: #e8f6ef; color: #246b50; }
+.analysis-brief-consideration-heading > span.invalid { background: #fff0e8; color: #9a471e; }
+.analysis-brief-table { display: grid; margin-top: 10px; }
+.analysis-brief-row { align-items: center; border-top: 1px solid #e5eaf1; display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr) 108px 50px; padding: 10px 0; }
+.analysis-brief-row > div:first-child { display: grid; gap: 3px; min-width: 0; }
+.analysis-brief-row > div:first-child strong { color: #30435f; font-size: 11px; }
+.analysis-brief-row > div:first-child span { color: #5b6d85; font-size: 10px; line-height: 1.4; }
+.analysis-brief-row > div:first-child small { color: #8590a1; font-size: 9px; line-height: 1.35; }
+.analysis-brief-row input,
+.analysis-brief-row textarea { font-size: 10px; }
+.analysis-brief-classification { align-items: flex-start; display: grid; gap: 4px; justify-items: start; }
+.analysis-brief-classification span { border-radius: 999px; font-size: 8px; font-weight: 800; padding: 4px 6px; }
+.analysis-brief-classification .weighted_preference { background: #e8efff; color: #285bb8; }
+.analysis-brief-classification .validity_gate { background: #f8e9f1; color: #844264; }
+.analysis-brief-classification .context_only { background: #edf1f5; color: #647084; }
+.analysis-brief-classification .connected { border: 1px solid #a8d2bc; color: #267053; }
+.analysis-brief-classification .partial { border: 1px solid #e1c771; color: #7d6210; }
+.analysis-brief-classification .needed { border: 1px dashed #c6a0aa; color: #864c59; }
+.analysis-brief-weight { color: #2c4f86; font-size: 11px; text-align: right; }
+.analysis-brief-weight label { align-items: center; display: flex; gap: 3px; }
+.analysis-brief-weight input { padding: 6px; text-align: right; width: 42px; }
+.analysis-brief-weight-note { background: #f4f6f9; border-radius: 8px; color: #6b788b; font-size: 9px; line-height: 1.45; margin: 9px 0 0; padding: 8px 9px; }
+.analysis-brief-footer { align-items: center; border-top: 1px solid #dfe6f0; display: flex; gap: 12px; justify-content: space-between; margin-top: 14px; padding-top: 13px; }
+.analysis-brief-footer > span { color: #68788f; font-size: 10px; }
+.analysis-brief-footer > div { display: flex; gap: 8px; }
+@media (max-width: 900px) {
+  .analysis-brief-frame { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .analysis-brief-header,
+  .analysis-brief-footer { align-items: stretch; flex-direction: column; }
+  .analysis-brief-actions { justify-content: space-between; }
+  .analysis-brief-row { grid-template-columns: minmax(0, 1fr) 98px; }
+  .analysis-brief-weight { grid-column: 2; }
+}
 .market-investigation {
   background: #f7f9fc;
   border: 1px solid #dfe6f0;

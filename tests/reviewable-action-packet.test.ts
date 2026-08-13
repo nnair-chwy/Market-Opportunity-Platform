@@ -9,6 +9,7 @@ import {
   reviewableActionPacketSchema,
 } from "../lib/planning/index.ts";
 import { answerInvestigationFollowUp, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
+import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
 import { explainFindingsAndProposal } from "../lib/planning/packet-ai-summary.ts";
 
 test("reviewable action packet preserves action fields and provenance for download", () => {
@@ -83,4 +84,17 @@ test("reviewable packet carries the exact analyst screening and lead follow-up",
   assert.match(document, /Analyst screening/);
   assert.match(document, /Question-specific leads/);
   assert.match(document, /Lead-scoped follow-ups/);
+});
+
+test("reviewable packet exports the human-confirmed question and considerations", () => {
+  const plan = planEvaluation("Which comparable markets differ most in CVC footprint?", "cvc");
+  const investigation = runMarketInvestigation(plan);
+  const brief = { ...buildAnalysisBrief(plan, investigation), status: "confirmed" as const, confirmedAt: "2026-08-13T12:00:00.000Z" };
+  const packet = assembleReviewableActionPacket(plan, proposedActionFromPlan(plan), "2026-08-13T12:01:00.000Z", investigation, [], brief);
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.equal(packet.analysisBrief?.status, "confirmed");
+  assert.match(document, /Confirmed analysis framing/);
+  assert.match(document, /Rewritten question/);
+  assert.match(document, /Addressable demand/);
+  assert.match(document, /weighted preference/);
 });

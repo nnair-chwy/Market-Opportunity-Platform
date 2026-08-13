@@ -7,6 +7,7 @@ import {
   type PlannedAction,
 } from "./contracts.ts";
 import type { InvestigationFollowUp, MarketInvestigation } from "./market-investigation.ts";
+import type { AnalysisBrief } from "./analysis-brief.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
 export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
@@ -40,6 +41,27 @@ export const reviewableActionPacketSchema = z.object({
   }).strict(),
   action: plannedActionSchema,
   findings: evaluationPlanSchema.shape.findings,
+  analysisBrief: z.object({
+    version: z.literal("1.0.0"),
+    planId: z.string().trim().min(1),
+    status: z.enum(["proposed", "confirmed"]),
+    originalQuestion: evaluationPlanSchema.shape.originalQuestion,
+    rewrittenQuestion: z.string().trim().min(1),
+    perspectiveId: evaluationPlanSchema.shape.perspectiveId,
+    geography: z.string().trim().min(1),
+    timeframe: z.string().trim().min(1),
+    assumptions: z.array(z.string().trim().min(1)),
+    considerations: z.array(z.object({
+      id: z.string().trim().min(1),
+      label: z.string().trim().min(1),
+      metric: z.string().trim().min(1),
+      role: z.enum(["weighted_preference", "validity_gate", "context_only"]),
+      evidenceStatus: z.enum(["connected", "partial", "needed"]),
+      weightPercent: z.number().min(0).max(100).nullable(),
+      whyItMatters: z.string().trim().min(1),
+    }).strict()).min(1),
+    confirmedAt: z.string().trim().min(1).nullable(),
+  }).strict().optional(),
   analysisAppendix: z.object({
     version: z.literal("1.0.0"),
     planId: z.string().trim().min(1),
@@ -126,6 +148,7 @@ export function assembleReviewableActionPacket(
   generatedAt = new Date().toISOString(),
   investigation?: MarketInvestigation,
   followUps: InvestigationFollowUp[] = [],
+  analysisBrief?: AnalysisBrief,
 ): ReviewableActionPacket {
   const placeLabels = plan.geographyResolution.places
     .map((place) => place.cbsaName ?? place.requestedName)
@@ -133,6 +156,9 @@ export function assembleReviewableActionPacket(
 
   if (investigation && (investigation.planId !== plan.planId || investigation.originalQuestion !== plan.originalQuestion)) {
     throw new Error("The investigation does not belong to this evaluation plan.");
+  }
+  if (analysisBrief && (analysisBrief.planId !== plan.planId || analysisBrief.originalQuestion !== plan.originalQuestion)) {
+    throw new Error("The analysis brief does not belong to this evaluation plan.");
   }
 
   return reviewableActionPacketSchema.parse({
@@ -165,6 +191,7 @@ export function assembleReviewableActionPacket(
     },
     action,
     findings: plan.findings,
+    analysisBrief,
     analysisAppendix: investigation ? { ...investigation, followUps } : undefined,
   });
 }
@@ -183,6 +210,25 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     ? packet.geographicFocus.selectedCbsaCodes.join(", ")
     : "None selected";
 
+  const framingSections = packet.analysisBrief ? [
+    "## Confirmed analysis framing",
+    `- Status: ${packet.analysisBrief.status}`,
+    `- Rewritten question: ${packet.analysisBrief.rewrittenQuestion}`,
+    `- Perspective: ${packet.analysisBrief.perspectiveId}`,
+    `- Geography: ${packet.analysisBrief.geography}`,
+    `- Timeframe: ${packet.analysisBrief.timeframe}`,
+    "",
+    "### Working assumptions",
+    bulletList(packet.analysisBrief.assumptions, "None listed"),
+    "",
+    "### Considerations",
+    ...packet.analysisBrief.considerations.flatMap((item) => [
+      `- ${item.label}: ${item.metric}`,
+      `  - Role: ${item.role.replaceAll("_", " ")}; evidence: ${item.evidenceStatus}; weight: ${item.weightPercent === null ? "not weighted" : `${item.weightPercent}%`}`,
+      `  - Why it matters: ${item.whyItMatters}`,
+    ]),
+    "",
+  ] : [];
   const analysisSections = packet.analysisAppendix ? [
     "## Analyst screening",
     `- Perspective: ${packet.analysisAppendix.perspectiveId}`,
@@ -275,6 +321,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "### Tradeoffs",
     bulletList(action.tradeoffs, "None listed"),
     "",
+    ...framingSections,
     ...analysisSections,
     "## Structured findings",
     ...packet.findings.flatMap((finding) => [
