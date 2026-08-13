@@ -1156,6 +1156,135 @@
   .analysis-brief-metric { grid-column: 1 / -1; }
   .analysis-brief-weight { grid-column: 3; }
 }
+
+/* Analysis contract: compact evidence-led review workspace. */
+.analysis-contract-page {
+  background: linear-gradient(180deg, #f4f7fb 0, #fbfcfe 52%, #f6f8fb 100%);
+  padding: 24px clamp(18px, 4vw, 52px) 48px;
+}
+.analysis-contract-intro { max-width: 1120px; }
+.analysis-contract-nav { align-items: center; display: flex; justify-content: space-between; }
+.analysis-contract-nav > span { color: #2f67c9; font-size: 10px; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
+.analysis-contract-intro .text-action { color: #526984; font-size: 12px; margin: 0; }
+.analysis-contract-intro h1 { font-size: clamp(30px, 4vw, 44px); line-height: 1; margin: 22px 0 8px; max-width: none; }
+.analysis-contract-intro > p { font-size: 14px; line-height: 1.45; max-width: none; }
+.analysis-contract-page .analysis-brief-panel {
+  background: #fff;
+  border: 1px solid #d9e2ee;
+  border-left-width: 1px;
+  border-radius: 18px;
+  box-shadow: 0 16px 45px rgba(30, 55, 91, .08);
+  margin-top: 22px;
+  max-width: 1120px;
+  padding: 20px;
+}
+.analysis-contract-page .analysis-brief-header { align-items: center; border-bottom: 1px solid #e7ecf3; padding-bottom: 15px; }
+.analysis-contract-page .analysis-brief-header .eyebrow { color: #2f67c9; font-size: 9px; }
+.analysis-contract-page .analysis-brief-header h2 { font-size: 20px; letter-spacing: -.02em; margin: 3px 0; }
+.analysis-contract-page .analysis-brief-header p { font-size: 12px; line-height: 1.4; max-width: 680px; }
+.analysis-contract-page .analysis-brief-status { font-size: 9px; padding: 6px 9px; }
+.analysis-contract-page .analysis-brief-frame { gap: 14px; margin-top: 14px; }
+.analysis-contract-page .analysis-brief-question,
+.analysis-contract-page .analysis-brief-considerations { border-radius: 12px; padding: 15px; }
+.analysis-contract-page .analysis-brief-question {
+  background: #f8fafc;
+  border-color: #e1e7ef;
+  gap: 12px 18px;
+  grid-template-columns: minmax(170px, .7fr) minmax(330px, 1.55fr);
+}
+.analysis-contract-page .analysis-brief-original { border-right: 1px solid #e0e7f0; min-height: 100%; padding-right: 18px; }
+.analysis-contract-page .analysis-brief-original > p { font-size: 12px; margin-top: 6px; }
+.analysis-contract-page .analysis-brief-question label strong,
+.analysis-contract-page .analysis-brief-assumptions > strong { font-size: 11px; }
+.analysis-contract-page .analysis-brief-question textarea { font-size: 13px; min-height: 76px; padding: 10px 11px; }
+.analysis-contract-page .analysis-brief-question dl {
+  border-left: 0;
+  border-top: 1px solid #e1e7ef;
+  display: grid;
+  gap: 10px;
+  grid-column: 1 / -1;
+  grid-template-columns: .55fr 1.25fr 1fr;
+  padding: 11px 0 0;
+}
+.analysis-contract-page .analysis-brief-question dl div { display: grid; gap: 2px; justify-content: start; }
+.analysis-contract-page .analysis-brief-question dt { font-size: 9px; text-transform: uppercase; }
+.analysis-contract-page .analysis-brief-question dd { font-size: 11px; text-align: left; }
+.analysis-contract-page .analysis-brief-assumptions {
+  gap: 14px;
+  grid-template-columns: 132px minmax(0, 1fr);
+  padding-top: 11px;
+}
+.analysis-contract-page .analysis-brief-assumptions textarea { font-size: 12px; min-height: 70px; padding: 9px 10px; }
+.analysis-contract-page .analysis-brief-assumptions ul { font-size: 11px; gap: 4px 18px; }
+.analysis-contract-page .analysis-brief-considerations { background: #fff; }
+.analysis-contract-page .analysis-brief-current-screen {
+  background: #eef4ff;
+  border: 0;
+  border-left: 4px solid #3f73d8;
+  border-radius: 8px;
+  gap: 10px 16px;
+  grid-template-columns: 118px minmax(0, 1fr) minmax(170px, .55fr);
+  margin-bottom: 14px;
+  padding: 11px 12px;
+}
+.analysis-contract-page .analysis-brief-current-screen strong { font-size: 9px; }
+.analysis-contract-page .analysis-brief-current-screen p { font-size: 11px; }
+.analysis-contract-page .analysis-brief-current-screen small,
+.analysis-contract-page .analysis-brief-current-screen b { font-size: 10px; }
+.analysis-contract-page .analysis-brief-consideration-heading strong { font-size: 13px; }
+.analysis-contract-page .analysis-brief-consideration-heading div span { font-size: 10px; }
+.analysis-contract-page .analysis-brief-table { border-color: #dce4ee; border-radius: 9px; margin-top: 8px; }
+.analysis-contract-page .analysis-brief-table-header,
+.analysis-contract-page .analysis-brief-row {
+  gap: 10px;
+  grid-template-columns: minmax(125px, .76fr) minmax(260px, 1.65fr) 78px 72px 52px;
+}
+.analysis-contract-page .analysis-brief-table-header { background: #f3f6fa; font-size: 8px; padding: 8px 11px; }
+.analysis-contract-page .analysis-brief-row { padding: 9px 11px; }
+.analysis-contract-page .analysis-brief-row:has(.connected) { box-shadow: inset 3px 0 #73b796; }
+.analysis-contract-page .analysis-brief-row:has(.partial) { box-shadow: inset 3px 0 #d7b84e; }
+.analysis-contract-page .analysis-brief-row:has(.needed) { box-shadow: inset 3px 0 #c58291; }
+.analysis-contract-page .analysis-brief-name strong { font-size: 11px; }
+.analysis-contract-page .analysis-brief-metric > span { font-size: 11px; }
+.analysis-contract-page .analysis-brief-metric > small { font-size: 9px; }
+.analysis-contract-page .analysis-brief-row input,
+.analysis-contract-page .analysis-brief-row textarea { font-size: 11px; }
+.analysis-contract-page .analysis-brief-row textarea { min-height: 42px; }
+.analysis-contract-page .analysis-brief-classification span { font-size: 7px; padding: 4px 5px; }
+.analysis-contract-page .analysis-brief-weight-note { font-size: 10px; margin-top: 8px; }
+.analysis-contract-page .analysis-brief-footer {
+  background: #f8fafc;
+  border: 1px solid #e1e7ef;
+  border-radius: 10px;
+  margin-top: 14px;
+  padding: 10px 11px;
+}
+.analysis-contract-page .analysis-brief-footer .primary-action { min-height: 42px; padding-inline: 17px; }
+
+@media (max-width: 900px) {
+  .analysis-contract-page { padding-inline: 16px; }
+  .analysis-contract-page .analysis-brief-panel { padding: 16px; }
+  .analysis-contract-page .analysis-brief-question { grid-template-columns: minmax(150px, .7fr) minmax(0, 1.45fr); }
+  .analysis-contract-page .analysis-brief-table-header,
+  .analysis-contract-page .analysis-brief-row { grid-template-columns: minmax(115px, .72fr) minmax(230px, 1.5fr) 72px 67px 46px; }
+}
+
+@media (max-width: 680px) {
+  .analysis-contract-nav { align-items: flex-start; flex-direction: column-reverse; gap: 12px; }
+  .analysis-contract-intro h1 { margin-top: 18px; }
+  .analysis-contract-page .analysis-brief-header { align-items: flex-start; }
+  .analysis-contract-page .analysis-brief-question { grid-template-columns: 1fr; }
+  .analysis-contract-page .analysis-brief-original { border-bottom: 1px solid #e0e7f0; border-right: 0; padding: 0 0 12px; }
+  .analysis-contract-page .analysis-brief-question dl { grid-template-columns: 1fr; }
+  .analysis-contract-page .analysis-brief-assumptions { grid-template-columns: 1fr; }
+  .analysis-contract-page .analysis-brief-current-screen { grid-template-columns: 1fr; }
+  .analysis-contract-page .analysis-brief-current-screen b { border-left: 0; grid-column: 1; padding-left: 0; }
+  .analysis-contract-page .analysis-brief-table { border: 0; gap: 8px; overflow: visible; }
+  .analysis-contract-page .analysis-brief-table-header { display: none; }
+  .analysis-contract-page .analysis-brief-row { border: 1px solid #dce5f0; border-radius: 9px; grid-template-columns: minmax(0, 1fr) auto auto; }
+  .analysis-contract-page .analysis-brief-name,
+  .analysis-contract-page .analysis-brief-metric { grid-column: 1 / -1; }
+}
 .evidence-planning-panel { background: #f7f9fc; border: 1px solid #d8e1ed; border-radius: 16px; margin-top: 16px; overflow: hidden; }
 .evidence-plan-toggle { align-items: center; background: transparent; border: 0; color: inherit; cursor: pointer; display: flex; font: inherit; gap: 20px; justify-content: space-between; padding: 16px 18px; text-align: left; width: 100%; }
 .evidence-plan-toggle > div:first-child { display: grid; gap: 3px; }

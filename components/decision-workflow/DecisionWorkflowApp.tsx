@@ -508,10 +508,12 @@ export function DecisionWorkflowApp() {
         {isConfirmationPage && plan && analysisBrief ? (
           <section className="analysis-contract-page" aria-labelledby="analysis-brief-title">
             <div className="analysis-contract-intro">
-              <button className="text-action" type="button" onClick={restart}>← Edit original question</button>
-              <div className="eyebrow">Human checkpoint · before calculation</div>
-              <h1>Confirm what the analyst will calculate</h1>
-              <p>The analyst translated your question into a scope, comparison method, and evidence boundary. Your edits below shape the investigation and what it may conclude.</p>
+              <div className="analysis-contract-nav">
+                <button className="text-action" type="button" onClick={restart}>← Edit original question</button>
+                <span>Human checkpoint · before analysis</span>
+              </div>
+              <h1>Review the analysis plan</h1>
+              <p>Confirm the question, method, and evidence boundaries before the analyst runs.</p>
             </div>
             <AnalysisBriefPanel brief={analysisBrief} onConfirm={confirmAndRun} />
           </section>

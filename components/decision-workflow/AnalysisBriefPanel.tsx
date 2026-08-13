@@ -61,9 +61,9 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
     <section className="analysis-brief-panel" aria-labelledby="analysis-brief-title" data-status={brief.status}>
       <header className="analysis-brief-header">
         <div>
-          <div className="eyebrow">Question and consideration check</div>
-          <h2 id="analysis-brief-title">Question, model, and decision boundaries</h2>
-          <p>This is the last checkpoint before analysis. Confirm the intended outcome, comparison method, and which evidence can support—or block—the conclusion.</p>
+          <div className="eyebrow">Analysis contract</div>
+          <h2 id="analysis-brief-title">Question and evidence check</h2>
+          <p>Edit anything that would change what the analyst compares or what the result is allowed to mean.</p>
         </div>
         <div className="analysis-brief-actions">
           <span className={`analysis-brief-status ${brief.status}`}>{brief.status === "confirmed" ? "Confirmed" : "Needs confirmation"}</span>
@@ -106,7 +106,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
 
         <section className="analysis-brief-considerations" aria-label="Analysis considerations">
           <div className="analysis-brief-current-screen">
-            <strong>Calculation the analyst proposes</strong>
+            <strong>Method and inputs</strong>
             <div>
               <p>{brief.currentScreen.inputs.join(" · ")}</p>
               <small>{brief.currentScreen.method}</small>
@@ -164,7 +164,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
 
       {editing ? (
         <footer className="analysis-brief-footer">
-          <span>{weightsValid ? "Ready to calculate" : `Every weighted category must be above 0% and total 100%; currently ${weightTotal}%`}</span>
+          <span>{weightsValid ? "Ready to run with these boundaries" : `Every weighted category must be above 0% and total 100%; currently ${weightTotal}%`}</span>
           <div>
             {brief.status === "confirmed" ? <button className="secondary-action" type="button" onClick={() => { setDraft(brief); setEditing(false); }}>Cancel</button> : null}
             <button className="primary-action" type="button" disabled={!weightsValid || !draft.rewrittenQuestion.trim()} onClick={confirm}>Confirm and run analysis <span aria-hidden="true">→</span></button>
