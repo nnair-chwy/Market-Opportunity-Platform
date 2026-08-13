@@ -82,7 +82,8 @@ test("typed perspective view contracts keep measures namespaced and non-scored f
 test("opening page stays responsive without horizontal overflow", () => {
   assert.match(css, /\.adaptive-opening[^{]*\{[^}]*overflow-x:\s*hidden/s);
   assert.match(css, /\.question-page:has\(\.adaptive-opening\) \.decision-content[^{]*\{[^}]*overflow-x:\s*hidden/s);
-  assert.match(css, /\.adaptive-cvc-views[^{]*\{[^}]*overflow-x:\s*auto/s);
+  assert.match(css, /\.adaptive-cvc-views[^{]*\{[^}]*display:\s*grid[^}]*overflow:\s*hidden/s);
+  assert.match(css, /\.adaptive-opening \.adaptive-cvc-views[^{]*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(css, /@media \(max-width: 680px\)/);
   assert.match(css, /@media \(max-width: 1050px\)/);
 });
