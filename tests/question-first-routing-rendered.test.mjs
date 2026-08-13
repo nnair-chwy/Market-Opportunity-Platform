@@ -72,3 +72,13 @@ test("selected analyst leads expose fixture values and drive the map context mea
   assert.match(workflow, /selectedContextMetric/);
   assert.match(workflow, /contextMetric=\{selectedContextMetric\}/);
 });
+
+test("finding colors stay synchronized between the map and finding cards", () => {
+  assert.match(workflow, /findings=\{investigation\?\.leads \?\? \[\]\}/);
+  assert.match(workflow, /selectedLeadId=\{selectedLeadId\}/);
+  assert.match(focusMap, /CBSA_FINDING_LAYER_ID/);
+  assert.match(focusMap, /finding_color/);
+  assert.match(focusMap, /Markets in the same pair share a color/);
+  assert.match(investigationPanel, /--lead-color/);
+  assert.match(investigationPanel, /investigationLeadColor/);
+});

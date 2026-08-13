@@ -617,6 +617,8 @@ export function DecisionWorkflowApp() {
                     focus={displayedGeographicFocus}
                     modeLabel={geographyModeLabel(plan)}
                     contextMetric={selectedContextMetric}
+                    findings={investigation?.leads ?? []}
+                    selectedLeadId={selectedLeadId}
                   />
                 </div>
               ) : null}

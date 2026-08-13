@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
 import { currentClinics } from "@/lib/locations/map-data";
+import { investigationLeadColor } from "@/lib/planning/lead-map";
 import type { InvestigationFollowUp, InvestigationLead, MarketInvestigation } from "@/lib/planning/market-investigation";
 
 type MarketInvestigationPanelProps = {
@@ -103,8 +104,9 @@ export function MarketInvestigationPanel({
                 className={selectedLeadId === lead.id ? "active" : undefined}
                 aria-pressed={selectedLeadId === lead.id}
                 onClick={() => onSelectLead(lead)}
+                style={{ "--lead-color": investigationLeadColor(index) } as CSSProperties}
               >
-                <span className="market-investigation-rank">Lead {index + 1}</span>
+                <span className="market-investigation-rank"><i />Finding {index + 1} · {lead.marketIds.length === 1 ? "individual" : "pair"}</span>
                 <strong>{lead.title}</strong>
                 <p>{lead.observation}</p>
                 <span className="market-investigation-meaning">Why it matters: {lead.businessMeaning}</span>
