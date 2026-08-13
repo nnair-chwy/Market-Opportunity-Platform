@@ -136,9 +136,9 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
                 </div>
                 <div role="cell" className="analysis-brief-metric">
                   {editing
-                    ? <textarea value={item.metric} aria-label={`${item.label} metric`} onChange={(event) => updateConsideration(item.id, { metric: event.target.value })} rows={2} />
-                    : <span>{item.metric}</span>}
-                  <small>{item.whyItMatters}</small>
+                    ? <input value={item.metric} aria-label={`${item.label} metric`} title={item.metric} onChange={(event) => updateConsideration(item.id, { metric: event.target.value })} />
+                    : <span title={item.metric}>{item.metric}</span>}
+                  <small title={item.whyItMatters}>{item.whyItMatters}</small>
                 </div>
                 <div role="cell" className="analysis-brief-classification analysis-brief-role">
                   <span className={`role ${item.role}`}>{roleLabel(item.role)}</span>
