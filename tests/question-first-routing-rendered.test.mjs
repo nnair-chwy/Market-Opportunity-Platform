@@ -40,8 +40,8 @@ test("review page routes result workspace types without interactive comparison",
   assert.match(workflow, /isResultPage/);
   assert.match(workflow, /resolveGeographicFocus/);
   assert.match(workflow, /decision-review-primary/);
-  assert.match(workflow, /Draft action packet/);
-  assert.match(workflow, /Download action packet/);
+  assert.match(workflow, /Action packet/);
+  assert.match(workflow, /Download full report/);
   assert.match(workflow, /Findings and proposed action/);
   assert.match(workflow, /packet-action-details/);
   assert.match(workflow, /Action details/);

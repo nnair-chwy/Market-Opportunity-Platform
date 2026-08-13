@@ -92,7 +92,7 @@ test("governed planning, packets, AI summary, and persistence remain wired", () 
   assert.match(workflow, /evaluationPlanResponseSchema\.safeParse/);
   assert.match(workflow, /setPhase\("interpreting"\)/);
   assert.match(workflow, /Save action packet/);
-  assert.match(workflow, /Download action packet/);
+  assert.match(workflow, /Download full report/);
   assert.match(workflow, /Findings and proposed action/);
   assert.doesNotMatch(workflow, /AskAiPanel/);
   assert.match(workflow, /market-intelligence-action-packets/);

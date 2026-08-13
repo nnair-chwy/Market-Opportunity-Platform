@@ -49,7 +49,7 @@ test("adaptive homepage transition retains the governed plan and action-packet w
   assert.match(workflow, /setPhase\("running"\)/);
   assert.match(workflow, /setPhase\("packet"\)/);
   assert.match(workflow, /Save action packet/);
-  assert.match(workflow, /Download action packet/);
+  assert.match(workflow, /Download full report/);
   assert.match(workflow, /Findings and proposed action/);
   assert.doesNotMatch(workflow, /AskAiPanel/);
   assert.match(workflow, /data-proposal-method/);

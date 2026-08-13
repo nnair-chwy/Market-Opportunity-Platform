@@ -66,7 +66,7 @@ export const reviewableActionPacketSchema = z.object({
     currentScreen: z.object({
       inputs: z.array(z.string().trim().min(1)),
       method: z.string().trim().min(1),
-      considerationEditsRecalculate: z.literal(false),
+      considerationEditsRecalculate: z.boolean(),
     }).strict(),
     considerations: z.array(z.object({
       id: z.string().trim().min(1),
@@ -117,8 +117,13 @@ export const reviewableActionPacketSchema = z.object({
     rejectedPatterns: z.array(z.string().trim().min(1)),
     limitations: z.array(z.string().trim().min(1)),
     sourceIds: z.array(z.string().trim().min(1)),
-    allowedUse: z.literal("market_context_only"),
-    scoringEligibility: z.literal("none"),
+    allowedUse: z.enum(["market_context_only", "synthetic_prototype_only"]),
+    scoringEligibility: z.enum(["none", "synthetic_prototype_only"]),
+    formula: z.array(z.object({
+      id: z.string().trim().min(1),
+      label: z.string().trim().min(1),
+      weightPercent: z.number().min(0).max(100),
+    }).strict()).optional(),
     followUps: z.array(z.object({
       id: z.string().trim().min(1),
       leadId: z.string().trim().min(1),
@@ -261,10 +266,10 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "### Working assumptions",
     bulletList(packet.analysisBrief.assumptions, "None listed"),
     "",
-    "### Current screen mechanics",
+    "### Confirmed calculation mechanics",
     `- Inputs: ${packet.analysisBrief.currentScreen.inputs.join("; ")}`,
     `- Method: ${packet.analysisBrief.currentScreen.method}`,
-    "- Human consideration edits recalculate this screen: no",
+    `- Human consideration edits recalculate this screen: ${packet.analysisBrief.currentScreen.considerationEditsRecalculate ? "yes" : "no"}`,
     "",
     "### Considerations",
     ...packet.analysisBrief.considerations.flatMap((item) => [
@@ -312,7 +317,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "",
   ] : [];
   const analysisSections = packet.analysisAppendix ? [
-    "## Analyst screening",
+    packet.analysisAppendix.scoringEligibility === "synthetic_prototype_only" ? "## Confirmed recommendation screening" : "## Analyst screening",
     `- Perspective: ${packet.analysisAppendix.perspectiveId}`,
     `- Coverage: ${packet.analysisAppendix.comparisonsExamined.toLocaleString()} comparisons screened; ${packet.analysisAppendix.leads.length} review leads kept`,
     `- Screening universe: ${packet.analysisAppendix.screeningScope.marketUniverse} metros; ${packet.analysisAppendix.screeningScope.eligibleComparisons.toLocaleString()} eligible comparisons of ${packet.analysisAppendix.screeningScope.allMarketPairs.toLocaleString()} possible metro pairs`,
@@ -323,6 +328,9 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `- Process: ${packet.analysisAppendix.toolsRun.join(" → ")}`,
     `- Readiness: ${packet.analysisAppendix.readiness.label} — ${packet.analysisAppendix.readiness.summary}`,
     `- Source IDs: ${packet.analysisAppendix.sourceIds.join(", ")}`,
+    ...(packet.analysisAppendix.formula?.length ? [
+      `- Confirmed formula: ${packet.analysisAppendix.formula.map((item) => `${item.label} ${item.weightPercent}%`).join("; ")}`,
+    ] : []),
     "",
     "### Question-specific leads",
     ...packet.analysisAppendix.leads.flatMap((lead, index) => [

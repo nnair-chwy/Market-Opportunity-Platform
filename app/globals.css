@@ -1069,8 +1069,53 @@
 .analysis-brief-footer { align-items: center; border-top: 1px solid #dfe6f0; display: flex; gap: 12px; justify-content: space-between; margin-top: 14px; padding-top: 13px; }
 .analysis-brief-footer > span { color: #68788f; font-size: 10px; }
 .analysis-brief-footer > div { display: flex; gap: 8px; }
+
+/* Full-page analysis contract shown before any calculation runs. */
+.confirmation-page-layout { display: block; max-width: none; }
+.confirmation-page-layout .decision-rail { display: none; }
+.analysis-contract-page {
+  background: radial-gradient(circle at 92% 4%, rgba(74, 131, 234, .12), transparent 28%), #f5f8fc;
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: clamp(30px, 5vw, 72px) clamp(24px, 6vw, 96px) 64px;
+}
+.analysis-contract-intro { margin: 0 auto; max-width: 1320px; }
+.analysis-contract-intro .text-action { background: transparent; border: 0; color: #4d6485; cursor: pointer; font: inherit; font-size: 13px; margin: 0 0 30px; padding: 0; }
+.analysis-contract-intro h1 { color: #14233d; font-size: clamp(36px, 4vw, 58px); letter-spacing: -.045em; line-height: 1.02; margin: 9px 0 14px; max-width: 820px; }
+.analysis-contract-intro > p { color: #576984; font-size: 17px; line-height: 1.55; margin: 0; max-width: 760px; }
+.analysis-contract-page .analysis-brief-panel { background: #fff; border-left-width: 1px; box-shadow: 0 22px 70px rgba(30, 55, 91, .09); margin: 32px auto 0; max-width: 1320px; padding: clamp(22px, 3vw, 38px); }
+.analysis-contract-page .analysis-brief-header h2 { font-size: 28px; }
+.analysis-contract-page .analysis-brief-header p { font-size: 14px; max-width: 720px; }
+.analysis-contract-page .analysis-brief-frame { gap: 24px; grid-template-columns: minmax(330px, .8fr) minmax(560px, 1.45fr); margin-top: 24px; }
+.analysis-contract-page .analysis-brief-question,
+.analysis-contract-page .analysis-brief-considerations { border-radius: 15px; padding: 22px; }
+.analysis-contract-page .analysis-brief-question > p,
+.analysis-contract-page .analysis-brief-question label strong,
+.analysis-contract-page .analysis-brief-assumptions > strong { font-size: 13px; }
+.analysis-contract-page .analysis-brief-question textarea,
+.analysis-contract-page .analysis-brief-assumptions textarea { font-size: 14px; padding: 11px 12px; }
+.analysis-contract-page .analysis-brief-question dt,
+.analysis-contract-page .analysis-brief-question dd,
+.analysis-contract-page .analysis-brief-assumptions ul { font-size: 12px; }
+.analysis-contract-page .analysis-brief-current-screen { gap: 7px; padding: 15px; }
+.analysis-contract-page .analysis-brief-current-screen strong { font-size: 11px; }
+.analysis-contract-page .analysis-brief-current-screen p { font-size: 12px; }
+.analysis-contract-page .analysis-brief-current-screen small,
+.analysis-contract-page .analysis-brief-current-screen b { font-size: 11px; }
+.analysis-contract-page .analysis-brief-row { grid-template-columns: minmax(0, 1fr) 126px 70px; padding: 14px 0; }
+.analysis-contract-page .analysis-brief-row > div:first-child strong { font-size: 14px; }
+.analysis-contract-page .analysis-brief-row > div:first-child span { font-size: 12px; }
+.analysis-contract-page .analysis-brief-row > div:first-child small { font-size: 11px; }
+.analysis-contract-page .analysis-brief-row input,
+.analysis-contract-page .analysis-brief-row textarea { font-size: 12px; }
+.analysis-contract-page .analysis-brief-weight input { font-size: 15px; width: 54px; }
+.analysis-contract-page .analysis-brief-weight-note,
+.analysis-contract-page .analysis-brief-footer > span { font-size: 11px; }
+.analysis-contract-page .analysis-brief-footer { margin-top: 22px; padding-top: 20px; }
+.analysis-contract-page .analysis-brief-footer .primary-action { min-height: 48px; padding-inline: 22px; }
 @media (max-width: 900px) {
   .analysis-brief-frame { grid-template-columns: 1fr; }
+  .analysis-contract-page .analysis-brief-frame { grid-template-columns: 1fr; }
 }
 @media (max-width: 620px) {
   .analysis-brief-header,

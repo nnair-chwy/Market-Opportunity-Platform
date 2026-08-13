@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
 import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
 import { DecisionGraphAnimation } from "@/components/decision-workflow/DecisionGraphAnimation";
-import { EvidencePlanningPanel } from "@/components/decision-workflow/EvidencePlanningPanel";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
@@ -20,6 +19,7 @@ import {
 } from "@/lib/planning/evidence-plan";
 import {
   answerInvestigationFollowUp,
+  runConfirmedMarketInvestigation,
   runMarketInvestigation,
   type InvestigationFollowUp,
   type InvestigationLead,
@@ -45,7 +45,7 @@ import {
   type SisterGeographySuggestion,
 } from "@/lib/planning";
 
-type Phase = "question" | "interpreting" | "running" | "packet" | "saved" | "error";
+type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error";
 
 type SavedPacket = {
   id: string;
@@ -85,6 +85,7 @@ function proposalMethodLabel(method: EvaluationPlan["proposalMethod"]) {
 }
 
 function workspaceHeading(plan: EvaluationPlan, investigation?: MarketInvestigation | null) {
+  if (investigation?.scoringEligibility === "synthetic_prototype_only") return "Markets to advance into detailed validation";
   if (investigation?.leads.length) return "Market investigation review";
   if (plan.resultWorkspaceType === "clarification") return "Clarification required";
   if (plan.resultWorkspaceType === "evidence_readiness") return "Evidence readiness review";
@@ -209,6 +210,23 @@ export function DecisionWorkflowApp() {
     }
     let cancelled = false;
     setPacketSummaryState("loading");
+    if (investigation?.scoringEligibility === "synthetic_prototype_only") {
+      const formula = investigation.formula?.map((item) => `${item.label} ${item.weightPercent}%`).join(" · ") ?? "the confirmed formula";
+      setPacketSummary({
+        title: "Findings and proposed action",
+        draftOnlyNotice: "Draft synthetic screening result for human review. It prioritizes validation work and cannot approve a market, site, lease, spend, or clinic opening.",
+        origin: "deterministic_fallback",
+        state: "deterministic_fallback",
+        modelVersion: null,
+        promptVersion: "evaluation-packet-findings-summary-v1",
+        evidenceIndicates: `${investigation.screeningScope.marketUniverse} metropolitan markets were screened with ${formula}. ${investigation.leads.length} markets were retained for detailed validation.${selectedLead ? ` The selected lead is ${selectedLead.title}: ${selectedLead.observation}` : ""}`,
+        whyActionRelevant: selectedLead?.businessMeaning ?? "The shortlist focuses governed follow-up on the markets most responsive to the confirmed assumptions.",
+        ownerNextStep: selectedLead?.nextEvidence ?? "Replace synthetic inputs with governed business evidence and rerun the confirmed formula.",
+        remainsUnknown: investigation.readiness.missing.join("; "),
+      });
+      setPacketSummaryState("ready");
+      return;
+    }
     setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
     void (async () => {
       try {
@@ -239,7 +257,7 @@ export function DecisionWorkflowApp() {
     return () => {
       cancelled = true;
     };
-  }, [phase, plan, selectedAction]);
+  }, [investigation, phase, plan, selectedAction, selectedLead]);
 
   async function startWorkflow(nextQuestion = question, nextPerspectiveId: PerspectiveId = perspectiveId) {
     if (!nextQuestion.trim()) return;
@@ -279,18 +297,30 @@ export function DecisionWorkflowApp() {
       const nextInvestigation = runMarketInvestigation(parsed.data.plan);
       const nextBrief = buildAnalysisBrief(parsed.data.plan, nextInvestigation);
       const nextEvidencePlan = buildEvidencePlan(parsed.data.plan);
-      setInvestigation(nextInvestigation);
+      setInvestigation(null);
       setAnalysisBrief(nextBrief);
       setEvidencePlan(nextEvidencePlan);
-      setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, nextInvestigation, nextEvidencePlan));
-      setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
+      setEvaluationDefinition(null);
+      setSelectedLeadId(null);
       setSelectedActionId(proposedActionFromPlan(parsed.data.plan).id);
-      setActiveStep(0);
-      setPhase("running");
+      setPhase("confirming");
     } catch {
       setRequestError("The evaluation plan service is unavailable. Retry or edit the question.");
       setPhase("error");
     }
+  }
+
+  function confirmAndRun(nextBrief: AnalysisBrief) {
+    if (!plan) return;
+    const nextInvestigation = runConfirmedMarketInvestigation(plan, nextBrief);
+    const nextEvidencePlan = evidencePlan ?? buildEvidencePlan(plan);
+    setAnalysisBrief(nextBrief);
+    setInvestigation(nextInvestigation);
+    setEvidencePlan(nextEvidencePlan);
+    setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, nextInvestigation, nextEvidencePlan));
+    setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
+    setActiveStep(0);
+    setPhase("running");
   }
 
   function restart() {
@@ -401,6 +431,7 @@ export function DecisionWorkflowApp() {
 
   const showPacket = phase === "packet" || phase === "saved";
   const isQuestionPage = activeView === "workflow" && phase === "question";
+  const isConfirmationPage = activeView === "workflow" && phase === "confirming";
   const isAnimationPage = activeView === "workflow" && (phase === "interpreting" || phase === "running");
   const isResultPage = activeView === "workflow" && showPacket;
   const isErrorPage = activeView === "workflow" && phase === "error";
@@ -408,6 +439,8 @@ export function DecisionWorkflowApp() {
     ? "saved-list"
     : isQuestionPage
       ? "question"
+      : isConfirmationPage
+        ? "confirmation"
       : isAnimationPage
         ? "animation"
         : isResultPage
@@ -417,6 +450,8 @@ export function DecisionWorkflowApp() {
             : "workspace";
   const workspaceLayoutClass = isQuestionPage
     ? "question-layout"
+    : isConfirmationPage
+      ? "confirmation-page-layout"
     : isAnimationPage
       ? "animation-page-layout"
       : "workspace-layout packet-workspace-layout result-page-layout";
@@ -433,9 +468,9 @@ export function DecisionWorkflowApp() {
           <p>Move from a business question to a reviewable next step.</p>
           <ol className="rail-steps">
             <li className={phase === "question" ? "current" : "complete"}><span>1</span><div><strong>Ask</strong><small>State the decision</small></div></li>
-            <li className={phase === "interpreting" || phase === "running" ? "current" : showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Trace</strong><small>Follow the decision graph</small></div></li>
-            <li className={showPacket && phase !== "saved" ? "current" : phase === "saved" ? "complete" : ""}><span>3</span><div><strong>Review</strong><small>Read the action packet</small></div></li>
-            <li className={phase === "saved" ? "current complete" : ""}><span>4</span><div><strong>Save</strong><small>Keep the reviewable draft</small></div></li>
+            <li className={phase === "interpreting" || phase === "confirming" ? "current" : phase === "running" || showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Confirm</strong><small>Set the analysis contract</small></div></li>
+            <li className={phase === "running" ? "current" : showPacket ? "complete" : ""}><span>3</span><div><strong>Run</strong><small>Calculate the confirmed model</small></div></li>
+            <li className={showPacket ? "current" : ""}><span>4</span><div><strong>Review</strong><small>Read and export results</small></div></li>
           </ol>
           <div className="rail-note"><strong>Decision boundary</strong><p>The workspace prepares evidence and next actions. An accountable owner makes the business decision.</p></div>
         </aside>
@@ -469,6 +504,18 @@ export function DecisionWorkflowApp() {
               }}
               onOpenSaved={() => setActiveView("saved")}
             />
+          </section>
+        ) : null}
+
+        {isConfirmationPage && plan && analysisBrief ? (
+          <section className="analysis-contract-page" aria-labelledby="analysis-brief-title">
+            <div className="analysis-contract-intro">
+              <button className="text-action" type="button" onClick={restart}>← Edit original question</button>
+              <div className="eyebrow">Human checkpoint · before calculation</div>
+              <h1>Confirm what the analyst will calculate</h1>
+              <p>The analyst proposed this formula from your question and the evidence currently available. Your edits below change the calculation and final shortlist.</p>
+            </div>
+            <AnalysisBriefPanel brief={analysisBrief} onConfirm={confirmAndRun} />
           </section>
         ) : null}
 
@@ -549,9 +596,9 @@ export function DecisionWorkflowApp() {
             >
               <div className="packet-heading">
                 <div>
-                  <div className="eyebrow">{phase === "saved" ? "Saved action packet" : "Decision review"}</div>
+                  <div className="eyebrow">{phase === "saved" ? "Saved recommendation" : "Recommendation"}</div>
                   <h1 id="packet-title">{workspaceHeading(plan, investigation)}</h1>
-                  <p className="lead">{packetSummaryFromPlan(plan)}</p>
+                  <p className="lead">{investigation?.readiness.summary ?? packetSummaryFromPlan(plan)}</p>
                 </div>
                 <div className="packet-heading-actions">
                   <span className="draft-pill">{phase === "saved" ? "Saved draft" : "Draft for review"}</span>
@@ -560,31 +607,9 @@ export function DecisionWorkflowApp() {
               </div>
 
               <div className="question-ribbon packet-question">
-                <span>Your question</span>
-                <strong>{plan.originalQuestion}</strong>
+                <span>Confirmed question</span>
+                <strong>{analysisBrief?.rewrittenQuestion ?? plan.originalQuestion}</strong>
               </div>
-
-              {analysisBrief ? (
-                <AnalysisBriefPanel
-                  brief={analysisBrief}
-                  onConfirm={(nextBrief) => {
-                    setAnalysisBrief(nextBrief);
-                    if (investigation && evidencePlan) {
-                      setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, investigation, evidencePlan));
-                    }
-                  }}
-                />
-              ) : null}
-
-              {analysisBrief && investigation && evidencePlan ? (
-                <EvidencePlanningPanel
-                  analysisBrief={analysisBrief}
-                  investigation={investigation}
-                  evidencePlan={evidencePlan}
-                  onEvidencePlanChange={setEvidencePlan}
-                  onDefinitionChange={setEvaluationDefinition}
-                />
-              ) : null}
 
               {investigation ? (
                 <MarketInvestigationPanel
@@ -617,12 +642,12 @@ export function DecisionWorkflowApp() {
 
                 <div className="decision-review-side">
                   <div className="action-packet-card">
-                    <div className="section-label">Draft action packet</div>
+                    <div className="section-label">Action packet</div>
                     <p className="action-packet-governance-note">
                       Draft for accountable review. This packet does not approve a market, site, lease, or spend decision.
                     </p>
-                    <h2>{selectedAction.title}</h2>
-                    <p>{selectedAction.summary}</p>
+                    <h2>{selectedLead ? `Validate ${selectedLead.title}` : selectedAction.title}</h2>
+                    <p>{selectedLead?.businessMeaning ?? selectedAction.summary}</p>
 
                     <section
                       className="packet-findings"
@@ -695,7 +720,7 @@ export function DecisionWorkflowApp() {
                             if (reviewablePacket) downloadReviewableActionPacket(reviewablePacket);
                           }}
                         >
-                          Download action packet
+                          Download full report
                         </button>
                         <button className="primary-action" onClick={savePacket}>
                           {phase === "saved" ? "Saved" : "Save action packet"} <span aria-hidden="true">✓</span>

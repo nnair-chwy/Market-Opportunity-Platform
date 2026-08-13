@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { planEvaluation } from "../lib/planning/index.ts";
-import { answerInvestigationFollowUp, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
+import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
+import { answerInvestigationFollowUp, runConfirmedMarketInvestigation, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
 
 test("stores the exact submitted question with a CVC investigation", () => {
   const question = "Which comparable markets differ most in clinic access and demand—and why?";
@@ -47,4 +48,31 @@ test("a lead-scoped follow-up stays grounded in the selected lead", () => {
   assert.match(answer, new RegExp(lead.strength.split(" ")[0].replace("×", "\\×")));
   assert.match(answer, /Important boundary:/);
   assert.match(answer, /Best next check:/);
+});
+
+test("confirmed CVC weights drive a versioned synthetic validation shortlist", () => {
+  const plan = planEvaluation("Where should we open the next clinic?", "cvc");
+  const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  const confirmed = { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-13T12:00:00.000Z" };
+  const investigation = runConfirmedMarketInvestigation(plan, confirmed);
+  assert.equal(investigation.scoringEligibility, "synthetic_prototype_only");
+  assert.equal(investigation.leads.length, 5);
+  assert.equal(investigation.formula?.reduce((total, item) => total + item.weightPercent, 0), 100);
+  assert.match(investigation.leads[0].observation, /of 100/);
+  assert.match(investigation.leads[0].challenge, /synthetic/i);
+});
+
+test("different CVC questions propose different formulas and shortlists", () => {
+  function run(question: string) {
+    const plan = planEvaluation(question, "cvc");
+    const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+    return {
+      weights: proposed.considerations.filter((item) => item.role === "weighted_preference").map((item) => item.weightPercent),
+      result: runConfirmedMarketInvestigation(plan, { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-13T12:00:00.000Z" }),
+    };
+  }
+  const demand = run("Which markets have the strongest customer demand growth?");
+  const supply = run("Where is veterinary supply whitespace?");
+  assert.notDeepEqual(demand.weights, supply.weights);
+  assert.notDeepEqual(demand.result.leads.map((lead) => lead.title), supply.result.leads.map((lead) => lead.title));
 });

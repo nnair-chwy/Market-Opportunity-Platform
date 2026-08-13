@@ -8,7 +8,7 @@ test("CVC analysis brief proposes editable preferences separately from gates and
   const plan = planEvaluation("Which comparable markets differ most in clinic footprint and demand?", "cvc");
   const brief = buildAnalysisBrief(plan, runMarketInvestigation(plan));
   assert.equal(brief.originalQuestion, plan.originalQuestion);
-  assert.equal(brief.rewrittenQuestion, plan.intent.conciseInterpretation);
+  assert.match(brief.rewrittenQuestion, /3–5 U\.S\. metropolitan markets/);
   assert.equal(analysisBriefWeightTotal(brief), 100);
   assert.ok(brief.considerations.some((item) => item.role === "weighted_preference"));
   assert.ok(brief.considerations.some((item) => item.role === "validity_gate" && item.weightPercent === null));

@@ -8,7 +8,7 @@ import {
   proposedActionFromPlan,
   reviewableActionPacketSchema,
 } from "../lib/planning/index.ts";
-import { answerInvestigationFollowUp, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
+import { answerInvestigationFollowUp, runConfirmedMarketInvestigation, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
 import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
 import { buildEvidencePlan, generateEvaluationDefinitionDraft } from "../lib/planning/evidence-plan.ts";
 import { explainFindingsAndProposal } from "../lib/planning/packet-ai-summary.ts";
@@ -96,8 +96,9 @@ test("reviewable packet exports the human-confirmed question and considerations"
   assert.equal(packet.analysisBrief?.status, "confirmed");
   assert.match(document, /Confirmed analysis framing/);
   assert.match(document, /Rewritten question/);
-  assert.match(document, /Addressable demand/);
+  assert.match(document, /Chewy demand/);
   assert.match(document, /weighted preference/);
+  assert.match(document, /Human consideration edits recalculate this screen: yes/);
 });
 
 test("reviewable packet exports evidence readiness and the generated execution plan", () => {
@@ -145,4 +146,28 @@ test("reviewable packet preserves the selected lead and map measure", () => {
   assert.match(document, /Saved review context/);
   assert.match(document, new RegExp(selectedLead.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(document, /Map context measure: population density/);
+});
+
+test("download report contains the confirmed formula and ranked validation evidence", () => {
+  const plan = planEvaluation("Where should we open the next CVC clinic?", "cvc");
+  const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  const brief = { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-13T22:00:00.000Z" };
+  const investigation = runConfirmedMarketInvestigation(plan, brief);
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-13T22:01:00.000Z",
+    investigation,
+    [],
+    brief,
+    undefined,
+    undefined,
+    { selectedLeadId: investigation.leads[0].id, contextMetric: "household_count" },
+  );
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Confirmed recommendation screening/);
+  assert.match(document, /Confirmed formula: Chewy demand 45%/);
+  assert.match(document, /validation priority 1/);
+  assert.match(document, /largest score contributions/i);
+  assert.match(document, /synthetic/i);
 });

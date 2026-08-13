@@ -32,8 +32,9 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
     setEditing(brief.status !== "confirmed");
   }, [brief]);
   const weightTotal = useMemo(() => analysisBriefWeightTotal(draft), [draft]);
-  const hasWeights = draft.considerations.some((item) => item.role === "weighted_preference");
-  const weightsValid = !hasWeights || Math.abs(weightTotal - 100) < 0.001;
+  const weightedItems = draft.considerations.filter((item) => item.role === "weighted_preference");
+  const hasWeights = weightedItems.length > 0;
+  const weightsValid = !hasWeights || (Math.abs(weightTotal - 100) < 0.001 && weightedItems.every((item) => (item.weightPercent ?? 0) > 0));
 
   function updateConsideration(id: string, patch: Partial<AnalysisConsideration>) {
     setDraft((current) => ({
@@ -61,8 +62,8 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
       <header className="analysis-brief-header">
         <div>
           <div className="eyebrow">Question and consideration check</div>
-          <h2 id="analysis-brief-title">How this analysis is framed</h2>
-          <p>Read this alongside the visualization. Edit anything the analyst should interpret differently.</p>
+          <h2 id="analysis-brief-title">Question, model, and decision boundaries</h2>
+          <p>This is the last checkpoint before calculation. Confirm the intended outcome and how much each evidence category should influence the shortlist.</p>
         </div>
         <div className="analysis-brief-actions">
           <span className={`analysis-brief-status ${brief.status}`}>{brief.status === "confirmed" ? "Confirmed" : "Needs confirmation"}</span>
@@ -103,10 +104,12 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
 
         <section className="analysis-brief-considerations" aria-label="Analysis considerations">
           <div className="analysis-brief-current-screen">
-            <strong>What currently drives the visualization</strong>
+            <strong>Calculation the analyst proposes</strong>
             <p>{brief.currentScreen.inputs.join(" · ")}</p>
             <small>{brief.currentScreen.method}</small>
-            <b>Edits below are saved as human guidance but do not recalculate this fixed public-data screen.</b>
+            <b>{brief.currentScreen.considerationEditsRecalculate
+              ? "The confirmed weights below directly control the calculation. No hidden weights are added later."
+              : "This question uses gates and comparisons rather than a blended score."}</b>
           </div>
           <div className="analysis-brief-consideration-heading">
             <div><strong>Considerations</strong><span>What can influence, gate, or contextualize the conclusion</span></div>
@@ -130,7 +133,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
                 </div>
                 <div role="cell" className="analysis-brief-weight">
                   {item.role === "weighted_preference" ? (
-                    editing ? <label><input type="number" min="0" max="100" value={item.weightPercent ?? 0} onChange={(event) => updateConsideration(item.id, { weightPercent: Number(event.target.value) })} /><span>%</span></label> : <strong>{item.weightPercent}%</strong>
+                    editing ? <label><input type="number" min="1" max="100" value={item.weightPercent ?? 0} onChange={(event) => updateConsideration(item.id, { weightPercent: Number(event.target.value) })} /><span>%</span></label> : <strong>{item.weightPercent}%</strong>
                   ) : <span>—</span>}
                 </div>
               </div>
@@ -138,7 +141,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
           </div>
           <p className="analysis-brief-weight-note">
             {hasWeights
-              ? "Weights describe a proposed future preference model. The current public-data screen does not calculate or hide a recommendation score."
+              ? "The analyst proposed these weights from the wording of your question. After confirmation, the versioned engine normalizes every configured metric, applies these weights, and tests how stable the ranking is when weights move."
               : "These considerations guide peer selection and validity checks. Combining them into one weighted score would be misleading for this question."}
           </p>
         </section>
@@ -146,10 +149,10 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
 
       {editing ? (
         <footer className="analysis-brief-footer">
-          <span>{weightsValid ? "Ready to confirm" : `Weights must total 100%; currently ${weightTotal}%`}</span>
+          <span>{weightsValid ? "Ready to calculate" : `Every weighted category must be above 0% and total 100%; currently ${weightTotal}%`}</span>
           <div>
             {brief.status === "confirmed" ? <button className="secondary-action" type="button" onClick={() => { setDraft(brief); setEditing(false); }}>Cancel</button> : null}
-            <button className="primary-action" type="button" disabled={!weightsValid || !draft.rewrittenQuestion.trim()} onClick={confirm}>Confirm analysis framing</button>
+            <button className="primary-action" type="button" disabled={!weightsValid || !draft.rewrittenQuestion.trim()} onClick={confirm}>Confirm and run analysis <span aria-hidden="true">→</span></button>
           </div>
         </footer>
       ) : null}

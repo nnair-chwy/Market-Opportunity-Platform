@@ -1,6 +1,13 @@
 import { publicMarkets } from "../data/public-market-ui.ts";
 import { currentClinics } from "../locations/map-data.ts";
 import type { EvaluationPlan } from "./contracts.ts";
+import type { AnalysisBrief } from "./analysis-brief.ts";
+import snapshotJson from "../../data/synthetic/market-attractiveness/v1/markets.json" with { type: "json" };
+import { MARKET_ATTRACTIVENESS_CONFIGURATION } from "../market-attractiveness/config.ts";
+import { scoreSyntheticMarkets } from "../market-attractiveness/scoring.ts";
+import type { MarketAttractivenessConfiguration, MarketDimensionId, SyntheticMarketSnapshot } from "../market-attractiveness/types.ts";
+
+const confirmedScoringSnapshot = snapshotJson as unknown as SyntheticMarketSnapshot;
 
 export type InvestigationLead = {
   id: string;
@@ -21,7 +28,7 @@ export type MarketInvestigation = {
   originalQuestion: string;
   perspectiveId: "cvc" | "marketing" | "pricing";
   geography: "CBSA";
-  period: "2020–2024 ACS 5-year estimate";
+  period: string;
   readiness: {
     label: "Partial answer" | "Context only";
     summary: string;
@@ -42,8 +49,9 @@ export type MarketInvestigation = {
   rejectedPatterns: string[];
   limitations: string[];
   sourceIds: string[];
-  allowedUse: "market_context_only";
-  scoringEligibility: "none";
+  allowedUse: "market_context_only" | "synthetic_prototype_only";
+  scoringEligibility: "none" | "synthetic_prototype_only";
+  formula?: Array<{ id: string; label: string; weightPercent: number }>;
 };
 
 export type InvestigationFollowUp = {
@@ -309,6 +317,97 @@ export function runMarketInvestigation(plan: EvaluationPlan): MarketInvestigatio
     return marketingInvestigation(plan, rows);
   }
   return contextOnlyInvestigation(plan, rows);
+}
+
+function confirmedCvcConfiguration(brief: AnalysisBrief): MarketAttractivenessConfiguration {
+  const weightByDimension = new Map<MarketDimensionId, number>(
+    brief.considerations
+      .filter((item) => item.role === "weighted_preference")
+      .map((item) => [item.id as MarketDimensionId, item.weightPercent ?? 0]),
+  );
+  const dimensions = MARKET_ATTRACTIVENESS_CONFIGURATION.dimensions.map((dimension) => ({
+    ...dimension,
+    weight: weightByDimension.get(dimension.dimensionId) ?? dimension.weight,
+  }));
+  const metrics = MARKET_ATTRACTIVENESS_CONFIGURATION.metrics.map((metric) => {
+    const originalDimension = MARKET_ATTRACTIVENESS_CONFIGURATION.dimensions.find((dimension) => dimension.dimensionId === metric.dimensionId)!;
+    const confirmedDimension = dimensions.find((dimension) => dimension.dimensionId === metric.dimensionId)!;
+    return { ...metric, weight: (metric.weight / originalDimension.weight) * confirmedDimension.weight };
+  });
+  return {
+    ...MARKET_ATTRACTIVENESS_CONFIGURATION,
+    configurationVersion: `${MARKET_ATTRACTIVENESS_CONFIGURATION.configurationVersion}:confirmed-analysis-v1`,
+    label: "Human-confirmed synthetic CVC market screening",
+    dimensions,
+    metrics,
+    notes: [
+      ...MARKET_ATTRACTIVENESS_CONFIGURATION.notes,
+      `Confirmed question: ${brief.rewrittenQuestion}`,
+      "Dimension weights were proposed from the question and confirmed or edited by a human before calculation.",
+    ],
+  };
+}
+
+export function runConfirmedMarketInvestigation(plan: EvaluationPlan, brief: AnalysisBrief): MarketInvestigation {
+  if (brief.status !== "confirmed") throw new Error("Confirm the analysis brief before running the evaluation.");
+  if (brief.planId !== plan.planId) throw new Error("The confirmed analysis brief does not belong to this plan.");
+  if (plan.perspectiveId !== "cvc") return runMarketInvestigation(plan);
+
+  const configuration = confirmedCvcConfiguration(brief);
+  const publishedFootprintIds = new Set(marketRows().filter((market) => market.clinicCount > 0).map((market) => market.id));
+  const ranked = scoreSyntheticMarkets(confirmedScoringSnapshot, configuration)
+    .filter((market) => market.cohort === "metropolitan")
+    .sort((left, right) => left.cohortRank - right.cohortRank);
+  const eligible = ranked.filter((market) => !market.cbsaCode || !publishedFootprintIds.has(market.cbsaCode));
+  const shortlist = eligible.slice(0, 5);
+  const formula = configuration.dimensions.map((dimension) => ({
+    id: dimension.dimensionId,
+    label: dimension.label,
+    weightPercent: dimension.weight,
+  }));
+  const formulaLabel = formula.map((item) => `${item.label} ${item.weightPercent}%`).join(" · ");
+  const leads = shortlist.map((market, index): InvestigationLead => {
+    const drivers = [...market.subscores].sort((left, right) => right.contribution - left.contribution).slice(0, 2);
+    return {
+      id: `confirmed-cvc-${market.prototypeMarketId}`,
+      marketIds: market.cbsaCode ? [market.cbsaCode] : [],
+      title: `${market.marketName} is validation priority ${index + 1}`,
+      observation: `${market.overallScore.toFixed(1)} of 100 and #${market.cohortRank} across the full synthetic metro cohort. The largest score contributions are ${drivers.map((driver) => `${driver.label} ${driver.contribution.toFixed(1)} points`).join(" and ")}.`,
+      businessMeaning: "Advance this market into detailed demand, trade-area, operating, and real-estate validation; do not treat the synthetic rank as an opening decision.",
+      method: `Cohort-normalized weighted score: ${formulaLabel}`,
+      sampleSize: ranked.length,
+      strength: `${market.overallScore.toFixed(1)}/100 · rank sensitivity ${market.sensitivity.bestRank}–${market.sensitivity.worstRank}`,
+      challenge: "All customer, growth, clinic-supply, workforce, ownership, and engagement fields in this model are synthetic hypotheses; operating feasibility is not scored.",
+      nextEvidence: "Replace synthetic fields with governed demand, clinic capacity, veterinary supply, approved trade areas, staffing, property, and unit-economics evidence, then rerun the confirmed formula.",
+    };
+  });
+  return {
+    ...baseInvestigation(plan, "cvc"),
+    period: "Synthetic prototype snapshot dated 2026-07-31",
+    readiness: {
+      label: "Partial answer",
+      summary: `The confirmed ${formulaLabel} formula produces a five-market validation shortlist. It is a synthetic screening result, not a recommendation to open a clinic.`,
+      missing: ["Governed CVC demand and customer outcomes", "Approved clinic trade areas, capacity, and maturity", "Current veterinary supply, staffing, property feasibility, and unit economics"],
+    },
+    toolsRun: ["Interpret the question", "Propose a question-specific formula", "Confirm assumptions and weights with a human", "Normalize metrics within the metro cohort", "Calculate weighted scores", "Run weight-sensitivity scenarios", "Return the five highest validation priorities"],
+    measuresExamined: configuration.metrics.map((metric) => metric.label),
+    comparisonsExamined: ranked.length,
+    screeningScope: {
+      marketUniverse: ranked.length,
+      eligibleCohort: `${eligible.length} metropolitan markets in the versioned synthetic snapshot without a mapped published CVC clinic`,
+      eligibleComparisons: eligible.length,
+      allMarketPairs: ranked.length * (ranked.length - 1) / 2,
+      selectionRule: "Apply the published-footprint eligibility gate, rank the remaining metropolitan markets using the human-confirmed dimension weights, and retain the top five as validation priorities.",
+      executionMode: "deterministic_local_snapshot",
+    },
+    leads,
+    rejectedPatterns: ["Markets outside the top five under the confirmed weights", "Unmatched map boundaries are retained in the report but cannot be highlighted on the public map"],
+    limitations: ["The ranking is deterministic after confirmation, but its inputs are synthetic and its directional assumptions are unapproved.", "The agent proposes the formula from the question; the human-visible confirmed weights control the calculation.", "The score omits site feasibility, staffing, capacity, economics, cannibalization, and approved trade-area access.", "A high score advances validation only and cannot approve a market, site, lease, or clinic opening."],
+    sourceIds: ["SYNTHETIC-MARKET-ATTRACTIVENESS-2026-07-31-V1", "SRC-014"],
+    allowedUse: "synthetic_prototype_only",
+    scoringEligibility: "synthetic_prototype_only",
+    formula,
+  };
 }
 
 export function answerInvestigationFollowUp(lead: InvestigationLead, question: string) {
