@@ -63,7 +63,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
         <div>
           <div className="eyebrow">Question and consideration check</div>
           <h2 id="analysis-brief-title">Question, model, and decision boundaries</h2>
-          <p>This is the last checkpoint before calculation. Confirm the intended outcome and how much each evidence category should influence the shortlist.</p>
+          <p>This is the last checkpoint before analysis. Confirm the intended outcome, comparison method, and which evidence can support—or block—the conclusion.</p>
         </div>
         <div className="analysis-brief-actions">
           <span className={`analysis-brief-status ${brief.status}`}>{brief.status === "confirmed" ? "Confirmed" : "Needs confirmation"}</span>

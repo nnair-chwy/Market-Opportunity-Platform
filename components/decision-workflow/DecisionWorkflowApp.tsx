@@ -87,7 +87,6 @@ function proposalMethodLabel(method: EvaluationPlan["proposalMethod"]) {
 }
 
 function workspaceHeading(plan: EvaluationPlan, investigation?: MarketInvestigation | null) {
-  if (investigation?.scoringEligibility === "synthetic_prototype_only") return "Markets to advance into detailed validation";
   if (investigation?.leads.length) return "Market investigation review";
   if (plan.resultWorkspaceType === "clarification") return "Clarification required";
   if (plan.resultWorkspaceType === "evidence_readiness") return "Evidence readiness review";
@@ -226,23 +225,6 @@ export function DecisionWorkflowApp() {
     }
     let cancelled = false;
     setPacketSummaryState("loading");
-    if (investigation?.scoringEligibility === "synthetic_prototype_only") {
-      const formula = investigation.formula?.map((item) => `${item.label} ${item.weightPercent}%`).join(" · ") ?? "the confirmed formula";
-      setPacketSummary({
-        title: "Findings and proposed action",
-        draftOnlyNotice: "Draft synthetic screening result for human review. It prioritizes validation work and cannot approve a market, site, lease, spend, or clinic opening.",
-        origin: "deterministic_fallback",
-        state: "deterministic_fallback",
-        modelVersion: null,
-        promptVersion: "evaluation-packet-findings-summary-v1",
-        evidenceIndicates: `${investigation.screeningScope.marketUniverse} metropolitan markets were screened with ${formula}. ${investigation.leads.length} markets were retained for detailed validation.${selectedLead ? ` The selected lead is ${selectedLead.title}: ${selectedLead.observation}` : ""}`,
-        whyActionRelevant: selectedLead?.businessMeaning ?? "The shortlist focuses governed follow-up on the markets most responsive to the confirmed assumptions.",
-        ownerNextStep: selectedLead?.nextEvidence ?? "Replace synthetic inputs with governed business evidence and rerun the confirmed formula.",
-        remainsUnknown: investigation.readiness.missing.join("; "),
-      });
-      setPacketSummaryState("ready");
-      return;
-    }
     setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
     void (async () => {
       try {
@@ -529,7 +511,7 @@ export function DecisionWorkflowApp() {
               <button className="text-action" type="button" onClick={restart}>← Edit original question</button>
               <div className="eyebrow">Human checkpoint · before calculation</div>
               <h1>Confirm what the analyst will calculate</h1>
-              <p>The analyst proposed this formula from your question and the evidence currently available. Your edits below change the calculation and final shortlist.</p>
+              <p>The analyst translated your question into a scope, comparison method, and evidence boundary. Your edits below shape the investigation and what it may conclude.</p>
             </div>
             <AnalysisBriefPanel brief={analysisBrief} onConfirm={confirmAndRun} />
           </section>
@@ -627,6 +609,16 @@ export function DecisionWorkflowApp() {
                 <strong>{analysisBrief?.rewrittenQuestion ?? plan.originalQuestion}</strong>
               </div>
 
+              {displayedGeographicFocus ? (
+                <div className="decision-result-map-shell">
+                  <GeographicFocusMap
+                    focus={displayedGeographicFocus}
+                    modeLabel={geographyModeLabel(plan)}
+                    contextMetric={selectedContextMetric}
+                  />
+                </div>
+              ) : null}
+
               {investigation ? (
                 <MarketInvestigationPanel
                   investigation={investigation}
@@ -648,14 +640,6 @@ export function DecisionWorkflowApp() {
               ) : null}
 
               <div className="decision-review-primary">
-                {displayedGeographicFocus ? (
-                  <GeographicFocusMap
-                    focus={displayedGeographicFocus}
-                    modeLabel={geographyModeLabel(plan)}
-                    contextMetric={selectedContextMetric}
-                  />
-                ) : null}
-
                 <div className="decision-review-side">
                   <div className="action-packet-card">
                     <p className="action-packet-governance-note">

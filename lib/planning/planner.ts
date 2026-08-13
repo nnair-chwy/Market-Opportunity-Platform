@@ -68,7 +68,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
       : topic === "local_growth"
         ? `Assess a local growth or campaign question for ${placeLabel} against approved measurement gates.`
         : topic === "clinic_location"
-          ? `Evaluate clinic-location options for ${placeLabel} using only permitted synthetic or approved fixtures.`
+          ? `Investigate clinic-location evidence for ${placeLabel} using published footprint and governed public context, with missing business evidence kept visible.`
           : requestedAction === "compare"
             ? `Compare ${placeLabel} using the requested public market measure.`
             : `Describe ${placeLabel} with governed public market context.`;
@@ -202,17 +202,17 @@ function actionsFor(
       title: "Open bounded clinic evaluation",
       summary: assessment.message,
       owner: "Real Estate Analytics",
-      timing: assessment.outcome === "blocked" ? "After gates clear" : "Prototype path available",
+      timing: assessment.outcome === "blocked" ? "After gates clear" : "Evidence review available",
       confidence: "Medium",
       evidence: assessment.missingEvidence.length
         ? assessment.missingEvidence
-        : ["Synthetic clinic-site fixtures", "Capability registry assessment"],
+        : ["Published clinic footprint", "Capability registry assessment"],
       tradeoffs: [
-        "Synthetic ranking is not a real-estate recommendation",
+        "No opportunity ranking is produced without governed business evidence",
         "Public Census context cannot enter site scoring",
       ],
       nextStep: assessment.missingApprovals.length
-        ? "Keep the material approval gate visible and review only permitted synthetic outputs."
+        ? "Keep the material approval gate visible and request the governed evidence required for a decision."
         : "Review the bounded clinic evaluation surface with source-linked limitations.",
       outputId: requirementFor(intent).outputId,
       requiresApproval: assessment.missingApprovals.length > 0 || intent.requestedAction === "approve",

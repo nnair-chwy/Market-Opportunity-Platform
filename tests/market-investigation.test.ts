@@ -50,29 +50,41 @@ test("a lead-scoped follow-up stays grounded in the selected lead", () => {
   assert.match(answer, /Best next check:/);
 });
 
-test("confirmed CVC weights drive a versioned synthetic validation shortlist", () => {
+test("confirmed CVC opening questions stay on connected evidence without a fabricated score", () => {
   const plan = planEvaluation("Where should we open the next clinic?", "cvc");
   const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
   const confirmed = { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-13T12:00:00.000Z" };
   const investigation = runConfirmedMarketInvestigation(plan, confirmed);
-  assert.equal(investigation.scoringEligibility, "synthetic_prototype_only");
-  assert.equal(investigation.leads.length, 5);
-  assert.equal(investigation.formula?.reduce((total, item) => total + item.weightPercent, 0), 100);
-  assert.match(investigation.leads[0].observation, /of 100/);
-  assert.match(investigation.leads[0].challenge, /synthetic/i);
+  assert.equal(investigation.scoringEligibility, "none");
+  assert.equal(investigation.leads.length, 6);
+  assert.equal(investigation.formula, undefined);
+  assert.deepEqual(investigation.sourceIds, ["SRC-009", "SRC-016"]);
+  assert.match(investigation.readiness.summary, /cannot yet rank clinic opportunity/i);
 });
 
-test("different CVC questions propose different formulas and shortlists", () => {
+test("exploratory CVC questions remain on the published-footprint and Census path", () => {
+  const plan = planEvaluation("What clinic footprint patterns are worth investigating?", "cvc");
+  const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  const investigation = runConfirmedMarketInvestigation(plan, { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-13T12:00:00.000Z" });
+  assert.equal(proposed.currentScreen.considerationEditsRecalculate, false);
+  assert.equal(proposed.considerations.some((item) => item.role === "weighted_preference"), false);
+  assert.equal(investigation.scoringEligibility, "none");
+  assert.deepEqual(investigation.sourceIds, ["SRC-009", "SRC-016"]);
+});
+
+test("different CVC questions keep distinct intent without changing the evidence boundary", () => {
   function run(question: string) {
     const plan = planEvaluation(question, "cvc");
     const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
     return {
-      weights: proposed.considerations.filter((item) => item.role === "weighted_preference").map((item) => item.weightPercent),
+      rewrittenQuestion: proposed.rewrittenQuestion,
       result: runConfirmedMarketInvestigation(plan, { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-13T12:00:00.000Z" }),
     };
   }
   const demand = run("Which markets have the strongest customer demand growth?");
   const supply = run("Where is veterinary supply whitespace?");
-  assert.notDeepEqual(demand.weights, supply.weights);
-  assert.notDeepEqual(demand.result.leads.map((lead) => lead.title), supply.result.leads.map((lead) => lead.title));
+  assert.notEqual(demand.rewrittenQuestion, supply.rewrittenQuestion);
+  assert.deepEqual(demand.result.sourceIds, supply.result.sourceIds);
+  assert.equal(demand.result.scoringEligibility, "none");
+  assert.equal(supply.result.scoringEligibility, "none");
 });

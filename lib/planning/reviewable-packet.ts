@@ -149,8 +149,8 @@ export const reviewableActionPacketSchema = z.object({
     rejectedPatterns: z.array(z.string().trim().min(1)),
     limitations: z.array(z.string().trim().min(1)),
     sourceIds: z.array(z.string().trim().min(1)),
-    allowedUse: z.enum(["market_context_only", "synthetic_prototype_only"]),
-    scoringEligibility: z.enum(["none", "synthetic_prototype_only"]),
+    allowedUse: z.literal("market_context_only"),
+    scoringEligibility: z.literal("none"),
     formula: z.array(z.object({
       id: z.string().trim().min(1),
       label: z.string().trim().min(1),
@@ -195,7 +195,7 @@ function evidenceSourceIdsFor(plan: EvaluationPlan): string[] {
     return ["SRC-014", "SRC-015", "SRC-016"];
   }
   if (plan.capabilityId === "clinic_site_evaluation") {
-    return ["SRC-014", "SRC-015", "SRC-016", "SYNTHETIC"];
+    return ["SRC-009", "SRC-014", "SRC-015", "SRC-016"];
   }
   return [];
 }
@@ -354,7 +354,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "",
   ] : [];
   const analysisSections = packet.analysisAppendix ? [
-    packet.analysisAppendix.scoringEligibility === "synthetic_prototype_only" ? "## Confirmed recommendation screening" : "## Analyst screening",
+    "## Analyst screening",
     `- Perspective: ${packet.analysisAppendix.perspectiveId}`,
     `- Coverage: ${packet.analysisAppendix.comparisonsExamined.toLocaleString()} comparisons screened; ${packet.analysisAppendix.leads.length} review leads kept`,
     `- Screening universe: ${packet.analysisAppendix.screeningScope.marketUniverse} metros; ${packet.analysisAppendix.screeningScope.eligibleComparisons.toLocaleString()} eligible comparisons of ${packet.analysisAppendix.screeningScope.allMarketPairs.toLocaleString()} possible metro pairs`,

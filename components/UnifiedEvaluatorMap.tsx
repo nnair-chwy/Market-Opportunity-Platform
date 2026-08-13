@@ -208,6 +208,7 @@ export function UnifiedEvaluatorMap({
   const markerRefs = useRef<Map<string, MapLibreMarker>>(new Map());
   const comparisonMarkerRefs = useRef<Map<string, MapLibreMarker>>(new Map());
   const callbacksRef = useRef({ onChooseMarket, onChooseLocation });
+  const marketDetailsRef = useRef({ marketScores, marketCategories, marketScoreLabel, marketScoreBoundary });
   const seattleOverlayRef = useRef(seattleDeepDiveOverlay);
   const seattleOverlayCallbackRef = useRef(onChooseSeattleSubmarket);
   const locationsRef = useRef(locations);
@@ -243,6 +244,10 @@ export function UnifiedEvaluatorMap({
   }, [locations, onChooseLocation, onChooseMarket]);
 
   useEffect(() => {
+    marketDetailsRef.current = { marketScores, marketCategories, marketScoreLabel, marketScoreBoundary };
+  }, [marketCategories, marketScoreBoundary, marketScoreLabel, marketScores]);
+
+  useEffect(() => {
     seattleOverlayRef.current = seattleDeepDiveOverlay;
     seattleOverlayCallbackRef.current = onChooseSeattleSubmarket;
   }, [onChooseSeattleSubmarket, seattleDeepDiveOverlay]);
@@ -263,7 +268,7 @@ export function UnifiedEvaluatorMap({
 
     async function initialize() {
       try {
-        const { AttributionControl, Map, NavigationControl } =
+        const { AttributionControl, Map, NavigationControl, Popup } =
           await import("maplibre-gl");
         if (disposed || !containerRef.current) return;
 
@@ -464,6 +469,25 @@ export function UnifiedEvaluatorMap({
             const code = event.features?.[0]?.properties?.cbsa_code;
             if (typeof code === "string") {
               callbacksRef.current.onChooseMarket(code);
+              const properties = event.features?.[0]?.properties;
+              const details = marketDetailsRef.current;
+              const score = details.marketScores[code];
+              const popup = document.createElement("div");
+              const title = document.createElement("strong");
+              title.textContent = String(properties?.cbsa_name ?? "Selected market");
+              const value = document.createElement("p");
+              value.textContent = score === undefined
+                ? "No value is available for the active view."
+                : `${details.marketScoreLabel}: ${score.toFixed(1)}`;
+              const category = document.createElement("p");
+              category.textContent = `Market status: ${details.marketCategories[code] ?? "context only"}`;
+              const boundary = document.createElement("small");
+              boundary.textContent = details.marketScoreBoundary;
+              popup.append(title, value, category, boundary);
+              new Popup({ closeButton: true, offset: 8 })
+                .setLngLat(event.lngLat)
+                .setDOMContent(popup)
+                .addTo(map);
             }
           });
           map.on("mouseenter", CBSA_FILL_LAYER_ID, () => {
@@ -648,7 +672,7 @@ export function UnifiedEvaluatorMap({
     let cancelled = false;
 
     async function syncLocations() {
-      const { Marker } = await import("maplibre-gl");
+      const { Marker, Popup } = await import("maplibre-gl");
       const activeMap = mapRef.current;
       if (cancelled || !activeMap) return;
 
@@ -679,6 +703,20 @@ export function UnifiedEvaluatorMap({
         element.addEventListener("click", (event) => {
           event.stopPropagation();
           callbacksRef.current.onChooseLocation(location);
+          const popup = document.createElement("div");
+          const title = document.createElement("strong");
+          title.textContent = location.name;
+          const place = document.createElement("p");
+          place.textContent = [location.address, `${location.city}, ${location.state}`].filter(Boolean).join(" · ");
+          const status = document.createElement("p");
+          status.textContent = `${location.statusLabel} · ${location.evidenceStatus}`;
+          const source = document.createElement("small");
+          source.textContent = `Source: ${location.sourceId}`;
+          popup.append(title, place, status, source);
+          new Popup({ closeButton: true, offset: 12 })
+            .setLngLat([location.longitude, location.latitude])
+            .setDOMContent(popup)
+            .addTo(activeMap);
         });
         const marker = new Marker({ element, anchor: "center" })
           .setLngLat([location.longitude, location.latitude])

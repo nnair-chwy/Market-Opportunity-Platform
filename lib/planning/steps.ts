@@ -111,17 +111,17 @@ export function buildPlanSteps(input: StepInput): PlanStep[] {
       step(
         "inspect-evidence-gates",
         "Inspect evidence gates",
-        "Check synthetic fixture availability and material approval requirements before any ranking.",
+        "Check governed evidence availability and material approval requirements before any ranking.",
         missingEvidence.length || missingApprovals.length
           ? "Gates remain visible"
-          : "Synthetic fixture gates satisfied",
+          : "Evidence gates satisfied",
       ),
       step(
         "run-permitted-evaluation",
         "Run only permitted evaluation",
         status === "blocked"
           ? "No clinic-location ranking runs while required evidence or approvals are missing."
-          : "Use only approved synthetic or explicitly approved fixtures for the permitted output.",
+          : "Use only governed, source-linked evidence for the permitted output.",
         status === "blocked" ? "Evaluation not executed" : `Status: ${status.replaceAll("_", " ")}`,
       ),
       step(

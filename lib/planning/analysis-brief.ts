@@ -30,22 +30,13 @@ export type AnalysisBrief = {
   confirmedAt: string | null;
 };
 
-function cvcConsiderations(question: string): AnalysisConsideration[] {
-  const weights = /veterinar|supply|access|whitespace/i.test(question)
-    ? [30, 15, 45, 10]
-    : /engagement|practice hub|clinic order/i.test(question)
-      ? [30, 15, 15, 40]
-      : /demand|growth|customer/i.test(question)
-        ? [60, 20, 10, 10]
-        : [45, 25, 20, 10];
+function cvcExplorationConsiderations(): AnalysisConsideration[] {
   return [
-    { id: "chewy_demand", label: "Chewy demand", metric: "Synthetic customer scale, penetration, and growth", role: "weighted_preference", evidenceStatus: "connected", weightPercent: weights[0], whyItMatters: "Tests whether a market has enough modeled Chewy demand to merit deeper clinic research." },
-    { id: "market_capacity", label: "Market capacity", metric: "Household scale and income context", role: "weighted_preference", evidenceStatus: "connected", weightPercent: weights[1], whyItMatters: "Represents the size and purchasing-power context of the modeled market." },
-    { id: "veterinary_opportunity", label: "Veterinary opportunity", metric: "Synthetic clinic supply, veterinarian availability, and corporate clinic share", role: "weighted_preference", evidenceStatus: "connected", weightPercent: weights[2], whyItMatters: "Balances modeled whitespace against the workforce needed to serve a market." },
-    { id: "chewy_clinic_engagement", label: "Clinic engagement", metric: "Synthetic Practice Hub participation and clinic orders", role: "weighted_preference", evidenceStatus: "connected", weightPercent: weights[3], whyItMatters: "Tests whether Chewy already has modeled clinic relationships that could support validation." },
-    { id: "operating_feasibility", label: "Operating feasibility", metric: "Staffing, property, permitting, capacity, and cost requirements", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "A promising market should not advance when a material operating requirement fails." },
-    { id: "current_cvc_footprint", label: "Current CVC footprint", metric: "Published clinic locations mapped to metropolitan CBSAs", role: "validity_gate", evidenceStatus: "partial", weightPercent: null, whyItMatters: "A shortlist still needs approved trade-area and current-capacity validation before it can represent whitespace." },
-    { id: "public_context", label: "Public market context", metric: "Population, households, income, and population density", role: "context_only", evidenceStatus: "connected", weightPercent: null, whyItMatters: "Supports interpretation and map context without entering the clinic screening score." },
+    { id: "current_cvc_footprint", label: "Current CVC footprint", metric: "Published clinic locations mapped to metropolitan CBSAs", role: "context_only", evidenceStatus: "partial", weightPercent: null, whyItMatters: "Shows where the published footprint differs without treating clinic count as capacity or access." },
+    { id: "public_market_context", label: "Public market context", metric: "Population, households, median income, and population density", role: "context_only", evidenceStatus: "connected", weightPercent: null, whyItMatters: "Finds structurally comparable metros for a more useful footprint contrast." },
+    { id: "comparison_validity", label: "Peer comparability", metric: "Same-grain market structure and alternate-peer stability", role: "validity_gate", evidenceStatus: "partial", weightPercent: null, whyItMatters: "A contrast is only useful when the markets are similar enough for the comparison to be interpretable." },
+    { id: "demand_capacity", label: "Demand and capacity", metric: "Chewy customer demand, clinic capacity, appointments, pet households, and trade-area access", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "A footprint difference cannot be called whitespace until demand and service capacity are verified." },
+    { id: "operating_context", label: "Operating context", metric: "Veterinary workforce, property feasibility, economics, maturity, and cannibalization", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "Explains whether a visible contrast is actionable or simply reflects an operating constraint." },
   ];
 }
 
@@ -70,25 +61,25 @@ function pricingConsiderations(): AnalysisConsideration[] {
 function cvcRewrittenQuestion(plan: EvaluationPlan) {
   const question = plan.originalQuestion;
   if (/open|next\s+(?:cvc\s+)?clinic|location/i.test(question)) {
-    return "Identify the 3–5 U.S. metropolitan markets that should advance to detailed validation for the next CVC clinic, excluding markets with a mapped published CVC clinic.";
+    return "Find 3–5 metro footprint contrasts worth validating for a future CVC clinic using published locations and public market context; do not rank opportunity until demand, capacity, workforce, and economics are connected.";
   }
   if (/veterinar|supply|access|whitespace/i.test(question)) {
-    return "Identify the 3–5 U.S. metropolitan markets with the strongest modeled veterinary whitespace that should advance to demand, capacity, and operating-feasibility validation.";
+    return "Find metro footprint contrasts worth validating for veterinary access or whitespace, while keeping demand, clinic capacity, and workforce as required evidence gaps.";
   }
   if (/demand|growth|customer/i.test(question)) {
-    return "Identify the 3–5 U.S. metropolitan markets with the strongest modeled Chewy demand that should advance to clinic demand and operating-feasibility validation.";
+    return "Find metro footprint contrasts worth validating against governed Chewy demand and clinic capacity; do not substitute household context for customer or pet demand.";
   }
   return plan.intent.conciseInterpretation;
 }
 
 export function buildAnalysisBrief(plan: EvaluationPlan, investigation: MarketInvestigation): AnalysisBrief {
   const considerations = plan.perspectiveId === "cvc"
-    ? cvcConsiderations(`${plan.originalQuestion} ${plan.intent.conciseInterpretation}`)
+    ? cvcExplorationConsiderations()
     : plan.perspectiveId === "marketing"
       ? marketingConsiderations()
       : pricingConsiderations();
   const assumptions = plan.perspectiveId === "cvc"
-    ? ["Use metropolitan CBSAs as the first comparison unit", "Treat every modeled business input as a synthetic prototype hypothesis", "Exclude markets with a mapped published CVC clinic before ranking", "Treat the shortlist as validation priority, not proof that a clinic should open"]
+    ? ["Use metropolitan CBSAs as the first comparison unit", "Treat mapped clinics as published footprint—not verified capacity or access", "Keep Census measures as market context rather than demand", "Return investigation leads rather than an opportunity ranking"]
     : plan.perspectiveId === "marketing"
       ? ["Use metropolitan CBSAs as the first peer-search unit", "Treat structural peers as feasibility leads, not assigned test or control markets", "Require pre-period outcomes and exposure checks before experiment design"]
       : ["Use metropolitan CBSAs as the initial comparison unit", "Do not infer elasticity from public context", "Require compatible price exposure and customer outcomes before recommending a regional strategy"];
@@ -101,16 +92,12 @@ export function buildAnalysisBrief(plan: EvaluationPlan, investigation: MarketIn
     rewrittenQuestion: plan.perspectiveId === "cvc" ? cvcRewrittenQuestion(plan) : plan.intent.conciseInterpretation,
     perspectiveId: plan.perspectiveId,
     geography: plan.geographyResolution.mode === "national" ? "U.S. metropolitan CBSAs" : plan.geographyResolution.message,
-    timeframe: plan.perspectiveId === "cvc" ? "Synthetic snapshot dated 2026-07-31" : investigation.period,
+    timeframe: investigation.period,
     assumptions,
     currentScreen: {
-      inputs: plan.perspectiveId === "cvc"
-        ? considerations.filter((item) => item.role === "weighted_preference").map((item) => item.metric)
-        : investigation.measuresExamined,
-      method: plan.perspectiveId === "cvc"
-        ? "Normalize each configured metric within the metropolitan cohort, apply the confirmed weights, run weight-sensitivity scenarios, and retain the five highest screening scores for validation."
-        : investigation.screeningScope.selectionRule,
-      considerationEditsRecalculate: plan.perspectiveId === "cvc",
+      inputs: investigation.measuresExamined,
+      method: investigation.screeningScope.selectionRule,
+      considerationEditsRecalculate: false,
     },
     considerations,
     confirmedAt: null,

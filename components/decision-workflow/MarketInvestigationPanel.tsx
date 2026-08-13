@@ -68,20 +68,19 @@ export function MarketInvestigationPanel({
 }: MarketInvestigationPanelProps) {
   const [showAll, setShowAll] = useState(false);
   const [followUpQuestion, setFollowUpQuestion] = useState("");
-  const isConfirmedScoring = investigation.scoringEligibility === "synthetic_prototype_only";
-  const visibleLeads = showAll || isConfirmedScoring ? investigation.leads : investigation.leads.slice(0, 3);
+  const visibleLeads = showAll ? investigation.leads : investigation.leads.slice(0, 3);
 
   return (
     <section className="market-investigation" aria-labelledby="market-investigation-title">
       <header className="market-investigation-heading">
         <div>
-          <div className="eyebrow">{isConfirmedScoring ? "Human-confirmed synthetic scoring" : "Deterministic snapshot screening"}</div>
-          <h2 id="market-investigation-title">{isConfirmedScoring ? "Confirmed market validation shortlist" : "Published footprint and public-context contrasts"}</h2>
+          <div className="eyebrow">Connected-evidence screening</div>
+          <h2 id="market-investigation-title">Published footprint and public-context contrasts</h2>
           <p>{investigation.readiness.summary}</p>
         </div>
         <div className="market-investigation-counts" aria-label="Screening coverage">
           <strong>{investigation.comparisonsExamined.toLocaleString()}</strong>
-          <span>{isConfirmedScoring ? "markets screened" : "comparisons screened"}</span>
+          <span>comparisons screened</span>
           <strong>{investigation.leads.length}</strong>
           <span>review leads kept</span>
         </div>
@@ -90,9 +89,9 @@ export function MarketInvestigationPanel({
       <div className="market-investigation-method">
         <div><strong>Looked at</strong><span>{investigation.measuresExamined.join(" · ")}</span></div>
         <div><strong>How</strong><span>{investigation.toolsRun.join(" → ")}</span></div>
-        <div><strong>Coverage</strong><span>{isConfirmedScoring ? investigation.screeningScope.eligibleCohort : `${investigation.screeningScope.eligibleComparisons.toLocaleString()} eligible comparisons from ${investigation.screeningScope.marketUniverse} metros; not all ${investigation.screeningScope.allMarketPairs.toLocaleString()} possible metro pairs`}</span></div>
+        <div><strong>Coverage</strong><span>{`${investigation.screeningScope.eligibleComparisons.toLocaleString()} eligible comparisons from ${investigation.screeningScope.marketUniverse} metros; not all ${investigation.screeningScope.allMarketPairs.toLocaleString()} possible metro pairs`}</span></div>
         <div><strong>Selection</strong><span>{investigation.screeningScope.selectionRule}</span></div>
-        <div><strong>Runtime</strong><span>{isConfirmedScoring ? "The analyst proposes the question-specific formula; versioned arithmetic executes only the human-confirmed weights over checked-in data. No live research or causal inference is performed." : "Fixed arithmetic over checked-in local data—no live research, external source retrieval, or autonomous causal analysis"}</span></div>
+        <div><strong>Runtime</strong><span>Fixed arithmetic over checked-in published and public data—no live research, recommendation score, or causal inference</span></div>
       </div>
 
       {visibleLeads.length ? (
@@ -121,7 +120,7 @@ export function MarketInvestigationPanel({
         </div>
       )}
 
-      {investigation.leads.length > 3 && !isConfirmedScoring ? (
+      {investigation.leads.length > 3 ? (
         <button className="secondary-action market-investigation-more" type="button" onClick={() => setShowAll((open) => !open)}>
           {showAll ? "Show strongest 3" : `Show all ${investigation.leads.length} leads`}
         </button>
@@ -134,7 +133,7 @@ export function MarketInvestigationPanel({
         return (
           <section className="lead-evidence-snapshot" aria-label="Selected lead evidence">
             <header>
-              <div><span>Selected lead evidence</span><strong>Actual fixture values behind the highlighted markets</strong></div>
+              <div><span>Selected lead evidence</span><strong>Source values behind the highlighted markets</strong></div>
               <small>Public context—not a score</small>
             </header>
             <div className="lead-evidence-metrics" role="group" aria-label="Map evidence measure">
@@ -200,7 +199,7 @@ export function MarketInvestigationPanel({
           <p>{investigation.limitations.join(" ")}</p>
           <strong>Evidence needed next</strong>
           <p>{investigation.readiness.missing.join("; ")}.</p>
-          <small>Sources: {investigation.sourceIds.join(" · ")} · {investigation.allowedUse.replaceAll("_", " ")} · {isConfirmedScoring ? "synthetic validation scoring only" : "no recommendation scoring"}</small>
+          <small>Sources: {investigation.sourceIds.join(" · ")} · {investigation.allowedUse.replaceAll("_", " ")} · no recommendation scoring</small>
         </div>
       </details>
     </section>

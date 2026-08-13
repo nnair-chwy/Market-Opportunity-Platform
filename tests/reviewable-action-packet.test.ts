@@ -97,9 +97,9 @@ test("reviewable packet exports the human-confirmed question and considerations"
   assert.equal(packet.analysisBrief?.status, "confirmed");
   assert.match(document, /Confirmed analysis framing/);
   assert.match(document, /Rewritten question/);
-  assert.match(document, /Chewy demand/);
-  assert.match(document, /weighted preference/);
-  assert.match(document, /Human consideration edits recalculate this screen: yes/);
+  assert.match(document, /Demand and capacity/);
+  assert.doesNotMatch(document, /weighted preference/);
+  assert.match(document, /Human consideration edits recalculate this screen: no/);
 });
 
 test("reviewable packet exports evidence readiness and the generated execution plan", () => {
@@ -149,7 +149,7 @@ test("reviewable packet preserves the selected lead and map measure", () => {
   assert.match(document, /Map context measure: population density/);
 });
 
-test("download report contains the confirmed formula and ranked validation evidence", () => {
+test("download report contains connected evidence, limitations, and an actionable handoff", () => {
   const plan = planEvaluation("Where should we open the next CVC clinic?", "cvc");
   const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
   const brief = { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-13T22:00:00.000Z" };
@@ -169,11 +169,11 @@ test("download report contains the confirmed formula and ranked validation evide
     actionPlan,
   );
   const document = formatReviewableActionPacketDocument(packet);
-  assert.match(document, /Confirmed recommendation screening/);
-  assert.match(document, /Confirmed formula: Chewy demand 45%/);
-  assert.match(document, /validation priority 1/);
-  assert.match(document, /largest score contributions/i);
-  assert.match(document, /synthetic/i);
+  assert.match(document, /Analyst screening/);
+  assert.doesNotMatch(document, /Confirmed formula:/);
+  assert.match(document, /published CVC clinic/i);
+  assert.match(document, /public market context/i);
+  assert.doesNotMatch(document, /synthetic/i);
   assert.match(document, /Decision handoff/);
   assert.match(document, /Do this next/);
   assert.match(document, /Consumer Insights Health \+ CVC Strategy/);

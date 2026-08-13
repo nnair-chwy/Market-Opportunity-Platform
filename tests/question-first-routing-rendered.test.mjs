@@ -65,7 +65,7 @@ test("review page routes result workspace types without interactive comparison",
 });
 
 test("selected analyst leads expose fixture values and drive the map context measure", () => {
-  assert.match(investigationPanel, /Actual fixture values behind the highlighted markets/);
+  assert.match(investigationPanel, /Source values behind the highlighted markets/);
   assert.match(investigationPanel, /Public context—not a score/);
   assert.match(investigationPanel, /SRC-009 · snapshot footprint only/);
   assert.match(investigationPanel, /onContextMetricChange/);

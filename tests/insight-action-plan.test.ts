@@ -11,7 +11,7 @@ function confirmedCvcAnalysis() {
   return { plan, brief, investigation: runConfirmedMarketInvestigation(plan, brief) };
 }
 
-test("action plan converts a synthetic market lead into an owned validation sprint", () => {
+test("action plan converts a connected-evidence lead into an owned validation sprint", () => {
   const { plan, brief, investigation } = confirmedCvcAnalysis();
   const actionPlan = buildInsightActionPlan(plan, investigation, investigation.leads[0], brief, brief.confirmedAt);
   assert.ok(actionPlan);

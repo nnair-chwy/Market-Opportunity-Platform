@@ -187,14 +187,19 @@ export function GeographicFocusMap({
         map.on("click", CBSA_FILL_LAYER_ID, (event: MapLayerMouseEvent) => {
           const properties = event.features?.[0]?.properties;
           const value = Number(properties?.[contextMetric]);
-          if (!properties || !Number.isFinite(value)) return;
-          const percentile = percentileRank(value, metricValues);
+          if (!properties) return;
           const popup = document.createElement("div");
           const title = document.createElement("strong");
           title.textContent = String(properties.cbsa_name ?? "Selected market");
           const detail = document.createElement("p");
-          detail.textContent = `${METRIC_LABELS[contextMetric]}: ${formatMetricValue(contextMetric, value)} · ${percentile >= 50 ? `top ${101 - percentile}%` : `bottom ${percentile}%`} of markets`;
-          popup.append(title, detail);
+          if (Number.isFinite(value)) {
+            const percentile = percentileRank(value, metricValues);
+            detail.textContent = `${METRIC_LABELS[contextMetric]}: ${formatMetricValue(contextMetric, value)} · ${percentile >= 50 ? `top ${101 - percentile}%` : `bottom ${percentile}%`} of markets`;
+            popup.append(title, detail);
+          } else {
+            detail.textContent = "No compatible value is available for this market.";
+            popup.append(title, detail);
+          }
           new Popup({ closeButton: true, offset: 8 }).setLngLat(event.lngLat).setDOMContent(popup).addTo(map);
         });
         map.on("error", () => {

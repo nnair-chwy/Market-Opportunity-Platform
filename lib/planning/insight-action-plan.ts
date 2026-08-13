@@ -47,7 +47,11 @@ function addBusinessDays(start: Date, days: number) {
 }
 
 function marketNameFromLead(lead: InvestigationLead) {
-  return lead.title.replace(/ is validation priority \d+.*$/, "").trim();
+  return lead.title
+    .replace(/ has the highest.*$/i, "")
+    .replace(/ form a useful footprint contrast.*$/i, "")
+    .replace(/ is validation priority \d+.*$/i, "")
+    .trim();
 }
 
 export function buildInsightActionPlan(
@@ -57,14 +61,14 @@ export function buildInsightActionPlan(
   brief: AnalysisBrief,
   generatedAt: string,
 ): InsightActionPlan | null {
-  if (plan.perspectiveId !== "cvc" || investigation.scoringEligibility !== "synthetic_prototype_only") return null;
+  if (plan.perspectiveId !== "cvc") return null;
   const start = new Date(generatedAt);
   const marketName = marketNameFromLead(lead);
   const workstreams: InsightActionWorkstream[] = [
     {
       id: "demand_awareness",
       sequence: 1,
-      title: "Replace the modeled demand signal",
+      title: "Add governed demand evidence",
       owner: "Consumer Insights Health + CVC Strategy",
       dueDate: addBusinessDays(start, 5),
       action: `Request a ${marketName} demand-and-awareness cut using the CVC Local Tracker learning pattern: pet-parent awareness, consideration, needs, barriers, and Chewy customer demand at the approved geography.`,
@@ -102,7 +106,7 @@ export function buildInsightActionPlan(
       dueDate: addBusinessDays(start, 17),
       action: `Reconvene the named owners with one evidence packet for ${marketName}; record Advance, Hold, or Stop and the evidence behind that decision.`,
       deliverable: "A signed validation disposition with the next accountable owner, next milestone, and any remaining evidence requests.",
-      completionCriteria: "The disposition is recorded by an accountable human owner; the synthetic screening rank is not used as approval evidence.",
+      completionCriteria: "The disposition is recorded by an accountable human owner; the public-context contrast is not used as approval evidence.",
       status: "blocked_on_evidence",
     },
   ];
@@ -115,21 +119,21 @@ export function buildInsightActionPlan(
     decisionOwner: "CVC Strategy and Real Estate Analytics",
     decisionDueDate: workstreams[3].dueDate,
     recommendation: `Start a bounded validation sprint for ${marketName}; do not begin site selection or opening approval yet.`,
-    whyNow: `${lead.observation} This makes the market worth validating under the confirmed formula, while ${lead.challenge.toLowerCase()}`,
+    whyNow: `${lead.observation} That is enough to prioritize a validation check, but not an opening decision. ${lead.challenge}`,
     whatThisInforms: [
       `Whether ${marketName} advances into detailed trade-area and site research`,
       "Which demand, awareness, supply, staffing, and economic gaps must be funded or requested",
-      "Whether the current formula remains useful after governed evidence replaces synthetic inputs",
+      "Whether the public footprint contrast survives after governed demand and operating evidence is added",
     ],
     workstreams,
     decisionRules: [
       { disposition: "advance", rule: "All three evidence workstreams meet owner-approved thresholds, no stop condition is present, and the market remains competitive under sensitivity checks." },
-      { disposition: "hold", rule: "Evidence is incomplete, definitions are incompatible, results conflict, or the market changes materially under reasonable weight adjustments." },
+      { disposition: "hold", rule: "Evidence is incomplete, definitions are incompatible, results conflict, or the market changes materially under alternate peer definitions or periods." },
       { disposition: "stop", rule: "Governed demand fails the expansion benchmark, current coverage or cannibalization removes the whitespace case, or operating/property economics fail an approved gate." },
     ],
     stakeholders: ["Consumer Insights Health", "CVC Strategy", "CVC Operations", "Network / Workforce Analytics", "CVC Real Estate", "Finance"],
     longerTermConsiderations: [
-      "Replace the synthetic snapshot with governed recurring market inputs before automating this screen.",
+      "Connect governed recurring market inputs before introducing any opportunity ranking.",
       "Track actual validation outcomes so the formula can be calibrated against markets that advanced, paused, or stopped.",
       "Use market-level awareness and needs research to tailor launch strategy only after the market clears expansion validation.",
     ],
