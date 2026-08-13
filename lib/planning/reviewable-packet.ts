@@ -49,6 +49,10 @@ export const reviewableActionPacketSchema = z.object({
   findings: evaluationPlanSchema.shape.findings,
   evidencePlan: evidencePlanSchema.optional(),
   evaluationDefinition: evaluationDefinitionDraftSchema.optional(),
+  reviewContext: z.object({
+    selectedLeadId: z.string().trim().min(1).nullable(),
+    contextMetric: z.enum(["total_population", "household_count", "median_household_income", "housing_unit_count", "population_density"]),
+  }).strict().optional(),
   analysisBrief: z.object({
     version: z.literal("1.0.0"),
     planId: z.string().trim().min(1),
@@ -172,6 +176,7 @@ export function assembleReviewableActionPacket(
   analysisBrief?: AnalysisBrief,
   evidencePlan?: EvidencePlan,
   evaluationDefinition?: EvaluationDefinitionDraft,
+  reviewContext?: { selectedLeadId: string | null; contextMetric: "total_population" | "household_count" | "median_household_income" | "housing_unit_count" | "population_density" },
 ): ReviewableActionPacket {
   const placeLabels = plan.geographyResolution.places
     .map((place) => place.cbsaName ?? place.requestedName)
@@ -188,6 +193,9 @@ export function assembleReviewableActionPacket(
   }
   if (evaluationDefinition && evaluationDefinition.planId !== plan.planId) {
     throw new Error("The evaluation definition does not belong to this evaluation plan.");
+  }
+  if (reviewContext?.selectedLeadId && !investigation?.leads.some((lead) => lead.id === reviewContext.selectedLeadId)) {
+    throw new Error("The selected lead does not belong to this investigation.");
   }
 
   return reviewableActionPacketSchema.parse({
@@ -222,6 +230,7 @@ export function assembleReviewableActionPacket(
     findings: plan.findings,
     evidencePlan,
     evaluationDefinition,
+    reviewContext,
     analysisBrief,
     analysisAppendix: investigation ? { ...investigation, followUps } : undefined,
   });
@@ -286,6 +295,20 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "",
     "### Blockers",
     bulletList(packet.evaluationDefinition.blockers, "None listed"),
+    "",
+  ] : [];
+  const selectedLead = packet.reviewContext?.selectedLeadId
+    ? packet.analysisAppendix?.leads.find((lead) => lead.id === packet.reviewContext?.selectedLeadId)
+    : undefined;
+  const reviewContextSections = packet.reviewContext ? [
+    "## Saved review context",
+    `- Selected lead: ${selectedLead?.title ?? "No lead selected"}`,
+    `- Map context measure: ${packet.reviewContext.contextMetric.replaceAll("_", " ")}`,
+    ...(selectedLead ? [
+      `- Selected observation: ${selectedLead.observation}`,
+      `- Selected boundary: ${selectedLead.challenge}`,
+      `- Selected evidence to check next: ${selectedLead.nextEvidence}`,
+    ] : []),
     "",
   ] : [];
   const analysisSections = packet.analysisAppendix ? [
@@ -385,6 +408,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "",
     ...framingSections,
     ...evidencePlanningSections,
+    ...reviewContextSections,
     ...analysisSections,
     "## Structured findings",
     ...packet.findings.flatMap((finding) => [

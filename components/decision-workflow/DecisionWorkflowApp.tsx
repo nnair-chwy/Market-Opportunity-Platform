@@ -60,6 +60,8 @@ type SavedPacket = {
   analysisBrief?: AnalysisBrief;
   evidencePlan?: EvidencePlan;
   evaluationDefinition?: EvaluationDefinitionDraft;
+  selectedLeadId?: string | null;
+  selectedContextMetric?: CbsaAcsMetricKey;
 };
 
 function nowLabel() {
@@ -165,9 +167,10 @@ export function DecisionWorkflowApp() {
         analysisBrief ?? undefined,
         evidencePlan ?? undefined,
         evaluationDefinition ?? undefined,
+        { selectedLeadId, contextMetric: selectedContextMetric },
       )
       : null),
-    [analysisBrief, evidencePlan, evaluationDefinition, investigation, investigationFollowUps, plan, selectedAction],
+    [analysisBrief, evidencePlan, evaluationDefinition, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId],
   );
 
   useEffect(() => {
@@ -325,6 +328,8 @@ export function DecisionWorkflowApp() {
       analysisBrief: analysisBrief ?? undefined,
       evidencePlan: evidencePlan ?? undefined,
       evaluationDefinition: evaluationDefinition ?? undefined,
+      selectedLeadId,
+      selectedContextMetric,
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
@@ -337,10 +342,12 @@ export function DecisionWorkflowApp() {
     setQuestion(packet.question);
     setPlan(restoredPlan);
     setPerspectiveId(restoredPlan.perspectiveId);
-    setSelectedContextMetric(restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count");
+    setSelectedContextMetric(packet.selectedContextMetric ?? (restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count"));
     const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
     setInvestigation(restoredInvestigation);
-    setSelectedLeadId(restoredInvestigation.leads[0]?.id ?? null);
+    setSelectedLeadId(packet.selectedLeadId && restoredInvestigation.leads.some((lead) => lead.id === packet.selectedLeadId)
+      ? packet.selectedLeadId
+      : restoredInvestigation.leads[0]?.id ?? null);
     setInvestigationFollowUps(packet.followUps ?? []);
     const restoredBrief = packet.analysisBrief ?? buildAnalysisBrief(restoredPlan, restoredInvestigation);
     const restoredEvidencePlan = packet.evidencePlan ?? buildEvidencePlan(restoredPlan);

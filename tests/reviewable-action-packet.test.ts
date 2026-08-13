@@ -123,3 +123,26 @@ test("reviewable packet exports evidence readiness and the generated execution p
   assert.match(document, /Staged for validation \(not used\)/);
   assert.match(document, /Media delivery, cost, and campaign history/);
 });
+
+test("reviewable packet preserves the selected lead and map measure", () => {
+  const plan = planEvaluation("Which comparable markets differ most in CVC footprint?", "cvc");
+  const investigation = runMarketInvestigation(plan);
+  const selectedLead = investigation.leads[1];
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-13T21:00:00.000Z",
+    investigation,
+    [],
+    undefined,
+    undefined,
+    undefined,
+    { selectedLeadId: selectedLead.id, contextMetric: "population_density" },
+  );
+  assert.equal(packet.reviewContext?.selectedLeadId, selectedLead.id);
+  assert.equal(packet.reviewContext?.contextMetric, "population_density");
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Saved review context/);
+  assert.match(document, new RegExp(selectedLead.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(document, /Map context measure: population density/);
+});
