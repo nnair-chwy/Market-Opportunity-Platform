@@ -9,6 +9,7 @@ import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFoc
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { publicMarkets } from "@/lib/data/public-market-ui";
+import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
 import type { PerspectiveId } from "@/lib/perspectives";
 import { buildAnalysisBrief, type AnalysisBrief } from "@/lib/planning/analysis-brief";
 import {
@@ -114,6 +115,7 @@ export function DecisionWorkflowApp() {
   const [analysisBrief, setAnalysisBrief] = useState<AnalysisBrief | null>(null);
   const [evidencePlan, setEvidencePlan] = useState<EvidencePlan | null>(null);
   const [evaluationDefinition, setEvaluationDefinition] = useState<EvaluationDefinitionDraft | null>(null);
+  const [selectedContextMetric, setSelectedContextMetric] = useState<CbsaAcsMetricKey>("household_count");
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
 
@@ -270,6 +272,7 @@ export function DecisionWorkflowApp() {
         return;
       }
       setPlan(parsed.data.plan);
+      setSelectedContextMetric(parsed.data.plan.perspectiveId === "marketing" ? "population_density" : parsed.data.plan.perspectiveId === "pricing" ? "median_household_income" : "household_count");
       const nextInvestigation = runMarketInvestigation(parsed.data.plan);
       const nextBrief = buildAnalysisBrief(parsed.data.plan, nextInvestigation);
       const nextEvidencePlan = buildEvidencePlan(parsed.data.plan);
@@ -304,6 +307,7 @@ export function DecisionWorkflowApp() {
     setEvidencePlan(null);
     setEvaluationDefinition(null);
     setPhase("question");
+    setSelectedContextMetric("household_count");
   }
 
   function savePacket() {
@@ -333,6 +337,7 @@ export function DecisionWorkflowApp() {
     setQuestion(packet.question);
     setPlan(restoredPlan);
     setPerspectiveId(restoredPlan.perspectiveId);
+    setSelectedContextMetric(restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count");
     const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
     setInvestigation(restoredInvestigation);
     setSelectedLeadId(restoredInvestigation.leads[0]?.id ?? null);
@@ -589,6 +594,8 @@ export function DecisionWorkflowApp() {
                       answer: answerInvestigationFollowUp(selectedLead, followUpQuestion),
                     }]);
                   }}
+                  selectedContextMetric={selectedContextMetric}
+                  onContextMetricChange={setSelectedContextMetric}
                 />
               ) : null}
 
@@ -597,11 +604,7 @@ export function DecisionWorkflowApp() {
                   <GeographicFocusMap
                     focus={displayedGeographicFocus}
                     modeLabel={geographyModeLabel(plan)}
-                    contextMetric={investigation?.perspectiveId === "marketing"
-                      ? "population_density"
-                      : investigation?.perspectiveId === "pricing"
-                        ? "median_household_income"
-                        : "household_count"}
+                    contextMetric={selectedContextMetric}
                   />
                 ) : null}
 

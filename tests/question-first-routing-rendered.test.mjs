@@ -5,6 +5,7 @@ import test from "node:test";
 const workflow = fs.readFileSync(new URL("../components/decision-workflow/DecisionWorkflowApp.tsx", import.meta.url), "utf8");
 const market = fs.readFileSync(new URL("../components/decision-workflow/AdaptiveMarketWorkspace.tsx", import.meta.url), "utf8");
 const focusMap = fs.readFileSync(new URL("../components/decision-workflow/GeographicFocusMap.tsx", import.meta.url), "utf8");
+const investigationPanel = fs.readFileSync(new URL("../components/decision-workflow/MarketInvestigationPanel.tsx", import.meta.url), "utf8");
 const sister = fs.readFileSync(new URL("../components/decision-workflow/SisterGeographiesSection.tsx", import.meta.url), "utf8");
 const sisterLib = fs.readFileSync(new URL("../lib/planning/sister-geographies.ts", import.meta.url), "utf8");
 
@@ -61,4 +62,13 @@ test("review page routes result workspace types without interactive comparison",
   assert.match(sisterLib, /SISTER_GEOGRAPHY_RULE_ID/);
   assert.match(sister, /Ask about this geography/);
   assert.match(sister, /if \(!suggestions\.length\) return null;/);
+});
+
+test("selected analyst leads expose fixture values and drive the map context measure", () => {
+  assert.match(investigationPanel, /Actual fixture values behind the highlighted markets/);
+  assert.match(investigationPanel, /Public context—not a score/);
+  assert.match(investigationPanel, /SRC-009 · snapshot footprint only/);
+  assert.match(investigationPanel, /onContextMetricChange/);
+  assert.match(workflow, /selectedContextMetric/);
+  assert.match(workflow, /contextMetric=\{selectedContextMetric\}/);
 });

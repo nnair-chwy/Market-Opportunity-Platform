@@ -1209,6 +1209,24 @@
 .market-investigation-meaning { color: #354967; }
 .market-investigation-leads small { color: #78859a; font-size: 10px; margin-top: auto; }
 .market-investigation-more { margin-top: 12px; }
+.lead-evidence-snapshot { background: #eef4ff; border: 1px solid #cbdaf1; border-radius: 12px; display: grid; gap: 11px; margin-top: 14px; padding: 14px; }
+.lead-evidence-snapshot > header { align-items: start; display: flex; gap: 12px; justify-content: space-between; }
+.lead-evidence-snapshot > header div { display: grid; gap: 3px; }
+.lead-evidence-snapshot > header span { color: #6a7d9a; font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.lead-evidence-snapshot > header strong { color: #263f66; font-size: 12px; }
+.lead-evidence-snapshot > header small { background: #fff; border-radius: 999px; color: #7b6240; font-size: 8px; font-weight: 800; padding: 5px 7px; text-transform: uppercase; }
+.lead-evidence-metrics { display: flex; flex-wrap: wrap; gap: 6px; }
+.lead-evidence-metrics button { background: #fff; border: 1px solid #cbd8e9; border-radius: 999px; color: #526882; cursor: pointer; font: inherit; font-size: 9px; font-weight: 750; padding: 6px 9px; }
+.lead-evidence-metrics button[aria-pressed="true"] { background: #356bd3; border-color: #356bd3; color: #fff; }
+.lead-evidence-table { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lead-evidence-table article { background: #fff; border: 1px solid #d8e2ef; border-radius: 9px; display: grid; gap: 8px; padding: 10px; }
+.lead-evidence-table article > div { display: grid; gap: 2px; }
+.lead-evidence-table article > div + div { border-top: 1px solid #edf1f6; padding-top: 7px; }
+.lead-evidence-table strong { color: #2b405e; font-size: 11px; }
+.lead-evidence-table span, .lead-evidence-table small { color: #78869a; font-size: 8px; line-height: 1.35; }
+.lead-evidence-table b { color: #294e88; font-size: 14px; }
+.lead-evidence-snapshot > p { color: #63748c; font-size: 9px; line-height: 1.4; margin: 0; }
+@media (max-width: 700px) { .lead-evidence-table { grid-template-columns: 1fr; } }
 .market-investigation-chat { background: #fff; border: 1px solid #dfe6f0; border-radius: 12px; margin-top: 14px; padding: 14px; }
 .market-investigation-chat ol { display: grid; gap: 10px; list-style: none; margin: 10px 0 12px; padding: 0; }
 .market-investigation-chat li { border-left: 2px solid #b8caf0; display: grid; gap: 6px; padding-left: 10px; }

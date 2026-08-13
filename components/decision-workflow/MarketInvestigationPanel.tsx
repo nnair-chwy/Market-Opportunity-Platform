@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { publicMarkets } from "@/lib/data/public-market-ui";
+import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
+import { currentClinics } from "@/lib/locations/map-data";
 import type { InvestigationFollowUp, InvestigationLead, MarketInvestigation } from "@/lib/planning/market-investigation";
 
 type MarketInvestigationPanelProps = {
@@ -9,7 +12,50 @@ type MarketInvestigationPanelProps = {
   onSelectLead: (lead: InvestigationLead) => void;
   followUps: InvestigationFollowUp[];
   onAskFollowUp: (question: string) => void;
+  selectedContextMetric: CbsaAcsMetricKey;
+  onContextMetricChange: (metric: CbsaAcsMetricKey) => void;
 };
+
+const CVC_MARKET_TO_CBSA: Record<string, string> = {
+  Atlanta: "Atlanta-Sandy Springs-Roswell, GA", Austin: "Austin-Round Rock-San Marcos, TX",
+  "Colorado Springs": "Colorado Springs, CO", Dallas: "Dallas-Fort Worth-Arlington, TX",
+  Denver: "Denver-Aurora-Centennial, CO", "Fort Collins": "Fort Collins-Loveland, CO",
+  Houston: "Houston-Pasadena-The Woodlands, TX", Jacksonville: "Jacksonville, FL",
+  Phoenix: "Phoenix-Mesa-Chandler, AZ", "South Florida": "Miami-Fort Lauderdale-West Palm Beach, FL",
+  Tampa: "Tampa-St. Petersburg-Clearwater, FL",
+};
+
+const METRICS: ReadonlyArray<{ id: CbsaAcsMetricKey; label: string; source: string }> = [
+  { id: "household_count", label: "Households", source: "SRC-016" },
+  { id: "population_density", label: "Density", source: "SRC-016" },
+  { id: "median_household_income", label: "Income", source: "SRC-016" },
+];
+
+function valueFor(code: string, metric: CbsaAcsMetricKey) {
+  return publicMarkets.find((market) => market.cbsa_code === code)?.acs?.metrics[metric].raw_value ?? null;
+}
+
+function percentileFor(value: number, metric: CbsaAcsMetricKey) {
+  const values = publicMarkets
+    .filter((market) => market.cbsa_type === "metropolitan")
+    .map((market) => market.acs?.metrics[metric].raw_value)
+    .filter((item): item is number => typeof item === "number" && Number.isFinite(item))
+    .sort((left, right) => left - right);
+  const atOrBelow = values.filter((item) => item <= value).length;
+  return Math.max(1, Math.round((atOrBelow / values.length) * 100));
+}
+
+function formatValue(value: number, metric: CbsaAcsMetricKey) {
+  if (metric === "median_household_income") return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+  if (metric === "population_density") return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value)} / sq. mi.`;
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
+}
+
+function clinicCountFor(code: string) {
+  const name = publicMarkets.find((market) => market.cbsa_code === code)?.cbsa_name;
+  if (!name) return 0;
+  return currentClinics.filter((clinic) => CVC_MARKET_TO_CBSA[clinic.market] === name).length;
+}
 
 export function MarketInvestigationPanel({
   investigation,
@@ -17,6 +63,8 @@ export function MarketInvestigationPanel({
   onSelectLead,
   followUps,
   onAskFollowUp,
+  selectedContextMetric,
+  onContextMetricChange,
 }: MarketInvestigationPanelProps) {
   const [showAll, setShowAll] = useState(false);
   const [followUpQuestion, setFollowUpQuestion] = useState("");
@@ -77,6 +125,40 @@ export function MarketInvestigationPanel({
           {showAll ? "Show strongest 3" : `Show all ${investigation.leads.length} leads`}
         </button>
       ) : null}
+
+      {selectedLeadId ? (() => {
+        const selectedLead = investigation.leads.find((lead) => lead.id === selectedLeadId);
+        if (!selectedLead) return null;
+        const metric = METRICS.find((item) => item.id === selectedContextMetric) ?? METRICS[0];
+        return (
+          <section className="lead-evidence-snapshot" aria-label="Selected lead evidence">
+            <header>
+              <div><span>Selected lead evidence</span><strong>Actual fixture values behind the highlighted markets</strong></div>
+              <small>Public context—not a score</small>
+            </header>
+            <div className="lead-evidence-metrics" role="group" aria-label="Map evidence measure">
+              {METRICS.map((item) => (
+                <button key={item.id} type="button" aria-pressed={selectedContextMetric === item.id} onClick={() => onContextMetricChange(item.id)}>{item.label}</button>
+              ))}
+            </div>
+            <div className="lead-evidence-table">
+              {selectedLead.marketIds.map((code) => {
+                const market = publicMarkets.find((item) => item.cbsa_code === code);
+                const value = valueFor(code, metric.id);
+                const percentile = value === null ? null : percentileFor(value, metric.id);
+                return (
+                  <article key={code}>
+                    <div><strong>{market?.cbsa_name ?? code}</strong><small>CBSA {code}</small></div>
+                    {investigation.perspectiveId === "cvc" ? <div><span>Published CVC clinics</span><b>{clinicCountFor(code)}</b><small>SRC-009 · snapshot footprint only</small></div> : null}
+                    <div><span>{metric.label}</span><b>{value === null ? "Unavailable" : formatValue(value, metric.id)}</b><small>{value === null || percentile === null ? "No percentile" : `${percentile >= 50 ? `Top ${101 - percentile}%` : `Bottom ${percentile}%`} of metropolitan markets`} · {metric.source}</small></div>
+                  </article>
+                );
+              })}
+            </div>
+            <p>Changing the measure updates the map context layer. The blue highlighted markets still come only from the selected lead.</p>
+          </section>
+        );
+      })() : null}
 
       {selectedLeadId ? (
         <section className="market-investigation-chat" aria-label="Lead follow-up">
