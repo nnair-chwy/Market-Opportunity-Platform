@@ -30,6 +30,14 @@ export type MarketInvestigation = {
   toolsRun: string[];
   measuresExamined: string[];
   comparisonsExamined: number;
+  screeningScope: {
+    marketUniverse: number;
+    eligibleCohort: string;
+    eligibleComparisons: number;
+    allMarketPairs: number;
+    selectionRule: string;
+    executionMode: "deterministic_local_snapshot";
+  };
   leads: InvestigationLead[];
   rejectedPatterns: string[];
   limitations: string[];
@@ -112,7 +120,7 @@ function contextDistance(left: MarketRow, right: MarketRow) {
   );
 }
 
-function baseInvestigation(plan: EvaluationPlan, perspectiveId: MarketInvestigation["perspectiveId"]): Omit<MarketInvestigation, "readiness" | "toolsRun" | "measuresExamined" | "comparisonsExamined" | "leads" | "rejectedPatterns" | "limitations" | "sourceIds"> {
+function baseInvestigation(plan: EvaluationPlan, perspectiveId: MarketInvestigation["perspectiveId"]): Omit<MarketInvestigation, "readiness" | "toolsRun" | "measuresExamined" | "comparisonsExamined" | "screeningScope" | "leads" | "rejectedPatterns" | "limitations" | "sourceIds"> {
   return {
     version: "1.0.0",
     planId: plan.planId,
@@ -182,9 +190,17 @@ function cvcInvestigation(plan: EvaluationPlan, rows: MarketRow[]): MarketInvest
     toolsRun: ["Interpret the submitted question", "Check evidence compatibility", "Build the footprint cohort", "Screen comparable metro peers", "Challenge business meaning"],
     measuresExamined: ["Published CVC clinic count", "Population", "Households", "Median household income", "Population density"],
     comparisonsExamined: footprint.length * outsideFootprint.length,
+    screeningScope: {
+      marketUniverse: rows.length,
+      eligibleCohort: `${footprint.length} metros with a mapped published CVC clinic × ${outsideFootprint.length} metros without one in the checked-in snapshot`,
+      eligibleComparisons: footprint.length * outsideFootprint.length,
+      allMarketPairs: rows.length * (rows.length - 1) / 2,
+      selectionRule: "Keep each footprint metro's single nearest no-footprint peer, then show the five closest matches plus one footprint-intensity diagnostic.",
+      executionMode: "deterministic_local_snapshot",
+    },
     leads,
     rejectedPatterns: ["Obvious national income and density extremes", "Mechanical household and population correlations", "Households relabeled as pet demand", "State pet ownership assigned directly to metros"],
-    limitations: ["Households are context, not pet demand; clinic points are footprint, not access or capacity.", "Public context is not eligible to become a clinic recommendation score.", "These leads prioritize validation work; they do not explain causality or recommend a market."],
+    limitations: ["Households are context, not pet demand; clinic points are footprint, not access or capacity.", "Population and households both enter the fixed distance, so market scale is represented twice; peer stability and alternate-match sensitivity are not yet tested.", "A zero means no mapped clinic in this checked-in snapshot, not verified absence from the market.", "Public context is not eligible to become a clinic recommendation score.", "These leads prioritize validation work; they do not explain causality or recommend a market."],
     sourceIds: ["SRC-009", "SRC-016"],
   };
 }
@@ -242,9 +258,17 @@ function marketingInvestigation(plan: EvaluationPlan, rows: MarketRow[]): Market
     toolsRun: ["Interpret the submitted question", "Restrict to large metros", "Screen same-grain structural peers", "Test concentration contrasts", "Challenge experiment validity"],
     measuresExamined: ["Population", "Households", "Median household income", "Population density"],
     comparisonsExamined: candidates.length,
+    screeningScope: {
+      marketUniverse: rows.length,
+      eligibleCohort: `${eligible.length} metropolitan markets with at least 500,000 residents and complete public-context inputs`,
+      eligibleComparisons: candidates.length,
+      allMarketPairs: rows.length * (rows.length - 1) / 2,
+      selectionRule: "Sort all eligible public-context pairs, retain non-overlapping closest peers, and add one household-scale concentration contrast.",
+      executionMode: "deterministic_local_snapshot",
+    },
     leads,
     rejectedPatterns: ["National size and income extremes", "Mechanical population and household correlations"],
-    limitations: ["Public market structure can prioritize validation but cannot establish marketing response, test validity, or causal lift.", "No customer, media, cost, or conversion outcome is connected yet."],
+    limitations: ["Public market structure can prioritize validation but cannot establish marketing response, test validity, or causal lift.", "Population and households overlap as measures of market scale; alternate peer stability is not yet tested.", "No customer, media, cost, or conversion outcome is connected yet."],
     sourceIds: ["SRC-016"],
   };
 }
@@ -261,6 +285,14 @@ function contextOnlyInvestigation(plan: EvaluationPlan, rows: MarketRow[]): Mark
     toolsRun: ["Interpret the submitted question", "Check evidence compatibility", "Suppress generic correlations", "Identify missing evidence"],
     measuresExamined: ["Population", "Households", "Median household income", "Housing units", "Population density"],
     comparisonsExamined: 0,
+    screeningScope: {
+      marketUniverse: rows.length,
+      eligibleCohort: "No question-compatible business outcome is connected",
+      eligibleComparisons: 0,
+      allMarketPairs: rows.length * (rows.length - 1) / 2,
+      selectionRule: "Suppress generic public-context patterns until a compatible business outcome or driver is available.",
+      executionMode: "deterministic_local_snapshot",
+    },
     leads: [],
     rejectedPatterns: ["Generic Census outliers", "Mechanical same-domain correlations"],
     limitations: ["No result is more useful than an irrelevant result.", "Public context is not eligible to become a recommendation score."],

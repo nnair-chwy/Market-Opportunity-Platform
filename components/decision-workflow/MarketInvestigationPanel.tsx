@@ -26,8 +26,8 @@ export function MarketInvestigationPanel({
     <section className="market-investigation" aria-labelledby="market-investigation-title">
       <header className="market-investigation-heading">
         <div>
-          <div className="eyebrow">Question-specific screening</div>
-          <h2 id="market-investigation-title">What the analyst loop found</h2>
+          <div className="eyebrow">Deterministic snapshot screening</div>
+          <h2 id="market-investigation-title">Published footprint and public-context contrasts</h2>
           <p>{investigation.readiness.summary}</p>
         </div>
         <div className="market-investigation-counts" aria-label="Screening coverage">
@@ -41,6 +41,9 @@ export function MarketInvestigationPanel({
       <div className="market-investigation-method">
         <div><strong>Looked at</strong><span>{investigation.measuresExamined.join(" · ")}</span></div>
         <div><strong>How</strong><span>{investigation.toolsRun.join(" → ")}</span></div>
+        <div><strong>Coverage</strong><span>{investigation.screeningScope.eligibleComparisons.toLocaleString()} eligible comparisons from {investigation.screeningScope.marketUniverse} metros; not all {investigation.screeningScope.allMarketPairs.toLocaleString()} possible metro pairs</span></div>
+        <div><strong>Selection</strong><span>{investigation.screeningScope.selectionRule}</span></div>
+        <div><strong>Runtime</strong><span>Fixed arithmetic over checked-in local data—no live research, external source retrieval, or autonomous causal analysis</span></div>
       </div>
 
       {visibleLeads.length ? (

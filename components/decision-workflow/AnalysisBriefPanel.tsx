@@ -102,6 +102,12 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
         </section>
 
         <section className="analysis-brief-considerations" aria-label="Analysis considerations">
+          <div className="analysis-brief-current-screen">
+            <strong>What currently drives the visualization</strong>
+            <p>{brief.currentScreen.inputs.join(" · ")}</p>
+            <small>{brief.currentScreen.method}</small>
+            <b>Edits below are saved as human guidance but do not recalculate this fixed public-data screen.</b>
+          </div>
           <div className="analysis-brief-consideration-heading">
             <div><strong>Considerations</strong><span>What can influence, gate, or contextualize the conclusion</span></div>
             {hasWeights ? <span className={weightsValid ? "valid" : "invalid"}>{weightTotal}% assigned</span> : <span>No blended score</span>}

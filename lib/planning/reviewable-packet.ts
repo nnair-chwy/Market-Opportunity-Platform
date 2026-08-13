@@ -51,6 +51,11 @@ export const reviewableActionPacketSchema = z.object({
     geography: z.string().trim().min(1),
     timeframe: z.string().trim().min(1),
     assumptions: z.array(z.string().trim().min(1)),
+    currentScreen: z.object({
+      inputs: z.array(z.string().trim().min(1)),
+      method: z.string().trim().min(1),
+      considerationEditsRecalculate: z.literal(false),
+    }).strict(),
     considerations: z.array(z.object({
       id: z.string().trim().min(1),
       label: z.string().trim().min(1),
@@ -77,6 +82,14 @@ export const reviewableActionPacketSchema = z.object({
     toolsRun: z.array(z.string().trim().min(1)),
     measuresExamined: z.array(z.string().trim().min(1)),
     comparisonsExamined: z.number().int().nonnegative(),
+    screeningScope: z.object({
+      marketUniverse: z.number().int().nonnegative(),
+      eligibleCohort: z.string().trim().min(1),
+      eligibleComparisons: z.number().int().nonnegative(),
+      allMarketPairs: z.number().int().nonnegative(),
+      selectionRule: z.string().trim().min(1),
+      executionMode: z.literal("deterministic_local_snapshot"),
+    }).strict(),
     leads: z.array(z.object({
       id: z.string().trim().min(1),
       marketIds: z.array(z.string().trim().min(1).max(5)).max(5),
@@ -221,6 +234,11 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "### Working assumptions",
     bulletList(packet.analysisBrief.assumptions, "None listed"),
     "",
+    "### Current screen mechanics",
+    `- Inputs: ${packet.analysisBrief.currentScreen.inputs.join("; ")}`,
+    `- Method: ${packet.analysisBrief.currentScreen.method}`,
+    "- Human consideration edits recalculate this screen: no",
+    "",
     "### Considerations",
     ...packet.analysisBrief.considerations.flatMap((item) => [
       `- ${item.label}: ${item.metric}`,
@@ -233,6 +251,9 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "## Analyst screening",
     `- Perspective: ${packet.analysisAppendix.perspectiveId}`,
     `- Coverage: ${packet.analysisAppendix.comparisonsExamined.toLocaleString()} comparisons screened; ${packet.analysisAppendix.leads.length} review leads kept`,
+    `- Screening universe: ${packet.analysisAppendix.screeningScope.marketUniverse} metros; ${packet.analysisAppendix.screeningScope.eligibleComparisons.toLocaleString()} eligible comparisons of ${packet.analysisAppendix.screeningScope.allMarketPairs.toLocaleString()} possible metro pairs`,
+    `- Selection rule: ${packet.analysisAppendix.screeningScope.selectionRule}`,
+    `- Execution mode: ${packet.analysisAppendix.screeningScope.executionMode.replaceAll("_", " ")}`,
     `- Period: ${packet.analysisAppendix.period}`,
     `- Measures examined: ${packet.analysisAppendix.measuresExamined.join("; ")}`,
     `- Process: ${packet.analysisAppendix.toolsRun.join(" → ")}`,

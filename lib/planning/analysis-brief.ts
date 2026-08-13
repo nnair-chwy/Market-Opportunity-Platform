@@ -21,6 +21,11 @@ export type AnalysisBrief = {
   geography: string;
   timeframe: string;
   assumptions: string[];
+  currentScreen: {
+    inputs: string[];
+    method: string;
+    considerationEditsRecalculate: false;
+  };
   considerations: AnalysisConsideration[];
   confirmedAt: string | null;
 };
@@ -75,6 +80,11 @@ export function buildAnalysisBrief(plan: EvaluationPlan, investigation: MarketIn
     geography: plan.geographyResolution.mode === "national" ? "U.S. metropolitan CBSAs" : plan.geographyResolution.message,
     timeframe: investigation.period,
     assumptions,
+    currentScreen: {
+      inputs: investigation.measuresExamined,
+      method: investigation.screeningScope.selectionRule,
+      considerationEditsRecalculate: false,
+    },
     considerations,
     confirmedAt: null,
   };
