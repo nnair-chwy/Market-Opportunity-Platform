@@ -32,29 +32,29 @@ export type AnalysisBrief = {
 
 function cvcExplorationConsiderations(): AnalysisConsideration[] {
   return [
-    { id: "current_cvc_footprint", label: "Current CVC footprint", metric: "Published clinic locations mapped to metropolitan CBSAs", role: "context_only", evidenceStatus: "partial", weightPercent: null, whyItMatters: "Shows where the published footprint differs without treating clinic count as capacity or access." },
-    { id: "public_market_context", label: "Public market context", metric: "Population, households, median income, and population density", role: "context_only", evidenceStatus: "connected", weightPercent: null, whyItMatters: "Finds structurally comparable metros for a more useful footprint contrast." },
-    { id: "comparison_validity", label: "Peer comparability", metric: "Same-grain market structure and alternate-peer stability", role: "validity_gate", evidenceStatus: "partial", weightPercent: null, whyItMatters: "A contrast is only useful when the markets are similar enough for the comparison to be interpretable." },
-    { id: "demand_capacity", label: "Demand and capacity", metric: "Chewy customer demand, clinic capacity, appointments, pet households, and trade-area access", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "A footprint difference cannot be called whitespace until demand and service capacity are verified." },
-    { id: "operating_context", label: "Operating context", metric: "Veterinary workforce, property feasibility, economics, maturity, and cannibalization", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "Explains whether a visible contrast is actionable or simply reflects an operating constraint." },
+    { id: "current_cvc_footprint", label: "Current CVC footprint", metric: "Published clinic locations mapped to metropolitan CBSAs", role: "context_only", evidenceStatus: "partial", weightPercent: 15, whyItMatters: "Shows where the published footprint differs without treating clinic count as capacity or access." },
+    { id: "public_market_context", label: "Public market context", metric: "Population, households, median income, and population density", role: "context_only", evidenceStatus: "connected", weightPercent: 15, whyItMatters: "Finds structurally comparable metros for a more useful footprint contrast." },
+    { id: "comparison_validity", label: "Peer comparability", metric: "Same-grain market structure and alternate-peer stability", role: "validity_gate", evidenceStatus: "partial", weightPercent: 10, whyItMatters: "A contrast is only useful when the markets are similar enough for the comparison to be interpretable." },
+    { id: "demand_capacity", label: "Demand and capacity", metric: "Chewy customer demand, clinic capacity, appointments, pet households, and trade-area access", role: "validity_gate", evidenceStatus: "needed", weightPercent: 35, whyItMatters: "A footprint difference cannot be called whitespace until demand and service capacity are verified." },
+    { id: "operating_context", label: "Operating context", metric: "Veterinary workforce, property feasibility, economics, maturity, and cannibalization", role: "validity_gate", evidenceStatus: "needed", weightPercent: 25, whyItMatters: "Explains whether a visible contrast is actionable or simply reflects an operating constraint." },
   ];
 }
 
 function marketingConsiderations(): AnalysisConsideration[] {
   return [
-    { id: "baseline_similarity", label: "Baseline similarity", metric: "Pre-period customer mix, outcomes, trend, and seasonality", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "Test and control markets must behave similarly before treatment." },
-    { id: "media_isolation", label: "Media isolation", metric: "Campaign history, spillover, contamination risk, reach, frequency, and cost", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "A structural peer is not a valid control when exposure cannot be separated." },
-    { id: "structural_peer", label: "Structural comparability", metric: "Population, households, income, and population density", role: "context_only", evidenceStatus: "connected", weightPercent: null, whyItMatters: "Narrows the feasibility search before business outcomes are connected." },
-    { id: "audience_concentration", label: "Audience concentration", metric: "Reachable customer and prospect concentration within the market", role: "context_only", evidenceStatus: "partial", weightPercent: null, whyItMatters: "Similar market scale may require different channel, reach, delivery, or creative tactics." },
+    { id: "baseline_similarity", label: "Baseline similarity", metric: "Pre-period customer mix, outcomes, trend, and seasonality", role: "validity_gate", evidenceStatus: "needed", weightPercent: 30, whyItMatters: "Test and control markets must behave similarly before treatment." },
+    { id: "media_isolation", label: "Media isolation", metric: "Campaign history, spillover, contamination risk, reach, frequency, and cost", role: "validity_gate", evidenceStatus: "needed", weightPercent: 25, whyItMatters: "A structural peer is not a valid control when exposure cannot be separated." },
+    { id: "structural_peer", label: "Structural comparability", metric: "Population, households, income, and population density", role: "context_only", evidenceStatus: "connected", weightPercent: 20, whyItMatters: "Narrows the feasibility search before business outcomes are connected." },
+    { id: "audience_concentration", label: "Audience concentration", metric: "Reachable customer and prospect concentration within the market", role: "context_only", evidenceStatus: "partial", weightPercent: 25, whyItMatters: "Similar market scale may require different channel, reach, delivery, or creative tactics." },
   ];
 }
 
 function pricingConsiderations(): AnalysisConsideration[] {
   return [
-    { id: "price_exposure", label: "Price and promotion exposure", metric: "Observed item-level price and promotion by geography and period", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "Regional response cannot be interpreted without knowing what customers actually saw." },
-    { id: "customer_response", label: "Customer response", metric: "Conversion, units, retention, substitution, and elasticity at compatible grain", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "Separates price response from a coincident difference in market composition." },
-    { id: "competitive_context", label: "Competitive context", metric: "Competitor price, assortment, availability, and delivery proposition", role: "context_only", evidenceStatus: "needed", weightPercent: null, whyItMatters: "A regional pricing pattern can reflect a different competitive environment." },
-    { id: "market_context", label: "Market context", metric: "Income, household scale, and density", role: "context_only", evidenceStatus: "connected", weightPercent: null, whyItMatters: "Describes the market but cannot substitute for governed pricing evidence." },
+    { id: "price_exposure", label: "Price and promotion exposure", metric: "Observed item-level price and promotion by geography and period", role: "validity_gate", evidenceStatus: "needed", weightPercent: 25, whyItMatters: "Regional response cannot be interpreted without knowing what customers actually saw." },
+    { id: "customer_response", label: "Customer response", metric: "Conversion, units, retention, substitution, and elasticity at compatible grain", role: "validity_gate", evidenceStatus: "needed", weightPercent: 35, whyItMatters: "Separates price response from a coincident difference in market composition." },
+    { id: "competitive_context", label: "Competitive context", metric: "Competitor price, assortment, availability, and delivery proposition", role: "context_only", evidenceStatus: "needed", weightPercent: 25, whyItMatters: "A regional pricing pattern can reflect a different competitive environment." },
+    { id: "market_context", label: "Market context", metric: "Income, household scale, and density", role: "context_only", evidenceStatus: "connected", weightPercent: 15, whyItMatters: "Describes the market but cannot substitute for governed pricing evidence." },
   ];
 }
 
@@ -105,5 +105,5 @@ export function buildAnalysisBrief(plan: EvaluationPlan, investigation: MarketIn
 }
 
 export function analysisBriefWeightTotal(brief: AnalysisBrief) {
-  return brief.considerations.reduce((total, item) => total + (item.role === "weighted_preference" ? item.weightPercent ?? 0 : 0), 0);
+  return brief.considerations.reduce((total, item) => total + (item.weightPercent ?? 0), 0);
 }

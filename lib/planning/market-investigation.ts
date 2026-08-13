@@ -316,7 +316,15 @@ export function runMarketInvestigation(plan: EvaluationPlan): MarketInvestigatio
 export function runConfirmedMarketInvestigation(plan: EvaluationPlan, brief: AnalysisBrief): MarketInvestigation {
   if (brief.status !== "confirmed") throw new Error("Confirm the analysis brief before running the evaluation.");
   if (brief.planId !== plan.planId) throw new Error("The confirmed analysis brief does not belong to this plan.");
-  return runMarketInvestigation(plan);
+  const investigation = runMarketInvestigation(plan);
+  return {
+    ...investigation,
+    formula: brief.considerations.flatMap((item) => item.weightPercent === null ? [] : [{
+      id: item.id,
+      label: item.label,
+      weightPercent: item.weightPercent,
+    }]),
+  };
 }
 
 export function answerInvestigationFollowUp(lead: InvestigationLead, question: string) {

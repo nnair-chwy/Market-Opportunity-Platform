@@ -57,8 +57,26 @@ test("confirmed CVC opening questions stay on connected evidence without a fabri
   const investigation = runConfirmedMarketInvestigation(plan, confirmed);
   assert.equal(investigation.scoringEligibility, "none");
   assert.equal(investigation.leads.length, 6);
-  assert.equal(investigation.formula, undefined);
+  assert.equal(investigation.formula?.reduce((total, item) => total + item.weightPercent, 0), 100);
   assert.deepEqual(investigation.sourceIds, ["SRC-009", "SRC-016"]);
+  assert.match(investigation.readiness.summary, /cannot yet rank clinic opportunity/i);
+});
+
+test("human weight edits are preserved in the confirmed run without fabricating scores", () => {
+  const plan = planEvaluation("Where should we open the next clinic?", "cvc");
+  const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  const edited = {
+    ...proposed,
+    status: "confirmed" as const,
+    confirmedAt: "2026-08-13T12:00:00.000Z",
+    considerations: proposed.considerations.map((item, index) => ({
+      ...item,
+      weightPercent: [10, 10, 10, 40, 30][index],
+    })),
+  };
+  const investigation = runConfirmedMarketInvestigation(plan, edited);
+  assert.deepEqual(investigation.formula?.map((item) => item.weightPercent), [10, 10, 10, 40, 30]);
+  assert.equal(investigation.scoringEligibility, "none");
   assert.match(investigation.readiness.summary, /cannot yet rank clinic opportunity/i);
 });
 

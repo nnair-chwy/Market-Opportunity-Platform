@@ -32,7 +32,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
     setEditing(brief.status !== "confirmed");
   }, [brief]);
   const weightTotal = useMemo(() => analysisBriefWeightTotal(draft), [draft]);
-  const weightedItems = draft.considerations.filter((item) => item.role === "weighted_preference");
+  const weightedItems = draft.considerations.filter((item) => item.weightPercent !== null);
   const hasWeights = weightedItems.length > 0;
   const weightsValid = !hasWeights || (Math.abs(weightTotal - 100) < 0.001 && weightedItems.every((item) => (item.weightPercent ?? 0) > 0));
 
@@ -113,7 +113,9 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
             </div>
             <b>{brief.currentScreen.considerationEditsRecalculate
                 ? "These weights directly control the calculation. No hidden weights are added."
-                : "This question uses gates and comparisons rather than a blended score."}</b>
+                : hasWeights
+                  ? "Weights define intended decision influence. Missing must-pass evidence can still block a recommendation."
+                  : "This question uses gates and comparisons rather than a blended score."}</b>
           </div>
           <div className="analysis-brief-consideration-heading">
             <div><strong>Considerations</strong><span>What can influence, gate, or contextualize the conclusion</span></div>
@@ -146,7 +148,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
                   <span className={`evidence ${item.evidenceStatus}`}>{evidenceLabel(item.evidenceStatus)}</span>
                 </div>
                 <div role="cell" className="analysis-brief-weight">
-                  {item.role === "weighted_preference" ? (
+                  {item.weightPercent !== null ? (
                     editing ? <label><input type="number" min="1" max="100" value={item.weightPercent ?? 0} onChange={(event) => updateConsideration(item.id, { weightPercent: Number(event.target.value) })} /><span>%</span></label> : <strong>{item.weightPercent}%</strong>
                   ) : <span>—</span>}
                 </div>
@@ -156,7 +158,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
           </div>
           <p className="analysis-brief-weight-note">
             {hasWeights
-              ? "The analyst proposed these weights from the wording of your question. After confirmation, the versioned engine normalizes every configured metric, applies these weights, and tests how stable the ranking is when weights move."
+              ? "The analyst proposed these weights from your question. They define intended influence and are preserved in the analysis contract. A must-pass item can still block a recommendation, and unavailable evidence is never given an invented score."
               : "These considerations guide peer selection and validity checks. Combining them into one weighted score would be misleading for this question."}
           </p>
         </section>

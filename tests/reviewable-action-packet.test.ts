@@ -170,7 +170,8 @@ test("download report contains connected evidence, limitations, and an actionabl
   );
   const document = formatReviewableActionPacketDocument(packet);
   assert.match(document, /Analyst screening/);
-  assert.doesNotMatch(document, /Confirmed formula:/);
+  assert.match(document, /Confirmed formula: Current CVC footprint 15%/);
+  assert.match(document, /Demand and capacity 35%/);
   assert.match(document, /published CVC clinic/i);
   assert.match(document, /public market context/i);
   assert.doesNotMatch(document, /synthetic/i);
