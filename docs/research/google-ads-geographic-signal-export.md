@@ -1,8 +1,11 @@
 # Google Ads geographic signal export discovery
 
-**Status:** Research proposal for review  
-**Observed:** 2026-08-13  
-**Account scope:** Authorized Chewy MCC, with U.S. evaluator focus  
+**Status:** Research proposal for review
+
+**Observed:** 2026-08-13
+
+**Account scope:** Authorized Chewy MCC, with U.S. evaluator focus
+
 **Production approval:** Not established
 
 For agent planning across all known sources, read

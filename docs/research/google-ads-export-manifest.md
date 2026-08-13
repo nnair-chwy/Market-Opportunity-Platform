@@ -1,9 +1,13 @@
 # Google Ads geographic export manifest and usage instructions
 
-**Snapshot window:** 2026-07-14 through 2026-08-12  
-**Exported:** 2026-08-13  
-**Account time zone:** Eastern Time  
-**Currency:** USD for U.S. exports  
+**Snapshot window:** 2026-07-14 through 2026-08-12
+
+**Exported:** 2026-08-13
+
+**Account time zone:** Eastern Time
+
+**Currency:** USD for U.S. exports
+
 **Production approval:** Not established
 
 This manifest maps the local Google Ads CSV snapshots used for discovery. Raw
