@@ -64,7 +64,7 @@ test("keeps the question workflow client-side and stores packet drafts in the br
   assert.match(workflow, /GeographicFocusMap/);
   assert.match(workflow, /SisterGeographiesSection/);
   assert.match(workflow, /Save action packet/);
-  assert.match(workflow, /Download action packet/);
+  assert.match(workflow, /Download full report/);
   assert.match(workflow, /Findings and proposed action/);
   assert.match(workflow, /packet-action-details/);
   assert.match(workflow, /downloadReviewableActionPacket/);

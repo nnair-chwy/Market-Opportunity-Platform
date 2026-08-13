@@ -6,9 +6,48 @@ import {
   type EvaluationPlan,
   type PlannedAction,
 } from "./contracts.ts";
+import type { InvestigationFollowUp, MarketInvestigation } from "./market-investigation.ts";
+import type { AnalysisBrief } from "./analysis-brief.ts";
+import type { InsightActionPlan } from "./insight-action-plan.ts";
+import {
+  evidencePlanSchema,
+  evaluationDefinitionDraftSchema,
+  type EvidencePlan,
+  type EvaluationDefinitionDraft,
+} from "./evidence-plan.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
 export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
+
+const insightActionPlanSchema = z.object({
+  version: z.literal("1.0.0"),
+  planId: z.string().trim().min(1),
+  leadId: z.string().trim().min(1),
+  marketName: z.string().trim().min(1),
+  decisionOwner: z.string().trim().min(1),
+  decisionDueDate: z.string().trim().min(1),
+  recommendation: z.string().trim().min(1),
+  whyNow: z.string().trim().min(1),
+  whatThisInforms: z.array(z.string().trim().min(1)).min(1),
+  workstreams: z.array(z.object({
+    id: z.string().trim().min(1),
+    sequence: z.number().int().positive(),
+    title: z.string().trim().min(1),
+    owner: z.string().trim().min(1),
+    dueDate: z.string().trim().min(1),
+    action: z.string().trim().min(1),
+    deliverable: z.string().trim().min(1),
+    completionCriteria: z.string().trim().min(1),
+    status: z.enum(["ready_to_start", "blocked_on_evidence"]),
+  }).strict()).min(1),
+  decisionRules: z.array(z.object({
+    disposition: z.enum(["advance", "hold", "stop"]),
+    rule: z.string().trim().min(1),
+  }).strict()).length(3),
+  stakeholders: z.array(z.string().trim().min(1)).min(1),
+  longerTermConsiderations: z.array(z.string().trim().min(1)).min(1),
+  sourcePattern: z.string().trim().min(1),
+}).strict();
 
 export const reviewableActionPacketSchema = z.object({
   packetKind: z.literal("draft_action_packet"),
@@ -20,6 +59,7 @@ export const reviewableActionPacketSchema = z.object({
   generatedAt: z.string().trim().min(1),
   proposalMethod: evaluationPlanSchema.shape.proposalMethod,
   originalQuestion: evaluationPlanSchema.shape.originalQuestion,
+  perspectiveId: evaluationPlanSchema.shape.perspectiveId,
   geographicFocus: z.object({
     mode: evaluationPlanSchema.shape.geographyResolution.shape.mode,
     message: z.string().trim().min(1),
@@ -38,6 +78,91 @@ export const reviewableActionPacketSchema = z.object({
   }).strict(),
   action: plannedActionSchema,
   findings: evaluationPlanSchema.shape.findings,
+  evidencePlan: evidencePlanSchema.optional(),
+  evaluationDefinition: evaluationDefinitionDraftSchema.optional(),
+  reviewContext: z.object({
+    selectedLeadId: z.string().trim().min(1).nullable(),
+    contextMetric: z.enum(["total_population", "household_count", "median_household_income", "housing_unit_count", "population_density"]),
+  }).strict().optional(),
+  analysisBrief: z.object({
+    version: z.literal("1.0.0"),
+    planId: z.string().trim().min(1),
+    status: z.enum(["proposed", "confirmed"]),
+    originalQuestion: evaluationPlanSchema.shape.originalQuestion,
+    rewrittenQuestion: z.string().trim().min(1),
+    perspectiveId: evaluationPlanSchema.shape.perspectiveId,
+    geography: z.string().trim().min(1),
+    timeframe: z.string().trim().min(1),
+    assumptions: z.array(z.string().trim().min(1)),
+    currentScreen: z.object({
+      inputs: z.array(z.string().trim().min(1)),
+      method: z.string().trim().min(1),
+      considerationEditsRecalculate: z.boolean(),
+    }).strict(),
+    considerations: z.array(z.object({
+      id: z.string().trim().min(1),
+      label: z.string().trim().min(1),
+      metric: z.string().trim().min(1),
+      role: z.enum(["weighted_preference", "validity_gate", "context_only"]),
+      evidenceStatus: z.enum(["connected", "partial", "needed"]),
+      weightPercent: z.number().min(0).max(100).nullable(),
+      whyItMatters: z.string().trim().min(1),
+    }).strict()).min(1),
+    confirmedAt: z.string().trim().min(1).nullable(),
+  }).strict().optional(),
+  actionPlan: insightActionPlanSchema.optional(),
+  analysisAppendix: z.object({
+    version: z.literal("1.0.0"),
+    planId: z.string().trim().min(1),
+    originalQuestion: evaluationPlanSchema.shape.originalQuestion,
+    perspectiveId: evaluationPlanSchema.shape.perspectiveId,
+    geography: z.literal("CBSA"),
+    period: z.string().trim().min(1),
+    readiness: z.object({
+      label: z.enum(["Partial answer", "Context only"]),
+      summary: z.string().trim().min(1),
+      missing: z.array(z.string().trim().min(1)),
+    }).strict(),
+    toolsRun: z.array(z.string().trim().min(1)),
+    measuresExamined: z.array(z.string().trim().min(1)),
+    comparisonsExamined: z.number().int().nonnegative(),
+    screeningScope: z.object({
+      marketUniverse: z.number().int().nonnegative(),
+      eligibleCohort: z.string().trim().min(1),
+      eligibleComparisons: z.number().int().nonnegative(),
+      allMarketPairs: z.number().int().nonnegative(),
+      selectionRule: z.string().trim().min(1),
+      executionMode: z.literal("deterministic_local_snapshot"),
+    }).strict(),
+    leads: z.array(z.object({
+      id: z.string().trim().min(1),
+      marketIds: z.array(z.string().trim().min(1).max(5)).max(5),
+      title: z.string().trim().min(1),
+      observation: z.string().trim().min(1),
+      businessMeaning: z.string().trim().min(1),
+      method: z.string().trim().min(1),
+      sampleSize: z.number().int().nonnegative(),
+      strength: z.string().trim().min(1),
+      challenge: z.string().trim().min(1),
+      nextEvidence: z.string().trim().min(1),
+    }).strict()).max(10),
+    rejectedPatterns: z.array(z.string().trim().min(1)),
+    limitations: z.array(z.string().trim().min(1)),
+    sourceIds: z.array(z.string().trim().min(1)),
+    allowedUse: z.literal("market_context_only"),
+    scoringEligibility: z.literal("none"),
+    formula: z.array(z.object({
+      id: z.string().trim().min(1),
+      label: z.string().trim().min(1),
+      weightPercent: z.number().min(0).max(100),
+    }).strict()).optional(),
+    followUps: z.array(z.object({
+      id: z.string().trim().min(1),
+      leadId: z.string().trim().min(1),
+      question: z.string().trim().min(1),
+      answer: z.string().trim().min(1),
+    }).strict()),
+  }).strict().optional(),
 }).strict();
 
 export type ReviewableActionPacket = z.infer<typeof reviewableActionPacketSchema>;
@@ -70,7 +195,7 @@ function evidenceSourceIdsFor(plan: EvaluationPlan): string[] {
     return ["SRC-014", "SRC-015", "SRC-016"];
   }
   if (plan.capabilityId === "clinic_site_evaluation") {
-    return ["SRC-014", "SRC-015", "SRC-016", "SYNTHETIC"];
+    return ["SRC-009", "SRC-014", "SRC-015", "SRC-016"];
   }
   return [];
 }
@@ -83,10 +208,36 @@ export function assembleReviewableActionPacket(
   plan: EvaluationPlan,
   action: PlannedAction = proposedActionFromPlan(plan),
   generatedAt = new Date().toISOString(),
+  investigation?: MarketInvestigation,
+  followUps: InvestigationFollowUp[] = [],
+  analysisBrief?: AnalysisBrief,
+  evidencePlan?: EvidencePlan,
+  evaluationDefinition?: EvaluationDefinitionDraft,
+  reviewContext?: { selectedLeadId: string | null; contextMetric: "total_population" | "household_count" | "median_household_income" | "housing_unit_count" | "population_density" },
+  actionPlan?: InsightActionPlan,
 ): ReviewableActionPacket {
   const placeLabels = plan.geographyResolution.places
     .map((place) => place.cbsaName ?? place.requestedName)
     .filter(Boolean);
+
+  if (investigation && (investigation.planId !== plan.planId || investigation.originalQuestion !== plan.originalQuestion)) {
+    throw new Error("The investigation does not belong to this evaluation plan.");
+  }
+  if (analysisBrief && (analysisBrief.planId !== plan.planId || analysisBrief.originalQuestion !== plan.originalQuestion)) {
+    throw new Error("The analysis brief does not belong to this evaluation plan.");
+  }
+  if (evidencePlan && (evidencePlan.planId !== plan.planId || evidencePlan.originalQuestion !== plan.originalQuestion)) {
+    throw new Error("The evidence plan does not belong to this evaluation plan.");
+  }
+  if (evaluationDefinition && evaluationDefinition.planId !== plan.planId) {
+    throw new Error("The evaluation definition does not belong to this evaluation plan.");
+  }
+  if (reviewContext?.selectedLeadId && !investigation?.leads.some((lead) => lead.id === reviewContext.selectedLeadId)) {
+    throw new Error("The selected lead does not belong to this investigation.");
+  }
+  if (actionPlan && (actionPlan.planId !== plan.planId || !investigation?.leads.some((lead) => lead.id === actionPlan.leadId))) {
+    throw new Error("The action plan does not belong to this evaluation plan and investigation.");
+  }
 
   return reviewableActionPacketSchema.parse({
     packetKind: "draft_action_packet",
@@ -99,6 +250,7 @@ export function assembleReviewableActionPacket(
     generatedAt,
     proposalMethod: plan.proposalMethod,
     originalQuestion: plan.originalQuestion,
+    perspectiveId: plan.perspectiveId,
     geographicFocus: {
       mode: plan.geographyResolution.mode,
       message: plan.geographyResolution.message,
@@ -117,6 +269,12 @@ export function assembleReviewableActionPacket(
     },
     action,
     findings: plan.findings,
+    evidencePlan,
+    evaluationDefinition,
+    reviewContext,
+    analysisBrief,
+    actionPlan,
+    analysisAppendix: investigation ? { ...investigation, followUps } : undefined,
   });
 }
 
@@ -134,6 +292,151 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     ? packet.geographicFocus.selectedCbsaCodes.join(", ")
     : "None selected";
 
+  const framingSections = packet.analysisBrief ? [
+    "## Confirmed analysis framing",
+    `- Status: ${packet.analysisBrief.status}`,
+    `- Rewritten question: ${packet.analysisBrief.rewrittenQuestion}`,
+    `- Perspective: ${packet.analysisBrief.perspectiveId}`,
+    `- Geography: ${packet.analysisBrief.geography}`,
+    `- Timeframe: ${packet.analysisBrief.timeframe}`,
+    "",
+    "### Working assumptions",
+    bulletList(packet.analysisBrief.assumptions, "None listed"),
+    "",
+    "### Confirmed calculation mechanics",
+    `- Inputs: ${packet.analysisBrief.currentScreen.inputs.join("; ")}`,
+    `- Method: ${packet.analysisBrief.currentScreen.method}`,
+    `- Human consideration edits recalculate this screen: ${packet.analysisBrief.currentScreen.considerationEditsRecalculate ? "yes" : "no"}`,
+    "",
+    "### Considerations",
+    ...packet.analysisBrief.considerations.flatMap((item) => [
+      `- ${item.label}: ${item.metric}`,
+      `  - Role: ${item.role.replaceAll("_", " ")}; evidence: ${item.evidenceStatus}; weight: ${item.weightPercent === null ? "not weighted" : `${item.weightPercent}%`}`,
+      `  - Why it matters: ${item.whyItMatters}`,
+    ]),
+    "",
+  ] : [];
+  const evidencePlanningSections = packet.evidencePlan && packet.evaluationDefinition ? [
+    "## Evidence readiness and generated execution plan",
+    `- Status: ${packet.evaluationDefinition.status.replaceAll("_", " ")}`,
+    `- Strongest allowed conclusion: ${packet.evaluationDefinition.strongestAllowedConclusion}`,
+    `- Available evidence: ${packet.evaluationDefinition.availableEvidenceIds.join(", ") || "None"}`,
+    `- Staged for validation (not used): ${packet.evaluationDefinition.stagedEvidenceIds.join(", ") || "None"}`,
+    "",
+    "### Evidence needs",
+    ...packet.evidencePlan.items.flatMap((item) => [
+      `- ${item.label}: ${item.availability}`,
+      `  - Needed for: ${item.requiredFor}`,
+      `  - Allowed use: ${item.allowedUse}`,
+      `  - Next: ${item.nextAction}`,
+      ...(item.correctionRequest ? [`  - Correction requested: ${item.correctionRequest}`] : []),
+    ]),
+    "",
+    "### Execution steps",
+    ...packet.evaluationDefinition.steps.map((step, index) => `${index + 1}. ${step}`),
+    "",
+    "### Blockers",
+    bulletList(packet.evaluationDefinition.blockers, "None listed"),
+    "",
+  ] : [];
+  const selectedLead = packet.reviewContext?.selectedLeadId
+    ? packet.analysisAppendix?.leads.find((lead) => lead.id === packet.reviewContext?.selectedLeadId)
+    : undefined;
+  const reviewContextSections = packet.reviewContext ? [
+    "## Saved review context",
+    `- Selected lead: ${selectedLead?.title ?? "No lead selected"}`,
+    `- Map context measure: ${packet.reviewContext.contextMetric.replaceAll("_", " ")}`,
+    ...(selectedLead ? [
+      `- Selected observation: ${selectedLead.observation}`,
+      `- Selected boundary: ${selectedLead.challenge}`,
+      `- Selected evidence to check next: ${selectedLead.nextEvidence}`,
+    ] : []),
+    "",
+  ] : [];
+  const analysisSections = packet.analysisAppendix ? [
+    "## Analyst screening",
+    `- Perspective: ${packet.analysisAppendix.perspectiveId}`,
+    `- Coverage: ${packet.analysisAppendix.comparisonsExamined.toLocaleString()} comparisons screened; ${packet.analysisAppendix.leads.length} review leads kept`,
+    `- Screening universe: ${packet.analysisAppendix.screeningScope.marketUniverse} metros; ${packet.analysisAppendix.screeningScope.eligibleComparisons.toLocaleString()} eligible comparisons of ${packet.analysisAppendix.screeningScope.allMarketPairs.toLocaleString()} possible metro pairs`,
+    `- Selection rule: ${packet.analysisAppendix.screeningScope.selectionRule}`,
+    `- Execution mode: ${packet.analysisAppendix.screeningScope.executionMode.replaceAll("_", " ")}`,
+    `- Period: ${packet.analysisAppendix.period}`,
+    `- Measures examined: ${packet.analysisAppendix.measuresExamined.join("; ")}`,
+    `- Process: ${packet.analysisAppendix.toolsRun.join(" → ")}`,
+    `- Readiness: ${packet.analysisAppendix.readiness.label} — ${packet.analysisAppendix.readiness.summary}`,
+    `- Source IDs: ${packet.analysisAppendix.sourceIds.join(", ")}`,
+    ...(packet.analysisAppendix.formula?.length ? [
+      `- Confirmed formula: ${packet.analysisAppendix.formula.map((item) => `${item.label} ${item.weightPercent}%`).join("; ")}`,
+    ] : []),
+    "",
+    "### Question-specific leads",
+    ...packet.analysisAppendix.leads.flatMap((lead, index) => [
+      `#### ${index + 1}. ${lead.title}`,
+      `- Observation: ${lead.observation}`,
+      `- Why it matters: ${lead.businessMeaning}`,
+      `- Method: ${lead.method}`,
+      `- Strength: ${lead.strength} (n=${lead.sampleSize})`,
+      `- Boundary: ${lead.challenge}`,
+      `- Evidence to check next: ${lead.nextEvidence}`,
+      "",
+    ]),
+    "### Rejected patterns and limitations",
+    bulletList(packet.analysisAppendix.rejectedPatterns, "None listed"),
+    "",
+    bulletList(packet.analysisAppendix.limitations, "None listed"),
+    "",
+    ...(packet.analysisAppendix.followUps.length ? [
+      "### Lead-scoped follow-ups",
+      ...packet.analysisAppendix.followUps.flatMap((turn) => [
+        `- Question: ${turn.question}`,
+        `- Answer: ${turn.answer}`,
+      ]),
+      "",
+    ] : []),
+  ] : [];
+  const actionPlanSections = packet.actionPlan ? [
+    "## Decision handoff",
+    `- Recommendation: ${packet.actionPlan.recommendation}`,
+    `- Market: ${packet.actionPlan.marketName}`,
+    `- Decision owner: ${packet.actionPlan.decisionOwner}`,
+    `- Decision review date: ${packet.actionPlan.decisionDueDate}`,
+    `- Why now: ${packet.actionPlan.whyNow}`,
+    "",
+    "### What this will inform",
+    bulletList(packet.actionPlan.whatThisInforms, "None listed"),
+    "",
+    "### Do this next",
+    `- ${packet.actionPlan.workstreams[0].title}`,
+    `  - Owner: ${packet.actionPlan.workstreams[0].owner}`,
+    `  - Due: ${packet.actionPlan.workstreams[0].dueDate}`,
+    `  - Action: ${packet.actionPlan.workstreams[0].action}`,
+    `  - Deliverable: ${packet.actionPlan.workstreams[0].deliverable}`,
+    `  - Done when: ${packet.actionPlan.workstreams[0].completionCriteria}`,
+    "",
+    "### Validation workplan",
+    ...packet.actionPlan.workstreams.flatMap((workstream) => [
+      `#### ${workstream.sequence}. ${workstream.title}`,
+      `- Status: ${workstream.status.replaceAll("_", " ")}`,
+      `- Owner: ${workstream.owner}`,
+      `- Due: ${workstream.dueDate}`,
+      `- Action: ${workstream.action}`,
+      `- Deliverable: ${workstream.deliverable}`,
+      `- Done when: ${workstream.completionCriteria}`,
+      "",
+    ]),
+    "### Decision rules",
+    ...packet.actionPlan.decisionRules.map((item) => `- ${item.disposition[0].toUpperCase()}${item.disposition.slice(1)}: ${item.rule}`),
+    "",
+    "### Stakeholders to involve",
+    bulletList(packet.actionPlan.stakeholders, "None listed"),
+    "",
+    "### Longer-term considerations",
+    bulletList(packet.actionPlan.longerTermConsiderations, "None listed"),
+    "",
+    `Research structure used: ${packet.actionPlan.sourcePattern}`,
+    "",
+  ] : [];
+
   return [
     "# Draft action packet (reviewable)",
     "",
@@ -150,6 +453,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "",
     "## Original question",
     packet.originalQuestion,
+    `Perspective: ${packet.perspectiveId}`,
     "",
     "## Geographic focus",
     `- Mode: ${packet.geographicFocus.mode.replaceAll("_", " ")}`,
@@ -173,22 +477,29 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `- Result workspace: ${packet.calculationVersions.resultWorkspaceType}`,
     `- Evidence source IDs: ${packet.calculationVersions.evidenceSourceIds.join(", ") || "None declared"}`,
     "",
-    "## Proposed action",
-    `- Title: ${action.title}`,
-    `- Summary: ${action.summary}`,
-    `- Owner: ${action.owner}`,
-    `- Timing: ${action.timing}`,
-    `- Confidence: ${action.confidence}`,
-    `- Next step: ${action.nextStep}`,
-    `- Output ID: ${action.outputId}`,
-    `- Requires approval: ${action.requiresApproval ? "yes" : "no"}`,
-    "",
-    "### Evidence considered",
-    bulletList(action.evidence, "None listed"),
-    "",
-    "### Tradeoffs",
-    bulletList(action.tradeoffs, "None listed"),
-    "",
+    ...(packet.actionPlan ? [] : [
+      "## Proposed action",
+      `- Title: ${action.title}`,
+      `- Summary: ${action.summary}`,
+      `- Owner: ${action.owner}`,
+      `- Timing: ${action.timing}`,
+      `- Confidence: ${action.confidence}`,
+      `- Next step: ${action.nextStep}`,
+      `- Output ID: ${action.outputId}`,
+      `- Requires approval: ${action.requiresApproval ? "yes" : "no"}`,
+      "",
+      "### Evidence considered",
+      bulletList(action.evidence, "None listed"),
+      "",
+      "### Tradeoffs",
+      bulletList(action.tradeoffs, "None listed"),
+      "",
+    ]),
+    ...actionPlanSections,
+    ...framingSections,
+    ...evidencePlanningSections,
+    ...reviewContextSections,
+    ...analysisSections,
     "## Structured findings",
     ...packet.findings.flatMap((finding) => [
       `### ${finding.title}`,

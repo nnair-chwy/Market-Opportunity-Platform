@@ -45,10 +45,9 @@ test("View A Single, Compare, and Layer modes render with synchronized selection
     }),
   );
   assert.match(single, /data-map-mode="single"/);
-  assert.match(single, /data-view-a-mode="single"/);
-  assert.match(single, /Active region/);
+  assert.match(single, /Click a market to see its value, percentile, rank, and evidence source/);
   assert.match(single, /Household percentile|Household count|Household/i);
-  assert.match(single, /not an opportunity score or recommendation/i);
+  assert.doesNotMatch(single, /ACTIVE REGION|SOURCE/);
   assert.match(single, /Unified clinic and public market context map|data-unified-map/);
   assert.match(single, /market-score-legend|Household percentile/);
 

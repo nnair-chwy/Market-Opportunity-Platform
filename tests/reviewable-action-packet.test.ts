@@ -2,12 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   assembleReviewableActionPacket,
+  buildInsightActionPlan,
   deterministicFindingsAndProposalSummary,
   formatReviewableActionPacketDocument,
   planEvaluation,
   proposedActionFromPlan,
   reviewableActionPacketSchema,
 } from "../lib/planning/index.ts";
+import { answerInvestigationFollowUp, runConfirmedMarketInvestigation, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
+import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
+import { buildEvidencePlan, generateEvaluationDefinitionDraft } from "../lib/planning/evidence-plan.ts";
 import { explainFindingsAndProposal } from "../lib/planning/packet-ai-summary.ts";
 
 test("reviewable action packet preserves action fields and provenance for download", () => {
@@ -62,4 +66,121 @@ test("packet AI summary falls back when the model is unavailable", async () => {
   assert.equal(summary.origin, "deterministic_fallback");
   assert.equal(summary.state, "provider_error");
   assert.match(summary.whyActionRelevant, /Explore governed market context|Inspect the resolved market context|Compare resolved markets/i);
+});
+
+test("reviewable packet carries the exact analyst screening and lead follow-up", () => {
+  const plan = planEvaluation("Which comparable markets differ most in CVC footprint—and why?", "cvc");
+  const investigation = runMarketInvestigation(plan);
+  const lead = investigation.leads[0];
+  const followUps = [{
+    id: "follow-up-1",
+    leadId: lead.id,
+    question: "What should I validate next?",
+    answer: answerInvestigationFollowUp(lead, "What should I validate next?"),
+  }];
+  const packet = assembleReviewableActionPacket(plan, proposedActionFromPlan(plan), "2026-08-12T19:00:00.000Z", investigation, followUps);
+  assert.equal(packet.analysisAppendix?.originalQuestion, plan.originalQuestion);
+  assert.equal(packet.analysisAppendix?.leads.length, 6);
+  assert.equal(packet.analysisAppendix?.followUps[0].question, followUps[0].question);
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Analyst screening/);
+  assert.match(document, /Question-specific leads/);
+  assert.match(document, /Lead-scoped follow-ups/);
+});
+
+test("reviewable packet exports the human-confirmed question and considerations", () => {
+  const plan = planEvaluation("Which comparable markets differ most in CVC footprint?", "cvc");
+  const investigation = runMarketInvestigation(plan);
+  const brief = { ...buildAnalysisBrief(plan, investigation), status: "confirmed" as const, confirmedAt: "2026-08-13T12:00:00.000Z" };
+  const packet = assembleReviewableActionPacket(plan, proposedActionFromPlan(plan), "2026-08-13T12:01:00.000Z", investigation, [], brief);
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.equal(packet.analysisBrief?.status, "confirmed");
+  assert.match(document, /Confirmed analysis framing/);
+  assert.match(document, /Rewritten question/);
+  assert.match(document, /Demand and capacity/);
+  assert.doesNotMatch(document, /weighted preference/);
+  assert.match(document, /Human consideration edits recalculate this screen: no/);
+});
+
+test("reviewable packet exports evidence readiness and the generated execution plan", () => {
+  const plan = planEvaluation("Which comparable markets could support a valid marketing test?", "marketing");
+  const investigation = runMarketInvestigation(plan);
+  const brief = buildAnalysisBrief(plan, investigation);
+  const evidencePlan = buildEvidencePlan(plan);
+  const definition = generateEvaluationDefinitionDraft(brief, investigation, evidencePlan);
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-13T20:00:00.000Z",
+    investigation,
+    [],
+    brief,
+    evidencePlan,
+    definition,
+  );
+  assert.equal(packet.evidencePlan?.items.find((item) => item.id === "media_exposure")?.availability, "missing");
+  assert.equal(packet.evaluationDefinition?.status, "partially_executable");
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Evidence readiness and generated execution plan/);
+  assert.match(document, /Staged for validation \(not used\)/);
+  assert.match(document, /Media delivery, cost, and campaign history/);
+});
+
+test("reviewable packet preserves the selected lead and map measure", () => {
+  const plan = planEvaluation("Which comparable markets differ most in CVC footprint?", "cvc");
+  const investigation = runMarketInvestigation(plan);
+  const selectedLead = investigation.leads[1];
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-13T21:00:00.000Z",
+    investigation,
+    [],
+    undefined,
+    undefined,
+    undefined,
+    { selectedLeadId: selectedLead.id, contextMetric: "population_density" },
+  );
+  assert.equal(packet.reviewContext?.selectedLeadId, selectedLead.id);
+  assert.equal(packet.reviewContext?.contextMetric, "population_density");
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Saved review context/);
+  assert.match(document, new RegExp(selectedLead.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(document, /Map context measure: population density/);
+});
+
+test("download report contains connected evidence, limitations, and an actionable handoff", () => {
+  const plan = planEvaluation("Where should we open the next CVC clinic?", "cvc");
+  const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  const brief = { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-13T22:00:00.000Z" };
+  const investigation = runConfirmedMarketInvestigation(plan, brief);
+  const actionPlan = buildInsightActionPlan(plan, investigation, investigation.leads[0], brief, brief.confirmedAt);
+  assert.ok(actionPlan);
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-13T22:01:00.000Z",
+    investigation,
+    [],
+    brief,
+    undefined,
+    undefined,
+    { selectedLeadId: investigation.leads[0].id, contextMetric: "household_count" },
+    actionPlan,
+  );
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Analyst screening/);
+  assert.match(document, /Confirmed formula: Current CVC footprint 15%/);
+  assert.match(document, /Demand and capacity 35%/);
+  assert.match(document, /published CVC clinic/i);
+  assert.match(document, /public market context/i);
+  assert.doesNotMatch(document, /synthetic/i);
+  assert.match(document, /Decision handoff/);
+  assert.match(document, /Do this next/);
+  assert.match(document, /Consumer Insights Health \+ CVC Strategy/);
+  assert.match(document, /Validation workplan/);
+  assert.match(document, /Advance:/);
+  assert.match(document, /Hold:/);
+  assert.match(document, /Stop:/);
+  assert.match(document, /Done when:/);
 });

@@ -45,7 +45,7 @@ test("renders a governed market comparison starting state", async (t) => {
   assert.doesNotMatch(html, /best market|recommended market/i);
 });
 
-test("renders controlled comparison selections in analyst order", async (t) => {
+test("does not manufacture comparison selections after prototype scores are removed", async (t) => {
   const vite = await createServer({
     configFile: false,
     appType: "custom",
@@ -56,24 +56,14 @@ test("renders controlled comparison selections in analyst order", async (t) => {
   });
   t.after(() => vite.close());
 
-  const [
-    { MarketComparisonWorkspace },
-    { publicMarkets },
-    { syntheticMarketAttractivenessResults },
-  ] = await Promise.all([
+  const [{ MarketComparisonWorkspace }, { publicMarkets }] = await Promise.all([
     vite.ssrLoadModule(
       "/components/market-comparison/MarketComparisonWorkspace.tsx",
     ),
     vite.ssrLoadModule("/lib/data/public-market-ui.ts"),
-    vite.ssrLoadModule("/lib/market-attractiveness/index.ts"),
   ]);
-  const scored = syntheticMarketAttractivenessResults.filter(
-    (result) => result.cbsaCode && result.cohort === "metropolitan",
-  );
-  const selectedCodes = [scored[1].cbsaCode, scored[0].cbsaCode];
-  const activeMarket = publicMarkets.find(
-    (market) => market.cbsa_code === selectedCodes[0],
-  );
+  const selectedCodes = [publicMarkets[1].cbsa_code, publicMarkets[0].cbsa_code];
+  const activeMarket = publicMarkets[1];
   const html = renderToStaticMarkup(
     createElement(MarketComparisonWorkspace, {
       activeMarket,
@@ -83,13 +73,12 @@ test("renders controlled comparison selections in analyst order", async (t) => {
     }),
   );
 
-  assert.match(html, /2 of 5 selected/);
-  assert.ok(html.indexOf(scored[1].marketName) < html.indexOf(scored[0].marketName));
-  assert.match(html, new RegExp(`Remove ${scored[1].marketName} from comparison`));
-  assert.match(html, /Synthetic deterministic results in analyst selection order/);
+  assert.match(html, /0 of 5 selected/);
+  assert.match(html, /No exact scored CBSA result/);
+  assert.doesNotMatch(html, /Synthetic deterministic results in analyst selection order/);
 });
 
-test("renders usable Ask AI context with one selected market", async (t) => {
+test("withholds Ask AI comparison context when no scored result exists", async (t) => {
   const vite = await createServer({
     configFile: false,
     appType: "custom",
@@ -100,37 +89,25 @@ test("renders usable Ask AI context with one selected market", async (t) => {
   });
   t.after(() => vite.close());
 
-  const [
-    { MarketComparisonWorkspace },
-    { publicMarkets },
-    { syntheticMarketAttractivenessResults },
-  ] = await Promise.all([
+  const [{ MarketComparisonWorkspace }, { publicMarkets }] = await Promise.all([
     vite.ssrLoadModule(
       "/components/market-comparison/MarketComparisonWorkspace.tsx",
     ),
     vite.ssrLoadModule("/lib/data/public-market-ui.ts"),
-    vite.ssrLoadModule("/lib/market-attractiveness/index.ts"),
   ]);
-  const scored = syntheticMarketAttractivenessResults.find(
-    (result) => result.cbsaCode && result.cohort === "metropolitan",
-  );
-  const activeMarket = publicMarkets.find(
-    (market) => market.cbsa_code === scored.cbsaCode,
-  );
+  const activeMarket = publicMarkets[0];
   const html = renderToStaticMarkup(
     createElement(MarketComparisonWorkspace, {
       activeMarket,
-      selectedCodes: [scored.cbsaCode],
+      selectedCodes: [activeMarket.cbsa_code],
       onAddActiveMarket() {},
       onRemoveMarket() {},
     }),
   );
 
-  assert.match(html, /1 of 5 selected/);
-  assert.match(html, new RegExp(`Review ${scored.marketName}`));
-  assert.match(html, /Ask AI/);
-  assert.match(html, /Ask AI about Review/);
-  assert.match(html, /Add another scored market/);
+  assert.match(html, /0 of 5 selected/);
+  assert.match(html, /No exact scored CBSA result/);
+  assert.doesNotMatch(html, /Ask AI about Review/);
 });
 
 test("save comparison is explicitly non-persistent", async () => {

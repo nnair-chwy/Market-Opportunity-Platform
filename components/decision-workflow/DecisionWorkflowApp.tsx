@@ -2,12 +2,33 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
+import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
 import { DecisionGraphAnimation } from "@/components/decision-workflow/DecisionGraphAnimation";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
+import { InsightActionPlanPanel } from "@/components/decision-workflow/InsightActionPlanPanel";
+import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { publicMarkets } from "@/lib/data/public-market-ui";
+import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
+import type { PerspectiveId } from "@/lib/perspectives";
+import { buildAnalysisBrief, type AnalysisBrief } from "@/lib/planning/analysis-brief";
+import {
+  buildEvidencePlan,
+  generateEvaluationDefinitionDraft,
+  type EvidencePlan,
+  type EvaluationDefinitionDraft,
+} from "@/lib/planning/evidence-plan";
+import {
+  answerInvestigationFollowUp,
+  runConfirmedMarketInvestigation,
+  runMarketInvestigation,
+  type InvestigationFollowUp,
+  type InvestigationLead,
+  type MarketInvestigation,
+} from "@/lib/planning/market-investigation";
 import {
   assembleReviewableActionPacket,
+  buildInsightActionPlan,
   buildSisterFollowUpQuestion,
   deterministicFindingsAndProposalSummary,
   downloadReviewableActionPacket,
@@ -21,11 +42,12 @@ import {
   resolveGeographicFocus,
   suggestSisterGeographiesFromPlan,
   type EvaluationPlan,
+  type GeographicFocus,
   type PacketFindingsSummary,
   type SisterGeographySuggestion,
 } from "@/lib/planning";
 
-type Phase = "question" | "interpreting" | "running" | "packet" | "saved" | "error";
+type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error";
 
 type SavedPacket = {
   id: string;
@@ -34,6 +56,14 @@ type SavedPacket = {
   actionId: string;
   savedAt: string;
   summary?: string;
+  investigation?: MarketInvestigation;
+  perspectiveId?: PerspectiveId;
+  followUps?: InvestigationFollowUp[];
+  analysisBrief?: AnalysisBrief;
+  evidencePlan?: EvidencePlan;
+  evaluationDefinition?: EvaluationDefinitionDraft;
+  selectedLeadId?: string | null;
+  selectedContextMetric?: CbsaAcsMetricKey;
 };
 
 function nowLabel() {
@@ -56,7 +86,8 @@ function proposalMethodLabel(method: EvaluationPlan["proposalMethod"]) {
   return method === "ai_proposed" ? "AI-proposed intent" : "Deterministic fallback";
 }
 
-function workspaceHeading(plan: EvaluationPlan) {
+function workspaceHeading(plan: EvaluationPlan, investigation?: MarketInvestigation | null) {
+  if (investigation?.leads.length) return "Market investigation review";
   if (plan.resultWorkspaceType === "clarification") return "Clarification required";
   if (plan.resultWorkspaceType === "evidence_readiness") return "Evidence readiness review";
   if (plan.resultWorkspaceType === "clinic_evaluation_surface") return "Bounded clinic evaluation";
@@ -81,6 +112,14 @@ export function DecisionWorkflowApp() {
   const [packetSummary, setPacketSummary] = useState<PacketFindingsSummary | null>(null);
   const [packetSummaryState, setPacketSummaryState] = useState<"idle" | "loading" | "ready">("idle");
   const [actionDetailsOpen, setActionDetailsOpen] = useState(false);
+  const [investigation, setInvestigation] = useState<MarketInvestigation | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [perspectiveId, setPerspectiveId] = useState<PerspectiveId>("cvc");
+  const [investigationFollowUps, setInvestigationFollowUps] = useState<InvestigationFollowUp[]>([]);
+  const [analysisBrief, setAnalysisBrief] = useState<AnalysisBrief | null>(null);
+  const [evidencePlan, setEvidencePlan] = useState<EvidencePlan | null>(null);
+  const [evaluationDefinition, setEvaluationDefinition] = useState<EvaluationDefinitionDraft | null>(null);
+  const [selectedContextMetric, setSelectedContextMetric] = useState<CbsaAcsMetricKey>("household_count");
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
 
@@ -94,6 +133,24 @@ export function DecisionWorkflowApp() {
     [plan],
   );
 
+  const selectedLead = useMemo(
+    () => investigation?.leads.find((lead) => lead.id === selectedLeadId) ?? investigation?.leads[0] ?? null,
+    [investigation, selectedLeadId],
+  );
+
+  const displayedGeographicFocus = useMemo<GeographicFocus | null>(() => {
+    if (!selectedLead) return geographicFocus;
+    const names = selectedLead.marketIds.map((code) => publicMarkets.find((market) => market.cbsa_code === code)?.cbsa_name ?? code);
+    return {
+      state: "focused",
+      source: "evaluation_result",
+      cbsaCodes: selectedLead.marketIds.slice(0, 5),
+      label: names.join(" compared with "),
+      evidenceStatus: "Derived",
+      message: `Map focus follows the selected analyst lead: ${selectedLead.title}.`,
+    };
+  }, [geographicFocus, selectedLead]);
+
   const sisterGeographies = useMemo(
     () => (plan && geographicFocus?.state === "focused"
       ? suggestSisterGeographiesFromPlan(plan, undefined, geographicFocus.cbsaCodes)
@@ -101,9 +158,35 @@ export function DecisionWorkflowApp() {
     [plan, geographicFocus],
   );
 
+  const insightActionPlan = useMemo(
+    () => (plan && investigation && selectedLead && analysisBrief
+      ? buildInsightActionPlan(
+        plan,
+        investigation,
+        selectedLead,
+        analysisBrief,
+        analysisBrief.confirmedAt ?? new Date().toISOString(),
+      )
+      : null),
+    [analysisBrief, investigation, plan, selectedLead],
+  );
+
   const reviewablePacket = useMemo(
-    () => (plan && selectedAction ? assembleReviewableActionPacket(plan, selectedAction) : null),
-    [plan, selectedAction],
+    () => (plan && selectedAction
+      ? assembleReviewableActionPacket(
+        plan,
+        selectedAction,
+        new Date().toISOString(),
+        investigation ?? undefined,
+        investigationFollowUps,
+        analysisBrief ?? undefined,
+        evidencePlan ?? undefined,
+        evaluationDefinition ?? undefined,
+        { selectedLeadId, contextMetric: selectedContextMetric },
+        insightActionPlan ?? undefined,
+      )
+      : null),
+    [analysisBrief, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId],
   );
 
   useEffect(() => {
@@ -172,9 +255,9 @@ export function DecisionWorkflowApp() {
     return () => {
       cancelled = true;
     };
-  }, [phase, plan, selectedAction]);
+  }, [investigation, phase, plan, selectedAction, selectedLead]);
 
-  async function startWorkflow(nextQuestion = question) {
+  async function startWorkflow(nextQuestion = question, nextPerspectiveId: PerspectiveId = perspectiveId) {
     if (!nextQuestion.trim()) return;
     const normalizedQuestion = nextQuestion.trim();
     setQuestion(normalizedQuestion);
@@ -186,12 +269,18 @@ export function DecisionWorkflowApp() {
     setPacketSummary(null);
     setPacketSummaryState("idle");
     setActionDetailsOpen(false);
+    setInvestigation(null);
+    setSelectedLeadId(null);
+    setInvestigationFollowUps([]);
+    setAnalysisBrief(null);
+    setEvidencePlan(null);
+    setEvaluationDefinition(null);
     setPhase("interpreting");
     try {
       const response = await fetch("/api/evaluation-plans", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: normalizedQuestion }),
+        body: JSON.stringify({ question: normalizedQuestion, perspectiveId: nextPerspectiveId }),
       });
       const payload: unknown = await response.json();
       const parsed = evaluationPlanResponseSchema.safeParse(payload);
@@ -202,13 +291,34 @@ export function DecisionWorkflowApp() {
         return;
       }
       setPlan(parsed.data.plan);
+      setSelectedContextMetric(parsed.data.plan.perspectiveId === "marketing" ? "population_density" : parsed.data.plan.perspectiveId === "pricing" ? "median_household_income" : "household_count");
+      const nextInvestigation = runMarketInvestigation(parsed.data.plan);
+      const nextBrief = buildAnalysisBrief(parsed.data.plan, nextInvestigation);
+      const nextEvidencePlan = buildEvidencePlan(parsed.data.plan);
+      setInvestigation(null);
+      setAnalysisBrief(nextBrief);
+      setEvidencePlan(nextEvidencePlan);
+      setEvaluationDefinition(null);
+      setSelectedLeadId(null);
       setSelectedActionId(proposedActionFromPlan(parsed.data.plan).id);
-      setActiveStep(0);
-      setPhase("running");
+      setPhase("confirming");
     } catch {
       setRequestError("The evaluation plan service is unavailable. Retry or edit the question.");
       setPhase("error");
     }
+  }
+
+  function confirmAndRun(nextBrief: AnalysisBrief) {
+    if (!plan) return;
+    const nextInvestigation = runConfirmedMarketInvestigation(plan, nextBrief);
+    const nextEvidencePlan = evidencePlan ?? buildEvidencePlan(plan);
+    setAnalysisBrief(nextBrief);
+    setInvestigation(nextInvestigation);
+    setEvidencePlan(nextEvidencePlan);
+    setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, nextInvestigation, nextEvidencePlan));
+    setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
+    setActiveStep(0);
+    setPhase("running");
   }
 
   function restart() {
@@ -221,7 +331,14 @@ export function DecisionWorkflowApp() {
     setPacketSummary(null);
     setPacketSummaryState("idle");
     setActionDetailsOpen(false);
+    setInvestigation(null);
+    setSelectedLeadId(null);
+    setInvestigationFollowUps([]);
+    setAnalysisBrief(null);
+    setEvidencePlan(null);
+    setEvaluationDefinition(null);
     setPhase("question");
+    setSelectedContextMetric("household_count");
   }
 
   function savePacket() {
@@ -233,6 +350,14 @@ export function DecisionWorkflowApp() {
       actionId: selectedAction.id,
       savedAt: nowLabel(),
       summary: packetSummaryFromPlan(plan),
+      investigation: investigation ?? undefined,
+      perspectiveId: plan.perspectiveId,
+      followUps: investigationFollowUps,
+      analysisBrief: analysisBrief ?? undefined,
+      evidencePlan: evidencePlan ?? undefined,
+      evaluationDefinition: evaluationDefinition ?? undefined,
+      selectedLeadId,
+      selectedContextMetric,
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
@@ -241,9 +366,22 @@ export function DecisionWorkflowApp() {
   }
 
   function openSavedPacket(packet: SavedPacket) {
-    const restoredPlan = planEvaluation(packet.question);
+    const restoredPlan = planEvaluation(packet.question, packet.perspectiveId);
     setQuestion(packet.question);
     setPlan(restoredPlan);
+    setPerspectiveId(restoredPlan.perspectiveId);
+    setSelectedContextMetric(packet.selectedContextMetric ?? (restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count"));
+    const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
+    setInvestigation(restoredInvestigation);
+    setSelectedLeadId(packet.selectedLeadId && restoredInvestigation.leads.some((lead) => lead.id === packet.selectedLeadId)
+      ? packet.selectedLeadId
+      : restoredInvestigation.leads[0]?.id ?? null);
+    setInvestigationFollowUps(packet.followUps ?? []);
+    const restoredBrief = packet.analysisBrief ?? buildAnalysisBrief(restoredPlan, restoredInvestigation);
+    const restoredEvidencePlan = packet.evidencePlan ?? buildEvidencePlan(restoredPlan);
+    setAnalysisBrief(restoredBrief);
+    setEvidencePlan(restoredEvidencePlan);
+    setEvaluationDefinition(packet.evaluationDefinition ?? generateEvaluationDefinitionDraft(restoredBrief, restoredInvestigation, restoredEvidencePlan));
     setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
     setRequestError(null);
     setSisterFollowUpNotice(null);
@@ -268,6 +406,12 @@ export function DecisionWorkflowApp() {
       || savedPackets.some((packet) => packet.question === currentQuestion);
     // Leave saved packets untouched. Do not auto-save or overwrite the current packet.
     setPlan(null);
+    setInvestigation(null);
+    setSelectedLeadId(null);
+    setInvestigationFollowUps([]);
+    setAnalysisBrief(null);
+    setEvidencePlan(null);
+    setEvaluationDefinition(null);
     setSelectedActionId("");
     setActiveStep(-1);
     setRequestError(null);
@@ -285,6 +429,7 @@ export function DecisionWorkflowApp() {
 
   const showPacket = phase === "packet" || phase === "saved";
   const isQuestionPage = activeView === "workflow" && phase === "question";
+  const isConfirmationPage = activeView === "workflow" && phase === "confirming";
   const isAnimationPage = activeView === "workflow" && (phase === "interpreting" || phase === "running");
   const isResultPage = activeView === "workflow" && showPacket;
   const isErrorPage = activeView === "workflow" && phase === "error";
@@ -292,6 +437,8 @@ export function DecisionWorkflowApp() {
     ? "saved-list"
     : isQuestionPage
       ? "question"
+      : isConfirmationPage
+        ? "confirmation"
       : isAnimationPage
         ? "animation"
         : isResultPage
@@ -301,6 +448,8 @@ export function DecisionWorkflowApp() {
             : "workspace";
   const workspaceLayoutClass = isQuestionPage
     ? "question-layout"
+    : isConfirmationPage
+      ? "confirmation-page-layout"
     : isAnimationPage
       ? "animation-page-layout"
       : "workspace-layout packet-workspace-layout result-page-layout";
@@ -317,9 +466,9 @@ export function DecisionWorkflowApp() {
           <p>Move from a business question to a reviewable next step.</p>
           <ol className="rail-steps">
             <li className={phase === "question" ? "current" : "complete"}><span>1</span><div><strong>Ask</strong><small>State the decision</small></div></li>
-            <li className={phase === "interpreting" || phase === "running" ? "current" : showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Trace</strong><small>Follow the decision graph</small></div></li>
-            <li className={showPacket && phase !== "saved" ? "current" : phase === "saved" ? "complete" : ""}><span>3</span><div><strong>Review</strong><small>Read the action packet</small></div></li>
-            <li className={phase === "saved" ? "current complete" : ""}><span>4</span><div><strong>Save</strong><small>Keep the reviewable draft</small></div></li>
+            <li className={phase === "interpreting" || phase === "confirming" ? "current" : phase === "running" || showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Confirm</strong><small>Set the analysis contract</small></div></li>
+            <li className={phase === "running" ? "current" : showPacket ? "complete" : ""}><span>3</span><div><strong>Run</strong><small>Calculate the confirmed model</small></div></li>
+            <li className={showPacket ? "current" : ""}><span>4</span><div><strong>Review</strong><small>Read and export results</small></div></li>
           </ol>
           <div className="rail-note"><strong>Decision boundary</strong><p>The workspace prepares evidence and next actions. An accountable owner makes the business decision.</p></div>
         </aside>
@@ -345,9 +494,28 @@ export function DecisionWorkflowApp() {
                 setQuestion(value);
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
               }}
-              onSubmit={() => void startWorkflow()}
+              onSubmit={(nextPerspectiveId) => void startWorkflow(question, nextPerspectiveId)}
+              onPerspectiveChange={(nextPerspectiveId) => {
+                setPerspectiveId(nextPerspectiveId);
+                setQuestion("");
+                setSisterFollowUpNotice(null);
+              }}
               onOpenSaved={() => setActiveView("saved")}
             />
+          </section>
+        ) : null}
+
+        {isConfirmationPage && plan && analysisBrief ? (
+          <section className="analysis-contract-page" aria-labelledby="analysis-brief-title">
+            <div className="analysis-contract-intro">
+              <div className="analysis-contract-nav">
+                <button className="text-action" type="button" onClick={restart}>← Edit original question</button>
+                <span>Human checkpoint · before analysis</span>
+              </div>
+              <h1>Review the analysis plan</h1>
+              <p>Confirm the question, method, and evidence boundaries before the analyst runs.</p>
+            </div>
+            <AnalysisBriefPanel brief={analysisBrief} onConfirm={confirmAndRun} />
           </section>
         ) : null}
 
@@ -428,9 +596,9 @@ export function DecisionWorkflowApp() {
             >
               <div className="packet-heading">
                 <div>
-                  <div className="eyebrow">{phase === "saved" ? "Saved action packet" : "Decision review"}</div>
-                  <h1 id="packet-title">{workspaceHeading(plan)}</h1>
-                  <p className="lead">{packetSummaryFromPlan(plan)}</p>
+                  <div className="eyebrow">{phase === "saved" ? "Saved recommendation" : "Recommendation"}</div>
+                  <h1 id="packet-title">{workspaceHeading(plan, investigation)}</h1>
+                  <p className="lead">{investigation?.readiness.summary ?? packetSummaryFromPlan(plan)}</p>
                 </div>
                 <div className="packet-heading-actions">
                   <span className="draft-pill">{phase === "saved" ? "Saved draft" : "Draft for review"}</span>
@@ -439,54 +607,85 @@ export function DecisionWorkflowApp() {
               </div>
 
               <div className="question-ribbon packet-question">
-                <span>Your question</span>
-                <strong>{plan.originalQuestion}</strong>
+                <span>Confirmed question</span>
+                <strong>{analysisBrief?.rewrittenQuestion ?? plan.originalQuestion}</strong>
               </div>
 
-              <div className="decision-review-primary">
-                {geographicFocus ? (
+              {displayedGeographicFocus ? (
+                <div className="decision-result-map-shell">
                   <GeographicFocusMap
-                    focus={geographicFocus}
+                    focus={displayedGeographicFocus}
                     modeLabel={geographyModeLabel(plan)}
+                    contextMetric={selectedContextMetric}
+                    findings={investigation?.leads ?? []}
+                    selectedLeadId={selectedLeadId}
+                    onSelectFinding={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
                   />
-                ) : null}
+                </div>
+              ) : null}
 
+              {investigation ? (
+                <MarketInvestigationPanel
+                  investigation={investigation}
+                  selectedLeadId={selectedLead?.id ?? null}
+                  onSelectLead={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
+                  followUps={investigationFollowUps.filter((turn) => turn.leadId === selectedLead?.id)}
+                  onAskFollowUp={(followUpQuestion) => {
+                    if (!selectedLead) return;
+                    setInvestigationFollowUps((turns) => [...turns, {
+                      id: `follow-up-${Date.now().toString(36)}`,
+                      leadId: selectedLead.id,
+                      question: followUpQuestion.trim(),
+                      answer: answerInvestigationFollowUp(selectedLead, followUpQuestion),
+                    }]);
+                  }}
+                  selectedContextMetric={selectedContextMetric}
+                  onContextMetricChange={setSelectedContextMetric}
+                />
+              ) : null}
+
+              <div className="decision-review-primary">
                 <div className="decision-review-side">
                   <div className="action-packet-card">
-                    <div className="section-label">Draft action packet</div>
                     <p className="action-packet-governance-note">
                       Draft for accountable review. This packet does not approve a market, site, lease, or spend decision.
                     </p>
-                    <h2>{selectedAction.title}</h2>
-                    <p>{selectedAction.summary}</p>
+                    {insightActionPlan ? (
+                      <InsightActionPlanPanel actionPlan={insightActionPlan} />
+                    ) : (
+                      <>
+                        <div className="section-label">Action packet</div>
+                        <h2>{selectedLead ? `Validate ${selectedLead.title}` : selectedAction.title}</h2>
+                        <p>{selectedLead?.businessMeaning ?? selectedAction.summary}</p>
+                        <section
+                          className="packet-findings"
+                          aria-labelledby="findings-summary-title"
+                          data-summary-state={packetSummaryState}
+                        >
+                          <div className="section-label" id="findings-summary-title">Findings and proposed action</div>
+                          {packetSummary ? (
+                            <>
+                              <p className="packet-ai-summary-notice">{packetSummary.draftOnlyNotice}</p>
+                              <ol className="packet-ai-summary-list">
+                                <li><strong>What the evidence indicates</strong><p>{packetSummary.evidenceIndicates}</p></li>
+                                <li><strong>Why the proposed action is relevant</strong><p>{packetSummary.whyActionRelevant}</p></li>
+                                <li><strong>What the owner should do next</strong><p>{packetSummary.ownerNextStep}</p></li>
+                                <li><strong>What remains unknown</strong><p>{packetSummary.remainsUnknown}</p></li>
+                              </ol>
+                              <small className="packet-findings-meta">
+                                Summary origin: {packetSummary.origin.replaceAll("_", " ")}
+                                {packetSummary.modelVersion ? ` · model ${packetSummary.modelVersion}` : ""}
+                                {" · "}prompt {packetSummary.promptVersion}
+                              </small>
+                            </>
+                          ) : (
+                            <p className="packet-findings-loading">Preparing the draft findings summary from the validated packet.</p>
+                          )}
+                        </section>
+                      </>
+                    )}
 
-                    <section
-                      className="packet-findings"
-                      aria-labelledby="findings-summary-title"
-                      data-summary-state={packetSummaryState}
-                    >
-                      <div className="section-label" id="findings-summary-title">Findings and proposed action</div>
-                      {packetSummary ? (
-                        <>
-                          <p className="packet-ai-summary-notice">{packetSummary.draftOnlyNotice}</p>
-                          <ol className="packet-ai-summary-list">
-                            <li><strong>What the evidence indicates</strong><p>{packetSummary.evidenceIndicates}</p></li>
-                            <li><strong>Why the proposed action is relevant</strong><p>{packetSummary.whyActionRelevant}</p></li>
-                            <li><strong>What the owner should do next</strong><p>{packetSummary.ownerNextStep}</p></li>
-                            <li><strong>What remains unknown</strong><p>{packetSummary.remainsUnknown}</p></li>
-                          </ol>
-                          <small className="packet-findings-meta">
-                            Summary origin: {packetSummary.origin.replaceAll("_", " ")}
-                            {packetSummary.modelVersion ? ` · model ${packetSummary.modelVersion}` : ""}
-                            {" · "}prompt {packetSummary.promptVersion}
-                          </small>
-                        </>
-                      ) : (
-                        <p className="packet-findings-loading">Preparing the draft findings summary from the validated packet.</p>
-                      )}
-                    </section>
-
-                    <details
+                    {!insightActionPlan ? <details
                       className="packet-action-details"
                       open={actionDetailsOpen}
                       onToggle={(event) => setActionDetailsOpen(event.currentTarget.open)}
@@ -520,7 +719,7 @@ export function DecisionWorkflowApp() {
                           ) : null}
                         </div>
                       ) : null}
-                    </details>
+                    </details> : null}
 
                     <div className="packet-card-footer">
                       <div className="packet-card-actions">
@@ -531,7 +730,7 @@ export function DecisionWorkflowApp() {
                             if (reviewablePacket) downloadReviewableActionPacket(reviewablePacket);
                           }}
                         >
-                          Download action packet
+                          Download full report
                         </button>
                         <button className="primary-action" onClick={savePacket}>
                           {phase === "saved" ? "Saved" : "Save action packet"} <span aria-hidden="true">✓</span>

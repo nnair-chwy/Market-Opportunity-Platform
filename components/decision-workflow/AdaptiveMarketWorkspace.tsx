@@ -406,7 +406,6 @@ export function AdaptiveMarketWorkspace({
         <div className="adaptive-opening-map-chrome" role="status">
           <strong id="adaptive-opening-map-title">{presentation.mapTitle}</strong>
           <span>{presentation.sourceLabel}</span>
-          <small>{presentation.evidenceBoundary}</small>
           {mapMode === "single" && selected ? (
             <dl className="adaptive-single-summary" data-view-a-mode="single">
               <div>
@@ -441,29 +440,12 @@ export function AdaptiveMarketWorkspace({
                     : "Unavailable"}
                 </dd>
               </div>
-              <div>
-                <dt>Source</dt>
-                <dd>{presentation.sourceLabel}</dd>
-              </div>
             </dl>
           ) : null}
           {mapMode === "single" && !selected ? (
-            <dl className="adaptive-single-summary" data-view-a-mode="single">
-              <div>
-                <dt>Active region</dt>
-                <dd>None selected</dd>
-              </div>
-              <div>
-                <dt>{showCensusChoropleth ? metricOption.label : presentation.legend.title}</dt>
-                <dd>Select a market</dd>
-              </div>
-              <div>
-                <dt>Source</dt>
-                <dd>{presentation.sourceLabel}</dd>
-              </div>
-            </dl>
+            <small className="adaptive-map-prompt">Click a market to see its value, percentile, rank, and evidence source.</small>
           ) : null}
-          {mapMode === "single" ? (
+          {mapMode === "single" && selected ? (
             <small className="adaptive-percentile-disclaimer">
               Percentile is market context only — not an opportunity score or recommendation.
             </small>

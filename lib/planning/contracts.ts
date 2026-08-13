@@ -116,6 +116,7 @@ export const evaluationPlanSchema = z.object({
   planId: z.string().trim().min(1),
   version: z.literal("1.0.0"),
   originalQuestion: z.string().trim().min(3).max(600),
+  perspectiveId: z.enum(["pricing", "marketing", "cvc"]),
   proposalMethod: z.enum(["ai_proposed", "deterministic_fallback"]),
   intent: planningIntentSchema,
   capabilityId: z.enum([
@@ -172,6 +173,7 @@ export type SisterGeographySuggestion = z.infer<typeof sisterGeographySuggestion
 
 export const evaluationPlanRequestSchema = z.object({
   question: z.string().trim().min(3).max(600),
+  perspectiveId: z.enum(["pricing", "marketing", "cvc"]).optional(),
 }).strict();
 
 export const evaluationPlanResponseSchema = z.object({

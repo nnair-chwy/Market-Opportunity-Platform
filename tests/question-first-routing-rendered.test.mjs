@@ -5,6 +5,7 @@ import test from "node:test";
 const workflow = fs.readFileSync(new URL("../components/decision-workflow/DecisionWorkflowApp.tsx", import.meta.url), "utf8");
 const market = fs.readFileSync(new URL("../components/decision-workflow/AdaptiveMarketWorkspace.tsx", import.meta.url), "utf8");
 const focusMap = fs.readFileSync(new URL("../components/decision-workflow/GeographicFocusMap.tsx", import.meta.url), "utf8");
+const investigationPanel = fs.readFileSync(new URL("../components/decision-workflow/MarketInvestigationPanel.tsx", import.meta.url), "utf8");
 const sister = fs.readFileSync(new URL("../components/decision-workflow/SisterGeographiesSection.tsx", import.meta.url), "utf8");
 const sisterLib = fs.readFileSync(new URL("../lib/planning/sister-geographies.ts", import.meta.url), "utf8");
 
@@ -39,8 +40,8 @@ test("review page routes result workspace types without interactive comparison",
   assert.match(workflow, /isResultPage/);
   assert.match(workflow, /resolveGeographicFocus/);
   assert.match(workflow, /decision-review-primary/);
-  assert.match(workflow, /Draft action packet/);
-  assert.match(workflow, /Download action packet/);
+  assert.match(workflow, /Action packet/);
+  assert.match(workflow, /Download full report/);
   assert.match(workflow, /Findings and proposed action/);
   assert.match(workflow, /packet-action-details/);
   assert.match(workflow, /Action details/);
@@ -61,4 +62,26 @@ test("review page routes result workspace types without interactive comparison",
   assert.match(sisterLib, /SISTER_GEOGRAPHY_RULE_ID/);
   assert.match(sister, /Ask about this geography/);
   assert.match(sister, /if \(!suggestions\.length\) return null;/);
+});
+
+test("selected analyst leads expose fixture values and drive the map context measure", () => {
+  assert.match(investigationPanel, /Source values behind the highlighted markets/);
+  assert.match(investigationPanel, /Public context—not a score/);
+  assert.match(investigationPanel, /SRC-009 · snapshot footprint only/);
+  assert.match(investigationPanel, /onContextMetricChange/);
+  assert.match(workflow, /selectedContextMetric/);
+  assert.match(workflow, /contextMetric=\{selectedContextMetric\}/);
+});
+
+test("finding colors stay synchronized between the map and finding cards", () => {
+  assert.match(workflow, /findings=\{investigation\?\.leads \?\? \[\]\}/);
+  assert.match(workflow, /selectedLeadId=\{selectedLeadId\}/);
+  assert.match(workflow, /onSelectFinding=/);
+  assert.match(focusMap, /CBSA_FINDING_LAYER_ID/);
+  assert.match(focusMap, /finding_color/);
+  assert.match(focusMap, /filteredFindingId/);
+  assert.match(focusMap, /aria-pressed/);
+  assert.match(focusMap, /Select a finding pill to isolate its market or pair/);
+  assert.match(investigationPanel, /--lead-color/);
+  assert.match(investigationPanel, /investigationLeadColor/);
 });

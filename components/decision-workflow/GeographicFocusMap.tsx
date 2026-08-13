@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FilterSpecification, GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
+import type { FilterSpecification, GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent } from "maplibre-gl";
 import {
   MAINLAND_MARKET_BOUNDS,
   PUBLIC_MARKET_MAX_FIT_ZOOM,
@@ -9,18 +9,50 @@ import {
   selectedMarketBounds,
 } from "@/lib/data/cbsa-market-map";
 import { publicMarketMapGeoJson } from "@/lib/data/public-market-ui";
+import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
 import type { GeographicFocus } from "@/lib/planning";
+import { investigationLeadColor } from "@/lib/planning/lead-map";
+import type { InvestigationLead } from "@/lib/planning/market-investigation";
 
 const DEFAULT_STYLE_URL = "https://api.maptiler.com/maps/streets-v4/style.json";
 const CBSA_SOURCE_ID = "review-focus-cbsa";
 const CBSA_FILL_LAYER_ID = "review-focus-cbsa-fill";
 const CBSA_OUTLINE_LAYER_ID = "review-focus-cbsa-outline";
 const CBSA_SELECTED_LAYER_ID = "review-focus-cbsa-selected";
+const CBSA_PERCENTILE_LAYER_ID = "review-focus-cbsa-percentile";
+const CBSA_FINDING_LAYER_ID = "review-focus-cbsa-findings";
+
+type PercentileBand = "all" | "top_1" | "top_5" | "top_10" | "bottom_10";
 
 type GeographicFocusMapProps = {
   focus: GeographicFocus;
   modeLabel: string;
+  contextMetric?: CbsaAcsMetricKey;
+  findings?: InvestigationLead[];
+  selectedLeadId?: string | null;
+  onSelectFinding?: (finding: InvestigationLead) => void;
 };
+
+const METRIC_LABELS: Record<CbsaAcsMetricKey, string> = {
+  total_population: "Population",
+  household_count: "Households",
+  median_household_income: "Median household income",
+  housing_unit_count: "Housing units",
+  population_density: "Population density",
+};
+
+function percentileFilter(metric: CbsaAcsMetricKey, band: PercentileBand, values: number[]): FilterSpecification {
+  if (band === "all" || values.length === 0) return ["==", ["get", "cbsa_code"], ""] as FilterSpecification;
+  const thresholdAt = (share: number) => values[Math.max(0, Math.min(values.length - 1, Math.floor((values.length - 1) * share)))];
+  if (band === "bottom_10") return ["<=", ["get", metric], thresholdAt(0.1)] as FilterSpecification;
+  const share = band === "top_1" ? 0.99 : band === "top_5" ? 0.95 : 0.9;
+  return [">=", ["get", metric], thresholdAt(share)] as FilterSpecification;
+}
+
+function percentileRank(value: number, values: number[]) {
+  const atOrBelow = values.filter((item) => item <= value).length;
+  return Math.max(1, Math.round((atOrBelow / values.length) * 100));
+}
 
 function focusFilter(codes: readonly string[]): FilterSpecification {
   return [
@@ -46,10 +78,58 @@ function sourceLabel(source: GeographicFocus["source"]) {
 export function GeographicFocusMap({
   focus,
   modeLabel,
+  contextMetric = "household_count",
+  findings = [],
+  selectedLeadId = null,
+  onSelectFinding,
 }: GeographicFocusMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "basemap_unavailable">("loading");
+  const [percentileBand, setPercentileBand] = useState<PercentileBand>("all");
+  const [filteredFindingId, setFilteredFindingId] = useState<string | null>(null);
+  const previousSelectedLeadIdRef = useRef(selectedLeadId);
+  const metricValues = useMemo(() => publicMarketMapGeoJson.features
+    .map((item) => item.properties[contextMetric])
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value))
+    .sort((left, right) => left - right), [contextMetric]);
+  const findingsGeoJson = useMemo(() => {
+    const findingByCode = new Map<string, { id: string; index: number; title: string; color: string; memberCount: number }>();
+    findings.forEach((finding, index) => {
+      finding.marketIds.forEach((code) => {
+        if (!findingByCode.has(code)) {
+          findingByCode.set(code, {
+            id: finding.id,
+            index,
+            title: finding.title,
+            color: investigationLeadColor(index),
+            memberCount: finding.marketIds.length,
+          });
+        }
+      });
+    });
+    return {
+      ...publicMarketMapGeoJson,
+      features: publicMarketMapGeoJson.features.map((feature) => {
+        const finding = findingByCode.get(feature.properties.cbsa_code);
+        return {
+          ...feature,
+          properties: {
+            ...feature.properties,
+            ...(finding ? {
+              finding_id: finding.id,
+              finding_index: finding.index,
+              finding_title: finding.title,
+              finding_color: finding.color,
+              finding_member_count: finding.memberCount,
+            } : {}),
+          },
+        };
+      }),
+    };
+  }, [findings]);
+  const findingMarketCount = useMemo(() => new Set(findings.flatMap((finding) => finding.marketIds)).size, [findings]);
+  const didInitializeFindingsRef = useRef(false);
   const config = useMemo(
     () => resolveMapTilerConfig(
       process.env.NEXT_PUBLIC_MAP_STYLE_URL?.trim() || DEFAULT_STYLE_URL,
@@ -60,6 +140,19 @@ export function GeographicFocusMap({
   const focusCbsaCodesRef = useRef(focus.cbsaCodes);
   focusCbsaCodesRef.current = focus.cbsaCodes;
   const interactiveEnabled = focus.state === "focused";
+
+  useEffect(() => {
+    if (findings.length > 0) {
+      setPercentileBand("all");
+      setFilteredFindingId(null);
+    }
+  }, [findings.length]);
+
+  useEffect(() => {
+    if (previousSelectedLeadIdRef.current === selectedLeadId) return;
+    previousSelectedLeadIdRef.current = selectedLeadId;
+    setFilteredFindingId(selectedLeadId);
+  }, [selectedLeadId]);
 
   useEffect(() => {
     if (!interactiveEnabled) {
@@ -83,7 +176,7 @@ export function GeographicFocusMap({
 
     async function initialize() {
       try {
-        const { AttributionControl, Map, NavigationControl } = await import("maplibre-gl");
+        const { AttributionControl, Map, NavigationControl, Popup } = await import("maplibre-gl");
         if (disposed || !containerRef.current) return;
 
         const map = new Map({
@@ -105,7 +198,7 @@ export function GeographicFocusMap({
           const initialFocus = focusCbsaCodesRef.current;
           map.addSource(CBSA_SOURCE_ID, {
             type: "geojson",
-            data: publicMarketMapGeoJson,
+            data: findingsGeoJson,
           });
           map.addLayer({
             id: CBSA_FILL_LAYER_ID,
@@ -127,18 +220,71 @@ export function GeographicFocusMap({
             },
           });
           map.addLayer({
-            id: CBSA_SELECTED_LAYER_ID,
+            id: CBSA_PERCENTILE_LAYER_ID,
             type: "fill",
+            source: CBSA_SOURCE_ID,
+            filter: percentileFilter(contextMetric, "all", metricValues),
+            paint: {
+              "fill-color": "#f29d49",
+              "fill-opacity": 0.38,
+            },
+          });
+          map.addLayer({
+            id: CBSA_FINDING_LAYER_ID,
+            type: "fill",
+            source: CBSA_SOURCE_ID,
+            filter: ["has", "finding_index"] as FilterSpecification,
+            paint: {
+              "fill-color": ["get", "finding_color"],
+              "fill-opacity": 0.58,
+              "fill-outline-color": ["get", "finding_color"],
+            },
+          });
+          map.addLayer({
+            id: CBSA_SELECTED_LAYER_ID,
+            type: "line",
             source: CBSA_SOURCE_ID,
             filter: initialFocus.length
               ? focusFilter(initialFocus)
               : (["==", ["get", "cbsa_code"], ""] as FilterSpecification),
             paint: {
-              "fill-color": "#3b6fd9",
-              "fill-opacity": 0.28,
+              "line-color": ["coalesce", ["get", "finding_color"], "#173f7a"],
+              "line-width": 3.25,
+              "line-opacity": 1,
             },
           });
           setLoadState("ready");
+        });
+        map.on("mouseenter", CBSA_FILL_LAYER_ID, () => { map.getCanvas().style.cursor = "pointer"; });
+        map.on("mouseleave", CBSA_FILL_LAYER_ID, () => { map.getCanvas().style.cursor = ""; });
+        map.on("click", CBSA_FILL_LAYER_ID, (event: MapLayerMouseEvent) => {
+          const properties = event.features?.[0]?.properties;
+          const value = Number(properties?.[contextMetric]);
+          if (!properties) return;
+          const popup = document.createElement("div");
+          const title = document.createElement("strong");
+          title.textContent = String(properties.cbsa_name ?? "Selected market");
+          const detail = document.createElement("p");
+          const findingIndex = Number(properties.finding_index);
+          if (Number.isFinite(findingIndex)) {
+            const finding = document.createElement("small");
+            const memberCount = Number(properties.finding_member_count);
+            finding.textContent = `Finding ${findingIndex + 1} · ${memberCount === 1 ? "individual market" : `${memberCount}-market pair`}`;
+            finding.style.color = String(properties.finding_color ?? "#2f6bdb");
+            finding.style.fontWeight = "800";
+            popup.append(title, finding);
+          } else {
+            popup.append(title);
+          }
+          if (Number.isFinite(value)) {
+            const percentile = percentileRank(value, metricValues);
+            detail.textContent = `${METRIC_LABELS[contextMetric]}: ${formatMetricValue(contextMetric, value)} · ${percentile >= 50 ? `top ${101 - percentile}%` : `bottom ${percentile}%`} of markets`;
+            popup.append(detail);
+          } else {
+            detail.textContent = "No compatible value is available for this market.";
+            popup.append(detail);
+          }
+          new Popup({ closeButton: true, offset: 8 }).setLngLat(event.lngLat).setDOMContent(popup).addTo(map);
         });
         map.on("error", () => {
           if (!disposed) setLoadState("basemap_unavailable");
@@ -154,7 +300,24 @@ export function GeographicFocusMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [config, interactiveEnabled]);
+  }, [config, contextMetric, findingsGeoJson, interactiveEnabled, metricValues]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || loadState !== "ready" || !map.getLayer(CBSA_PERCENTILE_LAYER_ID)) return;
+    map.setFilter(CBSA_PERCENTILE_LAYER_ID, percentileFilter(contextMetric, percentileBand, metricValues));
+  }, [contextMetric, loadState, metricValues, percentileBand]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || loadState !== "ready" || !map.getLayer(CBSA_FINDING_LAYER_ID)) return;
+    map.setFilter(
+      CBSA_FINDING_LAYER_ID,
+      filteredFindingId
+        ? (["==", ["get", "finding_id"], filteredFindingId] as FilterSpecification)
+        : (["has", "finding_index"] as FilterSpecification),
+    );
+  }, [filteredFindingId, loadState]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -168,6 +331,14 @@ export function GeographicFocusMap({
           ? focusFilter(focus.cbsaCodes)
           : (["==", ["get", "cbsa_code"], ""] as FilterSpecification),
       );
+    }
+
+    if (findings.length > 0 && !didInitializeFindingsRef.current) {
+      didInitializeFindingsRef.current = true;
+      map.fitBounds(MAINLAND_MARKET_BOUNDS, { padding: 30, duration: 700 });
+      const source = map.getSource(CBSA_SOURCE_ID) as GeoJSONSource | undefined;
+      source?.setData(findingsGeoJson);
+      return;
     }
 
     let west = Infinity;
@@ -193,8 +364,8 @@ export function GeographicFocusMap({
     }
 
     const source = map.getSource(CBSA_SOURCE_ID) as GeoJSONSource | undefined;
-    source?.setData(publicMarketMapGeoJson);
-  }, [focus.cbsaCodes, focus.state, loadState]);
+    source?.setData(findingsGeoJson);
+  }, [findings.length, findingsGeoJson, focus.cbsaCodes, focus.state, loadState, selectedLeadId]);
 
   const geographyFallback = focus.state === "fallback";
   const basemapFallback = interactiveEnabled && loadState === "basemap_unavailable";
@@ -209,15 +380,27 @@ export function GeographicFocusMap({
     >
       <div className="geographic-focus-toolbar">
         <div>
-          <span>Geographic focus</span>
-          <strong>{focus.label}</strong>
+          <span>{findings.length ? "Findings map" : "Geographic focus"}</span>
+          <strong>{findings.length ? `${findings.length} findings · ${findingMarketCount} markets` : focus.label}</strong>
           <small className="geographic-focus-evidence">
             Evidence status: {focus.evidenceStatus}
             {" · "}
             {sourceLabel(focus.source)}
           </small>
         </div>
-        <small>{modeLabel}</small>
+        <div className="geographic-focus-controls">
+          <small>{modeLabel}</small>
+          <label>
+            <span>{findings.length ? `${METRIC_LABELS[contextMetric]} context` : `${METRIC_LABELS[contextMetric]} range`}</span>
+            <select value={percentileBand} onChange={(event) => setPercentileBand(event.target.value as PercentileBand)}>
+              <option value="all">{findings.length ? "No context overlay" : "Selected lead only"}</option>
+              <option value="top_1">Top 1%</option>
+              <option value="top_5">Top 5%</option>
+              <option value="top_10">Top 10%</option>
+              <option value="bottom_10">Bottom 10%</option>
+            </select>
+          </label>
+        </div>
       </div>
       <div
         className="geographic-focus-frame"
@@ -262,10 +445,43 @@ export function GeographicFocusMap({
           </>
         )}
       </div>
-      <p className="geographic-focus-note">{focus.message}</p>
+      {findings.length ? (
+        <div className="geographic-focus-findings-legend" aria-label="Finding colors">
+          {findings.map((finding, index) => (
+            <button
+              key={finding.id}
+              type="button"
+              className={finding.id === filteredFindingId ? "selected" : undefined}
+              aria-pressed={finding.id === filteredFindingId}
+              onClick={() => {
+                if (finding.id === filteredFindingId) {
+                  setFilteredFindingId(null);
+                  return;
+                }
+                setFilteredFindingId(finding.id);
+                onSelectFinding?.(finding);
+              }}
+            >
+              <i style={{ background: investigationLeadColor(index) }} />
+              Finding {index + 1}
+              <small>{finding.marketIds.length === 1 ? "individual" : "pair"}</small>
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <p className="geographic-focus-note">{findings.length
+        ? filteredFindingId
+          ? `Showing Finding ${findings.findIndex((finding) => finding.id === filteredFindingId) + 1} only. Select it again to restore all findings.`
+          : "Every finding is mapped. Select a finding pill to isolate its market or pair."
+        : focus.message}</p>
       <small className="geographic-focus-provenance">
         Public CBSA context only (SRC-014 / SRC-015 / SRC-016). Geographic context map — not a score, ranking, or recommendation.
       </small>
     </section>
   );
+}
+
+function formatMetricValue(metric: CbsaAcsMetricKey, value: number) {
+  if (metric === "median_household_income") return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: metric === "population_density" ? 1 : 0 }).format(value);
 }
