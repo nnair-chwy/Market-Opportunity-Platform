@@ -73,8 +73,10 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
 
       <div className="analysis-brief-frame">
         <section className="analysis-brief-question">
-          <span>Original question</span>
-          <p>{brief.originalQuestion}</p>
+          <div className="analysis-brief-original">
+            <span>Original question</span>
+            <p>{brief.originalQuestion}</p>
+          </div>
           <label>
             <strong>Question the analyst used</strong>
             {editing ? (
@@ -85,7 +87,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
               />
             ) : <p className="analysis-brief-rewrite">{brief.rewrittenQuestion}</p>}
           </label>
-          <dl>
+          <dl aria-label="Analysis scope">
             <div><dt>Perspective</dt><dd>{brief.perspectiveId.toUpperCase()}</dd></div>
             <div><dt>Geography</dt><dd>{brief.geography}</dd></div>
             <div><dt>Data period</dt><dd>{brief.timeframe}</dd></div>
@@ -105,30 +107,43 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
         <section className="analysis-brief-considerations" aria-label="Analysis considerations">
           <div className="analysis-brief-current-screen">
             <strong>Calculation the analyst proposes</strong>
-            <p>{brief.currentScreen.inputs.join(" · ")}</p>
-            <small>{brief.currentScreen.method}</small>
+            <div>
+              <p>{brief.currentScreen.inputs.join(" · ")}</p>
+              <small>{brief.currentScreen.method}</small>
+            </div>
             <b>{brief.currentScreen.considerationEditsRecalculate
-              ? "The confirmed weights below directly control the calculation. No hidden weights are added later."
-              : "This question uses gates and comparisons rather than a blended score."}</b>
+                ? "These weights directly control the calculation. No hidden weights are added."
+                : "This question uses gates and comparisons rather than a blended score."}</b>
           </div>
           <div className="analysis-brief-consideration-heading">
             <div><strong>Considerations</strong><span>What can influence, gate, or contextualize the conclusion</span></div>
             {hasWeights ? <span className={weightsValid ? "valid" : "invalid"}>{weightTotal}% assigned</span> : <span>No blended score</span>}
           </div>
           <div className="analysis-brief-table" role="table">
+            <div className="analysis-brief-table-header" role="row">
+              <span role="columnheader">Consideration</span>
+              <span role="columnheader">Metric and rationale</span>
+              <span role="columnheader">Role</span>
+              <span role="columnheader">Evidence</span>
+              <span role="columnheader">Weight</span>
+            </div>
             {draft.considerations.map((item) => (
               <div className="analysis-brief-row" role="row" key={item.id}>
-                <div role="cell">
-                  {editing ? (
-                    <>
-                      <input value={item.label} aria-label={`${item.label} name`} onChange={(event) => updateConsideration(item.id, { label: event.target.value })} />
-                      <textarea value={item.metric} aria-label={`${item.label} metric`} onChange={(event) => updateConsideration(item.id, { metric: event.target.value })} rows={2} />
-                    </>
-                  ) : <><strong>{item.label}</strong><span>{item.metric}</span></>}
+                <div role="cell" className="analysis-brief-name">
+                  {editing
+                    ? <input value={item.label} aria-label={`${item.label} name`} onChange={(event) => updateConsideration(item.id, { label: event.target.value })} />
+                    : <strong>{item.label}</strong>}
+                </div>
+                <div role="cell" className="analysis-brief-metric">
+                  {editing
+                    ? <textarea value={item.metric} aria-label={`${item.label} metric`} onChange={(event) => updateConsideration(item.id, { metric: event.target.value })} rows={2} />
+                    : <span>{item.metric}</span>}
                   <small>{item.whyItMatters}</small>
                 </div>
-                <div role="cell" className="analysis-brief-classification">
+                <div role="cell" className="analysis-brief-classification analysis-brief-role">
                   <span className={`role ${item.role}`}>{roleLabel(item.role)}</span>
+                </div>
+                <div role="cell" className="analysis-brief-classification analysis-brief-evidence">
                   <span className={`evidence ${item.evidenceStatus}`}>{evidenceLabel(item.evidenceStatus)}</span>
                 </div>
                 <div role="cell" className="analysis-brief-weight">
