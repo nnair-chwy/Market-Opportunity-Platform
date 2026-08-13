@@ -8,6 +8,7 @@ import {
 } from "./contracts.ts";
 import type { InvestigationFollowUp, MarketInvestigation } from "./market-investigation.ts";
 import type { AnalysisBrief } from "./analysis-brief.ts";
+import type { InsightActionPlan } from "./insight-action-plan.ts";
 import {
   evidencePlanSchema,
   evaluationDefinitionDraftSchema,
@@ -17,6 +18,36 @@ import {
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
 export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
+
+const insightActionPlanSchema = z.object({
+  version: z.literal("1.0.0"),
+  planId: z.string().trim().min(1),
+  leadId: z.string().trim().min(1),
+  marketName: z.string().trim().min(1),
+  decisionOwner: z.string().trim().min(1),
+  decisionDueDate: z.string().trim().min(1),
+  recommendation: z.string().trim().min(1),
+  whyNow: z.string().trim().min(1),
+  whatThisInforms: z.array(z.string().trim().min(1)).min(1),
+  workstreams: z.array(z.object({
+    id: z.string().trim().min(1),
+    sequence: z.number().int().positive(),
+    title: z.string().trim().min(1),
+    owner: z.string().trim().min(1),
+    dueDate: z.string().trim().min(1),
+    action: z.string().trim().min(1),
+    deliverable: z.string().trim().min(1),
+    completionCriteria: z.string().trim().min(1),
+    status: z.enum(["ready_to_start", "blocked_on_evidence"]),
+  }).strict()).min(1),
+  decisionRules: z.array(z.object({
+    disposition: z.enum(["advance", "hold", "stop"]),
+    rule: z.string().trim().min(1),
+  }).strict()).length(3),
+  stakeholders: z.array(z.string().trim().min(1)).min(1),
+  longerTermConsiderations: z.array(z.string().trim().min(1)).min(1),
+  sourcePattern: z.string().trim().min(1),
+}).strict();
 
 export const reviewableActionPacketSchema = z.object({
   packetKind: z.literal("draft_action_packet"),
@@ -79,6 +110,7 @@ export const reviewableActionPacketSchema = z.object({
     }).strict()).min(1),
     confirmedAt: z.string().trim().min(1).nullable(),
   }).strict().optional(),
+  actionPlan: insightActionPlanSchema.optional(),
   analysisAppendix: z.object({
     version: z.literal("1.0.0"),
     planId: z.string().trim().min(1),
@@ -182,6 +214,7 @@ export function assembleReviewableActionPacket(
   evidencePlan?: EvidencePlan,
   evaluationDefinition?: EvaluationDefinitionDraft,
   reviewContext?: { selectedLeadId: string | null; contextMetric: "total_population" | "household_count" | "median_household_income" | "housing_unit_count" | "population_density" },
+  actionPlan?: InsightActionPlan,
 ): ReviewableActionPacket {
   const placeLabels = plan.geographyResolution.places
     .map((place) => place.cbsaName ?? place.requestedName)
@@ -201,6 +234,9 @@ export function assembleReviewableActionPacket(
   }
   if (reviewContext?.selectedLeadId && !investigation?.leads.some((lead) => lead.id === reviewContext.selectedLeadId)) {
     throw new Error("The selected lead does not belong to this investigation.");
+  }
+  if (actionPlan && (actionPlan.planId !== plan.planId || !investigation?.leads.some((lead) => lead.id === actionPlan.leadId))) {
+    throw new Error("The action plan does not belong to this evaluation plan and investigation.");
   }
 
   return reviewableActionPacketSchema.parse({
@@ -237,6 +273,7 @@ export function assembleReviewableActionPacket(
     evaluationDefinition,
     reviewContext,
     analysisBrief,
+    actionPlan,
     analysisAppendix: investigation ? { ...investigation, followUps } : undefined,
   });
 }
@@ -357,6 +394,48 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
       "",
     ] : []),
   ] : [];
+  const actionPlanSections = packet.actionPlan ? [
+    "## Decision handoff",
+    `- Recommendation: ${packet.actionPlan.recommendation}`,
+    `- Market: ${packet.actionPlan.marketName}`,
+    `- Decision owner: ${packet.actionPlan.decisionOwner}`,
+    `- Decision review date: ${packet.actionPlan.decisionDueDate}`,
+    `- Why now: ${packet.actionPlan.whyNow}`,
+    "",
+    "### What this will inform",
+    bulletList(packet.actionPlan.whatThisInforms, "None listed"),
+    "",
+    "### Do this next",
+    `- ${packet.actionPlan.workstreams[0].title}`,
+    `  - Owner: ${packet.actionPlan.workstreams[0].owner}`,
+    `  - Due: ${packet.actionPlan.workstreams[0].dueDate}`,
+    `  - Action: ${packet.actionPlan.workstreams[0].action}`,
+    `  - Deliverable: ${packet.actionPlan.workstreams[0].deliverable}`,
+    `  - Done when: ${packet.actionPlan.workstreams[0].completionCriteria}`,
+    "",
+    "### Validation workplan",
+    ...packet.actionPlan.workstreams.flatMap((workstream) => [
+      `#### ${workstream.sequence}. ${workstream.title}`,
+      `- Status: ${workstream.status.replaceAll("_", " ")}`,
+      `- Owner: ${workstream.owner}`,
+      `- Due: ${workstream.dueDate}`,
+      `- Action: ${workstream.action}`,
+      `- Deliverable: ${workstream.deliverable}`,
+      `- Done when: ${workstream.completionCriteria}`,
+      "",
+    ]),
+    "### Decision rules",
+    ...packet.actionPlan.decisionRules.map((item) => `- ${item.disposition[0].toUpperCase()}${item.disposition.slice(1)}: ${item.rule}`),
+    "",
+    "### Stakeholders to involve",
+    bulletList(packet.actionPlan.stakeholders, "None listed"),
+    "",
+    "### Longer-term considerations",
+    bulletList(packet.actionPlan.longerTermConsiderations, "None listed"),
+    "",
+    `Research structure used: ${packet.actionPlan.sourcePattern}`,
+    "",
+  ] : [];
 
   return [
     "# Draft action packet (reviewable)",
@@ -398,22 +477,25 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `- Result workspace: ${packet.calculationVersions.resultWorkspaceType}`,
     `- Evidence source IDs: ${packet.calculationVersions.evidenceSourceIds.join(", ") || "None declared"}`,
     "",
-    "## Proposed action",
-    `- Title: ${action.title}`,
-    `- Summary: ${action.summary}`,
-    `- Owner: ${action.owner}`,
-    `- Timing: ${action.timing}`,
-    `- Confidence: ${action.confidence}`,
-    `- Next step: ${action.nextStep}`,
-    `- Output ID: ${action.outputId}`,
-    `- Requires approval: ${action.requiresApproval ? "yes" : "no"}`,
-    "",
-    "### Evidence considered",
-    bulletList(action.evidence, "None listed"),
-    "",
-    "### Tradeoffs",
-    bulletList(action.tradeoffs, "None listed"),
-    "",
+    ...(packet.actionPlan ? [] : [
+      "## Proposed action",
+      `- Title: ${action.title}`,
+      `- Summary: ${action.summary}`,
+      `- Owner: ${action.owner}`,
+      `- Timing: ${action.timing}`,
+      `- Confidence: ${action.confidence}`,
+      `- Next step: ${action.nextStep}`,
+      `- Output ID: ${action.outputId}`,
+      `- Requires approval: ${action.requiresApproval ? "yes" : "no"}`,
+      "",
+      "### Evidence considered",
+      bulletList(action.evidence, "None listed"),
+      "",
+      "### Tradeoffs",
+      bulletList(action.tradeoffs, "None listed"),
+      "",
+    ]),
+    ...actionPlanSections,
     ...framingSections,
     ...evidencePlanningSections,
     ...reviewContextSections,

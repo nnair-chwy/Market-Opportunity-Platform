@@ -5,6 +5,7 @@ import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/Adap
 import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
 import { DecisionGraphAnimation } from "@/components/decision-workflow/DecisionGraphAnimation";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
+import { InsightActionPlanPanel } from "@/components/decision-workflow/InsightActionPlanPanel";
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { publicMarkets } from "@/lib/data/public-market-ui";
@@ -27,6 +28,7 @@ import {
 } from "@/lib/planning/market-investigation";
 import {
   assembleReviewableActionPacket,
+  buildInsightActionPlan,
   buildSisterFollowUpQuestion,
   deterministicFindingsAndProposalSummary,
   downloadReviewableActionPacket,
@@ -157,6 +159,19 @@ export function DecisionWorkflowApp() {
     [plan, geographicFocus],
   );
 
+  const insightActionPlan = useMemo(
+    () => (plan && investigation && selectedLead && analysisBrief
+      ? buildInsightActionPlan(
+        plan,
+        investigation,
+        selectedLead,
+        analysisBrief,
+        analysisBrief.confirmedAt ?? new Date().toISOString(),
+      )
+      : null),
+    [analysisBrief, investigation, plan, selectedLead],
+  );
+
   const reviewablePacket = useMemo(
     () => (plan && selectedAction
       ? assembleReviewableActionPacket(
@@ -169,9 +184,10 @@ export function DecisionWorkflowApp() {
         evidencePlan ?? undefined,
         evaluationDefinition ?? undefined,
         { selectedLeadId, contextMetric: selectedContextMetric },
+        insightActionPlan ?? undefined,
       )
       : null),
-    [analysisBrief, evidencePlan, evaluationDefinition, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId],
+    [analysisBrief, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId],
   );
 
   useEffect(() => {
@@ -642,40 +658,45 @@ export function DecisionWorkflowApp() {
 
                 <div className="decision-review-side">
                   <div className="action-packet-card">
-                    <div className="section-label">Action packet</div>
                     <p className="action-packet-governance-note">
                       Draft for accountable review. This packet does not approve a market, site, lease, or spend decision.
                     </p>
-                    <h2>{selectedLead ? `Validate ${selectedLead.title}` : selectedAction.title}</h2>
-                    <p>{selectedLead?.businessMeaning ?? selectedAction.summary}</p>
+                    {insightActionPlan ? (
+                      <InsightActionPlanPanel actionPlan={insightActionPlan} />
+                    ) : (
+                      <>
+                        <div className="section-label">Action packet</div>
+                        <h2>{selectedLead ? `Validate ${selectedLead.title}` : selectedAction.title}</h2>
+                        <p>{selectedLead?.businessMeaning ?? selectedAction.summary}</p>
+                        <section
+                          className="packet-findings"
+                          aria-labelledby="findings-summary-title"
+                          data-summary-state={packetSummaryState}
+                        >
+                          <div className="section-label" id="findings-summary-title">Findings and proposed action</div>
+                          {packetSummary ? (
+                            <>
+                              <p className="packet-ai-summary-notice">{packetSummary.draftOnlyNotice}</p>
+                              <ol className="packet-ai-summary-list">
+                                <li><strong>What the evidence indicates</strong><p>{packetSummary.evidenceIndicates}</p></li>
+                                <li><strong>Why the proposed action is relevant</strong><p>{packetSummary.whyActionRelevant}</p></li>
+                                <li><strong>What the owner should do next</strong><p>{packetSummary.ownerNextStep}</p></li>
+                                <li><strong>What remains unknown</strong><p>{packetSummary.remainsUnknown}</p></li>
+                              </ol>
+                              <small className="packet-findings-meta">
+                                Summary origin: {packetSummary.origin.replaceAll("_", " ")}
+                                {packetSummary.modelVersion ? ` · model ${packetSummary.modelVersion}` : ""}
+                                {" · "}prompt {packetSummary.promptVersion}
+                              </small>
+                            </>
+                          ) : (
+                            <p className="packet-findings-loading">Preparing the draft findings summary from the validated packet.</p>
+                          )}
+                        </section>
+                      </>
+                    )}
 
-                    <section
-                      className="packet-findings"
-                      aria-labelledby="findings-summary-title"
-                      data-summary-state={packetSummaryState}
-                    >
-                      <div className="section-label" id="findings-summary-title">Findings and proposed action</div>
-                      {packetSummary ? (
-                        <>
-                          <p className="packet-ai-summary-notice">{packetSummary.draftOnlyNotice}</p>
-                          <ol className="packet-ai-summary-list">
-                            <li><strong>What the evidence indicates</strong><p>{packetSummary.evidenceIndicates}</p></li>
-                            <li><strong>Why the proposed action is relevant</strong><p>{packetSummary.whyActionRelevant}</p></li>
-                            <li><strong>What the owner should do next</strong><p>{packetSummary.ownerNextStep}</p></li>
-                            <li><strong>What remains unknown</strong><p>{packetSummary.remainsUnknown}</p></li>
-                          </ol>
-                          <small className="packet-findings-meta">
-                            Summary origin: {packetSummary.origin.replaceAll("_", " ")}
-                            {packetSummary.modelVersion ? ` · model ${packetSummary.modelVersion}` : ""}
-                            {" · "}prompt {packetSummary.promptVersion}
-                          </small>
-                        </>
-                      ) : (
-                        <p className="packet-findings-loading">Preparing the draft findings summary from the validated packet.</p>
-                      )}
-                    </section>
-
-                    <details
+                    {!insightActionPlan ? <details
                       className="packet-action-details"
                       open={actionDetailsOpen}
                       onToggle={(event) => setActionDetailsOpen(event.currentTarget.open)}
@@ -709,7 +730,7 @@ export function DecisionWorkflowApp() {
                           ) : null}
                         </div>
                       ) : null}
-                    </details>
+                    </details> : null}
 
                     <div className="packet-card-footer">
                       <div className="packet-card-actions">

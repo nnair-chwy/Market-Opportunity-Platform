@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   assembleReviewableActionPacket,
+  buildInsightActionPlan,
   deterministicFindingsAndProposalSummary,
   formatReviewableActionPacketDocument,
   planEvaluation,
@@ -153,6 +154,8 @@ test("download report contains the confirmed formula and ranked validation evide
   const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
   const brief = { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-13T22:00:00.000Z" };
   const investigation = runConfirmedMarketInvestigation(plan, brief);
+  const actionPlan = buildInsightActionPlan(plan, investigation, investigation.leads[0], brief, brief.confirmedAt);
+  assert.ok(actionPlan);
   const packet = assembleReviewableActionPacket(
     plan,
     proposedActionFromPlan(plan),
@@ -163,6 +166,7 @@ test("download report contains the confirmed formula and ranked validation evide
     undefined,
     undefined,
     { selectedLeadId: investigation.leads[0].id, contextMetric: "household_count" },
+    actionPlan,
   );
   const document = formatReviewableActionPacketDocument(packet);
   assert.match(document, /Confirmed recommendation screening/);
@@ -170,4 +174,12 @@ test("download report contains the confirmed formula and ranked validation evide
   assert.match(document, /validation priority 1/);
   assert.match(document, /largest score contributions/i);
   assert.match(document, /synthetic/i);
+  assert.match(document, /Decision handoff/);
+  assert.match(document, /Do this next/);
+  assert.match(document, /Consumer Insights Health \+ CVC Strategy/);
+  assert.match(document, /Validation workplan/);
+  assert.match(document, /Advance:/);
+  assert.match(document, /Hold:/);
+  assert.match(document, /Stop:/);
+  assert.match(document, /Done when:/);
 });
