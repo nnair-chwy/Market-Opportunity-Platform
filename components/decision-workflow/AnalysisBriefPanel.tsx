@@ -138,7 +138,6 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
                   {editing
                     ? <input value={item.metric} aria-label={`${item.label} metric`} title={item.metric} onChange={(event) => updateConsideration(item.id, { metric: event.target.value })} />
                     : <span title={item.metric}>{item.metric}</span>}
-                  <small title={item.whyItMatters}>{item.whyItMatters}</small>
                 </div>
                 <div role="cell" className="analysis-brief-classification analysis-brief-role">
                   <span className={`role ${item.role}`}>{roleLabel(item.role)}</span>
@@ -151,6 +150,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
                     editing ? <label><input type="number" min="1" max="100" value={item.weightPercent ?? 0} onChange={(event) => updateConsideration(item.id, { weightPercent: Number(event.target.value) })} /><span>%</span></label> : <strong>{item.weightPercent}%</strong>
                   ) : <span>—</span>}
                 </div>
+                <small className="analysis-brief-rationale" title={item.whyItMatters}>{item.whyItMatters}</small>
               </div>
             ))}
           </div>
