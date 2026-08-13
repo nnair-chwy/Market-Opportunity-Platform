@@ -8,6 +8,12 @@ import {
 } from "./contracts.ts";
 import type { InvestigationFollowUp, MarketInvestigation } from "./market-investigation.ts";
 import type { AnalysisBrief } from "./analysis-brief.ts";
+import {
+  evidencePlanSchema,
+  evaluationDefinitionDraftSchema,
+  type EvidencePlan,
+  type EvaluationDefinitionDraft,
+} from "./evidence-plan.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
 export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
@@ -41,6 +47,8 @@ export const reviewableActionPacketSchema = z.object({
   }).strict(),
   action: plannedActionSchema,
   findings: evaluationPlanSchema.shape.findings,
+  evidencePlan: evidencePlanSchema.optional(),
+  evaluationDefinition: evaluationDefinitionDraftSchema.optional(),
   analysisBrief: z.object({
     version: z.literal("1.0.0"),
     planId: z.string().trim().min(1),
@@ -162,6 +170,8 @@ export function assembleReviewableActionPacket(
   investigation?: MarketInvestigation,
   followUps: InvestigationFollowUp[] = [],
   analysisBrief?: AnalysisBrief,
+  evidencePlan?: EvidencePlan,
+  evaluationDefinition?: EvaluationDefinitionDraft,
 ): ReviewableActionPacket {
   const placeLabels = plan.geographyResolution.places
     .map((place) => place.cbsaName ?? place.requestedName)
@@ -172,6 +182,12 @@ export function assembleReviewableActionPacket(
   }
   if (analysisBrief && (analysisBrief.planId !== plan.planId || analysisBrief.originalQuestion !== plan.originalQuestion)) {
     throw new Error("The analysis brief does not belong to this evaluation plan.");
+  }
+  if (evidencePlan && (evidencePlan.planId !== plan.planId || evidencePlan.originalQuestion !== plan.originalQuestion)) {
+    throw new Error("The evidence plan does not belong to this evaluation plan.");
+  }
+  if (evaluationDefinition && evaluationDefinition.planId !== plan.planId) {
+    throw new Error("The evaluation definition does not belong to this evaluation plan.");
   }
 
   return reviewableActionPacketSchema.parse({
@@ -204,6 +220,8 @@ export function assembleReviewableActionPacket(
     },
     action,
     findings: plan.findings,
+    evidencePlan,
+    evaluationDefinition,
     analysisBrief,
     analysisAppendix: investigation ? { ...investigation, followUps } : undefined,
   });
@@ -245,6 +263,29 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
       `  - Role: ${item.role.replaceAll("_", " ")}; evidence: ${item.evidenceStatus}; weight: ${item.weightPercent === null ? "not weighted" : `${item.weightPercent}%`}`,
       `  - Why it matters: ${item.whyItMatters}`,
     ]),
+    "",
+  ] : [];
+  const evidencePlanningSections = packet.evidencePlan && packet.evaluationDefinition ? [
+    "## Evidence readiness and generated execution plan",
+    `- Status: ${packet.evaluationDefinition.status.replaceAll("_", " ")}`,
+    `- Strongest allowed conclusion: ${packet.evaluationDefinition.strongestAllowedConclusion}`,
+    `- Available evidence: ${packet.evaluationDefinition.availableEvidenceIds.join(", ") || "None"}`,
+    `- Staged for validation (not used): ${packet.evaluationDefinition.stagedEvidenceIds.join(", ") || "None"}`,
+    "",
+    "### Evidence needs",
+    ...packet.evidencePlan.items.flatMap((item) => [
+      `- ${item.label}: ${item.availability}`,
+      `  - Needed for: ${item.requiredFor}`,
+      `  - Allowed use: ${item.allowedUse}`,
+      `  - Next: ${item.nextAction}`,
+      ...(item.correctionRequest ? [`  - Correction requested: ${item.correctionRequest}`] : []),
+    ]),
+    "",
+    "### Execution steps",
+    ...packet.evaluationDefinition.steps.map((step, index) => `${index + 1}. ${step}`),
+    "",
+    "### Blockers",
+    bulletList(packet.evaluationDefinition.blockers, "None listed"),
     "",
   ] : [];
   const analysisSections = packet.analysisAppendix ? [
@@ -343,6 +384,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     bulletList(action.tradeoffs, "None listed"),
     "",
     ...framingSections,
+    ...evidencePlanningSections,
     ...analysisSections,
     "## Structured findings",
     ...packet.findings.flatMap((finding) => [

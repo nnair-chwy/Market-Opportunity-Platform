@@ -4,12 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
 import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
 import { DecisionGraphAnimation } from "@/components/decision-workflow/DecisionGraphAnimation";
+import { EvidencePlanningPanel } from "@/components/decision-workflow/EvidencePlanningPanel";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { PerspectiveId } from "@/lib/perspectives";
 import { buildAnalysisBrief, type AnalysisBrief } from "@/lib/planning/analysis-brief";
+import {
+  buildEvidencePlan,
+  generateEvaluationDefinitionDraft,
+  type EvidencePlan,
+  type EvaluationDefinitionDraft,
+} from "@/lib/planning/evidence-plan";
 import {
   answerInvestigationFollowUp,
   runMarketInvestigation,
@@ -50,6 +57,8 @@ type SavedPacket = {
   perspectiveId?: PerspectiveId;
   followUps?: InvestigationFollowUp[];
   analysisBrief?: AnalysisBrief;
+  evidencePlan?: EvidencePlan;
+  evaluationDefinition?: EvaluationDefinitionDraft;
 };
 
 function nowLabel() {
@@ -103,6 +112,8 @@ export function DecisionWorkflowApp() {
   const [perspectiveId, setPerspectiveId] = useState<PerspectiveId>("cvc");
   const [investigationFollowUps, setInvestigationFollowUps] = useState<InvestigationFollowUp[]>([]);
   const [analysisBrief, setAnalysisBrief] = useState<AnalysisBrief | null>(null);
+  const [evidencePlan, setEvidencePlan] = useState<EvidencePlan | null>(null);
+  const [evaluationDefinition, setEvaluationDefinition] = useState<EvaluationDefinitionDraft | null>(null);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
 
@@ -143,9 +154,18 @@ export function DecisionWorkflowApp() {
 
   const reviewablePacket = useMemo(
     () => (plan && selectedAction
-      ? assembleReviewableActionPacket(plan, selectedAction, new Date().toISOString(), investigation ?? undefined, investigationFollowUps, analysisBrief ?? undefined)
+      ? assembleReviewableActionPacket(
+        plan,
+        selectedAction,
+        new Date().toISOString(),
+        investigation ?? undefined,
+        investigationFollowUps,
+        analysisBrief ?? undefined,
+        evidencePlan ?? undefined,
+        evaluationDefinition ?? undefined,
+      )
       : null),
-    [analysisBrief, investigation, investigationFollowUps, plan, selectedAction],
+    [analysisBrief, evidencePlan, evaluationDefinition, investigation, investigationFollowUps, plan, selectedAction],
   );
 
   useEffect(() => {
@@ -232,6 +252,8 @@ export function DecisionWorkflowApp() {
     setSelectedLeadId(null);
     setInvestigationFollowUps([]);
     setAnalysisBrief(null);
+    setEvidencePlan(null);
+    setEvaluationDefinition(null);
     setPhase("interpreting");
     try {
       const response = await fetch("/api/evaluation-plans", {
@@ -249,8 +271,12 @@ export function DecisionWorkflowApp() {
       }
       setPlan(parsed.data.plan);
       const nextInvestigation = runMarketInvestigation(parsed.data.plan);
+      const nextBrief = buildAnalysisBrief(parsed.data.plan, nextInvestigation);
+      const nextEvidencePlan = buildEvidencePlan(parsed.data.plan);
       setInvestigation(nextInvestigation);
-      setAnalysisBrief(buildAnalysisBrief(parsed.data.plan, nextInvestigation));
+      setAnalysisBrief(nextBrief);
+      setEvidencePlan(nextEvidencePlan);
+      setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, nextInvestigation, nextEvidencePlan));
       setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
       setSelectedActionId(proposedActionFromPlan(parsed.data.plan).id);
       setActiveStep(0);
@@ -275,6 +301,8 @@ export function DecisionWorkflowApp() {
     setSelectedLeadId(null);
     setInvestigationFollowUps([]);
     setAnalysisBrief(null);
+    setEvidencePlan(null);
+    setEvaluationDefinition(null);
     setPhase("question");
   }
 
@@ -291,6 +319,8 @@ export function DecisionWorkflowApp() {
       perspectiveId: plan.perspectiveId,
       followUps: investigationFollowUps,
       analysisBrief: analysisBrief ?? undefined,
+      evidencePlan: evidencePlan ?? undefined,
+      evaluationDefinition: evaluationDefinition ?? undefined,
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
@@ -307,7 +337,11 @@ export function DecisionWorkflowApp() {
     setInvestigation(restoredInvestigation);
     setSelectedLeadId(restoredInvestigation.leads[0]?.id ?? null);
     setInvestigationFollowUps(packet.followUps ?? []);
-    setAnalysisBrief(packet.analysisBrief ?? buildAnalysisBrief(restoredPlan, restoredInvestigation));
+    const restoredBrief = packet.analysisBrief ?? buildAnalysisBrief(restoredPlan, restoredInvestigation);
+    const restoredEvidencePlan = packet.evidencePlan ?? buildEvidencePlan(restoredPlan);
+    setAnalysisBrief(restoredBrief);
+    setEvidencePlan(restoredEvidencePlan);
+    setEvaluationDefinition(packet.evaluationDefinition ?? generateEvaluationDefinitionDraft(restoredBrief, restoredInvestigation, restoredEvidencePlan));
     setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
     setRequestError(null);
     setSisterFollowUpNotice(null);
@@ -336,6 +370,8 @@ export function DecisionWorkflowApp() {
     setSelectedLeadId(null);
     setInvestigationFollowUps([]);
     setAnalysisBrief(null);
+    setEvidencePlan(null);
+    setEvaluationDefinition(null);
     setSelectedActionId("");
     setActiveStep(-1);
     setRequestError(null);
@@ -517,7 +553,25 @@ export function DecisionWorkflowApp() {
               </div>
 
               {analysisBrief ? (
-                <AnalysisBriefPanel brief={analysisBrief} onConfirm={setAnalysisBrief} />
+                <AnalysisBriefPanel
+                  brief={analysisBrief}
+                  onConfirm={(nextBrief) => {
+                    setAnalysisBrief(nextBrief);
+                    if (investigation && evidencePlan) {
+                      setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, investigation, evidencePlan));
+                    }
+                  }}
+                />
+              ) : null}
+
+              {analysisBrief && investigation && evidencePlan ? (
+                <EvidencePlanningPanel
+                  analysisBrief={analysisBrief}
+                  investigation={investigation}
+                  evidencePlan={evidencePlan}
+                  onEvidencePlanChange={setEvidencePlan}
+                  onDefinitionChange={setEvaluationDefinition}
+                />
               ) : null}
 
               {investigation ? (

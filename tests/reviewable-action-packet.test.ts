@@ -10,6 +10,7 @@ import {
 } from "../lib/planning/index.ts";
 import { answerInvestigationFollowUp, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
 import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
+import { buildEvidencePlan, generateEvaluationDefinitionDraft } from "../lib/planning/evidence-plan.ts";
 import { explainFindingsAndProposal } from "../lib/planning/packet-ai-summary.ts";
 
 test("reviewable action packet preserves action fields and provenance for download", () => {
@@ -97,4 +98,28 @@ test("reviewable packet exports the human-confirmed question and considerations"
   assert.match(document, /Rewritten question/);
   assert.match(document, /Addressable demand/);
   assert.match(document, /weighted preference/);
+});
+
+test("reviewable packet exports evidence readiness and the generated execution plan", () => {
+  const plan = planEvaluation("Which comparable markets could support a valid marketing test?", "marketing");
+  const investigation = runMarketInvestigation(plan);
+  const brief = buildAnalysisBrief(plan, investigation);
+  const evidencePlan = buildEvidencePlan(plan);
+  const definition = generateEvaluationDefinitionDraft(brief, investigation, evidencePlan);
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-13T20:00:00.000Z",
+    investigation,
+    [],
+    brief,
+    evidencePlan,
+    definition,
+  );
+  assert.equal(packet.evidencePlan?.items.find((item) => item.id === "media_exposure")?.availability, "missing");
+  assert.equal(packet.evaluationDefinition?.status, "partially_executable");
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Evidence readiness and generated execution plan/);
+  assert.match(document, /Staged for validation \(not used\)/);
+  assert.match(document, /Media delivery, cost, and campaign history/);
 });
