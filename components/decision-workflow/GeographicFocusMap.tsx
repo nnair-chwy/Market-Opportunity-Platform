@@ -30,6 +30,7 @@ type GeographicFocusMapProps = {
   contextMetric?: CbsaAcsMetricKey;
   findings?: InvestigationLead[];
   selectedLeadId?: string | null;
+  onSelectFinding?: (finding: InvestigationLead) => void;
 };
 
 const METRIC_LABELS: Record<CbsaAcsMetricKey, string> = {
@@ -80,11 +81,14 @@ export function GeographicFocusMap({
   contextMetric = "household_count",
   findings = [],
   selectedLeadId = null,
+  onSelectFinding,
 }: GeographicFocusMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "basemap_unavailable">("loading");
   const [percentileBand, setPercentileBand] = useState<PercentileBand>("all");
+  const [filteredFindingId, setFilteredFindingId] = useState<string | null>(null);
+  const previousSelectedLeadIdRef = useRef(selectedLeadId);
   const metricValues = useMemo(() => publicMarketMapGeoJson.features
     .map((item) => item.properties[contextMetric])
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value))
@@ -138,8 +142,17 @@ export function GeographicFocusMap({
   const interactiveEnabled = focus.state === "focused";
 
   useEffect(() => {
-    if (findings.length > 0) setPercentileBand("all");
+    if (findings.length > 0) {
+      setPercentileBand("all");
+      setFilteredFindingId(null);
+    }
   }, [findings.length]);
+
+  useEffect(() => {
+    if (previousSelectedLeadIdRef.current === selectedLeadId) return;
+    previousSelectedLeadIdRef.current = selectedLeadId;
+    setFilteredFindingId(selectedLeadId);
+  }, [selectedLeadId]);
 
   useEffect(() => {
     if (!interactiveEnabled) {
@@ -297,6 +310,17 @@ export function GeographicFocusMap({
 
   useEffect(() => {
     const map = mapRef.current;
+    if (!map || loadState !== "ready" || !map.getLayer(CBSA_FINDING_LAYER_ID)) return;
+    map.setFilter(
+      CBSA_FINDING_LAYER_ID,
+      filteredFindingId
+        ? (["==", ["get", "finding_id"], filteredFindingId] as FilterSpecification)
+        : (["has", "finding_index"] as FilterSpecification),
+    );
+  }, [filteredFindingId, loadState]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!map || loadState !== "ready" || focus.state !== "focused") return;
 
     const selected = map.getLayer(CBSA_SELECTED_LAYER_ID);
@@ -424,16 +448,31 @@ export function GeographicFocusMap({
       {findings.length ? (
         <div className="geographic-focus-findings-legend" aria-label="Finding colors">
           {findings.map((finding, index) => (
-            <span key={finding.id} className={finding.id === selectedLeadId ? "selected" : undefined}>
+            <button
+              key={finding.id}
+              type="button"
+              className={finding.id === filteredFindingId ? "selected" : undefined}
+              aria-pressed={finding.id === filteredFindingId}
+              onClick={() => {
+                if (finding.id === filteredFindingId) {
+                  setFilteredFindingId(null);
+                  return;
+                }
+                setFilteredFindingId(finding.id);
+                onSelectFinding?.(finding);
+              }}
+            >
               <i style={{ background: investigationLeadColor(index) }} />
               Finding {index + 1}
               <small>{finding.marketIds.length === 1 ? "individual" : "pair"}</small>
-            </span>
+            </button>
           ))}
         </div>
       ) : null}
       <p className="geographic-focus-note">{findings.length
-        ? "Every finding is mapped. Markets in the same pair share a color; the selected finding has a stronger outline."
+        ? filteredFindingId
+          ? `Showing Finding ${findings.findIndex((finding) => finding.id === filteredFindingId) + 1} only. Select it again to restore all findings.`
+          : "Every finding is mapped. Select a finding pill to isolate its market or pair."
         : focus.message}</p>
       <small className="geographic-focus-provenance">
         Public CBSA context only (SRC-014 / SRC-015 / SRC-016). Geographic context map — not a score, ranking, or recommendation.

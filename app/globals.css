@@ -1586,7 +1586,7 @@
   margin: 0;
 }
 .geographic-focus-findings-legend { display: flex; flex-wrap: wrap; gap: 6px; }
-.geographic-focus-findings-legend > span {
+.geographic-focus-findings-legend > button {
   align-items: center;
   background: #fff;
   border: 1px solid #dce4ef;
@@ -1596,9 +1596,13 @@
   font-size: 9px;
   font-weight: 750;
   gap: 5px;
+  cursor: pointer;
+  font-family: inherit;
   padding: 5px 7px;
 }
-.geographic-focus-findings-legend > span.selected { border-color: #8da4c6; box-shadow: 0 0 0 2px rgba(69, 93, 129, .08); }
+.geographic-focus-findings-legend > button:hover { background: #f5f8fc; border-color: #aebed4; }
+.geographic-focus-findings-legend > button.selected { background: #edf4ff; border-color: #6f8fbc; box-shadow: 0 0 0 2px rgba(69, 93, 129, .1); color: #263e61; }
+.geographic-focus-findings-legend > button:focus-visible { outline: 2px solid #2f6bdb; outline-offset: 2px; }
 .geographic-focus-findings-legend i { border-radius: 50%; display: inline-block; height: 8px; width: 8px; }
 .geographic-focus-findings-legend small { color: #8a96a8; font-size: 8px; font-weight: 650; }
 .geographic-focus-provenance {
@@ -6204,6 +6208,9 @@ button {
 .adaptive-opening .adaptive-composer-row { display: grid; grid-template-columns: 1fr auto; gap: .55rem; align-items: stretch; }
 .adaptive-opening .adaptive-composer-row textarea { min-height: 52px; height: 52px; resize: none; border-color: #c5d6ec; border-radius: .8rem; padding: .85rem 1rem; font-size: .78rem; font-weight: 600; }
 .adaptive-opening .adaptive-composer-row button { min-width: 126px; border-radius: .85rem; background: #86afea; border-color: #86afea; }
+.adaptive-opening .adaptive-composer-row button:disabled { background: #b9cdea; border-color: #b9cdea; box-shadow: none; color: rgba(255,255,255,.78); opacity: 1; }
+.adaptive-opening .adaptive-composer-row button:not(:disabled) { background: #2f6bdb; border-color: #2f6bdb; box-shadow: 0 8px 18px rgba(47,107,219,.24); color: #fff; opacity: 1; }
+.adaptive-opening .adaptive-composer-row button:not(:disabled):hover { background: #2458bd; border-color: #2458bd; }
 .adaptive-composer-note { padding-left: .25rem; color: #667e9b; font-size: .58rem; }
 .adaptive-starter-questions { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; }
 .adaptive-starter-questions button { background: #fff; border: 1px solid #c9d6e7; border-radius: 999px; color: #49617f; cursor: pointer; font-size: .68rem; line-height: 1.25; padding: .38rem .65rem; text-align: left; }

@@ -619,6 +619,7 @@ export function DecisionWorkflowApp() {
                     contextMetric={selectedContextMetric}
                     findings={investigation?.leads ?? []}
                     selectedLeadId={selectedLeadId}
+                    onSelectFinding={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
                   />
                 </div>
               ) : null}

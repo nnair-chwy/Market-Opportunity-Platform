@@ -61,7 +61,7 @@ function pricingConsiderations(): AnalysisConsideration[] {
 function cvcRewrittenQuestion(plan: EvaluationPlan) {
   const question = plan.originalQuestion;
   if (/open|next\s+(?:cvc\s+)?clinic|location/i.test(question)) {
-    return "Find 3–5 metro footprint contrasts worth validating for a future CVC clinic using published locations and public market context; do not rank opportunity until demand, capacity, workforce, and economics are connected.";
+    return "Which 3–5 U.S. metro areas should be investigated first as candidates for the next CVC clinic, based on the evidence currently connected—and what demand, capacity, workforce, property, and economic evidence must be validated before selecting a location?";
   }
   if (/veterinar|supply|access|whitespace/i.test(question)) {
     return "Find metro footprint contrasts worth validating for veterinary access or whitespace, while keeping demand, clinic capacity, and workforce as required evidence gaps.";

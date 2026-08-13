@@ -76,9 +76,12 @@ test("selected analyst leads expose fixture values and drive the map context mea
 test("finding colors stay synchronized between the map and finding cards", () => {
   assert.match(workflow, /findings=\{investigation\?\.leads \?\? \[\]\}/);
   assert.match(workflow, /selectedLeadId=\{selectedLeadId\}/);
+  assert.match(workflow, /onSelectFinding=/);
   assert.match(focusMap, /CBSA_FINDING_LAYER_ID/);
   assert.match(focusMap, /finding_color/);
-  assert.match(focusMap, /Markets in the same pair share a color/);
+  assert.match(focusMap, /filteredFindingId/);
+  assert.match(focusMap, /aria-pressed/);
+  assert.match(focusMap, /Select a finding pill to isolate its market or pair/);
   assert.match(investigationPanel, /--lead-color/);
   assert.match(investigationPanel, /investigationLeadColor/);
 });

@@ -15,6 +15,14 @@ test("CVC analysis brief exposes evidence gates and context without inventing we
   assert.ok(brief.considerations.some((item) => item.role === "context_only" && item.evidenceStatus === "connected"));
 });
 
+test("CVC location brief preserves the requested decision instead of replacing it with a footprint exercise", () => {
+  const plan = planEvaluation("Where should we open a new clinic?", "cvc");
+  const brief = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  assert.match(brief.rewrittenQuestion, /which 3–5 U\.S\. metro areas/i);
+  assert.match(brief.rewrittenQuestion, /candidates for the next CVC clinic/i);
+  assert.match(brief.rewrittenQuestion, /before selecting a location/i);
+});
+
 test("Marketing analysis brief uses validity and context considerations without a misleading score", () => {
   const plan = planEvaluation("Which comparable markets could support a valid marketing test?", "marketing");
   const brief = buildAnalysisBrief(plan, runMarketInvestigation(plan));
