@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 import {
   MARKET_ATTRACTIVENESS_CONFIGURATION,
-  syntheticMarketAttractivenessResults,
+  marketAttractivenessResults,
 } from "@/lib/market-attractiveness";
 import type {
   MarketAttractivenessResult,
@@ -67,10 +67,10 @@ export function MarketAttractivenessRanking() {
 
   const cohortCounts = useMemo(
     () => ({
-      metropolitan: syntheticMarketAttractivenessResults.filter(
+      metropolitan: marketAttractivenessResults.filter(
         (market) => market.cohort === "metropolitan",
       ).length,
-      micropolitan: syntheticMarketAttractivenessResults.filter(
+      micropolitan: marketAttractivenessResults.filter(
         (market) => market.cohort === "micropolitan",
       ).length,
     }),
@@ -79,7 +79,7 @@ export function MarketAttractivenessRanking() {
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
-    return syntheticMarketAttractivenessResults
+    return marketAttractivenessResults
       .filter(
         (market) =>
           market.cohort === cohort &&

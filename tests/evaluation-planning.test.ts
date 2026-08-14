@@ -179,3 +179,14 @@ test("clinic performance, clinic location, local growth, and Census context use 
   assert.ok(plans.every((plan) => plan.findings.some((finding) => finding.kind === "actions" && finding.title === "Proposed action")));
   assert.ok(plans.some((plan) => plan.missingEvidence.length > 0 || plan.missingApprovals.length > 0));
 });
+
+test("exploratory CVC and Marketing questions assume a national cohort instead of asking for one", () => {
+  const marketing = planEvaluation("Which comparable markets could support a valid marketing test, and what makes them different?", "marketing");
+  const cvc = planEvaluation("Which comparable markets differ most in clinic footprint and demand, and why?", "cvc");
+  assert.equal(marketing.geographyResolution.mode, "national");
+  assert.equal(marketing.intent.clarificationRequired, false);
+  assert.equal(marketing.actions[0].id, "review-marketing-market-leads");
+  assert.equal(cvc.geographyResolution.mode, "national");
+  assert.equal(cvc.intent.clarificationRequired, false);
+  assert.equal(cvc.actions[0].id, "review-cvc-market-leads");
+});

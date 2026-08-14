@@ -6,7 +6,7 @@ import type { PublicMarketRecord } from "@/lib/data/cbsa-market-context";
 import {
   buildMarketComparisonAskAiContext,
   canAddMarketToComparison,
-  syntheticMarketAttractivenessResults,
+  marketAttractivenessResults,
   type MarketAttractivenessResult,
   type MarketDimensionId,
 } from "@/lib/market-attractiveness";
@@ -96,7 +96,7 @@ export function MarketComparisonWorkspace({
   const resultByCode = useMemo(
     () =>
       new Map(
-        syntheticMarketAttractivenessResults
+        marketAttractivenessResults
           .filter((result) => result.cbsaCode)
           .map((result) => [result.cbsaCode!, result]),
       ),

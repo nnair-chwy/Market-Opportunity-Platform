@@ -132,7 +132,7 @@ export function packetSummaryFromPlan(plan: EvaluationPlan): string {
     return "The interpreted question matches a capability that is blocked by missing evidence or approvals.";
   }
   if (plan.resultWorkspaceType === "clinic_evaluation_surface") {
-    return "A bounded clinic evaluation path is available for accountable review using only permitted synthetic or approved fixtures.";
+    return "A bounded clinic evidence review is available; no opportunity score is produced until the required governed inputs are connected.";
   }
   return "Governed market-context comparison is available on the adaptive national map without creating an opportunity score.";
 }
