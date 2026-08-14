@@ -46,6 +46,10 @@ import {
   type PacketFindingsSummary,
   type SisterGeographySuggestion,
 } from "@/lib/planning";
+import {
+  clinicSiteWorkflowResultSchema,
+  type ClinicSiteWorkflowResult,
+} from "@/lib/phoenix-retrieval/contracts";
 
 type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error";
 
@@ -105,6 +109,7 @@ export function DecisionWorkflowApp() {
   const [question, setQuestion] = useState("");
   const [activeStep, setActiveStep] = useState(-1);
   const [plan, setPlan] = useState<EvaluationPlan | null>(null);
+  const [clinicWorkflow, setClinicWorkflow] = useState<ClinicSiteWorkflowResult | null>(null);
   const [selectedActionId, setSelectedActionId] = useState("");
   const [requestError, setRequestError] = useState<string | null>(null);
   const [savedPackets, setSavedPackets] = useState<SavedPacket[]>([]);
@@ -262,6 +267,7 @@ export function DecisionWorkflowApp() {
     const normalizedQuestion = nextQuestion.trim();
     setQuestion(normalizedQuestion);
     setPlan(null);
+    setClinicWorkflow(null);
     setSelectedActionId("");
     setRequestError(null);
     setActiveStep(-1);
@@ -308,7 +314,7 @@ export function DecisionWorkflowApp() {
     }
   }
 
-  function confirmAndRun(nextBrief: AnalysisBrief) {
+  async function confirmAndRun(nextBrief: AnalysisBrief) {
     if (!plan) return;
     const nextInvestigation = runConfirmedMarketInvestigation(plan, nextBrief);
     const nextEvidencePlan = evidencePlan ?? buildEvidencePlan(plan);
@@ -319,11 +325,29 @@ export function DecisionWorkflowApp() {
     setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
     setActiveStep(0);
     setPhase("running");
+    setClinicWorkflow(null);
+    if (plan.capabilityId !== "clinic_site_evaluation") return;
+    try {
+      const response = await fetch("/api/clinic-site-evaluation", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: plan.originalQuestion }),
+      });
+      const payload: unknown = await response.json();
+      const workflow = payload && typeof payload === "object" && "workflow" in payload
+        ? (payload as { workflow: unknown }).workflow
+        : null;
+      const parsed = clinicSiteWorkflowResultSchema.safeParse(workflow);
+      if (parsed.success) setClinicWorkflow(parsed.data);
+    } catch {
+      // The existing deterministic packet remains usable if retrieval is unavailable.
+    }
   }
 
   function restart() {
     setQuestion("");
     setPlan(null);
+    setClinicWorkflow(null);
     setActiveStep(-1);
     setSelectedActionId("");
     setRequestError(null);
@@ -369,6 +393,7 @@ export function DecisionWorkflowApp() {
     const restoredPlan = planEvaluation(packet.question, packet.perspectiveId);
     setQuestion(packet.question);
     setPlan(restoredPlan);
+    setClinicWorkflow(null);
     setPerspectiveId(restoredPlan.perspectiveId);
     setSelectedContextMetric(packet.selectedContextMetric ?? (restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count"));
     const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
@@ -682,6 +707,23 @@ export function DecisionWorkflowApp() {
                             <p className="packet-findings-loading">Preparing the draft findings summary from the validated packet.</p>
                           )}
                         </section>
+                        {plan.capabilityId === "clinic_site_evaluation" && clinicWorkflow ? (
+                          <section className="packet-evidence clinic-retrieval-panel" aria-label="Clinic evidence retrieval">
+                            <div className="section-label">Retrieved clinic evidence</div>
+                            <p>
+                              {clinicWorkflow.supportedFindings[0] ?? "No registered clinic evidence was returned."}
+                            </p>
+                            {clinicWorkflow.missingEvidence.length ? (
+                              <p><strong>Still needed:</strong> {clinicWorkflow.missingEvidence.join("; ")}</p>
+                            ) : null}
+                            <div className="packet-evidence">
+                              <strong>Next research steps</strong>
+                              {clinicWorkflow.nextResearchSteps.map((step) => (
+                                <span key={step.id}><i>{step.priority === "next" ? "→" : "·"}</i>{step.title}</span>
+                              ))}
+                            </div>
+                          </section>
+                        ) : null}
                       </>
                     )}
 
