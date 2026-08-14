@@ -69,7 +69,6 @@ test("keeps the question workflow client-side and stores packet drafts in the br
   assert.match(workflow, /packet-action-details/);
   assert.match(workflow, /downloadReviewableActionPacket/);
   assert.doesNotMatch(workflow, /review-evidence-strip/);
-  assert.doesNotMatch(workflow, /Evidence boundary/);
   assert.doesNotMatch(workflow, /Compare possible actions/);
   assert.doesNotMatch(workflow, /AdaptiveMarketWorkspace/);
   assert.match(workflow, /SavedPacketsView/);

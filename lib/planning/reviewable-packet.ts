@@ -6,6 +6,10 @@ import {
   type EvaluationPlan,
   type PlannedAction,
 } from "./contracts.ts";
+import {
+  evaluationExecutionResultSchema,
+  type EvaluationExecutionResult,
+} from "./execution.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
 export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
@@ -38,6 +42,7 @@ export const reviewableActionPacketSchema = z.object({
   }).strict(),
   action: plannedActionSchema,
   findings: evaluationPlanSchema.shape.findings,
+  execution: evaluationExecutionResultSchema.nullable(),
 }).strict();
 
 export type ReviewableActionPacket = z.infer<typeof reviewableActionPacketSchema>;
@@ -83,6 +88,7 @@ export function assembleReviewableActionPacket(
   plan: EvaluationPlan,
   action: PlannedAction = proposedActionFromPlan(plan),
   generatedAt = new Date().toISOString(),
+  execution: EvaluationExecutionResult | null = null,
 ): ReviewableActionPacket {
   const placeLabels = plan.geographyResolution.places
     .map((place) => place.cbsaName ?? place.requestedName)
@@ -117,6 +123,7 @@ export function assembleReviewableActionPacket(
     },
     action,
     findings: plan.findings,
+    execution,
   });
 }
 
@@ -195,6 +202,22 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
       finding.detail,
       "",
     ]),
+    "## Executed evidence result",
+    packet.execution
+      ? [
+          `- Status: ${packet.execution.status}`,
+          `- Snapshot version: ${packet.execution.snapshotVersion}`,
+          `- Calculation version: ${packet.execution.calculationVersion}`,
+          `- Confidence: ${packet.execution.confidence}`,
+          `- Evidence observations: ${packet.execution.evidenceBundle.length}`,
+          `- Comparisons: ${packet.execution.comparisons.length}`,
+          ...packet.execution.supportedFindings.map((item) => `- Supported finding: ${item}`),
+          ...packet.execution.contraryEvidence.map((item) => `- Contrary evidence: ${item}`),
+          ...packet.execution.missingEvidence.map((item) => `- Missing evidence: ${item}`),
+          ...packet.execution.warnings.map((item) => `- Warning: ${item}`),
+        ].join("\n")
+      : "No deterministic execution result was produced.",
+    "",
     "## Structured packet (JSON)",
     "```json",
     JSON.stringify(packet, null, 2),

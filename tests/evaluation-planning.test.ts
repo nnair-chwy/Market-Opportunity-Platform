@@ -21,6 +21,72 @@ test("public market questions compile to governed Census context", () => {
   evaluationPlanSchema.parse(plan);
 });
 
+test("deterministic planning resolves ordinary Atlanta metro phrasing", () => {
+  for (const question of [
+    "What is the population of the Atlanta metro?",
+    "What is the population of the Atlanta metropolitan area?",
+    "What is the population of Atlanta, GA?",
+    "What is the population of the Atlanta market?",
+  ]) {
+    const plan = planEvaluation(question);
+    assert.equal(plan.intent.requestedPlaces[0]?.name, "Atlanta");
+    assert.equal(plan.geographyResolution.mode, "single");
+    assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, ["12060"]);
+  }
+});
+
+test("AI geography text is normalized and resolved only through the question and CBSA universe", () => {
+  const base = inferPlanningIntent("What is the population of the Atlanta metro?");
+
+  const empty = compileEvaluationPlan(
+    "What is the population of the Atlanta metro?",
+    { ...base, requestedPlaces: [] },
+    "ai_proposed",
+  );
+  assert.equal(empty.intent.requestedPlaces[0]?.name, "Atlanta");
+  assert.deepEqual(empty.geographyResolution.selectedCbsaCodes, ["12060"]);
+
+  for (const requestedPlaces of [
+    [{ name: "Atlanta metro", stateHint: null }],
+    [{ name: "Atlanta", stateHint: "GA" }],
+  ]) {
+    const plan = compileEvaluationPlan(
+      "What is the population of the Atlanta metro?",
+      { ...base, requestedPlaces },
+      "ai_proposed",
+    );
+    assert.equal(plan.intent.requestedPlaces[0]?.name, "Atlanta");
+    assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, ["12060"]);
+    assert.equal(plan.geographyResolution.places[0]?.cbsaCode, "12060");
+  }
+});
+
+test("ambiguous and unavailable AI geography remains blocked without invented identifiers", () => {
+  const ambiguousQuestion = "What is the population of Springfield?";
+  const ambiguousIntent = inferPlanningIntent(ambiguousQuestion);
+  const ambiguous = compileEvaluationPlan(
+    ambiguousQuestion,
+    { ...ambiguousIntent, requestedPlaces: [{ name: "Springfield metro", stateHint: null }] },
+    "ai_proposed",
+  );
+  assert.equal(ambiguous.status, "blocked");
+  assert.equal(ambiguous.geographyResolution.mode, "clarification");
+  assert.deepEqual(ambiguous.geographyResolution.selectedCbsaCodes, []);
+  assert.ok(ambiguous.geographyResolution.places[0]?.candidates.length);
+
+  const unavailableQuestion = "What is the population of Atlantis metro?";
+  const unavailableIntent = inferPlanningIntent(unavailableQuestion);
+  const unavailable = compileEvaluationPlan(
+    unavailableQuestion,
+    { ...unavailableIntent, requestedPlaces: [{ name: "Atlantis metro", stateHint: null }] },
+    "ai_proposed",
+  );
+  assert.equal(unavailable.status, "blocked");
+  assert.equal(unavailable.geographyResolution.mode, "unavailable");
+  assert.deepEqual(unavailable.geographyResolution.selectedCbsaCodes, []);
+  assert.equal(unavailable.geographyResolution.places[0]?.cbsaCode, null);
+});
+
 test("clinic approval requests preserve the human approval gate", () => {
   const plan = planEvaluation("Where should Chewy approve opening a new clinic?");
   assert.equal(plan.capabilityId, "clinic_site_evaluation");

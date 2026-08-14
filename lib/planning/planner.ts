@@ -10,7 +10,7 @@ import {
   type PlannedAction,
 } from "./contracts.ts";
 import { derivePlanFindings, deriveResultWorkspaceType } from "./findings.ts";
-import { extractRequestedPlaces, resolveGeography } from "./geography.ts";
+import { extractRequestedPlaces, normalizeRequestedPlaces, resolveGeography } from "./geography.ts";
 import { buildPlanSteps } from "./steps.ts";
 
 function has(value: string, expression: RegExp) {
@@ -205,14 +205,18 @@ export function compileEvaluationPlan(
   intent: PlanningIntent,
   proposalMethod: EvaluationPlan["proposalMethod"] = "deterministic_fallback",
 ): EvaluationPlan {
-  const requirement = requirementFor(intent);
+  const normalizedIntent = planningIntentSchema.parse({
+    ...intent,
+    requestedPlaces: normalizeRequestedPlaces(question, intent.requestedPlaces),
+  });
+  const requirement = requirementFor(normalizedIntent);
   const assessment = assessCapabilityQuestion({
     question,
     requirements: [requirement],
     availableEvidenceIds: [],
     satisfiedApprovalIds: [],
   });
-  const geography = resolveGeography(intent);
+  const geography = resolveGeography(normalizedIntent);
   const status: EvaluationPlan["status"] = geography.mode === "clarification" || geography.mode === "unavailable"
     ? "blocked"
     : assessment.outcome === "supported"
@@ -221,14 +225,14 @@ export function compileEvaluationPlan(
         ? "partially_executable"
         : "blocked";
   const resultWorkspaceType = deriveResultWorkspaceType({
-    intent,
+    intent: normalizedIntent,
     capabilityId: requirement.capabilityId,
     status,
     geography,
   });
-  const actions = actionsFor(intent, assessment, geography, resultWorkspaceType);
+  const actions = actionsFor(normalizedIntent, assessment, geography, resultWorkspaceType);
   const findings = derivePlanFindings({
-    intent,
+    intent: normalizedIntent,
     proposalMethod,
     capabilityId: requirement.capabilityId,
     status,
@@ -240,11 +244,11 @@ export function compileEvaluationPlan(
   });
 
   return evaluationPlanSchema.parse({
-    planId: `plan-${intent.topic}-${geography.mode}-${requirement.capabilityId}`,
+    planId: `plan-${normalizedIntent.topic}-${geography.mode}-${requirement.capabilityId}`,
     version: "1.0.0",
     originalQuestion: question,
     proposalMethod,
-    intent,
+    intent: normalizedIntent,
     capabilityId: requirement.capabilityId,
     geographyGrain: requirement.geographyGrain === "market" ? "cbsa" : requirement.geographyGrain,
     geographyResolution: geography,
@@ -256,7 +260,7 @@ export function compileEvaluationPlan(
     missingEvidence: assessment.missingEvidence,
     missingApprovals: assessment.missingApprovals,
     steps: buildPlanSteps({
-      intent,
+      intent: normalizedIntent,
       capabilityId: requirement.capabilityId,
       status,
       geography,

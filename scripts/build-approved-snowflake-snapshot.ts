@@ -14,16 +14,16 @@ const acsPath = resolve("data/public/census/cbsa-acs/2024/market-context.json");
 const siteIdentitiesPath = resolve("data/sample/esri/2026-07-30/site-identities.json");
 
 const inputFiles = {
-  marketAttractiveness: process.env.SNOWFLAKE_MARKET_FILE ?? "cbsa_market_attractiveness.csv",
-  clinicProfile: process.env.SNOWFLAKE_CLINIC_PROFILE_FILE ?? "clinic_profile.csv",
-  clinicActivity: process.env.SNOWFLAKE_CLINIC_ACTIVITY_FILE ?? "clinic_activity.csv",
-  zipMarket: process.env.SNOWFLAKE_ZIP_CBSA_FILE ?? "zip_cbsa.csv",
-  cbsaPopulation: process.env.SNOWFLAKE_CBSA_POPULATION_FILE ?? "cbsa_population.csv",
-  zipContext: process.env.SNOWFLAKE_ZIP_CONTEXT_FILE ?? "zip_context.csv",
-  regionalDemand: process.env.SNOWFLAKE_ZIP_SALES_FILE ?? "zip_sales.csv",
-  zipMetro: process.env.SNOWFLAKE_ZIP_METRO_FILE ?? "zip_metro.csv",
-  retention: process.env.SNOWFLAKE_RETENTION_FILE ?? "retention.csv",
-  appointments: process.env.SNOWFLAKE_APPOINTMENTS_FILE ?? "appointments.csv",
+  marketAttractiveness: process.env.SNOWFLAKE_MARKET_FILE ?? "cbsa_market_attractiveness_2026-07-31-1246 (1).csv",
+  clinicProfile: process.env.SNOWFLAKE_CLINIC_PROFILE_FILE ?? "clinic_market_profile_ownership_demographics.csv",
+  clinicActivity: process.env.SNOWFLAKE_CLINIC_ACTIVITY_FILE ?? "clinic_level_pre_post_ph_orders_prescriptions_sales.csv",
+  zipMarket: process.env.SNOWFLAKE_ZIP_CBSA_FILE ?? "zip_code_to_cbsa_csa_statistical_area_mapping.csv",
+  cbsaPopulation: process.env.SNOWFLAKE_CBSA_POPULATION_FILE ?? "cbsa_population_estimates.csv",
+  zipContext: process.env.SNOWFLAKE_ZIP_CONTEXT_FILE ?? "zcta5_household_income_and_family_estimates_2026-08-10.csv",
+  regionalDemand: process.env.SNOWFLAKE_ZIP_SALES_FILE ?? "annual_net_sales_by_customer_zip.csv",
+  zipMetro: process.env.SNOWFLAKE_ZIP_METRO_FILE ?? "customer_zip_to_metro_state_mapping.csv",
+  retention: process.env.SNOWFLAKE_RETENTION_FILE ?? "weekly_customer_lifecycle_retention_metrics_by_channel.csv",
+  appointments: process.env.SNOWFLAKE_APPOINTMENTS_FILE ?? "monthly_appointment_counts_by_geography_type_state_reason.csv",
 };
 
 type OutputFile = { path: string; rowCount: number; sha256: string; grain: string; allowedUse: string };
@@ -335,7 +335,7 @@ outputs.push(await writeOutput("zip-metro.json", jsonRows(zipMetro.rows.map((row
 
 const manifest = {
   manifestVersion: "1.0.0",
-  snapshotVersion: "approved-snowflake-2026-08-11-v1",
+  snapshotVersion: process.env.SNOWFLAKE_SNAPSHOT_VERSION ?? "approved-snowflake-2026-08-11-v1",
   builtAt: new Date().toISOString(),
   sourceType: "approved_internal_snowflake_exports",
   rawExportsCopied: false,

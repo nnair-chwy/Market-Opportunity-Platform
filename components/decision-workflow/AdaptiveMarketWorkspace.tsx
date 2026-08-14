@@ -562,39 +562,45 @@ export function AdaptiveMarketWorkspace({
           <p>Layers stay visually separate. No hidden combined score is created.</p>
           <ul className="adaptive-layer-list">
             {layerEntries.map(({ layerId, resolved, enabled }) => {
-              const unsupported = "status" in resolved;
-              const layer = unsupported ? null : resolved;
+              if ("status" in resolved) {
+                return (
+                  <li key={layerId} data-layer-id={layerId}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        disabled
+                        onChange={() => toggleLayer(layerId)}
+                      />
+                      <span>{layerId}</span>
+                    </label>
+                    <small className="adaptive-layer-unsupported" role="status">
+                      {resolved.reason}
+                    </small>
+                  </li>
+                );
+              }
+              const layer = resolved;
               return (
                 <li key={layerId} data-layer-id={layerId}>
                   <label>
                     <input
                       type="checkbox"
-                      checked={enabled && !unsupported}
-                      disabled={unsupported}
+                      checked={enabled}
                       onChange={() => toggleLayer(layerId)}
                     />
-                    <span>{layer?.label ?? layerId}</span>
+                    <span>{layer.label}</span>
                   </label>
-                  {unsupported ? (
-                    <small className="adaptive-layer-unsupported" role="status">
-                      {resolved.reason}
-                    </small>
-                  ) : (
-                    <div className="adaptive-layer-meta">
-                      <span>{layer.legendLabel}</span>
-                      <span>
-                        {layer.sourceIds.join(" · ")} · {layer.vintage}
-                      </span>
-                      <span>
-                        {layer.evidenceStatus} · {layer.allowedUse}
-                      </span>
-                      {layer.descriptiveOnly ? (
-                        <small>{layer.evidenceBoundary}</small>
-                      ) : (
-                        <small>{layer.evidenceBoundary}</small>
-                      )}
-                    </div>
-                  )}
+                  <div className="adaptive-layer-meta">
+                    <span>{layer.legendLabel}</span>
+                    <span>
+                      {layer.sourceIds.join(" · ")} · {layer.vintage}
+                    </span>
+                    <span>
+                      {layer.evidenceStatus} · {layer.allowedUse}
+                    </span>
+                    <small>{layer.evidenceBoundary}</small>
+                  </div>
                 </li>
               );
             })}

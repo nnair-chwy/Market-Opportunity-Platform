@@ -57,7 +57,7 @@ test("evaluation-result focus can supply sister candidates without inventing sco
   assert.ok(suggestions.length > 0);
   assert.ok(suggestions.length <= 3);
   assert.equal(suggestions.some((item) => item.cbsaCode === "42660"), false);
-  assert.equal(suggestions.every((item) => item.signals.every((signal) => signal.id !== "opportunity_score")), true);
+  assert.equal(suggestions.every((item) => item.signals.every((signal) => signal.id === "shared_state" || signal.id === "matching_cbsa_type")), true);
   assert.match(suggestions[0].uncertainty, /do not establish similar demand/i);
 });
 

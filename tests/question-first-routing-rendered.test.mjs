@@ -25,6 +25,19 @@ test("request state is transparent before a plan is treated as final", () => {
   assert.match(workflow, /Retry/);
   assert.match(workflow, /Edit question/);
   assert.match(workflow, /data-proposal-method/);
+  assert.match(workflow, /data-plan-confirmation/);
+  assert.match(workflow, /Confirm interpretation and run/);
+  assert.match(workflow, /setPhase\("confirming"\)/);
+});
+
+test("executed result keeps evidence lineage and decision boundaries visible", () => {
+  assert.match(workflow, /Executed evidence result/);
+  assert.match(workflow, /snapshotVersion/);
+  assert.match(workflow, /calculationVersion/);
+  assert.match(workflow, /Supported findings/);
+  assert.match(workflow, /Contrary evidence/);
+  assert.match(workflow, /Missing evidence and warnings/);
+  assert.match(workflow, /executeEvaluationPlan/);
 });
 
 test("review page routes result workspace types without interactive comparison", () => {
@@ -47,7 +60,6 @@ test("review page routes result workspace types without interactive comparison",
   assert.match(workflow, /action-packet-governance-note/);
   assert.match(workflow, /downloadReviewableActionPacket/);
   assert.doesNotMatch(workflow, /review-evidence-strip/);
-  assert.doesNotMatch(workflow, /Evidence boundary/);
   assert.doesNotMatch(workflow, /Compare possible actions/);
   assert.doesNotMatch(workflow, /AskAiPanel/);
   assert.doesNotMatch(workflow, /AdaptiveMarketWorkspace/);

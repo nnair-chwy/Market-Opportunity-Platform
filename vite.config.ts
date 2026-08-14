@@ -53,7 +53,10 @@ export default defineConfig(async ({ command, mode }) => {
     optimizeDeps: {
       // MapLibre 6 resolves its ESM worker with import.meta.url. Let the
       // browser load that worker directly instead of caching a stale path.
-      exclude: ["maplibre-gl"],
+      exclude: ["maplibre-gl", "@duckdb/node-api"],
+    },
+    ssr: {
+      external: ["@duckdb/node-api", "@duckdb/node-bindings"],
     },
     server: isCodexSeatbeltSandbox
       ? { watch: { useFsEvents: false, usePolling: true } }

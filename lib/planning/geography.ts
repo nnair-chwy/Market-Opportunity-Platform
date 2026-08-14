@@ -106,6 +106,43 @@ function normalizeStateHint(value: string | null | undefined): string | null {
   return US_STATE_CODES.has(hint) ? hint : null;
 }
 
+function normalizedPlaceTokens(value: string): string[] {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter((token) => token.length > 1 && !IGNORED_PLACE_TOKENS.has(token));
+}
+
+function samePlaceText(left: string, right: string): boolean {
+  const leftTokens = normalizedPlaceTokens(left);
+  const rightTokens = normalizedPlaceTokens(right);
+  if (!leftTokens.length || !rightTokens.length) return false;
+  return leftTokens.every((token) => rightTokens.includes(token))
+    || rightTokens.every((token) => leftTokens.includes(token));
+}
+
+/**
+ * AI may propose human-readable geography text, but the question and the
+ * checked-in CBSA universe remain the source of truth for what can resolve.
+ */
+export function normalizeRequestedPlaces(
+  question: string,
+  requestedPlaces: readonly RequestedPlace[],
+): RequestedPlace[] {
+  const extracted = extractRequestedPlaces(question);
+  if (!requestedPlaces.length) return extracted;
+
+  return requestedPlaces.slice(0, 5).map((place) => {
+    const match = extracted.find((candidate) => samePlaceText(place.name, candidate.name));
+    if (!match) return { name: place.name.trim(), stateHint: normalizeStateHint(place.stateHint) };
+    return {
+      name: match.name,
+      stateHint: normalizeStateHint(place.stateHint) ?? match.stateHint,
+    };
+  });
+}
+
 function scoreCandidates(
   candidates: readonly PlaceCandidate[],
   stateHint: string | null,
@@ -122,7 +159,7 @@ function scoreCandidates(
   const metros = pool.filter((candidate) => candidate.cbsaType === "metropolitan");
   if (metros.length === 1) return metros;
   if (metros.length > 1) return metros;
-  return pool;
+  return [...pool];
 }
 
 export function resolveRequestedPlace(place: RequestedPlace) {

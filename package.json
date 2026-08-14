@@ -18,6 +18,7 @@
     "data:audit:snowflake-csvs": "node --experimental-strip-types scripts/audit-snowflake-csvs.ts",
     "data:prepare:snowflake-playbook": "node --experimental-strip-types scripts/prepare-snowflake-playbook.ts",
     "data:build:approved-snowflake-snapshot": "node --experimental-strip-types scripts/build-approved-snowflake-snapshot.ts",
+    "data:ingest:evidence-snapshot": "node --experimental-strip-types scripts/ingest-evidence-snapshot.ts",
     "data:audit:esri-sources": "node --experimental-strip-types scripts/audit-esri-sources.ts",
     "test": "vinext build && node --experimental-strip-types --test tests/*.test.ts tests/data/*.test.ts tests/adapters/census/*.test.ts tests/adapters/cvc-performance/*.test.ts && node --test tests/*.test.mjs",
     "test:cbsa-acs": "node --experimental-strip-types --test tests/adapters/census/census-adapter.test.ts tests/adapters/census/census-contract.test.ts tests/cbsa-acs.test.ts tests/cbsa-market-context.test.ts",
@@ -31,6 +32,7 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },
   "dependencies": {
+    "@duckdb/node-api": "1.4.5-r.1",
     "d3-geo": "^3.1.1",
     "maplibre-gl": "6.0.0",
     "next": "16.2.6",

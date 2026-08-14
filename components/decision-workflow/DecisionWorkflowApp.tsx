@@ -5,6 +5,7 @@ import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/Adap
 import { DecisionGraphAnimation } from "@/components/decision-workflow/DecisionGraphAnimation";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
+import { SnapshotEvidenceStatus } from "@/components/decision-workflow/SnapshotEvidenceStatus";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import {
   assembleReviewableActionPacket,
@@ -20,12 +21,14 @@ import {
   proposedActionFromPlan,
   resolveGeographicFocus,
   suggestSisterGeographiesFromPlan,
+  executeEvaluationPlan,
   type EvaluationPlan,
+  type EvaluationExecutionResult,
   type PacketFindingsSummary,
   type SisterGeographySuggestion,
 } from "@/lib/planning";
 
-type Phase = "question" | "interpreting" | "running" | "packet" | "saved" | "error";
+type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error";
 
 type SavedPacket = {
   id: string;
@@ -74,6 +77,7 @@ export function DecisionWorkflowApp() {
   const [question, setQuestion] = useState("");
   const [activeStep, setActiveStep] = useState(-1);
   const [plan, setPlan] = useState<EvaluationPlan | null>(null);
+  const [execution, setExecution] = useState<EvaluationExecutionResult | null>(null);
   const [selectedActionId, setSelectedActionId] = useState("");
   const [requestError, setRequestError] = useState<string | null>(null);
   const [savedPackets, setSavedPackets] = useState<SavedPacket[]>([]);
@@ -102,8 +106,8 @@ export function DecisionWorkflowApp() {
   );
 
   const reviewablePacket = useMemo(
-    () => (plan && selectedAction ? assembleReviewableActionPacket(plan, selectedAction) : null),
-    [plan, selectedAction],
+    () => (plan && selectedAction ? assembleReviewableActionPacket(plan, selectedAction, new Date().toISOString(), execution) : null),
+    [plan, selectedAction, execution],
   );
 
   useEffect(() => {
@@ -179,6 +183,7 @@ export function DecisionWorkflowApp() {
     const normalizedQuestion = nextQuestion.trim();
     setQuestion(normalizedQuestion);
     setPlan(null);
+    setExecution(null);
     setSelectedActionId("");
     setRequestError(null);
     setActiveStep(-1);
@@ -203,8 +208,8 @@ export function DecisionWorkflowApp() {
       }
       setPlan(parsed.data.plan);
       setSelectedActionId(proposedActionFromPlan(parsed.data.plan).id);
-      setActiveStep(0);
-      setPhase("running");
+      setActiveStep(-1);
+      setPhase("confirming");
     } catch {
       setRequestError("The evaluation plan service is unavailable. Retry or edit the question.");
       setPhase("error");
@@ -214,6 +219,7 @@ export function DecisionWorkflowApp() {
   function restart() {
     setQuestion("");
     setPlan(null);
+    setExecution(null);
     setActiveStep(-1);
     setSelectedActionId("");
     setRequestError(null);
@@ -222,6 +228,13 @@ export function DecisionWorkflowApp() {
     setPacketSummaryState("idle");
     setActionDetailsOpen(false);
     setPhase("question");
+  }
+
+  function confirmInterpretation() {
+    if (!plan) return;
+    setExecution(executeEvaluationPlan(plan, publicMarkets));
+    setActiveStep(0);
+    setPhase("running");
   }
 
   function savePacket() {
@@ -244,6 +257,7 @@ export function DecisionWorkflowApp() {
     const restoredPlan = planEvaluation(packet.question);
     setQuestion(packet.question);
     setPlan(restoredPlan);
+    setExecution(executeEvaluationPlan(restoredPlan, publicMarkets));
     setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
     setRequestError(null);
     setSisterFollowUpNotice(null);
@@ -268,6 +282,7 @@ export function DecisionWorkflowApp() {
       || savedPackets.some((packet) => packet.question === currentQuestion);
     // Leave saved packets untouched. Do not auto-save or overwrite the current packet.
     setPlan(null);
+    setExecution(null);
     setSelectedActionId("");
     setActiveStep(-1);
     setRequestError(null);
@@ -285,6 +300,7 @@ export function DecisionWorkflowApp() {
 
   const showPacket = phase === "packet" || phase === "saved";
   const isQuestionPage = activeView === "workflow" && phase === "question";
+  const isConfirmationPage = activeView === "workflow" && phase === "confirming";
   const isAnimationPage = activeView === "workflow" && (phase === "interpreting" || phase === "running");
   const isResultPage = activeView === "workflow" && showPacket;
   const isErrorPage = activeView === "workflow" && phase === "error";
@@ -292,8 +308,10 @@ export function DecisionWorkflowApp() {
     ? "saved-list"
     : isQuestionPage
       ? "question"
-      : isAnimationPage
-        ? "animation"
+    : isAnimationPage
+      ? "animation"
+      : isConfirmationPage
+        ? "confirmation"
         : isResultPage
           ? "result"
           : isErrorPage
@@ -301,6 +319,8 @@ export function DecisionWorkflowApp() {
             : "workspace";
   const workspaceLayoutClass = isQuestionPage
     ? "question-layout"
+    : isConfirmationPage
+      ? "workspace-layout confirmation-layout"
     : isAnimationPage
       ? "animation-page-layout"
       : "workspace-layout packet-workspace-layout result-page-layout";
@@ -317,7 +337,7 @@ export function DecisionWorkflowApp() {
           <p>Move from a business question to a reviewable next step.</p>
           <ol className="rail-steps">
             <li className={phase === "question" ? "current" : "complete"}><span>1</span><div><strong>Ask</strong><small>State the decision</small></div></li>
-            <li className={phase === "interpreting" || phase === "running" ? "current" : showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Trace</strong><small>Follow the decision graph</small></div></li>
+            <li className={phase === "interpreting" || phase === "confirming" || phase === "running" ? "current" : showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Trace</strong><small>Confirm the interpretation</small></div></li>
             <li className={showPacket && phase !== "saved" ? "current" : phase === "saved" ? "complete" : ""}><span>3</span><div><strong>Review</strong><small>Read the action packet</small></div></li>
             <li className={phase === "saved" ? "current complete" : ""}><span>4</span><div><strong>Save</strong><small>Keep the reviewable draft</small></div></li>
           </ol>
@@ -348,6 +368,39 @@ export function DecisionWorkflowApp() {
               onSubmit={() => void startWorkflow()}
               onOpenSaved={() => setActiveView("saved")}
             />
+          </section>
+        ) : null}
+
+        {isConfirmationPage && plan ? (
+          <section className="decision-content confirmation-page">
+            <section className="packet-view plan-confirmation" aria-labelledby="plan-confirmation-title" data-plan-confirmation="true">
+              <div className="eyebrow">Review interpretation</div>
+              <h1 id="plan-confirmation-title">Confirm the evaluation before it runs</h1>
+              <p className="lead">Check the complete interpretation, evidence boundary, and permitted output. This is the final in-product approval step for the demo.</p>
+              <SnapshotEvidenceStatus />
+              <div className="question-ribbon packet-question"><span>Your question</span><strong>{plan.originalQuestion}</strong></div>
+              <div className="confirmation-grid">
+                <div><span>Decision type</span><strong>{plan.intent.topic.replaceAll("_", " ")}</strong></div>
+                <div><span>Geography</span><strong>{plan.geographyResolution.message}</strong></div>
+                <div><span>Time window</span><strong>2020–2024 ACS 5-year estimate</strong></div>
+                <div><span>Evidence categories</span><strong>{plan.capabilityId.replaceAll("_", " ")}</strong></div>
+                <div><span>Requested measure</span><strong>{plan.intent.requestedMeasure.replaceAll("_", " ")}</strong></div>
+                <div><span>Scoring approach</span><strong>{plan.capabilityId === "census_market_context" ? "Deterministic cohort percentile, no opportunity score" : "No calculation until evidence gates clear"}</strong></div>
+                <div><span>Expected output</span><strong>{plan.actions[0]?.outputId.replaceAll("_", " ") ?? "Review packet"}</strong></div>
+                <div><span>Permitted next action</span><strong>{plan.actions[0]?.title ?? "Research needed"}</strong></div>
+              </div>
+              <div className="confirmation-boundary"><strong>Evidence boundary</strong><p>{plan.evidenceBoundary}</p></div>
+              {(plan.missingEvidence.length || plan.missingApprovals.length) ? (
+                <div className="confirmation-gates" role="status">
+                  {plan.missingEvidence.length ? <p><strong>Missing evidence:</strong> {plan.missingEvidence.join("; ")}</p> : null}
+                  {plan.missingApprovals.length ? <p><strong>Missing approvals:</strong> {plan.missingApprovals.join("; ")}</p> : null}
+                </div>
+              ) : null}
+              <div className="packet-heading-actions">
+                <button className="secondary-action" type="button" onClick={restart}>Edit question</button>
+                <button className="primary-action" type="button" onClick={confirmInterpretation}>Confirm interpretation and run <span aria-hidden="true">→</span></button>
+              </div>
+            </section>
           </section>
         ) : null}
 
@@ -442,6 +495,7 @@ export function DecisionWorkflowApp() {
                 <span>Your question</span>
                 <strong>{plan.originalQuestion}</strong>
               </div>
+              <SnapshotEvidenceStatus />
 
               <div className="decision-review-primary">
                 {geographicFocus ? (
@@ -541,6 +595,28 @@ export function DecisionWorkflowApp() {
                   </div>
                 </div>
               </div>
+
+              {execution ? (
+                <section className="execution-result" aria-labelledby="execution-result-title" data-execution-status={execution.status}>
+                  <div className="section-label" id="execution-result-title">Executed evidence result</div>
+                  <div className="execution-result-meta">
+                    <span>Status: {execution.status.replaceAll("_", " ")}</span>
+                    <span>Snapshot: {execution.snapshotVersion}</span>
+                    <span>Calculation: {execution.calculationVersion}</span>
+                    <span>Confidence: {execution.confidence}</span>
+                  </div>
+                  <div className="execution-result-columns">
+                    <div><strong>Supported findings</strong>{execution.supportedFindings.map((item) => <p key={item}>{item}</p>)}</div>
+                    <div><strong>Contrary evidence</strong>{execution.contraryEvidence.map((item) => <p key={item}>{item}</p>)}</div>
+                    <div><strong>Missing evidence and warnings</strong>{[...execution.missingEvidence, ...execution.warnings].map((item) => <p key={item}>{item}</p>)}</div>
+                  </div>
+                  {execution.comparisons.length ? (
+                    <div className="execution-comparison-list" aria-label="Deterministic market comparison">
+                      {execution.comparisons.slice(0, 10).map((comparison) => <div key={comparison.cbsaCode}><strong>{comparison.cbsaName}</strong><span>{comparison.rawValue.toLocaleString()} {comparison.unit} · percentile {comparison.percentile.toFixed(1)}</span></div>)}
+                    </div>
+                  ) : null}
+                </section>
+              ) : null}
 
               <SisterGeographiesSection
                 suggestions={sisterGeographies}

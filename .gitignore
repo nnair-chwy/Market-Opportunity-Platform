@@ -54,3 +54,8 @@ next-env.d.ts
 # generated internal evidence snapshots and audit reports
 /data/approved/snowflake/
 /reports/snowflake-*/
+
+# local DuckDB evidence layer
+/.local/
+*.duckdb
+*.duckdb.wal
