@@ -272,8 +272,9 @@ prototype use. Planned and unavailable capabilities do not become executable
 because a caller supplies an identifier.
 
 The initial registry marks only public Census market context as connected.
-Clinic performance is unavailable pending an approved aggregate export,
-outcome definition, and owner approval. Clinic site evaluation is synthetic.
+Clinic performance evidence is available for descriptive review from approved
+aggregate exports. Outcome definitions, maturity rules, and owner approvals
+remain separate requirements for comparison and scoring. Clinic site evaluation is synthetic.
 Local growth testing is planned and requires approved, privacy-safe aggregate
 inputs. The registry does not establish a Snowflake, Tableau, Esri, campaign,
 or customer-data connection.

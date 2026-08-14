@@ -327,7 +327,7 @@ outputs.push(await writeOutput("cbsa-population.json", jsonRows(cbsaPopulationRo
 outputs.push(await writeOutput("zip-context.json", jsonRows(zipContextRows), zipContextRows.length, "one ZIP x household context"));
 outputs.push(await writeOutput("regional-demand.json", jsonRows(demandRows), demandRows.length, "one customer-address ZIP x year"));
 outputs.push(await writeOutput("clinic-market-summary.json", jsonRows(clinicMarketRows), clinicMarketRows.length, "one CBSA name x clinic aggregate", "approved_internal_decision_support_pending_identity_rule"));
-outputs.push(await writeOutput("clinic-performance-market-summary.json", jsonRows(clinicPerformanceRows), clinicPerformanceRows.length, "one CBSA name x clinic performance aggregate", "approved_internal_decision_support_pending_outcome_rule"));
+outputs.push(await writeOutput("clinic-performance-market-summary.json", jsonRows(clinicPerformanceRows), clinicPerformanceRows.length, "one CBSA name x clinic performance aggregate", "approved_internal_decision_support"));
 outputs.push(await writeOutput("candidate-sites.json", jsonRows(candidateSiteRows), candidateSiteRows.length, "one approved internal candidate site", "internal_demo_evidence_only"));
 outputs.push(await writeOutput("appointment-context.json", jsonRows(appointmentRows), appointmentRows.length, "one state x month x appointment dimensions"));
 outputs.push(await writeOutput("retention-baseline.json", jsonRows(retentionRows), retentionRows.length, "one week x aggregation level x business channel"));

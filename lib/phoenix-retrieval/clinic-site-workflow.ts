@@ -34,7 +34,7 @@ function researchSteps(): ClinicResearchStep[] {
     {
       id: "approve-performance-definition",
       title: "Define the comparable clinic outcome and maturity window",
-      reason: "Clinic performance data cannot support site scoring until the outcome, maturity rule, cohort, and owner approval are defined.",
+      reason: "Clinic performance data is available as descriptive evidence; site scoring requires documented outcome, maturity, cohort, and owner configuration.",
       owner: "CVC Analytics and Finance metric owner",
       priority: "later",
     },

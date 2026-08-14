@@ -165,7 +165,7 @@ export const capabilityRegistry = capabilityRegistrySchema.parse({
     {
       capabilityId: "clinic_performance",
       version: "1.0.0",
-      status: "unavailable",
+      status: "connected",
       supportedGeographyGrains: ["site", "portfolio"],
       supportedOutputs: [{
         outputId: "clinic_outcome_comparison",

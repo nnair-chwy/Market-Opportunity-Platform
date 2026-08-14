@@ -21,8 +21,9 @@ approval requirements, and limitations.
 Question assessment is deterministic and returns `supported`, `unsupported`,
 `partially_supported`, or `blocked`. It reports the executable outputs
 separately from missing evidence and approvals. Registry version `1.0.0` marks
-only Census market context as connected, clinic site evaluation as synthetic,
-clinic performance as unavailable, and local growth tests as planned.
+only Census market context and descriptive clinic performance as connected,
+with clinic performance available from approved aggregate evidence, clinic site evaluation as
+synthetic, and local growth tests as planned.
 
 ## Alternatives considered
 

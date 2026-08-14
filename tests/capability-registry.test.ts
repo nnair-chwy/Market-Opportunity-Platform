@@ -103,10 +103,10 @@ test("blocks an otherwise available output until approval is supplied", () => {
   assert.equal(approved.outcome, "supported");
 });
 
-test("keeps undocumented data systems explicitly disconnected", () => {
+test("keeps available clinic performance evidence distinct from planned capabilities", () => {
   assert.equal(
     capabilityRegistry.capabilities.find((item) => item.capabilityId === "clinic_performance")?.status,
-    "unavailable",
+    "connected",
   );
   assert.equal(
     capabilityRegistry.capabilities.find((item) => item.capabilityId === "local_growth_test")?.status,
