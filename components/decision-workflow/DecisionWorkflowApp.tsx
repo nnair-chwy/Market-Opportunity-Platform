@@ -119,7 +119,6 @@ export function DecisionWorkflowApp() {
   const [actionDetailsOpen, setActionDetailsOpen] = useState(false);
   const [investigation, setInvestigation] = useState<MarketInvestigation | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [perspectiveId, setPerspectiveId] = useState<PerspectiveId>("cvc");
   const [investigationFollowUps, setInvestigationFollowUps] = useState<InvestigationFollowUp[]>([]);
   const [analysisBrief, setAnalysisBrief] = useState<AnalysisBrief | null>(null);
   const [evidencePlan, setEvidencePlan] = useState<EvidencePlan | null>(null);
@@ -262,7 +261,7 @@ export function DecisionWorkflowApp() {
     };
   }, [investigation, phase, plan, selectedAction, selectedLead]);
 
-  async function startWorkflow(nextQuestion = question, nextPerspectiveId: PerspectiveId = perspectiveId) {
+  async function startWorkflow(nextQuestion = question, nextPerspectiveId?: PerspectiveId) {
     if (!nextQuestion.trim()) return;
     const normalizedQuestion = nextQuestion.trim();
     setQuestion(normalizedQuestion);
@@ -286,7 +285,10 @@ export function DecisionWorkflowApp() {
       const response = await fetch("/api/evaluation-plans", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: normalizedQuestion, perspectiveId: nextPerspectiveId }),
+        body: JSON.stringify({
+          question: normalizedQuestion,
+          ...(nextPerspectiveId ? { perspectiveId: nextPerspectiveId } : {}),
+        }),
       });
       const payload: unknown = await response.json();
       const parsed = evaluationPlanResponseSchema.safeParse(payload);
@@ -394,7 +396,6 @@ export function DecisionWorkflowApp() {
     setQuestion(packet.question);
     setPlan(restoredPlan);
     setClinicWorkflow(null);
-    setPerspectiveId(restoredPlan.perspectiveId);
     setSelectedContextMetric(packet.selectedContextMetric ?? (restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count"));
     const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
     setInvestigation(restoredInvestigation);
@@ -521,7 +522,6 @@ export function DecisionWorkflowApp() {
               }}
               onSubmit={(nextPerspectiveId) => void startWorkflow(question, nextPerspectiveId)}
               onPerspectiveChange={(nextPerspectiveId) => {
-                setPerspectiveId(nextPerspectiveId);
                 setQuestion("");
                 setSisterFollowUpNotice(null);
               }}

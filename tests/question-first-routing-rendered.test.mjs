@@ -6,6 +6,7 @@ const workflow = fs.readFileSync(new URL("../components/decision-workflow/Decisi
 const market = fs.readFileSync(new URL("../components/decision-workflow/AdaptiveMarketWorkspace.tsx", import.meta.url), "utf8");
 const focusMap = fs.readFileSync(new URL("../components/decision-workflow/GeographicFocusMap.tsx", import.meta.url), "utf8");
 const investigationPanel = fs.readFileSync(new URL("../components/decision-workflow/MarketInvestigationPanel.tsx", import.meta.url), "utf8");
+const questionWorkspace = fs.readFileSync(new URL("../components/decision-workflow/AdaptiveEvaluationWorkspace.tsx", import.meta.url), "utf8");
 const sister = fs.readFileSync(new URL("../components/decision-workflow/SisterGeographiesSection.tsx", import.meta.url), "utf8");
 const sisterLib = fs.readFileSync(new URL("../lib/planning/sister-geographies.ts", import.meta.url), "utf8");
 
@@ -17,6 +18,12 @@ test("question results do not hard-code Seattle or fixed findings", () => {
   assert.doesNotMatch(workflow, /Three governed action paths/);
   assert.match(workflow, /deterministicFindingsAndProposalSummary/);
   assert.match(workflow, /proposedActionFromPlan/);
+});
+
+test("the default CVC perspective does not override question inference", () => {
+  assert.match(questionWorkspace, /perspectiveExplicitlySelected/);
+  assert.match(questionWorkspace, /onSubmit\(perspectiveExplicitlySelected \? perspectiveId : undefined\)/);
+  assert.match(workflow, /\.\.\.\(nextPerspectiveId \? \{ perspectiveId: nextPerspectiveId \} : \{\}\)/);
 });
 
 test("request state is transparent before a plan is treated as final", () => {
@@ -81,6 +88,8 @@ test("selected analyst leads expose fixture values and drive the map context mea
   assert.match(investigationPanel, /Public context—not a score/);
   assert.match(investigationPanel, /SRC-009 · snapshot footprint only/);
   assert.match(investigationPanel, /onContextMetricChange/);
+  assert.match(investigationPanel, /dataSnapshotLabel/);
+  assert.match(investigationPanel, /dataSnapshotVersion/);
   assert.match(workflow, /selectedContextMetric/);
   assert.match(workflow, /contextMetric=\{selectedContextMetric\}/);
 });

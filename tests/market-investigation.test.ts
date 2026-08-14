@@ -106,3 +106,30 @@ test("different CVC questions keep distinct intent without changing the evidence
   assert.equal(demand.result.scoringEligibility, "none");
   assert.equal(supply.result.scoringEligibility, "none");
 });
+
+test("a named CVC geography limits leads to the requested market", () => {
+  const plan = planEvaluation("Where should we investigate a new clinic in Phoenix?", "cvc");
+  const investigation = runMarketInvestigation(plan);
+
+  assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, ["38060"]);
+  assert.ok(investigation.leads.length > 0);
+  assert.ok(investigation.leads.every((lead) => lead.marketIds.includes("38060")));
+  assert.equal(investigation.dataSnapshotVersion, "SRC-009-footprint+SRC-016-acs-2024");
+});
+
+test("different named CVC locations do not reuse the same result leads", () => {
+  const phoenix = runMarketInvestigation(
+    planEvaluation("Where should we investigate a new clinic in Phoenix?", "cvc"),
+  );
+  const seattle = runMarketInvestigation(
+    planEvaluation("Where should we investigate a new clinic in Seattle?", "cvc"),
+  );
+
+  assert.ok(phoenix.leads.length > 0);
+  assert.ok(phoenix.leads.every((lead) => lead.marketIds.includes("38060")));
+  assert.equal(seattle.leads.length, 0);
+  assert.notDeepEqual(
+    phoenix.leads.map((lead) => lead.id),
+    seattle.leads.map((lead) => lead.id),
+  );
+});

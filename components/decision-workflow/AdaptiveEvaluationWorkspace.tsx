@@ -42,7 +42,7 @@ type AdaptiveEvaluationWorkspaceProps = {
   question: string;
   savedPackets: SavedPacketPreview[];
   onQuestionChange: (value: string) => void;
-  onSubmit: (perspectiveId: PerspectiveId) => void;
+  onSubmit: (perspectiveId?: PerspectiveId) => void;
   onPerspectiveChange: (perspectiveId: PerspectiveId) => void;
   onOpenSaved: () => void;
 };
@@ -56,6 +56,7 @@ export function AdaptiveEvaluationWorkspace({
   onOpenSaved,
 }: AdaptiveEvaluationWorkspaceProps) {
   const [perspectiveId, setPerspectiveId] = useState<PerspectiveId>("cvc");
+  const [perspectiveExplicitlySelected, setPerspectiveExplicitlySelected] = useState(false);
   const [activeViews, setActiveViews] = useState(createDefaultActiveViews);
   const [perspectiveOpen, setPerspectiveOpen] = useState(false);
   const [mapMode, setMapMode] = useState<MapViewMode>("single");
@@ -95,11 +96,12 @@ export function AdaptiveEvaluationWorkspace({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit(perspectiveId);
+    onSubmit(perspectiveExplicitlySelected ? perspectiveId : undefined);
   }
 
   function choosePerspective(next: PerspectiveId) {
     setPerspectiveId(next);
+    setPerspectiveExplicitlySelected(true);
     setPerspectiveOpen(false);
     onPerspectiveChange(next);
     const nextView = getPerspectiveView(next, activeViews[next]);

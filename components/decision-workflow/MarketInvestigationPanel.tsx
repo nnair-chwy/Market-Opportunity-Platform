@@ -92,7 +92,8 @@ export function MarketInvestigationPanel({
         <div><strong>How</strong><span>{investigation.toolsRun.join(" → ")}</span></div>
         <div><strong>Coverage</strong><span>{`${investigation.screeningScope.eligibleComparisons.toLocaleString()} eligible comparisons from ${investigation.screeningScope.marketUniverse} metros; not all ${investigation.screeningScope.allMarketPairs.toLocaleString()} possible metro pairs`}</span></div>
         <div><strong>Selection</strong><span>{investigation.screeningScope.selectionRule}</span></div>
-        <div><strong>Runtime</strong><span>Fixed arithmetic over checked-in published and public data—no live research, recommendation score, or causal inference</span></div>
+        <div><strong>Data</strong><span>{investigation.dataSnapshotLabel} · {investigation.dataSnapshotVersion}</span></div>
+        <div><strong>Runtime</strong><span>Fixed arithmetic over the checked-in snapshot. No live research, recommendation score, or causal inference.</span></div>
       </div>
 
       {visibleLeads.length ? (

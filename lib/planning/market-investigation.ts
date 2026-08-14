@@ -23,6 +23,8 @@ export type MarketInvestigation = {
   perspectiveId: "cvc" | "marketing" | "pricing";
   geography: "CBSA";
   period: string;
+  dataSnapshotLabel: string;
+  dataSnapshotVersion: string;
   readiness: {
     label: "Partial answer" | "Context only";
     summary: string;
@@ -130,6 +132,8 @@ function baseInvestigation(plan: EvaluationPlan, perspectiveId: MarketInvestigat
     perspectiveId,
     geography: "CBSA",
     period: "2020–2024 ACS 5-year estimate",
+    dataSnapshotLabel: "Checked-in SRC-009 clinic footprint and SRC-016 ACS context",
+    dataSnapshotVersion: "SRC-009-footprint+SRC-016-acs-2024",
     allowedUse: "market_context_only",
     scoringEligibility: "none",
   };
@@ -155,7 +159,7 @@ function cvcInvestigation(plan: EvaluationPlan, rows: MarketRow[]): MarketInvest
     : (intensityValues[middle - 1] + intensityValues[middle]) / 2;
   const highest = intensity[0];
 
-  const leads: InvestigationLead[] = [
+  const allLeads: InvestigationLead[] = [
     {
       id: "cvc-footprint-intensity-proxy",
       marketIds: [highest.market.id],
@@ -181,6 +185,11 @@ function cvcInvestigation(plan: EvaluationPlan, rows: MarketRow[]): MarketInvest
       nextEvidence: "Compare pet households, Chewy customer demand, veterinary capacity, trade-area access, property feasibility, and historical market decisions.",
     })),
   ];
+
+  const requestedCodes = new Set(plan.geographyResolution.selectedCbsaCodes);
+  const leads = requestedCodes.size
+    ? allLeads.filter((lead) => lead.marketIds.some((marketId) => requestedCodes.has(marketId)))
+    : allLeads;
 
   return {
     ...baseInvestigation(plan, "cvc"),

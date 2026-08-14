@@ -123,6 +123,8 @@ export const reviewableActionPacketSchema = z.object({
     perspectiveId: evaluationPlanSchema.shape.perspectiveId,
     geography: z.literal("CBSA"),
     period: z.string().trim().min(1),
+    dataSnapshotLabel: z.string().trim().min(1),
+    dataSnapshotVersion: z.string().trim().min(1),
     readiness: z.object({
       label: z.enum(["Partial answer", "Context only"]),
       summary: z.string().trim().min(1),
@@ -368,6 +370,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `- Selection rule: ${packet.analysisAppendix.screeningScope.selectionRule}`,
     `- Execution mode: ${packet.analysisAppendix.screeningScope.executionMode.replaceAll("_", " ")}`,
     `- Period: ${packet.analysisAppendix.period}`,
+    `- Data snapshot: ${packet.analysisAppendix.dataSnapshotLabel} (${packet.analysisAppendix.dataSnapshotVersion})`,
     `- Measures examined: ${packet.analysisAppendix.measuresExamined.join("; ")}`,
     `- Process: ${packet.analysisAppendix.toolsRun.join(" → ")}`,
     `- Readiness: ${packet.analysisAppendix.readiness.label} — ${packet.analysisAppendix.readiness.summary}`,
