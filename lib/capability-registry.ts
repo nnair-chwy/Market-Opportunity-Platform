@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CAPABILITY_REGISTRY_VERSION = "1.0.0" as const;
+export const CAPABILITY_REGISTRY_VERSION = "1.1.0" as const;
 
 const identifierSchema = z.string().trim().min(1).max(180);
 const descriptionSchema = z.string().trim().min(1).max(800);
@@ -280,7 +280,7 @@ export const capabilityRegistry = capabilityRegistrySchema.parse({
     },
     {
       capabilityId: "local_growth_test",
-      version: "1.0.0",
+      version: "1.1.0",
       status: "planned",
       supportedGeographyGrains: ["drive_time", "trade_area", "market"],
       supportedOutputs: [
@@ -293,7 +293,14 @@ export const capabilityRegistry = capabilityRegistrySchema.parse({
         {
           outputId: "growth_test_measurement",
           label: "Local growth-test measurement",
-          requiredEvidenceIds: ["approved_campaign_aggregate"],
+          requiredEvidenceIds: [
+            "approved_campaign_aggregate",
+            "approved_first_party_regional_outcome",
+            "approved_campaign_taxonomy",
+            "approved_dma_market_relationship",
+            "approved_attribution_lag_contract",
+            "approved_geo_experiment_design",
+          ],
           approvalRequirementIds: ["growth_measurement_approval"],
         },
       ],
@@ -308,11 +315,51 @@ export const capabilityRegistry = capabilityRegistrySchema.parse({
         },
         {
           evidenceId: "approved_campaign_aggregate",
-          label: "Approved aggregate campaign measurement",
+          label: "Approved weekly DMA campaign aggregate",
           required: true,
           availableByDefault: false,
-          sourceIds: ["SRC-004"],
-          limitation: "A documented launch-marketing concept does not establish campaign-data access.",
+          sourceIds: ["SRC-018", "SRC-020"],
+          limitation: "Manual Google Ads exports are validation evidence, not an approved production connection or refresh path.",
+        },
+        {
+          evidenceId: "approved_first_party_regional_outcome",
+          label: "Approved first-party regional outcome aggregate",
+          required: true,
+          availableByDefault: false,
+          sourceIds: ["SRC-021"],
+          limitation: "Platform-attributed conversions alone do not establish total-business demand or incremental impact.",
+        },
+        {
+          evidenceId: "approved_campaign_taxonomy",
+          label: "Approved campaign taxonomy and comparison cohort",
+          required: true,
+          availableByDefault: false,
+          sourceIds: ["SRC-023"],
+          limitation: "Account, funnel, tactic, brand, audience, bid, budget, and outcome differences can invalidate regional comparisons.",
+        },
+        {
+          evidenceId: "approved_dma_market_relationship",
+          label: "Approved versioned DMA-to-market relationship",
+          required: true,
+          availableByDefault: false,
+          sourceIds: ["SRC-018", "SRC-019"],
+          limitation: "Nielsen DMA, postal, physical-user, matched-interest, and Census CBSA geographies are not interchangeable.",
+        },
+        {
+          evidenceId: "approved_attribution_lag_contract",
+          label: "Approved conversion, attribution, and lag contract",
+          required: true,
+          availableByDefault: false,
+          sourceIds: ["SRC-018", "SRC-021"],
+          limitation: "Conversion-action downloads omit many performance denominators and cannot define efficiency by themselves.",
+        },
+        {
+          evidenceId: "approved_geo_experiment_design",
+          label: "Approved geo-experiment design and guardrails",
+          required: true,
+          availableByDefault: false,
+          sourceIds: ["SRC-022", "SRC-024"],
+          limitation: "Observational matched-location efficiency cannot establish incrementality or justify a spend change.",
         },
       ],
       permittedDeterministicOperators: ["filter", "aggregate", "compare"],
@@ -333,7 +380,9 @@ export const capabilityRegistry = capabilityRegistrySchema.parse({
         },
       ],
       knownLimitations: [
-        "No campaign platform or customer-data connection is documented.",
+        "Google Ads UI exports are available for source validation, but no approved product connection is documented.",
+        "DMA is the default comparable layer; postal evidence requires coverage and volume gates and is drill-down only.",
+        "Observed advertising efficiency does not establish causal lift, total demand, pricing power, or site suitability.",
         "Precise customer locations are prohibited.",
         "A 30-minute launch-marketing area is not automatically an approved site-scoring trade area.",
       ],
@@ -385,19 +434,8 @@ export function assessCapabilityQuestion(input: CapabilityQuestion): CapabilityE
       (item) => item.outputId === requirement.outputId,
     );
     const label = output?.label ?? requirement.outputId.replaceAll("_", " ");
-    if (
-      !output ||
-      !capability.supportedGeographyGrains.includes(requirement.geographyGrain) ||
-      capability.status === "unavailable" ||
-      capability.status === "planned"
-    ) {
+    if (!output) {
       unsupported.push(label);
-      output?.requiredEvidenceIds.forEach((id) => {
-        const evidence = capability.requiredEvidence.find((item) => item.evidenceId === id);
-        if (evidence?.required && !evidence.availableByDefault && !suppliedEvidence.has(id)) {
-          missingEvidence.add(evidence.label);
-        }
-      });
       continue;
     }
 
@@ -414,7 +452,13 @@ export function assessCapabilityQuestion(input: CapabilityQuestion): CapabilityE
     absentApprovals.forEach((id) => {
       missingApprovals.add(capability.approvalRequirements.find((item) => item.approvalId === id)!.label);
     });
-    if (absentEvidence.length || absentApprovals.length) {
+    if (
+      !capability.supportedGeographyGrains.includes(requirement.geographyGrain) ||
+      capability.status === "unavailable" ||
+      capability.status === "planned" ||
+      absentEvidence.length ||
+      absentApprovals.length
+    ) {
       unsupported.push(label);
     } else {
       supported.push(label);

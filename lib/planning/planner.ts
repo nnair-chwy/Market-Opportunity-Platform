@@ -21,7 +21,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   const value = question.toLowerCase();
   const clinic = has(value, /\b(clinic|clinics|vet care|veterinary)\b/);
   const performance = clinic && has(value, /\b(performance|peer|underperform|operating)\b/);
-  const growth = has(value, /\b(campaign|advertis|promotion|awareness|growth test|marketing|media|test market|control market|reach)\b/);
+  const growth = has(value, /\b(ad|ads|adwords|campaign|advertis\w*|paid search|promotion|awareness|growth test|marketing|media|test market|control market|reach)\b/);
   const location = clinic && has(value, /\b(open|opening|location|site|market|where|investigate)\b/) && !performance;
   const vague = has(value, /\bwhat should we do next\b/) || has(value, /\bwhat next\b/);
   const requestedMeasure: PlanningIntent["requestedMeasure"] = performance || growth || vague
@@ -269,6 +269,7 @@ export function compileEvaluationPlan(
     topic: resolvedPerspectiveId === "cvc" ? "clinic_location" : "local_growth",
     geographyGrain: "cbsa",
     requestedAction: normalizedIntent.requestedAction === "describe" ? "investigate" : normalizedIntent.requestedAction,
+    requestedMeasure: "none",
     clarificationRequired: false,
     clarificationReason: "none",
     conciseInterpretation: resolvedPerspectiveId === "cvc"
@@ -283,7 +284,7 @@ export function compileEvaluationPlan(
     satisfiedApprovalIds: [],
   });
   const geography = resolveGeography(effectiveIntent);
-  const status: EvaluationPlan["status"] = geography.mode === "clarification" || geography.mode === "unavailable"
+  const status: EvaluationPlan["status"] = effectiveIntent.clarificationRequired || geography.mode === "clarification" || geography.mode === "unavailable"
     ? "blocked"
     : assessment.outcome === "supported"
       ? "executable"

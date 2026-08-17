@@ -1,0 +1,86 @@
+{
+  "snapshotDate": "2026-08-17",
+  "rawDirectory": "data/approved/snowflake/pricing/2026-08-17/raw",
+  "rawDirectoryTrackedInGit": false,
+  "allowedUse": "internal_shadow_evaluation_and_source_validation_only",
+  "exports": [
+    {
+      "file": "competitor-price-geo_latest-by-zip-competitor-sku-30d_2026-08-17.csv",
+      "source": "EDLDB.CHEWYBI.PRICE_COMPETITOR_BUNGEE_TECH_HISTORY",
+      "grain": "latest_competitor_x_zip_x_sku_offer_in_30d",
+      "rows": 831917,
+      "columns": 15,
+      "sha256": "61c3b2b554a903cbce4ea1d3c2f5928024fb46ab98307dcda117381631a66820",
+      "query": "queries/01_competitor-price-availability-by-zip.sql"
+    },
+    {
+      "file": "competitor-price-geo_by-zip-competitor-category-30d_2026-08-17.csv",
+      "source": "competitor_history_join_current_pse_category",
+      "grain": "zip_x_competitor_x_merchandise_hierarchy_over_30d",
+      "rows": 5586,
+      "columns": 14,
+      "sha256": "26f3fc235f425b3e1e3932c07b6cdcb0b3ded8bcf4adb2b40428f7e17bff6121",
+      "query": "queries/08_competitor-geo-by-category.sql"
+    },
+    {
+      "file": "pse-pricing-economics_by-us-sku-current-day_2026-08-17.csv",
+      "source": "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.PRICING_SELF_SERVICE_DASHBOARD",
+      "grain": "current_date_x_us_sku",
+      "rows": 238692,
+      "columns": 19,
+      "sha256": "cfe98eb27858a69e94c10c27c5a7068894df9a3e3d11962f1469cfb214bb4dce",
+      "query": "queries/02_pse-pricing-economics-by-sku.sql"
+    },
+    {
+      "file": "pse-pricing-economics_by-us-category-current-day_2026-08-17.csv",
+      "source": "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.PRICING_SELF_SERVICE_DASHBOARD",
+      "grain": "current_date_x_merchandise_hierarchy_x_manufacturer",
+      "rows": 13359,
+      "columns": 17,
+      "sha256": "4b0a2f377e1e17c91a73c2922208e3c93187c5d7f0454dac278841a0c022c584",
+      "query": "queries/07_pse-pricing-economics-by-category.sql"
+    },
+    {
+      "file": "product-catalog_active-us-product-spine_2026-08-17.csv",
+      "source": "EDLDB.CHEWYBI.PRODUCTS",
+      "grain": "one_latest_active_us_catalog_row_per_sku",
+      "rows": 365398,
+      "columns": 26,
+      "sha256": "1e836b373239497069dc24d30064d45ede4be4fc1aba310fc068ae8b29839edf",
+      "query": "queries/03_product-hierarchy-by-sku.sql"
+    },
+    {
+      "file": "chewy-price-history_by-sku-90d_2026-08-17.csv",
+      "source": "EDLDB.CHEWYBI.PRICE_CHEWY_HISTORY",
+      "grain": "sku_over_90d",
+      "rows": 216380,
+      "columns": 14,
+      "sha256": "0521a285d6276ff255e49704ffedf290cc5589008f57c6765668f480fb1a7019",
+      "query": "queries/09_chewy-price-history-by-sku.sql"
+    },
+    {
+      "file": "pharmacy-merch-performance_by-sku-90d_2026-08-17.csv",
+      "source": "EDLDB.MRCH.MERCH_PERFORMANCE_SNAPSHOT_PHARMACY",
+      "grain": "sku_over_90d",
+      "rows": 546987,
+      "columns": 26,
+      "sha256": "8ccf09fb91a91d881cee8052d38ac86130ff40aa6ffbae13cf18846920999be3",
+      "query": "queries/06_sku-exposure-sales.sql"
+    }
+  ],
+  "schemaOnly": [
+    "competitor-price-history_schema_2026-08-17.csv",
+    "pse-pricing-economics_schema_2026-08-17.csv",
+    "product-catalog_schema_2026-08-17.csv",
+    "chewy-price-history_schema_2026-08-17.csv",
+    "pharmacy-merch-performance_schema_2026-08-17.csv",
+    "order-line_schema-only_2026-08-17.csv"
+  ],
+  "warnings": [
+    "Preserve ZIP_CODE as five-character text.",
+    "Do not interpret national SKU performance as local demand.",
+    "Keep PSE cost, raw product cost, modeled product cost, and contribution margin distinct.",
+    "Competitor coverage depends on rotating and representative ZIP monitoring.",
+    "No raw order, customer, pet, subscription, or address identifiers were exported."
+  ]
+}

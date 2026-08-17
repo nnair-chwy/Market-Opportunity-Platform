@@ -1,0 +1,69 @@
+{
+  "validatedAt": "2026-08-17",
+  "environment": "Snowflake web worksheet",
+  "role": "DBT_DEMO_DEVELOPER",
+  "warehouse": "OTH_WH",
+  "database": "EDLDB",
+  "allowedUse": "internal_shadow_evaluation_and_source_validation_only",
+  "rawDirectory": "data/approved/snowflake/pricing/2026-08-17/raw",
+  "preparedExports": {
+    "competitorLatestZipSku30dRows": 831917,
+    "competitorZipCategory30dRows": 5586,
+    "currentUsPseSkuRows": 238692,
+    "currentUsPseCategoryRows": 13359,
+    "activeUsProductSpineRows": 365398,
+    "chewyPriceHistory90dSkuRows": 216380,
+    "pharmacyMerchPerformance90dSkuRows": 546987
+  },
+  "objects": {
+    "EDLDB.CHEWYBI.PRICE_COMPETITOR_BUNGEE_TECH_HISTORY": {
+      "access": "visible_view",
+      "schemaColumns": 53,
+      "recentZipSample": {
+        "rowLimit": 1000,
+        "lookbackDays": 30,
+        "distinctZipCodes": 11,
+        "distinctProductPartNumbers": 966,
+        "observedOfferDateMin": "2026-07-18T00:02:04Z",
+        "observedOfferDateMax": "2026-07-20T12:29:29Z",
+        "caveat": "Limit without representative sampling was overwhelmingly Walmart and cannot estimate national competitor or ZIP coverage."
+      }
+    },
+    "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.PRICING_SELF_SERVICE_DASHBOARD": {
+      "access": "visible_base_table",
+      "schemaColumns": 151,
+      "currentDaySample": {
+        "rowLimit": 1000,
+        "activityDate": "2026-08-17",
+        "countryCounts": { "USA": 975, "CA": 25 },
+        "nullCounts": {
+          "PSE_COST": 128,
+          "MIN_COMPETITOR_PRICE": 512,
+          "ELASTICITY": 25,
+          "PRICING_STRATEGY": 1000
+        },
+        "caveat": "Production U.S. extraction must explicitly filter COUNTRY = 'USA'; row-limited sample is not a coverage estimate."
+      }
+    },
+    "EDLDB.CHEWYBI.PRICE_CHEWY_HISTORY": { "access": "visible_view", "schemaColumns": 49 },
+    "EDLDB.CHEWYBI.PRODUCTS": { "access": "visible_view", "schemaColumns": 246 },
+    "EDLDB.ECOM.ORDER_LINE": {
+      "access": "visible_view",
+      "schemaColumns": 175,
+      "restriction": "Schema only. Do not export raw order, customer, pet, subscription, or address identifiers. An approved destination-geography aggregate is still required."
+    },
+    "EDLDB.MRCH.MERCH_PERFORMANCE_SNAPSHOT_PHARMACY": { "access": "visible_view", "schemaColumns": 236 },
+    "EDLDB.CHEWYBI.ORDER_LINE_COST_MEASURES_PHARMACY": {
+      "access": "snowflake_lookup_failed",
+      "interpretation": "Pricing onboarding documents this as a Vertica table. Do not infer a Snowflake permission gap from this lookup."
+    },
+    "EDLDB.MKT_SOLUTIONS_SANDBOX.BIDCOIN_METRICS_ATTRIBUTION": {
+      "access": "not_visible_to_tested_role",
+      "interpretation": "Optional Marketing attribution source; not a Pricing-pilot blocker."
+    },
+    "EDLDB.PDM.PROMOTIONS": {
+      "access": "invalid_or_legacy_name_tested",
+      "interpretation": "Phoenix Promotions examples use EDLDB.PDM.PROMOTION (singular) and CDM promotion-usage tables. Test those before inferring a permission gap."
+    }
+  }
+}

@@ -258,7 +258,7 @@ weighted calculations.
 
 ## Workspace capability registry
 
-Registry version `1.0.0` in `lib/capability-registry.ts` declares the executable
+Registry version `1.1.0` in `lib/capability-registry.ts` declares the executable
 boundary for `census_market_context`, `clinic_performance`,
 `clinic_site_evaluation`, and `local_growth_test`. Each entry records its
 version and status, supported geography grains and outputs, required evidence,

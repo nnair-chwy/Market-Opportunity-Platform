@@ -213,19 +213,14 @@ Availability has a specific meaning:
 - **State:** Workspace only; live read-only manager access, sixteen U.S.
   30-day exports, and one Canada diagnostic are confirmed. Raw files stay
   outside Git.
-- **Initial diagnostic:** The Canada Search/Shopping export at
-  `/Users/xwang1/Downloads/Location report.csv` is not a U.S. evaluator input.
-  It demonstrated file shape and sparse target/campaign combinations only.
-- **U.S. local files:**
-  - `Location report (1).csv` — Vet Clinic Search, ZIP/radius target detail,
-    SHA-256 `7d5f7c4a9541fbf6e6071a8f18a1942bb30d84a95ef9e98f18065fc80e9a6037`.
-  - `Location report (2).csv` — CarePlus Search/Shopping, state target detail,
-    SHA-256 `1063c31143d73769281a231e0778961f814ada931c8aa586cfa97647e25aa783`.
-  - `Location report (3).csv` — Connect with a Vet Search/Shopping, state
-    target detail, SHA-256
-    `d11e0c8b2fcb9c4d918842ce3e4acc069fdaa78bb6f98a0ac4bff2dee6219ff3`.
-  - `Location report (4).csv` — Get Real, metro and finer target detail,
-    SHA-256 `11c5043a380da4d3a12f84b26e7bca4772548ef6b66f1a8c4609640e262a0336`.
+- **Initial diagnostic:** The Canada Search/Shopping export is excluded from
+  the U.S. evaluator. It demonstrated file shape only and is not organized
+  into the repository's local evidence directory.
+- **U.S. local files:** Start at
+  `data/contracts/google-ads/export-catalog.json`. It maps every original
+  Google download to a descriptive account, geography, grain, and role name.
+  The verified raw copies live under ignored
+  `data/approved/google-ads/2026-07-14_2026-08-12/raw/`.
 - **Provides:** Configured location, campaign, ad group, impressions,
   interactions, interaction rate, cost, conversion rate, conversions, and cost
   per conversion.
@@ -254,10 +249,11 @@ Availability has a specific meaning:
 - **Do not infer:** Total demand, population penetration, organic behavior,
   causal lift, pricing power, customer residence, competitor activity, or site
   suitability.
-- **Critical distinction:** The local CSVs are configured-target performance.
-  Nationwide targets show only `United States`, but Google Ads has a separate
-  `When and where ads showed > Matched locations` report and API physical-user
-  views. Never blend target, physical-presence, and interest geography.
+- **Critical distinction:** The local set includes both configured-target and
+  matched-location exports. Nationwide configured targets show only `United
+  States`; matched DMA and postal reports show where activity was attributed.
+  Physical-presence and interest-only geography are still separate concepts
+  and are not proven by the UI matched export. Never blend them.
 - **Before ingestion/modeling:** Resolve OQ-033 through OQ-037, establish a
   conversion-action dictionary and campaign taxonomy, approve reuse and
   retention, and resolve OQ-038 through OQ-040.
@@ -265,6 +261,64 @@ Availability has a specific meaning:
 - **Export inventory and usage:** See `google-ads-export-manifest.md`. Agents
   must follow its geography ladder and conversion-segment warning before using
   a local CSV.
+
+### SRC-025 through SRC-032 — Pricing and adjacent Snowflake evidence
+
+- **State:** Workspace connected for bounded discovery. Core Pricing evidence is
+  visible. Earlier failed lookups mixed an optional Marketing object, a likely
+  legacy Vertica object, and an incorrect/legacy Promotions table name; they
+  are not blockers for the first Pricing pilot.
+- **Start here:** `data/contracts/pricing-snowflake/source-catalog.json` records
+  each table's status, grain, known fields, intended export name, use, and
+  limitations. Minimal queries are in the adjacent `queries/` directory.
+- **Geographic Pricing signal:**
+  `EDLDB.CHEWYBI.PRICE_COMPETITOR_BUNGEE_TECH_HISTORY` is the strongest
+  documented source because it combines competitor, ZIP, SKU, offer date,
+  availability, price, coupon, package equalization, and regional/median fields.
+  A 2026-08-17 bounded query confirmed populated recent ZIP rows. Retain
+  representative/rotating ZIP sampling and known crawl-to-Snowflake lag as data
+  quality fields; a limited sample is not a competitor-coverage estimate.
+- **Cost and item context:** The PSE view is visible and contains PSE cost, raw
+  product cost, modeled product cost, price, sales, discounts, shipping revenue,
+  elasticity, strategy, and price-driver fields. Keep their definitions
+  separate and filter `COUNTRY = 'USA'` for this evaluator. Join through
+  `CHEWYBI.PRODUCTS`; profile `CHEWYBI.PRICE_CHEWY_HISTORY` before selecting
+  columns.
+- **Materiality:** Merch performance provides national SKU exposure, sales,
+  units, purchase, and return context. It does not become local demand merely
+  because another table has ZIP.
+- **Profitability:** PSE and merchandising evidence are sufficient for initial
+  competitor-price and availability triage. Do not export `ECOM.ORDER_LINE.*`.
+  A privacy-safe week x geography x category aggregate is a later dependency
+  only for local demand/profit claims. CCP/Bidcoin is a Marketing attribution
+  source, not a Pricing-pilot prerequisite.
+- **Elasticity:** Monthly SKU elasticity may inform Pricing sensitivity after
+  owner validation, but it is not a geographic signal and predicted values
+  must remain distinguishable from observed estimates.
+- **Phoenix SQL correction:** Pricing examples use
+  `PRICING_SELF_SERVICE_DASHBOARD`, `DAILY_COMPETITOR_COVERAGE_SNAPSHOT`,
+  `PRICING_LABS_RESULTS_SUMMARY`, `OFFER_PULSING_STATS`, and
+  `PRODUCTS_UNIT_OF_MEASURE`. Promotions examples use singular `PDM.PROMOTION`
+  plus CDM promotion-usage tables. MSO examples use
+  `CHEWYBI.ORDER_LINE_COST_MEASURES` and a daily campaign-performance summary.
+  Validate these exact curated sources before requesting new permissions.
+- **Failed-lookup interpretation:** The Pharmacy cost-measures object is listed
+  in onboarding as Vertica, Bidcoin is optional Marketing data, and the tested
+  plural Promotions name does not match current Phoenix SQL. None is a proven
+  blocker for the first Pricing pilot.
+- **Order-line clarification:** `ECOM.ORDER_LINE` is visible and its schema
+  includes cost, adjustment, refund, margin, and contribution fields. The
+  blocker is approved destination geography and privacy-safe aggregation, not
+  basic table visibility. Never export order/customer/address identifiers.
+- **Export inventory:** `data/contracts/pricing-snowflake/export-manifest.json`
+  records the seven prepared datasets, row counts, hashes, grains, and queries.
+  `available-data-matrix.md` explains what each answers and the exact remaining
+  access request.
+- **Before the first pilot:** Resolve only the questions that affect competitor
+  signal validity and controlled action: representative ZIPs, availability
+  codes, freshness, cost semantics, existing experiment outcomes, approval,
+  success metrics, and rollback. Resolve order geography, Bidcoin, promotions,
+  and cross-channel geography only when the chosen recommendation needs them.
 
 ### SRC-019 — Official Google Ads geographic documentation
 
@@ -383,6 +437,30 @@ targets. Treat the U.S. UI exports as validation fixtures, not the primary
 pipeline. Resolve the DMA-to-CBSA relationship, then use SRC-022 for historical
 shadow evaluation and controlled geo-test design before setting recommendation
 thresholds.
+
+The current evaluator routes explicit Google Ads, paid-search, campaign, and
+media questions to `local_growth_test`. Registry version `1.1.0` keeps that
+capability `planned`: a local UI export is not treated as an approved campaign
+aggregate, and even a fully asserted input packet cannot make the capability
+executable until the registry status changes through review. The evaluator
+must expose the missing weekly DMA aggregate, first-party regional outcome,
+campaign taxonomy, DMA-to-market relationship, conversion/attribution/lag
+contract, geo-experiment design, and measurement approval. See
+`google-ads-evaluator-validation.md` for the regression cases and remaining
+product gap.
+
+### Pricing geographic-signal plan
+
+Use the competitor ZIP/SKU/offer history as the local market condition, then
+join a dated product hierarchy and Chewy price/cost context at SKU and date.
+Aggregate SKU evidence to a decision-compatible category and geography only
+with explicit coverage weights; never duplicate national SKU exposure across
+ZIPs. Add a privacy-safe first-party order/contribution outcome to determine
+whether a price gap is commercially material. Use elasticity to size or rank a
+test only after validating its table, segment, observation/prediction status,
+and owner. The default recommendation is an investigation or controlled price
+test with margin, availability, volume, and rollback guardrails—not an
+automatic price action.
 
 ### Clinic launch or performance plan
 

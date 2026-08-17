@@ -1,0 +1,130 @@
+{
+  "version": "1.0.0",
+  "asOf": "2026-08-17",
+  "sensitivity": "internal",
+  "defaultAllowedUse": "source_discovery_and_shadow_evaluation_only",
+  "scoringEligibility": "none",
+  "sources": [
+    {
+      "datasetId": "pricing_competitor_geo_offer",
+      "table": "EDLDB.CHEWYBI.PRICE_COMPETITOR_BUNGEE_TECH_HISTORY",
+      "status": "workspace_visible_schema_and_bounded_samples_extracted",
+      "grain": "competitor_x_zip_x_product_part_number_x_offer_date",
+      "knownFields": ["COMPETITOR_NAME", "ZIP_CODE", "PRODUCT_PART_NUMBER", "COMPETITOR_ITEM_AVAILABILITY", "COMPETITOR_OFFER_DATE", "COMPETITOR_PRICE", "COMPETITOR_IN_CART_PRICE", "COUPON", "EQUALIZED_PRICE", "TOTAL_SIZE", "TOTAL_UOM", "PACKAGE_QUANTITY", "LATEST", "REGIONAL_PRICE_ENABLED", "MEDIAN_ZIP_PRICE", "MEDIAN_ZIP", "MEDIAN_AVAILABILITY"],
+      "intendedFile": "competitor-price-geo_latest-by-zip-competitor-sku-30d.csv",
+      "use": "Regional competitor price, availability, and coupon evidence",
+      "limitations": ["Snowflake aggregate can lag crawl data by 12 to 24 hours", "Replication and price_matching_enabled discrepancies have been documented", "Rotating or representative ZIP selection must be retained"],
+      "sourceIds": ["SRC-025", "SRC-028", "SRC-030"]
+    },
+    {
+      "datasetId": "pricing_pse_cost",
+      "table": "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.PRICING_SELF_SERVICE_DASHBOARD",
+      "status": "workspace_visible_schema_and_bounded_sample_extracted",
+      "grain": "activity_date_x_product_part_number",
+      "knownFields": ["ACTIVITY_DATE", "PRODUCT_PART_NUMBER", "COUNTRY", "PRODUCT_MERCH_CLASSIFICATION1", "PRODUCT_MERCH_CLASSIFICATION2", "PRODUCT_MERCH_CLASSIFICATION3", "PRODUCT_MANUFACTURER_NAME", "CHEWY_PRICEBOT_PRICE", "LIST_PRICE", "MIN_COMPETITOR_PRICE", "PSE_COST", "RAW_PRODUCT_COST", "PRODUCT_COST", "NET_SALES", "UNITS_SOLD", "TOTAL_DISCOUNTS", "SHIPPING_REVENUE", "ELASTICITY", "PRICING_STRATEGY", "PRICE_DRIVER"],
+      "intendedFile": "pse-pricing-economics_by-us-sku-current-day.csv",
+      "use": "Product economics, price position, materiality, and sensitivity context",
+      "limitations": ["PSE cost, raw product cost, and modeled product cost have distinct definitions", "Coverage and historical restatement behavior require profiling", "The table contains Canada rows and must be filtered to USA", "SKU economics are not destination-specific cost-to-serve"],
+      "sourceIds": ["SRC-025", "SRC-026"]
+    },
+    {
+      "datasetId": "pricing_product_hierarchy",
+      "table": "EDLDB.CHEWYBI.PRODUCTS",
+      "status": "workspace_visible_schema_and_export_extracted",
+      "grain": "product_part_number",
+      "knownFields": ["PRODUCT_PART_NUMBER", "PRODUCT_NAME", "PRODUCT_MANUFACTURER_NAME", "PRODUCT_MERCH_CLASSIFICATION1", "PRODUCT_MERCH_CLASSIFICATION2", "PRODUCT_MERCH_CLASSIFICATION3"],
+      "intendedFile": "product-catalog_active-us-product-spine.csv",
+      "use": "Stable SKU join and category cohort definition",
+      "limitations": ["Hierarchy can change", "Use a dated lifecycle snapshot when historical classification matters"],
+      "sourceIds": ["SRC-027"]
+    },
+    {
+      "datasetId": "pricing_chewy_price_history",
+      "table": "EDLDB.CHEWYBI.PRICE_CHEWY_HISTORY",
+      "status": "workspace_visible_schema_and_export_extracted",
+      "grain": "expected_product_part_number_x_price_change_timestamp",
+      "knownFields": ["PRODUCT_PART_NUMBER", "PRICE_CHEWY_OFFER_DTTM", "PRICE_CHEWY_PRICE", "PRICE_CHEWY_SUGGESTED_PRICE", "PRICE_CHEWY_MAP_PRICE", "PRICE_CHEWY_LIST_PRICE", "PRICE_DRIVER", "PRICE_DRIVER_DESCRIPTION", "IS_MAP_BREAK"],
+      "intendedFile": "chewy-price-history_by-sku-90d.csv",
+      "use": "Chewy price, price change, and price-driver context",
+      "limitations": ["Column contract must be discovered in Snowflake", "PricePulse capability does not establish direct workspace access"],
+      "sourceIds": ["SRC-026", "SRC-029"]
+    },
+    {
+      "datasetId": "pricing_sku_exposure_sales",
+      "table": "EDLDB.MRCH.MERCH_PERFORMANCE_SNAPSHOT_PHARMACY",
+      "status": "workspace_visible_schema_and_export_extracted",
+      "grain": "activity_date_x_product_part_number",
+      "knownFields": ["ACTIVITY_DATE", "PRODUCT_PART_NUMBER", "BRAND", "MERCH_SALES", "UNITS_SOLD", "AUTOSHIP_UNITS_SOLD", "NON_AUTOSHIP_UNITS_SOLD", "INSTOCK_DISTINCT_PDP_VIEWS", "PDP_PURCHASES", "RETURN_UNITS"],
+      "intendedFile": "pharmacy-merch-performance_by-sku-90d.csv",
+      "use": "Business materiality and outcome context",
+      "limitations": ["No geographic grain is documented", "Do not allocate national SKU exposure to ZIPs or DMAs"],
+      "sourceIds": ["SRC-027"]
+    },
+    {
+      "datasetId": "pricing_order_line_profitability",
+      "table": "EDLDB.ECOM.ORDER_LINE",
+      "status": "workspace_visible_restricted_schema_discovery_required",
+      "grain": "order_line",
+      "knownFields": ["ORDER_LINE_SHIPPED_DTTM_EST", "PART_NUMBER", "ORDER_LINE_QUANTITY", "ORDER_LINE_TOTAL_PRICE", "ORDER_LINE_TOTAL_ADJUSTMENT", "ORDER_LINE_SHIP_CHARGE", "RAW_PRODUCT_COST", "PRODUCT_COST", "NET_SALES", "GROSS_MARGIN", "CONTRIBUTION_MARGIN", "REFUND_CREDIT_AMOUNT", "CUSTOMER_ADDRESS_ID", "SITE_ID"],
+      "intendedFile": "pricing_order-profitability_by-week-zip-category.csv",
+      "use": "Privacy-safe realized geographic profitability aggregate",
+      "limitations": ["ORDER_LINE_SHIP_CHARGE is customer shipping revenue, not necessarily Chewy shipping cost", "The table contains cost and contribution fields but no approved destination geography column", "CUSTOMER_ADDRESS_ID is sensitive and must not be exported", "SITE_ID may be a fulfillment/operational site and must not be treated as customer geography", "Raw order and address identifiers must not enter Git"],
+      "sourceIds": ["SRC-025", "SRC-031"]
+    },
+    {
+      "datasetId": "pricing_order_contribution_profit",
+      "table": "EDLDB.MKT_SOLUTIONS_SANDBOX.BIDCOIN_METRICS_ATTRIBUTION",
+      "status": "not_visible_to_current_role",
+      "grain": "campaign_or_order_attribution_record",
+      "knownFields": ["ORDER_CCP", "ORDER_CCP_WITH_STRAIGHTPAY_SPONSORED_ADS", "ORDER_CCP_WITHOUT_ONSITE_SPONSORED_ADS"],
+      "intendedFile": "pricing_order-contribution_by-week-dma-category.csv",
+      "use": "Optional first-party contribution-profit outcome for paid-media and local-growth evaluation; not required for the first Pricing pilot",
+      "limitations": ["Do not treat this as a Pricing access blocker", "Production status and geography keys require confirmation", "2024 CCP has documented frequency bias from incomplete prior-order history", "Use 2025 onward only after owner validation"],
+      "sourceIds": ["SRC-031"]
+    },
+    {
+      "datasetId": "pricing_curated_competitor_snapshot",
+      "table": "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.DAILY_COMPETITOR_COVERAGE_SNAPSHOT",
+      "status": "identified_in_phoenix_pricing_sql_not_yet_profiled",
+      "grain": "snapshot_date_x_product_part_number_x_competitor",
+      "knownFields": ["SNAPSHOT_DATE", "PRODUCT_PART_NUMBER", "COMP_NAME_CONCAT", "PRICE_MATCHED", "PRICE", "AVAILABILITY", "SOURCE", "COUPON", "BUYBOX"],
+      "intendedFile": "pricing-competitor-coverage_by-date-sku-competitor.csv",
+      "use": "Curated competitor coverage, price, availability, coupon, MAP, and buy-box evidence used by Phoenix Pricing",
+      "limitations": ["Profile freshness, competitor normalization, and representative-ZIP behavior before preferring it to raw Bungee history"],
+      "sourceIds": ["SRC-025"]
+    },
+    {
+      "datasetId": "pricing_experiment_results",
+      "table": "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.PRICING_LABS_RESULTS_SUMMARY",
+      "status": "identified_in_phoenix_pricing_sql_not_yet_profiled",
+      "grain": "pricing_experiment_x_cohort_x_result_period",
+      "knownFields": [],
+      "intendedFile": "pricing-labs-results_by-experiment-cohort.csv",
+      "use": "Existing Pricing test cohorts, outcomes, match rate, success, and stickiness",
+      "limitations": ["Column contract and experiment-success definitions require owner validation"],
+      "sourceIds": ["SRC-025"]
+    },
+    {
+      "datasetId": "pricing_offer_pulsing_results",
+      "table": "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.OFFER_PULSING_STATS",
+      "status": "identified_in_phoenix_pricing_sql_not_yet_profiled",
+      "grain": "offer_pulsing_experiment_x_round_x_product",
+      "knownFields": [],
+      "intendedFile": "pricing-offer-pulsing_by-experiment-round.csv",
+      "use": "Existing offer-pulsing rounds and success evidence for evaluation design",
+      "limitations": ["Column contract and success semantics require owner validation"],
+      "sourceIds": ["SRC-025"]
+    },
+    {
+      "datasetId": "pricing_sku_elasticity",
+      "table": null,
+      "status": "owner_and_table_unknown",
+      "grain": "month_x_product_part_number_x_autoship_segment",
+      "knownFields": [],
+      "intendedFile": "pricing_own-price-elasticity_by-month-sku-segment.csv",
+      "use": "Pricing Science sensitivity evidence after validation",
+      "limitations": ["Not geographic evidence", "Stage-two values are model predictions", "Low-history SKUs require different interpretation", "Owner and published Snowflake table remain unresolved"],
+      "sourceIds": ["SRC-025", "SRC-032"]
+    }
+  ]
+}

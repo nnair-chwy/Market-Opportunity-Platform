@@ -8,7 +8,7 @@ import {
 
 test("publishes a valid versioned registry with the four initial capabilities", () => {
   assert.equal(capabilityRegistrySchema.safeParse(capabilityRegistry).success, true);
-  assert.equal(capabilityRegistry.registryVersion, "1.0.0");
+  assert.equal(capabilityRegistry.registryVersion, "1.1.0");
   assert.deepEqual(
     capabilityRegistry.capabilities.map((item) => item.capabilityId),
     [
@@ -112,4 +112,48 @@ test("keeps available clinic performance evidence distinct from planned capabili
     capabilityRegistry.capabilities.find((item) => item.capabilityId === "local_growth_test")?.status,
     "planned",
   );
+});
+
+test("keeps Google Ads geo evidence blocked behind the full measurement contract", () => {
+  const result = assessCapabilityQuestion({
+    question: "Use the matched-location exports to recommend a DMA growth test.",
+    requirements: [{
+      capabilityId: "local_growth_test",
+      outputId: "growth_test_measurement",
+      geographyGrain: "market",
+    }],
+    availableEvidenceIds: ["approved_campaign_aggregate"],
+  });
+
+  assert.equal(result.outcome, "blocked");
+  assert.match(result.missingEvidence.join(" "), /first-party regional outcome/i);
+  assert.match(result.missingEvidence.join(" "), /campaign taxonomy/i);
+  assert.match(result.missingEvidence.join(" "), /DMA-to-market/i);
+  assert.match(result.missingEvidence.join(" "), /attribution.*lag/i);
+  assert.match(result.missingEvidence.join(" "), /geo-experiment design/i);
+  assert.deepEqual(result.missingApprovals, ["Growth-test measurement approval"]);
+});
+
+test("a planned Google Ads capability does not become executable from asserted inputs", () => {
+  const result = assessCapabilityQuestion({
+    question: "Measure a DMA growth test.",
+    requirements: [{
+      capabilityId: "local_growth_test",
+      outputId: "growth_test_measurement",
+      geographyGrain: "market",
+    }],
+    availableEvidenceIds: [
+      "approved_campaign_aggregate",
+      "approved_first_party_regional_outcome",
+      "approved_campaign_taxonomy",
+      "approved_dma_market_relationship",
+      "approved_attribution_lag_contract",
+      "approved_geo_experiment_design",
+    ],
+    satisfiedApprovalIds: ["growth_measurement_approval"],
+  });
+
+  assert.equal(result.outcome, "unsupported");
+  assert.deepEqual(result.missingEvidence, []);
+  assert.deepEqual(result.missingApprovals, []);
 });

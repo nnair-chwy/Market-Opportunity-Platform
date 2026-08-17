@@ -1,0 +1,21 @@
+-- DESIGN TEMPLATE: do not run until schema discovery confirms every placeholder.
+-- Never export raw order IDs, customer IDs, or full destination addresses.
+-- Intended output: pricing_order-profitability_by-week-zip-category.csv
+--
+-- Required confirmed fields:
+--   shipped week; five-character destination ZIP; SKU; quantity; net sales;
+--   discount; product cost; Chewy shipping/fulfillment cost; returns/credits;
+--   contribution profit.
+--
+-- select
+--   date_trunc('week', order_line_shipped_dttm_est) as week_start_date,
+--   lpad(destination_zip, 5, '0') as destination_zip,
+--   product_merch_classification1,
+--   count(distinct order_id) as orders,
+--   sum(quantity) as units,
+--   sum(net_sales) as net_sales,
+--   sum(product_cost) as product_cost,
+--   sum(chewy_shipping_cost) as shipping_cost,
+--   sum(contribution_profit) as contribution_profit
+-- from approved_order_line_profitability_view
+-- group by all;

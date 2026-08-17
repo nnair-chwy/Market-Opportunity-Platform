@@ -10,9 +10,11 @@
 
 **Production approval:** Not established
 
-This manifest maps the local Google Ads CSV snapshots used for discovery. Raw
-account exports stay in `/Users/xwang1/Downloads` and must not be committed to
-Git. The repository records only file roles, row-level profiles, and hashes.
+This manifest maps the local Google Ads CSV snapshots used for discovery. The
+verified, descriptively named copies live under ignored
+`data/approved/google-ads/2026-07-14_2026-08-12/raw/` and must not be committed
+to Git. `data/contracts/google-ads/export-catalog.json` retains the original
+download-name mapping, file roles, row profiles, and hashes.
 
 ## Export set
 
@@ -23,30 +25,30 @@ regional demand.
 
 | Local file | Account and grain | Detail rows | SHA-256 | Use |
 | --- | --- | ---: | --- | --- |
-| `Location report (1).csv` | Vet Clinic Search; target x campaign x ad group | 5,960 | `7d5f7c4a9541fbf6e6071a8f18a1942bb30d84a95ef9e98f18065fc80e9a6037` | Validate clinic-market ZIP/radius scope and exclusions |
-| `Location report (2).csv` | CarePlus; target x campaign x ad group | 658 | `1063c31143d73769281a231e0778961f814ada931c8aa586cfa97647e25aa783` | Validate state eligibility and campaign scope |
-| `Location report (3).csv` | Connect with a Vet; target x campaign x ad group | 41 | `d11e0c8b2fcb9c4d918842ce3e4acc069fdaa78bb6f98a0ac4bff2dee6219ff3` | Validate state eligibility and campaign scope |
-| `Location report (4).csv` | Get Real; target x campaign x ad group | 13,269 | `11c5043a380da4d3a12f84b26e7bca4772548ef6b66f1a8c4609640e262a0336` | Validate metro/local program scope after the program is defined |
+| `cvc_configured-targets_by-campaign-adgroup_us.csv` | Vet Clinic Search; target x campaign x ad group | 5,960 | `7d5f7c4a9541fbf6e6071a8f18a1942bb30d84a95ef9e98f18065fc80e9a6037` | Validate clinic-market ZIP/radius scope and exclusions |
+| `careplus_configured-targets_by-campaign-adgroup_us.csv` | CarePlus; target x campaign x ad group | 658 | `1063c31143d73769281a231e0778961f814ada931c8aa586cfa97647e25aa783` | Validate state eligibility and campaign scope |
+| `connect-with-a-vet_configured-targets_by-campaign-adgroup_us.csv` | Connect with a Vet; target x campaign x ad group | 41 | `d11e0c8b2fcb9c4d918842ce3e4acc069fdaa78bb6f98a0ac4bff2dee6219ff3` | Validate state eligibility and campaign scope |
+| `get-real_configured-targets_by-campaign-adgroup_us.csv` | Get Real; target x campaign x ad group | 13,269 | `11c5043a380da4d3a12f84b26e7bca4772548ef6b66f1a8c4609640e262a0336` | Validate metro/local program scope after the program is defined |
 
-`Location report.csv` is the initial Canada diagnostic. Exclude it from the
+The initial Canada diagnostic is intentionally absent. Exclude it from the
 U.S. evaluator.
 
 ### Matched-location exports
 
 | Local file | Account, geography, and view | Rows | Distinct locations | Campaigns | SHA-256 | Use |
 | --- | --- | ---: | ---: | ---: | --- | --- |
-| `Matched locations report.csv` | Main Search/Shopping; DMA; account | 217 | 217 | — | `34e1955c7818507be69a4bdfae07e698ec8185756d9581a2ed2b50747a03c657` | DMA totals and reconciliation |
-| `Matched locations report (1).csv` | Pharmacy; DMA; account | 211 | 211 | — | `a8bf9d8b30031c88511a7180612bc0f1e3986b5737498efd15918356d1437e8b` | Separate RX DMA totals and reconciliation |
-| `Matched locations report (2).csv` | Pharmacy; DMA x campaign x conversion action | 65,720 | 211 | 26 | `fd1655268a73bb2e02d8b5adbdeb65ebf08be3ca5bb4baf696c0b0da4ec80301` | Conversion-action vocabulary and distribution only |
-| `Matched locations report (3).csv` | Pharmacy; postal; account | 24,507 | 24,507 | — | `70a08ea9b5aa894c1c9e86e7d03d673d5e6145beb6c09a155315f7040d49221d` | RX local drill-down; aggregate thin outcomes upward |
-| `Matched locations report (4).csv` | Main Search/Shopping; postal; account | 25,862 | 25,861 | — | `17489d4d850ca044d1cd763c0dee1629b05b3836c08652fcfdfb9aca106271bd` | Fine local context inside a qualified DMA |
-| `Matched locations report (5).csv` | Main Search/Shopping; DMA x campaign x conversion action | 1,562,452 | 214 | 659 | `f309dc24924e43caad0c3505ce1a55f2336a5301fdd8c9478336870c1e0d5e64` | Conversion-action vocabulary and distribution only |
-| `Matched locations report (6).csv` | Vet Clinic Search; postal x campaign | 3,983 | 2,333 | 29 nonblank | `d6a866cbd25f34dd7220e5321a2ba30ffba88db58eae784e364933745fb3d31d` | Diagnose local CVC delivery against campaign scope |
-| `Matched locations report (7).csv` | CarePlus; postal x campaign | 67,446 | 20,204 | 7 nonblank | `14127337e208a7f57ff2a78420c810e7f3761cb5e56675a23c1caee9d32d053e` | Sub-state context after eligibility and volume gates |
-| `Matched locations report (8).csv` | Connect with a Vet; postal x campaign | 5,708 | 4,869 | 14 nonblank | `a24aee2bb8720221b53050dcec7f2f1492128656d0a1583c7813e2df9c43dc72` | Telehealth context after eligibility and volume gates |
-| `Matched locations report (9).csv` | Get Real; postal x campaign | 110,004 | 18,855 | 9 nonblank | `0ce3d0ecc9387dc3d6f4ab384c2a23ebc98da22bc13816e3baeac565c98fac26` | Program-specific local context only |
-| `Matched locations report (10).csv` | Pharmacy; DMA x campaign | 4,603 | 211 | 24 | `0e728fde0aee43cd299582ee4a489a24c2f46909bcafb2eb54cbd43ca387d74d` | Primary manual RX DMA performance validation |
-| `Matched locations report (11).csv` | Main Search/Shopping; DMA x campaign | 89,859 | 215 | 479 | `e76736c302048dfc229e8c2552340c25a7d4977add401a98227da72d3d8e387c` | Primary manual retail DMA performance validation |
+| `retail_matched-dma_account-summary_us.csv` | Main Search/Shopping; DMA; account | 217 | 217 | — | `34e1955c7818507be69a4bdfae07e698ec8185756d9581a2ed2b50747a03c657` | DMA totals and reconciliation |
+| `pharmacy_matched-dma_account-summary_us.csv` | Pharmacy; DMA; account | 211 | 211 | — | `a8bf9d8b30031c88511a7180612bc0f1e3986b5737498efd15918356d1437e8b` | Separate RX DMA totals and reconciliation |
+| `pharmacy_matched-dma-campaign-conversion-action_us.csv` | Pharmacy; DMA x campaign x conversion action | 65,720 | 211 | 26 | `fd1655268a73bb2e02d8b5adbdeb65ebf08be3ca5bb4baf696c0b0da4ec80301` | Conversion-action vocabulary and distribution only |
+| `pharmacy_matched-postal_account-summary_us.csv` | Pharmacy; postal; account | 24,507 | 24,507 | — | `70a08ea9b5aa894c1c9e86e7d03d673d5e6145beb6c09a155315f7040d49221d` | RX local drill-down; aggregate thin outcomes upward |
+| `retail_matched-postal_account-summary_us.csv` | Main Search/Shopping; postal; account | 25,862 | 25,861 | — | `17489d4d850ca044d1cd763c0dee1629b05b3836c08652fcfdfb9aca106271bd` | Fine local context inside a qualified DMA |
+| `retail_matched-dma-campaign-conversion-action_us.csv` | Main Search/Shopping; DMA x campaign x conversion action | 1,562,452 | 214 | 659 | `f309dc24924e43caad0c3505ce1a55f2336a5301fdd8c9478336870c1e0d5e64` | Conversion-action vocabulary and distribution only |
+| `cvc_matched-postal-campaign_us.csv` | Vet Clinic Search; postal x campaign | 3,983 | 2,333 | 29 nonblank | `d6a866cbd25f34dd7220e5321a2ba30ffba88db58eae784e364933745fb3d31d` | Diagnose local CVC delivery against campaign scope |
+| `careplus_matched-postal-campaign_us.csv` | CarePlus; postal x campaign | 67,446 | 20,204 | 7 nonblank | `14127337e208a7f57ff2a78420c810e7f3761cb5e56675a23c1caee9d32d053e` | Sub-state context after eligibility and volume gates |
+| `connect-with-a-vet_matched-postal-campaign_us.csv` | Connect with a Vet; postal x campaign | 5,708 | 4,869 | 14 nonblank | `a24aee2bb8720221b53050dcec7f2f1492128656d0a1583c7813e2df9c43dc72` | Telehealth context after eligibility and volume gates |
+| `get-real_matched-postal-campaign_us.csv` | Get Real; postal x campaign | 110,004 | 18,855 | 9 nonblank | `0ce3d0ecc9387dc3d6f4ab384c2a23ebc98da22bc13816e3baeac565c98fac26` | Program-specific local context only |
+| `pharmacy_matched-dma-campaign-performance_us.csv` | Pharmacy; DMA x campaign | 4,603 | 211 | 24 | `0e728fde0aee43cd299582ee4a489a24c2f46909bcafb2eb54cbd43ca387d74d` | Primary manual RX DMA performance validation |
+| `retail_matched-dma-campaign-performance_us.csv` | Main Search/Shopping; DMA x campaign | 89,859 | 215 | 479 | `e76736c302048dfc229e8c2552340c25a7d4977add401a98227da72d3d8e387c` | Primary manual retail DMA performance validation |
 
 Campaign counts describe nonblank values in the data rows and are not a
 current active-campaign inventory. Paused campaigns are included by the report
@@ -60,8 +62,9 @@ from the download. That behavior is visible in the two segmented files:
 - only 4 of 65,720 Pharmacy rows retain nonzero impressions; and
 - only 5 of 1,562,452 main-account rows retain nonzero impressions.
 
-Therefore, never calculate CTR, CPC, CPA, or spend efficiency from files `(2)`
-or `(5)`. Use files `(10)` and `(11)` for DMA x campaign performance, and use
+Therefore, never calculate CTR, CPC, CPA, or spend efficiency from the two
+`*-conversion-action_us.csv` files. Use the two
+`*-campaign-performance_us.csv` files for DMA x campaign performance, and use
 the segmented files only to identify and quantify approved conversion actions.
 Prefer the governed first-party outcome source for actual evaluation.
 
@@ -124,8 +127,9 @@ the numeric thresholds; the accountable metric owner must approve those.
    measures for retail, N2Rx/RX orders for Pharmacy, and total appointments for
    CVC.
 2. Select a comparable entity/funnel/tactic cohort with campaign taxonomy.
-3. Establish a DMA pattern with performance file `(10)` or `(11)`, preferably
-   the governed `vw_spend_by_dma` equivalent and first-party outcomes.
+3. Establish a DMA pattern with the relevant retail or Pharmacy
+   `*-campaign-performance_us.csv`, preferably the governed `vw_spend_by_dma`
+   equivalent and first-party outcomes.
 4. Use postal context only inside that qualified market. Look for sustained
    concentration, internal contradictions, unresolved coverage, and thin rows.
 5. For CVC or another regional program, reconcile postal delivery with the

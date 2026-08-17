@@ -1,0 +1,28 @@
+{
+  "snapshotId": "2026-07-14_2026-08-12",
+  "sourceId": "SRC-018",
+  "exportedAt": "2026-08-13",
+  "accountTimeZone": "America/New_York",
+  "currency": "USD",
+  "sensitivity": "internal",
+  "allowedUse": "workspace_validation_only",
+  "scoringEligibility": "none",
+  "files": [
+    {"originalFile":"Location report (1).csv","renamedFile":"cvc_configured-targets_by-campaign-adgroup_us.csv","datasetRole":"configured_scope","accountCohort":"cvc","geography":"configured_target","grain":"target_x_campaign_x_ad_group","rows":5960,"sha256":"7d5f7c4a9541fbf6e6071a8f18a1942bb30d84a95ef9e98f18065fc80e9a6037"},
+    {"originalFile":"Location report (2).csv","renamedFile":"careplus_configured-targets_by-campaign-adgroup_us.csv","datasetRole":"configured_scope","accountCohort":"careplus","geography":"configured_target","grain":"target_x_campaign_x_ad_group","rows":658,"sha256":"1063c31143d73769281a231e0778961f814ada931c8aa586cfa97647e25aa783"},
+    {"originalFile":"Location report (3).csv","renamedFile":"connect-with-a-vet_configured-targets_by-campaign-adgroup_us.csv","datasetRole":"configured_scope","accountCohort":"connect_with_a_vet","geography":"configured_target","grain":"target_x_campaign_x_ad_group","rows":41,"sha256":"d11e0c8b2fcb9c4d918842ce3e4acc069fdaa78bb6f98a0ac4bff2dee6219ff3"},
+    {"originalFile":"Location report (4).csv","renamedFile":"get-real_configured-targets_by-campaign-adgroup_us.csv","datasetRole":"configured_scope","accountCohort":"get_real","geography":"configured_target","grain":"target_x_campaign_x_ad_group","rows":13269,"sha256":"11c5043a380da4d3a12f84b26e7bca4772548ef6b66f1a8c4609640e262a0336"},
+    {"originalFile":"Matched locations report.csv","renamedFile":"retail_matched-dma_account-summary_us.csv","datasetRole":"reconciliation","accountCohort":"retail","geography":"matched_dma","grain":"dma","rows":217,"sha256":"34e1955c7818507be69a4bdfae07e698ec8185756d9581a2ed2b50747a03c657"},
+    {"originalFile":"Matched locations report (1).csv","renamedFile":"pharmacy_matched-dma_account-summary_us.csv","datasetRole":"reconciliation","accountCohort":"pharmacy","geography":"matched_dma","grain":"dma","rows":211,"sha256":"a8bf9d8b30031c88511a7180612bc0f1e3986b5737498efd15918356d1437e8b"},
+    {"originalFile":"Matched locations report (2).csv","renamedFile":"pharmacy_matched-dma-campaign-conversion-action_us.csv","datasetRole":"conversion_semantics_only","accountCohort":"pharmacy","geography":"matched_dma","grain":"dma_x_campaign_x_conversion_action","rows":65720,"sha256":"fd1655268a73bb2e02d8b5adbdeb65ebf08be3ca5bb4baf696c0b0da4ec80301"},
+    {"originalFile":"Matched locations report (3).csv","renamedFile":"pharmacy_matched-postal_account-summary_us.csv","datasetRole":"drill_down","accountCohort":"pharmacy","geography":"matched_postal","grain":"postal","rows":24507,"sha256":"70a08ea9b5aa894c1c9e86e7d03d673d5e6145beb6c09a155315f7040d49221d"},
+    {"originalFile":"Matched locations report (4).csv","renamedFile":"retail_matched-postal_account-summary_us.csv","datasetRole":"drill_down","accountCohort":"retail","geography":"matched_postal","grain":"postal","rows":25862,"sha256":"17489d4d850ca044d1cd763c0dee1629b05b3836c08652fcfdfb9aca106271bd"},
+    {"originalFile":"Matched locations report (5).csv","renamedFile":"retail_matched-dma-campaign-conversion-action_us.csv","datasetRole":"conversion_semantics_only","accountCohort":"retail","geography":"matched_dma","grain":"dma_x_campaign_x_conversion_action","rows":1562452,"sha256":"f309dc24924e43caad0c3505ce1a55f2336a5301fdd8c9478336870c1e0d5e64"},
+    {"originalFile":"Matched locations report (6).csv","renamedFile":"cvc_matched-postal-campaign_us.csv","datasetRole":"program_drill_down","accountCohort":"cvc","geography":"matched_postal","grain":"postal_x_campaign","rows":3983,"sha256":"d6a866cbd25f34dd7220e5321a2ba30ffba88db58eae784e364933745fb3d31d"},
+    {"originalFile":"Matched locations report (7).csv","renamedFile":"careplus_matched-postal-campaign_us.csv","datasetRole":"program_drill_down","accountCohort":"careplus","geography":"matched_postal","grain":"postal_x_campaign","rows":67446,"sha256":"14127337e208a7f57ff2a78420c810e7f3761cb5e56675a23c1caee9d32d053e"},
+    {"originalFile":"Matched locations report (8).csv","renamedFile":"connect-with-a-vet_matched-postal-campaign_us.csv","datasetRole":"program_drill_down","accountCohort":"connect_with_a_vet","geography":"matched_postal","grain":"postal_x_campaign","rows":5708,"sha256":"a24aee2bb8720221b53050dcec7f2f1492128656d0a1583c7813e2df9c43dc72"},
+    {"originalFile":"Matched locations report (9).csv","renamedFile":"get-real_matched-postal-campaign_us.csv","datasetRole":"program_drill_down","accountCohort":"get_real","geography":"matched_postal","grain":"postal_x_campaign","rows":110004,"sha256":"0ce3d0ecc9387dc3d6f4ab384c2a23ebc98da22bc13816e3baeac565c98fac26"},
+    {"originalFile":"Matched locations report (10).csv","renamedFile":"pharmacy_matched-dma-campaign-performance_us.csv","datasetRole":"primary_validation","accountCohort":"pharmacy","geography":"matched_dma","grain":"dma_x_campaign","rows":4603,"sha256":"0e728fde0aee43cd299582ee4a489a24c2f46909bcafb2eb54cbd43ca387d74d"},
+    {"originalFile":"Matched locations report (11).csv","renamedFile":"retail_matched-dma-campaign-performance_us.csv","datasetRole":"primary_validation","accountCohort":"retail","geography":"matched_dma","grain":"dma_x_campaign","rows":89859,"sha256":"e76736c302048dfc229e8c2552340c25a7d4977add401a98227da72d3d8e387c"}
+  ]
+}

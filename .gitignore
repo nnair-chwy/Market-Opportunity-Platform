@@ -53,6 +53,7 @@ next-env.d.ts
 
 # generated internal evidence snapshots and audit reports
 /data/approved/snowflake/
+/data/approved/google-ads/
 /reports/snowflake-*/
 
 # local DuckDB evidence layer

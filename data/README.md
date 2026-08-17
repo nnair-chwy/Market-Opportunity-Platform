@@ -88,6 +88,42 @@ runtime.
 - Credentials or tokens
 - Raw exports copied from internal dashboards without approval
 
+## Agent data-contract entry points
+
+Agents must inspect the relevant contract before opening a local export or
+proposing an ingestion/modeling plan:
+
+- `contracts/google-ads/` maps Google's ambiguous download names to stable,
+  descriptive names and explains which files are valid for DMA comparison,
+  postal drill-down, reconciliation, conversion semantics, or configured
+  scope. Local raw files live under ignored `approved/google-ads/`.
+- `contracts/pricing-snowflake/` catalogs documented Pricing and adjacent
+  Snowflake sources, their grains and limitations, intended export names, and
+  minimal extraction queries. Local sanitized exports belong under ignored
+  `approved/snowflake/pricing/`.
+
+Neither contract grants production use or scoring eligibility. Each preserves
+source status, geography, grain, limitations, and unresolved approvals so an
+agent can distinguish available evidence from a data gap.
+
+## Local Google Ads evidence snapshot
+
+Run:
+
+```sh
+pnpm data:organize:google-ads
+```
+
+The command verifies all sixteen U.S. downloads against the cataloged hashes
+and report headers, then copies them into
+`data/approved/google-ads/2026-07-14_2026-08-12/raw/` with descriptive names.
+The directory is ignored by Git. The initial Canada diagnostic is excluded.
+
+Use the two `*_matched-dma-campaign-performance_us.csv` files as the primary
+manual performance fixtures. Conversion-action exports are semantics-only;
+configured-target exports describe intended scope; postal exports are local
+drill-down subject to coverage and volume gates.
+
 ## Local Snowflake evidence snapshot
 
 `data/approved/snowflake/<snapshot-version>/` is an ignored local destination

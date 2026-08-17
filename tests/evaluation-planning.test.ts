@@ -190,3 +190,33 @@ test("exploratory CVC and Marketing questions assume a national cohort instead o
   assert.equal(cvc.intent.clarificationRequired, false);
   assert.equal(cvc.actions[0].id, "review-cvc-market-leads");
 });
+
+test("Google Ads questions route to blocked Marketing evidence readiness", () => {
+  const national = planEvaluation(
+    "Which U.S. DMAs show promising Google Ads demand and acquisition efficiency?",
+    "marketing",
+  );
+  assert.equal(national.intent.topic, "local_growth");
+  assert.equal(national.intent.requestedMeasure, "none");
+  assert.equal(national.capabilityId, "local_growth_test");
+  assert.equal(national.status, "blocked");
+  assert.equal(national.resultWorkspaceType, "evidence_readiness");
+  assert.match(national.missingEvidence.join(" "), /weekly DMA campaign aggregate/i);
+  assert.match(national.missingEvidence.join(" "), /first-party regional outcome/i);
+  assert.match(national.missingEvidence.join(" "), /campaign taxonomy/i);
+  assert.match(national.missingEvidence.join(" "), /DMA-to-market/i);
+  assert.match(national.missingEvidence.join(" "), /attribution.*lag/i);
+  assert.match(national.missingEvidence.join(" "), /geo-experiment design/i);
+  assert.match(national.missingApprovals.join(" "), /growth-test measurement approval/i);
+  assert.equal(national.actions.some((action) => /increase.*spend/i.test(action.title)), false);
+
+  const compare = planEvaluation(
+    "Compare Phoenix and Seattle as geo-test markets using Google Ads performance.",
+    "marketing",
+  );
+  assert.equal(compare.intent.topic, "local_growth");
+  assert.equal(compare.geographyResolution.mode, "compare");
+  assert.equal(compare.capabilityId, "local_growth_test");
+  assert.equal(compare.status, "blocked");
+  assert.equal(compare.resultWorkspaceType, "evidence_readiness");
+});
