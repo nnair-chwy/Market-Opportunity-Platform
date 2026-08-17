@@ -9,3 +9,4 @@ export * from "./planner.ts";
 export * from "./reviewable-packet.ts";
 export * from "./sister-geographies.ts";
 export * from "./steps.ts";
+export * from "./validation-workplan.ts";

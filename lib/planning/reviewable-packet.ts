@@ -19,9 +19,13 @@ import {
   evaluationExecutionResultSchema,
   type EvaluationExecutionResult,
 } from "./execution.ts";
+import {
+  validationWorkplanSchema,
+  type ValidationWorkplan,
+} from "./validation-workplan.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
-export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
+export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v2" as const;
 
 const insightActionPlanSchema = z.object({
   version: z.literal("1.0.0"),
@@ -116,6 +120,7 @@ export const reviewableActionPacketSchema = z.object({
     confirmedAt: z.string().trim().min(1).nullable(),
   }).strict().optional(),
   actionPlan: insightActionPlanSchema.optional(),
+  validationWorkplan: validationWorkplanSchema.optional(),
   analysisAppendix: z.object({
     version: z.literal("1.0.0"),
     planId: z.string().trim().min(1),
@@ -189,10 +194,7 @@ export const packetFindingsSummarySchema = z.object({
   ]),
   modelVersion: z.string().trim().min(1).nullable(),
   promptVersion: z.literal(PACKET_SUMMARY_PROMPT_VERSION),
-  evidenceIndicates: z.string().trim().min(1).max(600),
-  whyActionRelevant: z.string().trim().min(1).max(600),
-  ownerNextStep: z.string().trim().min(1).max(600),
-  remainsUnknown: z.string().trim().min(1).max(600),
+  summary: z.string().trim().min(1).max(1400),
 }).strict();
 
 export type PacketFindingsSummary = z.infer<typeof packetFindingsSummarySchema>;
@@ -223,6 +225,7 @@ export function assembleReviewableActionPacket(
   reviewContext?: { selectedLeadId: string | null; contextMetric: "total_population" | "household_count" | "median_household_income" | "housing_unit_count" | "population_density" },
   actionPlan?: InsightActionPlan,
   execution: EvaluationExecutionResult | null = null,
+  validationWorkplan?: ValidationWorkplan,
 ): ReviewableActionPacket {
   const placeLabels = plan.geographyResolution.places
     .map((place) => place.cbsaName ?? place.requestedName)
@@ -283,6 +286,7 @@ export function assembleReviewableActionPacket(
     reviewContext,
     analysisBrief,
     actionPlan,
+    validationWorkplan,
     analysisAppendix: investigation ? { ...investigation, followUps } : undefined,
   });
 }
@@ -404,6 +408,43 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
       "",
     ] : []),
   ] : [];
+  const validationWorkplanSections = packet.validationWorkplan ? [
+    "## Market-validation workplan",
+    `- Title: ${packet.validationWorkplan.title}`,
+    `- Objective: ${packet.validationWorkplan.objective}`,
+    `- Accountable owner: ${packet.validationWorkplan.accountableOwner}`,
+    `- Proposed action: ${packet.validationWorkplan.proposedAction}`,
+    "",
+    "### What this informs",
+    bulletList(packet.validationWorkplan.whatThisInforms, "None listed"),
+    "",
+    "### Evidence inventory",
+    ...packet.validationWorkplan.evidence.flatMap((item) => [
+      `- ${item.label}: ${item.status.replaceAll("_", " ")}`,
+      `  - Owner: ${item.owner}; grain: ${item.expectedGrain}; source: ${item.sourceId ?? "not connected"}; observation date: ${item.observationDate ?? "unknown"}`,
+      `  - Allowed use: ${item.allowedUse}`,
+      `  - Why needed: ${item.whyNeeded}`,
+    ]),
+    "",
+    "### Workstreams",
+    ...packet.validationWorkplan.workstreams.flatMap((workstream) => [
+      `#### ${workstream.sequence}. ${workstream.title}`,
+      `- Status: ${workstream.status.replaceAll("_", " ")}`,
+      `- Owner: ${workstream.owner}`,
+      `- Action: ${workstream.action}`,
+      `- Evidence: ${workstream.evidenceIds.join(", ")}`,
+      `- Deliverable: ${workstream.deliverable}`,
+      `- Done when: ${workstream.completionCriteria}`,
+      "",
+    ]),
+    "### Validation disposition rules",
+    ...packet.validationWorkplan.decisionRules.map((item) => `- ${item.disposition[0].toUpperCase()}${item.disposition.slice(1)}: ${item.rule}`),
+    "",
+    "### Limitations",
+    bulletList(packet.validationWorkplan.limitations, "None listed"),
+    "",
+  ] : [];
+
   const actionPlanSections = packet.actionPlan ? [
     "## Decision handoff",
     `- Recommendation: ${packet.actionPlan.recommendation}`,
@@ -487,7 +528,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `- Result workspace: ${packet.calculationVersions.resultWorkspaceType}`,
     `- Evidence source IDs: ${packet.calculationVersions.evidenceSourceIds.join(", ") || "None declared"}`,
     "",
-    ...(packet.actionPlan ? [] : [
+    ...(!packet.actionPlan && !packet.validationWorkplan ? [
       "## Proposed action",
       `- Title: ${action.title}`,
       `- Summary: ${action.summary}`,
@@ -504,7 +545,8 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
       "### Tradeoffs",
       bulletList(action.tradeoffs, "None listed"),
       "",
-    ]),
+    ] : []),
+    ...validationWorkplanSections,
     ...actionPlanSections,
     ...framingSections,
     ...evidencePlanningSections,
@@ -566,17 +608,12 @@ export function deterministicFindingsAndProposalSummary(
   return packetFindingsSummarySchema.parse({
     title: "Findings and proposed action",
     draftOnlyNotice:
-      "AI-generated draft summary for human review only. It restates the validated plan and proposed action packet and is not a final real-estate or business decision.",
+      "Draft summary for human review only. It restates the validated plan and proposed action packet and is not a final real-estate or business decision.",
     origin: "deterministic_fallback",
     state: "deterministic_fallback",
     modelVersion: null,
     promptVersion: PACKET_SUMMARY_PROMPT_VERSION,
-    evidenceIndicates:
-      `The validated plan interprets the question as: ${interpretation} Geographic focus: ${geography} Evidence boundary: ${plan.evidenceBoundary}`,
-    whyActionRelevant:
-      `The proposed action “${action.title}” is the governed next step compiled for capability ${plan.capabilityId.replaceAll("_", " ")} with ${action.confidence.toLowerCase()} confidence. ${action.summary}`,
-    ownerNextStep:
-      `${action.owner} should ${action.nextStep} Timing: ${action.timing}.`,
-    remainsUnknown: unknownParts.join(" "),
+    summary:
+      `${interpretation} Geographic focus: ${geography} Next, ${action.owner} should ${action.nextStep}. This action is relevant because ${action.summary} Key limitation: ${unknownParts.join(" ")}`,
   });
 }

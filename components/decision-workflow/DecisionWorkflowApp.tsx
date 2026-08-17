@@ -8,6 +8,7 @@ import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFoc
 import { InsightActionPlanPanel } from "@/components/decision-workflow/InsightActionPlanPanel";
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
+import { ValidationWorkplanPanel } from "@/components/decision-workflow/ValidationWorkplanPanel";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
 import type { PerspectiveId } from "@/lib/perspectives";
@@ -29,6 +30,7 @@ import {
 import {
   assembleReviewableActionPacket,
   buildInsightActionPlan,
+  buildValidationWorkplan,
   buildSisterFollowUpQuestion,
   deterministicFindingsAndProposalSummary,
   downloadReviewableActionPacket,
@@ -175,6 +177,11 @@ export function DecisionWorkflowApp() {
     [analysisBrief, investigation, plan, selectedLead],
   );
 
+  const validationWorkplan = useMemo(
+    () => (plan && !insightActionPlan ? buildValidationWorkplan(plan) : null),
+    [insightActionPlan, plan],
+  );
+
   const reviewablePacket = useMemo(
     () => (plan && selectedAction
       ? assembleReviewableActionPacket(
@@ -188,9 +195,11 @@ export function DecisionWorkflowApp() {
         evaluationDefinition ?? undefined,
         { selectedLeadId, contextMetric: selectedContextMetric },
         insightActionPlan ?? undefined,
+        null,
+        validationWorkplan ?? undefined,
       )
       : null),
-    [analysisBrief, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId],
+    [analysisBrief, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId, validationWorkplan],
   );
 
   useEffect(() => {
@@ -675,7 +684,31 @@ export function DecisionWorkflowApp() {
                     <p className="action-packet-governance-note">
                       Draft for accountable review. This packet does not approve a market, site, lease, or spend decision.
                     </p>
-                    {insightActionPlan ? (
+                    {validationWorkplan ? (
+                      <>
+                        <ValidationWorkplanPanel workplan={validationWorkplan} />
+                        <section
+                          className="packet-findings"
+                          aria-labelledby="findings-summary-title"
+                          data-summary-state={packetSummaryState}
+                        >
+                          <div className="section-label" id="findings-summary-title">Findings and proposed action</div>
+                          {packetSummary ? (
+                            <>
+                              <p className="packet-ai-summary-notice">{packetSummary.draftOnlyNotice}</p>
+                              <p className="packet-ai-summary-blurb">{packetSummary.summary}</p>
+                              <small className="packet-findings-meta">
+                                Summary origin: {packetSummary.origin.replaceAll("_", " ")}
+                                {packetSummary.modelVersion ? ` · model ${packetSummary.modelVersion}` : ""}
+                                {" · "}prompt {packetSummary.promptVersion}
+                              </small>
+                            </>
+                          ) : (
+                            <p className="packet-findings-loading">Preparing the draft findings summary from the validated packet.</p>
+                          )}
+                        </section>
+                      </>
+                    ) : insightActionPlan ? (
                       <InsightActionPlanPanel actionPlan={insightActionPlan} />
                     ) : (
                       <>
@@ -691,12 +724,7 @@ export function DecisionWorkflowApp() {
                           {packetSummary ? (
                             <>
                               <p className="packet-ai-summary-notice">{packetSummary.draftOnlyNotice}</p>
-                              <ol className="packet-ai-summary-list">
-                                <li><strong>What the evidence indicates</strong><p>{packetSummary.evidenceIndicates}</p></li>
-                                <li><strong>Why the proposed action is relevant</strong><p>{packetSummary.whyActionRelevant}</p></li>
-                                <li><strong>What the owner should do next</strong><p>{packetSummary.ownerNextStep}</p></li>
-                                <li><strong>What remains unknown</strong><p>{packetSummary.remainsUnknown}</p></li>
-                              </ol>
+                              <p className="packet-ai-summary-blurb">{packetSummary.summary}</p>
                               <small className="packet-findings-meta">
                                 Summary origin: {packetSummary.origin.replaceAll("_", " ")}
                                 {packetSummary.modelVersion ? ` · model ${packetSummary.modelVersion}` : ""}
@@ -727,7 +755,7 @@ export function DecisionWorkflowApp() {
                       </>
                     )}
 
-                    {!insightActionPlan ? <details
+                    {!insightActionPlan && !validationWorkplan ? <details
                       className="packet-action-details"
                       open={actionDetailsOpen}
                       onToggle={(event) => setActionDetailsOpen(event.currentTarget.open)}

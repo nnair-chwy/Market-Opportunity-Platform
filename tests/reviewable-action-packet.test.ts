@@ -44,18 +44,17 @@ test("reviewable action packet preserves action fields and provenance for downlo
   assert.doesNotMatch(document, /approved for execution|message sent/i);
 });
 
-test("deterministic findings summary covers the four required review points", () => {
+test("deterministic findings summary produces one concise action blurb", () => {
   const plan = planEvaluation("Why are operating clinics underperforming their peers?");
   const action = proposedActionFromPlan(plan);
   const summary = deterministicFindingsAndProposalSummary(plan, action);
   assert.equal(summary.title, "Findings and proposed action");
   assert.equal(summary.origin, "deterministic_fallback");
   assert.match(summary.draftOnlyNotice, /draft only|human review/i);
-  assert.match(summary.evidenceIndicates, /interprets the question/i);
-  assert.match(summary.whyActionRelevant, new RegExp(action.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(summary.ownerNextStep, new RegExp(action.owner.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(summary.ownerNextStep, new RegExp(action.nextStep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(summary.remainsUnknown, /Missing evidence|human review|does not approve/i);
+  assert.match(summary.summary, /interprets the question|Geographic focus/i);
+  assert.match(summary.summary, new RegExp(action.owner.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(summary.summary, new RegExp(action.nextStep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(summary.summary, /Missing evidence|human review|does not approve/i);
 });
 
 test("packet AI summary falls back when the model is unavailable", async () => {
@@ -65,7 +64,7 @@ test("packet AI summary falls back when the model is unavailable", async () => {
   });
   assert.equal(summary.origin, "deterministic_fallback");
   assert.equal(summary.state, "provider_error");
-  assert.match(summary.whyActionRelevant, /Explore governed market context|Inspect the resolved market context|Compare resolved markets/i);
+  assert.match(summary.summary, /Select a measure and market|Explore governed market context|Inspect the resolved market context|Compare resolved markets/i);
 });
 
 test("reviewable packet carries the exact analyst screening and lead follow-up", () => {
