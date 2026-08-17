@@ -25,7 +25,7 @@ import {
 } from "../evidence-snapshot/contracts.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
-export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
+export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v2" as const;
 
 const insightActionPlanSchema = z.object({
   version: z.literal("1.0.0"),
@@ -198,10 +198,7 @@ export const packetFindingsSummarySchema = z.object({
   ]),
   modelVersion: z.string().trim().min(1).nullable(),
   promptVersion: z.literal(PACKET_SUMMARY_PROMPT_VERSION),
-  evidenceIndicates: z.string().trim().min(1).max(600),
-  whyActionRelevant: z.string().trim().min(1).max(600),
-  ownerNextStep: z.string().trim().min(1).max(600),
-  remainsUnknown: z.string().trim().min(1).max(600),
+  summary: z.string().trim().min(1).max(1400),
 }).strict();
 
 export type PacketFindingsSummary = z.infer<typeof packetFindingsSummarySchema>;
@@ -616,17 +613,12 @@ export function deterministicFindingsAndProposalSummary(
   return packetFindingsSummarySchema.parse({
     title: "Findings and proposed action",
     draftOnlyNotice:
-      "AI-generated draft summary for human review only. It restates the validated plan and proposed action packet and is not a final real-estate or business decision.",
+      "Draft summary for human review only. It restates the validated plan and proposed action packet and is not a final real-estate or business decision.",
     origin: "deterministic_fallback",
     state: "deterministic_fallback",
     modelVersion: null,
     promptVersion: PACKET_SUMMARY_PROMPT_VERSION,
-    evidenceIndicates:
-      `The validated plan interprets the question as: ${interpretation} Geographic focus: ${geography} Evidence boundary: ${plan.evidenceBoundary}`,
-    whyActionRelevant:
-      `The proposed action “${action.title}” is the governed next step compiled for capability ${plan.capabilityId.replaceAll("_", " ")} with ${action.confidence.toLowerCase()} confidence. ${action.summary}`,
-    ownerNextStep:
-      `${action.owner} should ${action.nextStep} Timing: ${action.timing}.`,
-    remainsUnknown: unknownParts.join(" "),
+    summary:
+      `${interpretation} Geographic focus: ${geography} Next, ${action.owner} should ${action.nextStep}. This action is relevant because ${action.summary} Key limitation: ${unknownParts.join(" ")}`,
   });
 }

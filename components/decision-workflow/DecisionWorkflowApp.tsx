@@ -722,12 +722,7 @@ export function DecisionWorkflowApp() {
                           {packetSummary ? (
                             <>
                               <p className="packet-ai-summary-notice">{packetSummary.draftOnlyNotice}</p>
-                              <ol className="packet-ai-summary-list">
-                                <li><strong>What the evidence indicates</strong><p>{packetSummary.evidenceIndicates}</p></li>
-                                <li><strong>Why the proposed action is relevant</strong><p>{packetSummary.whyActionRelevant}</p></li>
-                                <li><strong>What the owner should do next</strong><p>{packetSummary.ownerNextStep}</p></li>
-                                <li><strong>What remains unknown</strong><p>{packetSummary.remainsUnknown}</p></li>
-                              </ol>
+                              <p className="packet-ai-summary-blurb">{packetSummary.summary}</p>
                               <small className="packet-findings-meta">
                                 Summary origin: {packetSummary.origin.replaceAll("_", " ")}
                                 {packetSummary.modelVersion ? ` · model ${packetSummary.modelVersion}` : ""}

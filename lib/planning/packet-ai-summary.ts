@@ -14,10 +14,7 @@ import {
 } from "./reviewable-packet.ts";
 
 const modelSummarySchema = z.object({
-  evidenceIndicates: z.string().trim().min(1).max(600),
-  whyActionRelevant: z.string().trim().min(1).max(600),
-  ownerNextStep: z.string().trim().min(1).max(600),
-  remainsUnknown: z.string().trim().min(1).max(600),
+  summary: z.string().trim().min(1).max(1400),
 }).strict();
 
 export type PacketSummaryModelCaller = (packet: ReviewableActionPacket) => Promise<{
@@ -80,7 +77,7 @@ async function callOpenAi(packet: ReviewableActionPacket) {
           role: "developer",
           content: [
             "Summarize only the supplied validated draft action packet.",
-            "Return four short paragraphs: evidenceIndicates, whyActionRelevant, ownerNextStep, remainsUnknown.",
+            "Return one concise plain-language summary paragraph, ideally two to four sentences, that explains what the evidence says, why the proposed action matters, what the accountable owner should do next, and the main limitation or unknown.",
             "Use only facts present in the packet. Do not invent markets, scores, weights, evidence, or approvals.",
             "Do not alter the proposed next step meaning. Do not make a final real-estate or business decision.",
             "State that the packet remains draft-only for human review.",
@@ -113,6 +110,8 @@ function fallbackWithState(
 ): PacketFindingsSummary {
   return packetFindingsSummarySchema.parse({
     ...deterministicFindingsAndProposalSummary(plan, action),
+    draftOnlyNotice:
+      "Draft summary for human review only. It restates the validated plan and proposed action packet and is not a final real-estate or business decision.",
     state,
     origin: "deterministic_fallback",
   });
@@ -138,7 +137,7 @@ export async function explainFindingsAndProposal(
       state: "available",
       modelVersion: result.model,
       promptVersion: PACKET_SUMMARY_PROMPT_VERSION,
-      ...output,
+      summary: output.summary,
     });
   } catch (error) {
     if (error instanceof PacketSummaryError) return fallbackWithState(plan, action, error.code);

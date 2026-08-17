@@ -702,25 +702,10 @@
   line-height: 1.45;
   margin: 0;
 }
-.packet-ai-summary-list {
-  display: grid;
-  gap: 14px;
-  list-style: decimal;
-  margin: 0;
-  padding-left: 18px;
-}
-.packet-ai-summary-list li {
+.packet-ai-summary-blurb {
   color: #34415a;
   font-size: 13px;
   line-height: 1.45;
-}
-.packet-ai-summary-list strong {
-  color: #243552;
-  display: block;
-  font-size: 12px;
-  margin-bottom: 4px;
-}
-.packet-ai-summary-list p {
   margin: 0;
 }
 .action-options > p { color: #7d899d; font-size: 12px; margin: 8px 0 16px; }
