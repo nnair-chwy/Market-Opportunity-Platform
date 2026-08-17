@@ -26,6 +26,19 @@ test("the default CVC perspective does not override question inference", () => {
   assert.match(workflow, /\.\.\.\(nextPerspectiveId \? \{ perspectiveId: nextPerspectiveId \} : \{\}\)/);
 });
 
+test("opening experience exposes exactly the three approved evidence questions", () => {
+  const approved = [
+    "What is this market, what public or descriptive evidence exists, and what remains unknown?",
+    "How is this clinic performing relative to an approved peer group, and how reliable is that comparison?",
+    "Is there a measurable regional opportunity, and what evidence and guardrails are required before testing it?",
+  ];
+  for (const question of approved) assert.match(questionWorkspace, new RegExp(question.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(questionWorkspace, /What works now/);
+  assert.match(questionWorkspace, /Product vision/);
+  assert.match(workflow, /\/api\/evaluation-plans\/execute/);
+  assert.match(workflow, /EvidenceBundlePanel/);
+});
+
 test("request state is transparent before a plan is treated as final", () => {
   assert.match(workflow, /setPhase\("interpreting"\)/);
   assert.match(workflow, /data-plan-request-state=\{phase === "interpreting" \? "pending" : "ready"\}/);

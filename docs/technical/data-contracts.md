@@ -361,6 +361,68 @@ the default UI list is a reversible population-sorted view of 50 metropolitan
 areas. Population growth is not calculated because comparing vintages requires
 an approved rule for boundary compatibility.
 
+## Google Ads matched-location context
+
+The `SRC-018` adapter registers two user-supplied Google Ads Matched Locations
+CSV exports under contract version `google-ads-matched-location-context-v2`.
+The transformation preserves each report's exact matched-location label,
+observation window, reported delivery and cost metrics, source filename, source
+hash, source row number, quality status, and warnings. Report totals and footer
+rows are excluded deterministically and raw CSV files are not copied into the
+snapshot.
+
+Each observation has:
+
+- `geographyType: matched_location_label`;
+- `stableGeographyId: null`;
+- `allowedUse: matched_location_descriptive_context_only`;
+- `marketJoinEligibility: blocked_missing_stable_geography_id`;
+- `scoringEligibility: none`; and
+- `rankingEligibility: none`.
+
+The matched-location label must not be fuzzy-matched or silently treated as a
+CBSA, ZIP, DMA, trade area, or service area. The observations remain in a
+separate Parquet table rather than the canonical market observation table.
+Exact market joins and regional comparisons require a registered stable Google
+location ID and an approved deterministic geography bridge.
+
+CTR, average CPC, and cost per conversion are checked against their available
+reported inputs using declared rounding tolerances. The adapter preserves the
+reported conversion rate without attempting to recompute it because the export
+does not include the required Google Ads interaction denominator. Missing
+values remain `null` and are never treated as zero.
+
+## Canonical frozen-snapshot execution
+
+The server-side `canonical-evidence-query-v1` service is the only path from a
+typed frozen-snapshot request to the clinic-market Parquet artifacts. A request
+contains a stable request ID, snapshot version, registered query name, exact
+typed parameters, request time, execution mode, and optional question and plan
+IDs. It never accepts SQL or reads the raw Downloads directory.
+
+Before opening DuckDB, the service validates the canonical manifest, requested
+snapshot version, every output byte count and SHA-256 hash, and the source-status
+manifest. Registered SQL is static application code. Rows are ordered by stable
+evidence or source-label keys, and the connection is closed after successful and
+failed queries.
+
+The execution response distinguishes `complete`, `partial`, `blocked`, and
+`failed`. It preserves source IDs, snapshot ID, query and calculation versions,
+evidence and quality status, observation dates, allowed use, sensitivity,
+warnings, missing evidence, and unknowns. Missing values remain `null`.
+Confidential and restricted observations produce a structured blocked response
+with no rows or evidence bundle. Synthetic evidence must be labeled
+`Hypothesis` and `synthetic_demo_fixture`.
+
+The initial registered queries are:
+
+- exact-CBSA canonical market evidence;
+- exact-CBSA clinic performance readiness, which currently blocks confidential
+  rows from the response boundary; and
+- Google Ads matched-location context, which returns descriptive source-label
+  evidence while keeping stable geography IDs `null` and regional ranking
+  blocked.
+
 ## Minimized Esri internal-demo snapshot
 
 The `SRC-017` snapshot has stable ID `esri-demo-2026-07-30`, transformation
@@ -599,3 +661,21 @@ The process-local run records status, a visible seven-step plan, allowlisted
 tool invocations, evidence receipts, the segmentation request and response,
 blockers, readiness flags, version metadata, and an optional draft packet. A
 comparison-ready state is impossible without a recorded `confirm` response.
+## Configured local demo workflows
+
+The local presentation registers three exact starter questions in
+`lib/demo/scenarios.ts`. Market context and growth testing resolve to exact key
+`cbsa:38060`; the clinic comparison resolves to the checked-in synthetic
+three-clinic cohort. These defaults apply only to exact registered questions and
+must not leak into generic planning.
+
+`lib/planning/execute-plan.ts` composes the low-level evidence responses into
+market-context, clinic-performance, clinic-site, or growth-test bundles. The
+bundle preserves the original question, capability, plan ID, exact geography,
+component queries, missing approvals, and guardrails.
+
+The shared browser presentation renders every evidence item with source ID,
+snapshot ID, evidence status, quality status, observation period, allowed use,
+and execution mode. The existing `reviewable-action-packet-v1` packet may carry
+the same executed evidence response. It remains a draft for human review and
+does not authorize or send an action.

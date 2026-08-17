@@ -2,7 +2,7 @@ import { snapshotQueryRequestSchema, type SnapshotQueryRequest, SNAPSHOT_QUERY_V
 import { closeDuckDb, duckDbPath, openDuckDb } from "./duckdb.ts";
 import { ingestSnapshot, snapshotReadiness } from "./ingest.ts";
 
-const ALLOWED_QUERY_NAMES = new Set(["market_context_by_cbsa", "zip_cbsa_coverage", "regional_demand_by_zip_year", "regional_demand_by_cbsa_year", "clinic_profile_by_market", "clinic_activity_by_market", "cbsa_population_by_cbsa", "zip_context_by_zip", "zip_metro_by_zip", "clinic_market_evidence", "appointment_context", "retention_context", "google_ads_market_aggregates", "source_quality_summary"]);
+const ALLOWED_QUERY_NAMES = new Set(["market_context_by_cbsa", "zip_cbsa_coverage", "regional_demand_by_zip_year", "regional_demand_by_cbsa_year", "clinic_profile_by_market", "clinic_activity_by_market", "cbsa_population_by_cbsa", "zip_context_by_zip", "zip_metro_by_zip", "clinic_market_evidence", "appointment_context", "retention_context", "google_ads_matched_location_context", "google_ads_market_aggregates", "source_quality_summary"]);
 
 export function rejectArbitrarySql(sql: unknown): never { throw new Error(typeof sql === "string" && sql.trim() ? "Arbitrary SQL is not supported by the evidence boundary." : "A typed query name is required."); }
 
@@ -31,7 +31,8 @@ export async function querySnapshot(input: SnapshotQueryRequest, options: { data
     case "clinic_market_evidence": sql = "SELECT cbsaCode, cbsaName, clinicCount, clinicDensityPer10000Households, clinicDensityStatus, status, source.sourceId AS sourceId FROM clinic_market_summary WHERE (? IS NULL OR cbsaCode = ?) LIMIT 1000"; values = [parsed.cbsaCode ?? null, parsed.cbsaCode ?? null]; break;
     case "appointment_context": sql = "SELECT geography, reportingMonth, appointmentType, appointmentState, reason, appointmentCount, source.sourceId AS sourceId FROM appointment_context WHERE (? IS NULL OR geography = ?) LIMIT 5000"; values = [parsed.geography ?? null, parsed.geography ?? null]; break;
     case "retention_context": sql = "SELECT reportingYear, reportingPeriod, reportingWeek, weekStartDate, aggregationLevel, businessChannel, totalCustomers, source.sourceId AS sourceId FROM retention_baseline WHERE (? IS NULL OR reportingYear = ?) LIMIT 2000"; values = [parsed.reportingYear ?? null, parsed.reportingYear ?? null]; break;
-    case "google_ads_market_aggregates": throw new Error("Google Ads evidence is contract-ready but no registered export is available.");
+    case "google_ads_matched_location_context": throw new Error("Google Ads matched-location evidence is registered in the canonical Parquet snapshot but is not connected to this legacy snapshot query service. Use the canonical execution service after it is implemented.");
+    case "google_ads_market_aggregates": throw new Error("Google Ads market aggregation is blocked because the registered exports do not contain stable geography IDs.");
     case "source_quality_summary": sql = "SELECT table_name AS tableName, sensitivity, allowed_use AS allowedUse, expected_row_count AS expectedRowCount, actual_row_count AS actualRowCount, duplicate_key_count AS duplicateKeyCount, quality_warning_count AS qualityWarningCount, date_min AS dateMin, date_max AS dateMax FROM snapshot_table_registry WHERE snapshot_version = ? UNION ALL SELECT table_name AS tableName, sensitivity, allowed_use AS allowedUse, row_count AS expectedRowCount, row_count AS actualRowCount, 0 AS duplicateKeyCount, 0 AS qualityWarningCount, NULL AS dateMin, NULL AS dateMax FROM source_registry WHERE snapshot_version = ?"; values = [parsed.snapshotVersion, parsed.snapshotVersion]; break;
   }
   let reader;

@@ -1,6 +1,41 @@
 @import "tailwindcss";
 @import "maplibre-gl/dist/maplibre-gl.css";
 
+.adaptive-platform-capability {
+  background: #102b5d;
+  border-radius: 14px;
+  color: #fff;
+  display: grid;
+  gap: 1px;
+  grid-template-columns: 1fr 1fr;
+  margin: 18px 0;
+  overflow: hidden;
+}
+
+.adaptive-platform-capability > div {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 18px 20px;
+}
+
+.adaptive-platform-capability strong {
+  color: #91d1ff;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.adaptive-platform-capability p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 7px 0 0;
+}
+
+@media (max-width: 720px) {
+  .adaptive-platform-capability {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Figma-inspired platform shell */
 .platform-shell {
   display: flex;

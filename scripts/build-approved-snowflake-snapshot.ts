@@ -342,7 +342,12 @@ const manifest = {
   evidenceStatus: "Reported",
   allowedUse: "approved_internal_decision_support",
   scoringStatus: "available only through playbook-specific configuration and validation",
-  inputFiles: Object.values(inputFiles).map((file) => ({ file })),
+  inputFiles: [market, clinicProfile, clinicActivity, zipMarket, cbsaPopulation, zipContext, regionalDemand, zipMetro, retention, appointments].map((input) => ({
+    file: input.file,
+    rowCount: input.rows.length,
+    sha256: sha256(input.text),
+    ingestionStatus: "loaded",
+  })),
   outputs,
   exclusions: [
     "Raw clinic IDs and row-level clinic activity are not stored in the snapshot.",

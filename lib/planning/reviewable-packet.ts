@@ -19,6 +19,10 @@ import {
   evaluationExecutionResultSchema,
   type EvaluationExecutionResult,
 } from "./execution.ts";
+import {
+  evidenceExecutionResponseSchema,
+  type EvidenceExecutionResponse,
+} from "../evidence-snapshot/contracts.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
 export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
@@ -79,10 +83,15 @@ export const reviewableActionPacketSchema = z.object({
     capabilityId: evaluationPlanSchema.shape.capabilityId,
     resultWorkspaceType: evaluationPlanSchema.shape.resultWorkspaceType,
     evidenceSourceIds: z.array(z.string().trim().min(1)).max(12),
+    evidenceSnapshotIds: z.array(z.string().trim().min(1)).max(20),
+    evidenceQueryVersion: z.string().trim().min(1).nullable(),
+    evidenceCalculationVersion: z.string().trim().min(1).nullable(),
+    executionMode: z.enum(["frozen_snapshot_demo", "synthetic_demo"]).nullable(),
   }).strict(),
   action: plannedActionSchema,
   findings: evaluationPlanSchema.shape.findings,
   execution: evaluationExecutionResultSchema.nullable().optional(),
+  evidenceExecution: evidenceExecutionResponseSchema.nullable().optional(),
   evidencePlan: evidencePlanSchema.optional(),
   evaluationDefinition: evaluationDefinitionDraftSchema.optional(),
   reviewContext: z.object({
@@ -223,6 +232,7 @@ export function assembleReviewableActionPacket(
   reviewContext?: { selectedLeadId: string | null; contextMetric: "total_population" | "household_count" | "median_household_income" | "housing_unit_count" | "population_density" },
   actionPlan?: InsightActionPlan,
   execution: EvaluationExecutionResult | null = null,
+  evidenceExecution: EvidenceExecutionResponse | null = null,
 ): ReviewableActionPacket {
   const placeLabels = plan.geographyResolution.places
     .map((place) => place.cbsaName ?? place.requestedName)
@@ -266,18 +276,23 @@ export function assembleReviewableActionPacket(
       placeLabels,
     },
     evidenceBoundary: plan.evidenceBoundary,
-    missingEvidence: plan.missingEvidence,
-    missingApprovals: plan.missingApprovals,
+    missingEvidence: [...new Set([...plan.missingEvidence, ...(evidenceExecution?.missingEvidence ?? []), ...(evidenceExecution?.unknowns ?? [])])],
+    missingApprovals: [...new Set([...plan.missingApprovals, ...(evidenceExecution?.missingApprovals ?? [])])],
     calculationVersions: {
       evaluationPlanVersion: plan.version,
       capabilityRegistryVersion: CAPABILITY_REGISTRY_VERSION,
       capabilityId: plan.capabilityId,
       resultWorkspaceType: plan.resultWorkspaceType,
-      evidenceSourceIds: evidenceSourceIdsFor(plan),
+      evidenceSourceIds: evidenceExecution?.sourceIds ?? evidenceSourceIdsFor(plan),
+      evidenceSnapshotIds: evidenceExecution ? [...new Set([evidenceExecution.snapshotVersion, ...evidenceExecution.evidenceBundle.map((item) => item.snapshotId)])] : [],
+      evidenceQueryVersion: evidenceExecution?.queryVersion ?? null,
+      evidenceCalculationVersion: evidenceExecution?.calculationVersion ?? null,
+      executionMode: evidenceExecution?.executionMode ?? null,
     },
     action,
     findings: plan.findings,
     execution,
+    evidenceExecution,
     evidencePlan,
     evaluationDefinition,
     reviewContext,
@@ -446,6 +461,36 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `Research structure used: ${packet.actionPlan.sourcePattern}`,
     "",
   ] : [];
+  const evidenceExecutionSections = packet.evidenceExecution ? [
+    "## Executed evidence bundle",
+    `- Status: ${packet.evidenceExecution.status}`,
+    `- Execution mode: ${packet.evidenceExecution.executionMode.replaceAll("_", " ")}`,
+    `- Query: ${packet.evidenceExecution.query}`,
+    `- Allowed use: ${packet.evidenceExecution.allowedUse}`,
+    `- Sensitivity: ${packet.evidenceExecution.sensitivity}`,
+    "",
+    "### Evidence items",
+    ...packet.evidenceExecution.evidenceBundle.flatMap((item) => [
+      `- ${item.metricId}: ${item.rawValue ?? "structured value"} ${item.unit ?? ""}`.trim(),
+      `  - Evidence ID: ${item.evidenceId}`,
+      `  - Source ID: ${item.sourceId}`,
+      `  - Snapshot ID: ${item.snapshotId}`,
+      `  - Evidence status: ${item.evidenceStatus}`,
+      `  - Quality status: ${item.qualityStatus}`,
+      `  - Observation: ${item.observationStart && item.observationEnd ? `${item.observationStart} to ${item.observationEnd}` : item.observationEnd ?? "Not supplied"}`,
+      `  - Allowed use: ${item.allowedUse}`,
+      ...(item.warning ? [`  - Warning: ${item.warning}`] : []),
+    ]),
+    "",
+    "### Quality warnings",
+    bulletList(packet.evidenceExecution.qualityWarnings, "None listed"),
+    "",
+    "### Unknowns and guardrails",
+    bulletList(packet.evidenceExecution.unknowns, "None listed"),
+    "",
+    bulletList(packet.evidenceExecution.guardrails, "None listed"),
+    "",
+  ] : [];
 
   return [
     "# Draft action packet (reviewable)",
@@ -486,7 +531,12 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `- Capability: ${packet.calculationVersions.capabilityId}`,
     `- Result workspace: ${packet.calculationVersions.resultWorkspaceType}`,
     `- Evidence source IDs: ${packet.calculationVersions.evidenceSourceIds.join(", ") || "None declared"}`,
+    `- Evidence snapshot IDs: ${packet.calculationVersions.evidenceSnapshotIds.join(", ") || "None declared"}`,
+    `- Evidence query version: ${packet.calculationVersions.evidenceQueryVersion ?? "None declared"}`,
+    `- Evidence calculation version: ${packet.calculationVersions.evidenceCalculationVersion ?? "None declared"}`,
+    `- Execution mode: ${packet.calculationVersions.executionMode?.replaceAll("_", " ") ?? "None declared"}`,
     "",
+    ...evidenceExecutionSections,
     ...(packet.actionPlan ? [] : [
       "## Proposed action",
       `- Title: ${action.title}`,

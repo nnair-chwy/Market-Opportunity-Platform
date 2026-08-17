@@ -72,7 +72,51 @@ function cvcRewrittenQuestion(plan: EvaluationPlan) {
   return plan.intent.conciseInterpretation;
 }
 
+function configuredDemoBrief(plan: EvaluationPlan): AnalysisBrief | null {
+  if (plan.planId === "plan-demo-market-context-phoenix") return {
+    version: "1.0.0", planId: plan.planId, status: "proposed", originalQuestion: plan.originalQuestion,
+    rewrittenQuestion: plan.intent.conciseInterpretation, perspectiveId: plan.perspectiveId,
+    geography: plan.geographyResolution.message, timeframe: "Frozen regional snapshot through 2026-07-31 plus 2024 ACS context",
+    assumptions: ["Use CBSA 38060 as the configured demo market", "Treat customer and Census measures as descriptive context", "Keep missing SEO, pricing, competitor, campaign, capacity, and outcome evidence visible"],
+    currentScreen: { inputs: ["Phoenix aggregate customer observations", "Public ACS market context", "Registered source-status manifest"], method: "Registered exact-CBSA evidence retrieval with no opportunity score", considerationEditsRecalculate: false },
+    considerations: [
+      { id: "regional_customer_context", label: "Regional customer context", metric: "Active customers, prior-year customers, year-over-year growth, and customers per 1,000 households", role: "context_only", evidenceStatus: "connected", weightPercent: null, whyItMatters: "Describes the current market without asserting incremental demand." },
+      { id: "public_market_context", label: "Public market context", metric: "Population and households for CBSA 38060", role: "context_only", evidenceStatus: "connected", weightPercent: null, whyItMatters: "Provides a compatible public denominator and market description." },
+      { id: "missing_market_evidence", label: "Missing market evidence", metric: "Regional SEO, pricing, competitor, clinic capacity, and campaign outcomes", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "These gaps could materially change an opportunity interpretation." },
+    ], confirmedAt: null,
+  };
+  if (plan.planId === "plan-demo-clinic-performance-synthetic") return {
+    version: "1.0.0", planId: plan.planId, status: "proposed", originalQuestion: plan.originalQuestion,
+    rewrittenQuestion: "Compare Synthetic South Clinic with the three-clinic synthetic peer group on completed appointments at 38 weeks since opening, then assess the limits of that comparison.",
+    perspectiveId: plan.perspectiveId, geography: "Synthetic three-clinic portfolio cohort", timeframe: "Shared 38-week maturity point in the checked-in synthetic fixture",
+    assumptions: ["Use completed appointments as the configured demo outcome", "Use all three synthetic clinics as the illustrative peer group", "Do not treat the result as a production clinic judgment"],
+    currentScreen: { inputs: ["Synthetic aggregate clinic fixture", "Completed appointments", "Exact 38-week maturity rule"], method: "Deterministic rank within a compatible three-row synthetic cohort", considerationEditsRecalculate: false },
+    considerations: [
+      { id: "outcome", label: "Outcome", metric: "Completed appointments", role: "validity_gate", evidenceStatus: "partial", weightPercent: null, whyItMatters: "The demo outcome is explicit, but its production definition is not approved." },
+      { id: "peer_group", label: "Peer group", metric: "SYN-CVC-001, SYN-CVC-002, and SYN-CVC-003", role: "validity_gate", evidenceStatus: "partial", weightPercent: null, whyItMatters: "The illustrative cohort is explicit, but the production peer-group rule is not approved." },
+      { id: "maturity", label: "Maturity", metric: "38 weeks since opening", role: "validity_gate", evidenceStatus: "connected", weightPercent: null, whyItMatters: "A shared maturity point prevents an incompatible age comparison in the fixture." },
+      { id: "quality", label: "Quality", metric: "Source quality status and warnings", role: "validity_gate", evidenceStatus: "partial", weightPercent: null, whyItMatters: "The selected synthetic clinic carries a warning that must remain visible." },
+    ], confirmedAt: null,
+  };
+  if (plan.planId === "plan-demo-growth-test-phoenix") return {
+    version: "1.0.0", planId: plan.planId, status: "proposed", originalQuestion: plan.originalQuestion,
+    rewrittenQuestion: plan.intent.conciseInterpretation, perspectiveId: plan.perspectiveId,
+    geography: plan.geographyResolution.message, timeframe: "Frozen regional snapshot through 2026-07-31 and Google Ads matched-location reports through 2026-08-16",
+    assumptions: ["Use Phoenix signals as descriptive opportunity context", "Keep Google Ads matched-location labels separate from CBSA 38060", "Stop before launch, spend, activation, ranking, or causal claims"],
+    currentScreen: { inputs: ["Phoenix aggregate customer observations", "Registered unmatched Google Ads context", "Open test and measurement gates"], method: "Descriptive evidence assembly and launch-readiness gating", considerationEditsRecalculate: false },
+    considerations: [
+      { id: "regional_signal", label: "Regional signal", metric: "Active-customer growth and customer concentration", role: "context_only", evidenceStatus: "connected", weightPercent: null, whyItMatters: "Frames a measurable hypothesis without proving incremental opportunity." },
+      { id: "ads_geography", label: "Advertising geography", metric: "Stable Google Ads geography ID and approved CBSA bridge", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "Matched-location labels cannot be assigned to Phoenix or ranked without an exact bridge." },
+      { id: "measurement", label: "Measurement design", metric: "Pre-period, outcome, exposure, control, contamination, and stop conditions", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "A descriptive signal cannot establish causal lift or test validity." },
+      { id: "approvals", label: "Launch approvals", metric: "Design, measurement, privacy, budget, and activation approval", role: "validity_gate", evidenceStatus: "needed", weightPercent: null, whyItMatters: "The demo must stop before any campaign activation or spend authorization." },
+    ], confirmedAt: null,
+  };
+  return null;
+}
+
 export function buildAnalysisBrief(plan: EvaluationPlan, investigation: MarketInvestigation): AnalysisBrief {
+  const demoBrief = configuredDemoBrief(plan);
+  if (demoBrief) return demoBrief;
   const considerations = plan.perspectiveId === "cvc"
     ? cvcExplorationConsiderations()
     : plan.perspectiveId === "marketing"

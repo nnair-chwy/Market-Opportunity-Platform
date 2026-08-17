@@ -44,3 +44,6 @@ Current records:
 - [ADR-025: Review-page draft action packet download and AI summary](ADR-025-reviewable-action-packet-download.md)
 - [ADR-026: Deterministic sister geographies on decision review](ADR-026-deterministic-sister-geographies.md)
 - [ADR-027: Cinematic decision graph animation in the post-question workflow](ADR-027-cinematic-decision-graph-animation.md)
+- [ADR-028: Register Google Ads as matched-location context only](ADR-028-google-ads-matched-location-context.md)
+- [ADR-029: One typed service executes canonical frozen snapshots](ADR-029-canonical-frozen-snapshot-execution.md)
+- [ADR-030: Configure three bounded question-to-evidence demo workflows](ADR-030-configured-question-evidence-demo.md)

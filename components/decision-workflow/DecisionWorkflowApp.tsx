@@ -8,6 +8,8 @@ import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFoc
 import { InsightActionPlanPanel } from "@/components/decision-workflow/InsightActionPlanPanel";
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
+import { EvidenceBundlePanel } from "@/components/evidence/EvidenceBundlePanel";
+import { evidenceExecutionResponseSchema, type EvidenceExecutionResponse } from "@/lib/evidence-snapshot/contracts";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
 import type { PerspectiveId } from "@/lib/perspectives";
@@ -123,6 +125,7 @@ export function DecisionWorkflowApp() {
   const [analysisBrief, setAnalysisBrief] = useState<AnalysisBrief | null>(null);
   const [evidencePlan, setEvidencePlan] = useState<EvidencePlan | null>(null);
   const [evaluationDefinition, setEvaluationDefinition] = useState<EvaluationDefinitionDraft | null>(null);
+  const [evidenceExecution, setEvidenceExecution] = useState<EvidenceExecutionResponse | null>(null);
   const [selectedContextMetric, setSelectedContextMetric] = useState<CbsaAcsMetricKey>("household_count");
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
@@ -188,9 +191,11 @@ export function DecisionWorkflowApp() {
         evaluationDefinition ?? undefined,
         { selectedLeadId, contextMetric: selectedContextMetric },
         insightActionPlan ?? undefined,
+        null,
+        evidenceExecution,
       )
       : null),
-    [analysisBrief, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId],
+    [analysisBrief, evidenceExecution, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId],
   );
 
   useEffect(() => {
@@ -280,6 +285,7 @@ export function DecisionWorkflowApp() {
     setAnalysisBrief(null);
     setEvidencePlan(null);
     setEvaluationDefinition(null);
+    setEvidenceExecution(null);
     setPhase("interpreting");
     try {
       const response = await fetch("/api/evaluation-plans", {
@@ -319,15 +325,29 @@ export function DecisionWorkflowApp() {
   async function confirmAndRun(nextBrief: AnalysisBrief) {
     if (!plan) return;
     const nextInvestigation = runConfirmedMarketInvestigation(plan, nextBrief);
+    const configuredEvidenceDemo = plan.planId.startsWith("plan-demo-");
     const nextEvidencePlan = evidencePlan ?? buildEvidencePlan(plan);
     setAnalysisBrief(nextBrief);
-    setInvestigation(nextInvestigation);
+    setInvestigation(configuredEvidenceDemo ? null : nextInvestigation);
     setEvidencePlan(nextEvidencePlan);
     setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, nextInvestigation, nextEvidencePlan));
-    setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
+    setSelectedLeadId(configuredEvidenceDemo ? null : nextInvestigation.leads[0]?.id ?? null);
     setActiveStep(0);
     setPhase("running");
     setClinicWorkflow(null);
+    setEvidenceExecution(null);
+    try {
+      const response = await fetch("/api/evaluation-plans/execute", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ requestId: `workflow-${plan.planId}-${Date.now()}`, plan }),
+      });
+      const payload: unknown = await response.json();
+      const parsed = evidenceExecutionResponseSchema.safeParse(payload);
+      if (parsed.success) setEvidenceExecution(parsed.data);
+    } catch {
+      // The review page retains the validated plan when local evidence execution is unavailable.
+    }
     if (plan.capabilityId !== "clinic_site_evaluation") return;
     try {
       const response = await fetch("/api/clinic-site-evaluation", {
@@ -363,6 +383,7 @@ export function DecisionWorkflowApp() {
     setAnalysisBrief(null);
     setEvidencePlan(null);
     setEvaluationDefinition(null);
+    setEvidenceExecution(null);
     setPhase("question");
     setSelectedContextMetric("household_count");
   }
@@ -396,6 +417,7 @@ export function DecisionWorkflowApp() {
     setQuestion(packet.question);
     setPlan(restoredPlan);
     setClinicWorkflow(null);
+    setEvidenceExecution(null);
     setSelectedContextMetric(packet.selectedContextMetric ?? (restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count"));
     const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
     setInvestigation(restoredInvestigation);
@@ -438,6 +460,7 @@ export function DecisionWorkflowApp() {
     setAnalysisBrief(null);
     setEvidencePlan(null);
     setEvaluationDefinition(null);
+    setEvidenceExecution(null);
     setSelectedActionId("");
     setActiveStep(-1);
     setRequestError(null);
@@ -521,7 +544,7 @@ export function DecisionWorkflowApp() {
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
               }}
               onSubmit={(nextPerspectiveId) => void startWorkflow(question, nextPerspectiveId)}
-              onPerspectiveChange={(nextPerspectiveId) => {
+              onPerspectiveChange={() => {
                 setQuestion("");
                 setSisterFollowUpNotice(null);
               }}
@@ -636,7 +659,15 @@ export function DecisionWorkflowApp() {
                 <strong>{analysisBrief?.rewrittenQuestion ?? plan.originalQuestion}</strong>
               </div>
 
-              {displayedGeographicFocus ? (
+              {evidenceExecution ? (
+                <EvidenceBundlePanel result={evidenceExecution} action={selectedAction} />
+              ) : (
+                <div className="packet-missing-gates" role="status">
+                  <small>The registered evidence bundle is unavailable. The validated plan remains visible, but no snapshot result is being represented as complete.</small>
+                </div>
+              )}
+
+              {displayedGeographicFocus && evidenceExecution?.query !== "clinic_performance_bundle" ? (
                 <div className="decision-result-map-shell">
                   <GeographicFocusMap
                     focus={displayedGeographicFocus}

@@ -23,20 +23,11 @@ type SavedPacketPreview = {
   savedAt: string;
 };
 
-const starterQuestions: Record<PerspectiveId, readonly [string, string]> = {
-  cvc: [
-    "What clinic footprint patterns are worth investigating?",
-    "Which comparable metros have different CVC footprints, and what should we validate next?",
-  ],
-  marketing: [
-    "What regional marketing patterns are worth investigating?",
-    "Which comparable metros could support a test-and-control feasibility check?",
-  ],
-  pricing: [
-    "What regional pricing patterns are worth investigating?",
-    "Where might customer response to price or promotion differ, and what evidence would test it?",
-  ],
-};
+const starterQuestions = [
+  "What is this market, what public or descriptive evidence exists, and what remains unknown?",
+  "How is this clinic performing relative to an approved peer group, and how reliable is that comparison?",
+  "Is there a measurable regional opportunity, and what evidence and guardrails are required before testing it?",
+] as const;
 
 type AdaptiveEvaluationWorkspaceProps = {
   question: string;
@@ -243,6 +234,17 @@ export function AdaptiveEvaluationWorkspace({
         </div>
       </header>
 
+      <section className="adaptive-platform-capability" aria-label="Current capability and product vision">
+        <div>
+          <strong>What works now</strong>
+          <p>Three approved questions route to deterministic local evidence, visible source and quality metadata, explicit unknowns, and a reviewable action packet.</p>
+        </div>
+        <div>
+          <strong>Product vision</strong>
+          <p>Scale the same governed question-to-evidence workflow across market, clinic, marketing, pricing, and competitive decisions without automating the final business decision.</p>
+        </div>
+      </section>
+
       <AdaptiveMarketWorkspace
         opening
         activeView={activeView}
@@ -270,8 +272,8 @@ export function AdaptiveEvaluationWorkspace({
                 Run decision graph <span aria-hidden="true">→</span>
               </button>
             </div>
-            <div className="adaptive-starter-questions" aria-label={`${activePerspective.label} example questions`}>
-              {starterQuestions[perspectiveId].map((starter) => (
+            <div className="adaptive-starter-questions" aria-label="Demo questions">
+              {starterQuestions.map((starter) => (
                 <button key={starter} type="button" onClick={() => onQuestionChange(starter)}>
                   {starter}
                 </button>

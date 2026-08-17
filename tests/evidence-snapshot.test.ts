@@ -49,9 +49,12 @@ test("validates typed queries, rejects arbitrary SQL, and preserves reproducible
 });
 
 test("requires an explicit Google Ads contract and never treats missing conversions as zero", () => {
-  const valid = googleAdsObservationSchema.parse({ sourceId: "ADS-001", snapshotId: "ads-v1", campaignOrAccountScope: "account-aggregate", geographyType: "market", geographyId: "cbsa:10180", observationStart: "2026-01-01", observationEnd: "2026-01-31", spend: 10, impressions: 100, clicks: 4, conversions: null, coveragePresent: false, currency: "USD", spendUnit: "USD", sensitivity: "internal", allowedUse: "approved_internal_decision_support", qualityStatus: "warning", evidenceStatus: "Reported", provenance: "registered export" });
+  const valid = googleAdsObservationSchema.parse({ observationId: "ADS-001:row-1", sourceId: "ADS-001", snapshotId: "ads-v1", reportScope: "example-report", geographyType: "matched_location_label", matchedLocationLabel: "Example location, United States", stableGeographyId: null, observationStart: "2026-01-01", observationEnd: "2026-01-31", spend: 10, impressions: 100, clicks: 4, conversions: null, ctr: 0.04, averageCpc: 2.5, conversionRate: null, costPerConversion: null, conversionsCoveragePresent: false, currency: "USD", spendUnit: "currency_units", sensitivity: "internal", allowedUse: "matched_location_descriptive_context_only", qualityStatus: "warning", evidenceStatus: "Reported", scoringEligibility: "none", rankingEligibility: "none", marketJoinEligibility: "blocked_missing_stable_geography_id", warnings: ["Conversions are unavailable."], provenance: { sourceFile: "example.csv", sourceSha256: "a".repeat(64), sourceRowNumber: 2, transformationVersion: "test-v1" } });
   assert.equal(valid.conversions, null);
+  assert.equal(valid.stableGeographyId, null);
+  assert.equal(valid.rankingEligibility, "none");
   assert.equal(googleAdsObservationSchema.safeParse({ ...valid, observationEnd: "2025-01-01" }).success, false);
+  assert.equal(googleAdsObservationSchema.safeParse({ ...valid, geographyType: "market", stableGeographyId: "cbsa:10180" }).success, false);
 });
 
 test("registers all current CSV datasets with aggregate-only AI exposure", () => {

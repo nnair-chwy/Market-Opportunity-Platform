@@ -13,6 +13,8 @@ import { answerInvestigationFollowUp, runConfirmedMarketInvestigation, runMarket
 import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
 import { buildEvidencePlan, generateEvaluationDefinitionDraft } from "../lib/planning/evidence-plan.ts";
 import { explainFindingsAndProposal } from "../lib/planning/packet-ai-summary.ts";
+import { DEMO_QUESTIONS, planConfiguredDemoQuestion } from "../lib/demo/scenarios.ts";
+import { executeEvaluationPlanEvidence } from "../lib/planning/execute-plan.ts";
 
 test("reviewable action packet preserves action fields and provenance for download", () => {
   const plan = planEvaluation("Compare Austin and Denver by population density.");
@@ -42,6 +44,42 @@ test("reviewable action packet preserves action fields and provenance for downlo
   assert.match(document, new RegExp(action.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(document, new RegExp(action.nextStep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(document, /approved for execution|message sent/i);
+});
+
+test("existing packet format preserves executed evidence metadata and human-review boundaries", async () => {
+  const plan = planConfiguredDemoQuestion(DEMO_QUESTIONS.clinicPerformance);
+  assert.ok(plan);
+  const execution = await executeEvaluationPlanEvidence({ requestId: "packet-clinic-demo", plan });
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-17T00:00:00.000Z",
+    undefined,
+    [],
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    null,
+    execution,
+  );
+  reviewableActionPacketSchema.parse(packet);
+  assert.equal(packet.packetVersion, "reviewable-action-packet-v1");
+  assert.equal(packet.evidenceExecution?.executionMode, "synthetic_demo");
+  assert.deepEqual(packet.calculationVersions.evidenceSourceIds, ["SRC-002"]);
+  assert.ok(packet.calculationVersions.evidenceSnapshotIds.includes("synthetic-clinic-performance-v1"));
+  assert.equal(packet.calculationVersions.evidenceCalculationVersion, "synthetic-clinic-rank-v1");
+  assert.ok(packet.evidenceExecution?.evidenceBundle.every((item) => item.evidenceStatus === "Hypothesis"));
+  assert.ok(packet.missingApprovals.includes("Production peer-group approval"));
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Executed evidence bundle/);
+  assert.match(document, /Source ID: SRC-002/);
+  assert.match(document, /Snapshot ID: synthetic-clinic-performance-v1/);
+  assert.match(document, /Evidence status: Hypothesis/);
+  assert.match(document, /Quality status:/);
+  assert.match(document, /synthetic demo/);
+  assert.doesNotMatch(document, /approved for execution|final site recommendation|spend authorized/i);
 });
 
 test("deterministic findings summary covers the four required review points", () => {
