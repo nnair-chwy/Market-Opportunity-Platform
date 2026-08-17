@@ -1,0 +1,39 @@
+{
+  "snapshotDate": "2026-08-14",
+  "sourceId": "SRC-035",
+  "sourceProduct": "Semrush",
+  "exportType": "all_keywords",
+  "country": "US",
+  "currency": "USD",
+  "grain": "keyword_within_seed_cohort",
+  "fields": ["Keyword", "Intent", "Volume", "Keyword Difficulty", "CPC (USD)", "SERP Features"],
+  "sensitivity": "internal",
+  "allowedUse": "workspace_validation_and_shadow_evaluation_only",
+  "scoringEligibility": "none",
+  "rawDirectory": "data/approved/seo/2026-08-14/raw",
+  "rawDirectoryTrackedInGit": false,
+  "validKeywordRows": 478111,
+  "files": [
+    {"originalFile":"Chewy_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_brand-chewy_us_2026-08-14.csv","cohortType":"brand","cohort":"chewy","rows":50000,"subscriptionCapReached":true,"sha256":"fae1a0ee2f43bae4c6b0567eafb4f0e645091af8de1009c63d3996a04ef7622f"},
+    {"originalFile":"amazon-pet-supplies_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_competitor-amazon-pet-supplies_us_2026-08-14.csv","cohortType":"competitor","cohort":"amazon-pet-supplies","rows":1061,"subscriptionCapReached":false,"sha256":"04c11228398f3f0be13313f6c263c77d556fba5d622ce162458f4be6f7948ae9"},
+    {"originalFile":"petco_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_competitor-petco_us_2026-08-14.csv","cohortType":"competitor","cohort":"petco","rows":50000,"subscriptionCapReached":true,"sha256":"35c5b3ec41eee01fc64031dbf719eb6174f5103f7c2f4b4bb8998824b1467e61"},
+    {"originalFile":"petsmart_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_competitor-petsmart_us_2026-08-14.csv","cohortType":"competitor","cohort":"petsmart","rows":50000,"subscriptionCapReached":true,"sha256":"a39aef3d44fa5327d69edac635085553188b285fa56dfe91ad5dc716630d2b7e"},
+    {"originalFile":"target-pet-supplies_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_competitor-target-pet-supplies_us_2026-08-14.csv","cohortType":"competitor","cohort":"target-pet-supplies","rows":422,"subscriptionCapReached":false,"sha256":"95d3c938df32689d69d003c7a240fb866a76ded56481110de6fd949c7e35fd1e"},
+    {"originalFile":"walmart-pet-supplies_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_competitor-walmart-pet-supplies_us_2026-08-14.csv","cohortType":"competitor","cohort":"walmart-pet-supplies","rows":6487,"subscriptionCapReached":false,"sha256":"ee5fb64d492d64603735863ffb4689fe86c34923ee258548c0fbf906aa738375"},
+    {"originalFile":"cat-food_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_topic-cat-food_us_2026-08-14.csv","cohortType":"topic","cohort":"cat-food","rows":50000,"subscriptionCapReached":true,"sha256":"4e71d4a85b0d6d5dbac7933a3e9df98384713507f11e5880cfb0de2594865663"},
+    {"originalFile":"cat-litter_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_topic-cat-litter_us_2026-08-14.csv","cohortType":"topic","cohort":"cat-litter","rows":50000,"subscriptionCapReached":true,"sha256":"2ea5bd4e83dfa23187c056910eee08db569042ee27011fe63070fe6635cd47ea"},
+    {"originalFile":"dog-food_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_topic-dog-food_us_2026-08-14.csv","cohortType":"topic","cohort":"dog-food","rows":50000,"subscriptionCapReached":true,"sha256":"ce17bb11ea150091e3bb94dc361d4f154ed7e94cc4b26c8b5f8fb5d13a70f837"},
+    {"originalFile":"dog-toy_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_topic-dog-toy_us_2026-08-14.csv","cohortType":"topic","cohort":"dog-toy","rows":50000,"subscriptionCapReached":true,"sha256":"5dc8e91897a52811c8d49dbda3d3cf7c02b8439de3b5ab30574e91b3de291594"},
+    {"originalFile":"flea-and-tick-treatment_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_topic-flea-and-tick-treatment_us_2026-08-14.csv","cohortType":"topic","cohort":"flea-and-tick-treatment","rows":7851,"subscriptionCapReached":false,"sha256":"bf5804adb4d73a9db893a52cf95aece48d55a859567d22c9347fc31c24ca2ef2"},
+    {"originalFile":"online-vet_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_topic-online-vet_us_2026-08-14.csv","cohortType":"topic","cohort":"online-vet","rows":7584,"subscriptionCapReached":false,"sha256":"27dc130602bd3cafc4fb3754a398be9bd2e5fea8f929014db1166fdf3b93c5fe"},
+    {"originalFile":"pet-insurance_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_topic-pet-insurance_us_2026-08-14.csv","cohortType":"topic","cohort":"pet-insurance","rows":50000,"subscriptionCapReached":true,"sha256":"5040b265ca5d096bd02ae2c037e99789465e7b6ebc92a824de18f8c47ceae8ae"},
+    {"originalFile":"pet-pharmacy_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_topic-pet-pharmacy_us_2026-08-14.csv","cohortType":"topic","cohort":"pet-pharmacy","rows":4706,"subscriptionCapReached":false,"sha256":"54bc1657db7ed36665868972329e1ee68fdb06565744ca390c48b881fd0a3762"},
+    {"originalFile":"veterinary-clinic_all-keywords_us_2026-08-14.csv","renamedFile":"semrush-keyword-demand_topic-veterinary-clinic_us_2026-08-14.csv","cohortType":"topic","cohort":"veterinary-clinic","rows":50000,"subscriptionCapReached":true,"sha256":"c606df6a31ce7c3ee08280109176b47eb585a47c2aded3e41265b3261bc0fadf"}
+  ],
+  "warnings": [
+    "This snapshot has national U.S. keyword evidence only; it has no state, DMA, CBSA, ZIP, trade-area, or local-rank field.",
+    "Nine exports reached the 50,000-keyword subscription cap and include three non-data footer rows after the valid keyword records.",
+    "Keyword volume is third-party modeled search demand, not Chewy traffic, orders, revenue, or market share.",
+    "Deduplicate by normalized keyword before aggregating across overlapping seed cohorts."
+  ]
+}

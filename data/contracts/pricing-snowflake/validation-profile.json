@@ -15,6 +15,33 @@
     "chewyPriceHistory90dSkuRows": 216380,
     "pharmacyMerchPerformance90dSkuRows": 546987
   },
+  "phoenixPricingSources": {
+    "dailyCompetitorCoverageSnapshot": {
+      "access": "visible",
+      "latestSnapshotDate": "2026-08-17",
+      "lookbackDays": 30,
+      "btRows": 16587279,
+      "distinctSkus": 177518
+    },
+    "pricingLabsResultsSummary": {
+      "access": "visible",
+      "latestStartDate": "2026-08-12",
+      "lookbackDays": 730,
+      "rows": 1317316,
+      "distinctSkus": 88117
+    },
+    "offerPulsingStats": {
+      "access": "visible",
+      "latestStartDate": "2026-08-17",
+      "lookbackDays": 730,
+      "rows": 44991,
+      "distinctSkus": 21124
+    },
+    "productsUnitOfMeasure": {
+      "access": "not_visible_to_tested_role",
+      "interpretation": "Optional because the Bungee source already supplies equalized price, total size, UOM, and package quantity."
+    }
+  },
   "objects": {
     "EDLDB.CHEWYBI.PRICE_COMPETITOR_BUNGEE_TECH_HISTORY": {
       "access": "visible_view",

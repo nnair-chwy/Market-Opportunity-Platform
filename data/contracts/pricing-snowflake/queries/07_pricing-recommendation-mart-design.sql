@@ -1,0 +1,32 @@
+-- Design query: build a bounded shadow-evaluation mart, not an execution feed.
+-- Required grain: evaluation_date x SKU x competitor x observed ZIP.
+--
+-- Join families:
+-- 1. PRICE_COMPETITOR_BUNGEE_TECH_HISTORY: traceable ZIP observations,
+--    equalized price, coupon, availability, median ZIP/price, freshness.
+-- 2. DAILY_COMPETITOR_COVERAGE_SNAPSHOT: normalized competitor, current
+--    price-match state, buy-box and daily availability/price.
+-- 3. PRICING_SELF_SERVICE_DASHBOARD: Chewy price, MAP/guardrails, PSE cost,
+--    sales/PDP exposure, price driver and elasticity context.
+-- 4. PRODUCTS and PRICE_CHEWY_HISTORY: hierarchy, lifecycle and Chewy price
+--    changes.
+-- 5. PRICING_LABS_RESULTS_SUMMARY and OFFER_PULSING_STATS: prior/active
+--    interventions and observed outcome labels.
+--
+-- Minimum derived features:
+-- competitor_price_gap_pct, regional_price_spread_pct,
+-- competitor_oos_rate, competitor_price_change_rate,
+-- scrape_age_hours, observed_zip_count, region_count,
+-- median_price_gap_pct, coupon_flag, price_match_enabled_flag,
+-- chewy_price_change_rate, map_headroom_pct, pse_margin_proxy,
+-- sales_or_pdp_exposure, prior_raise_attempts, prior_raise_match_rate,
+-- prior_raise_stickiness_days, prior_pulse_attempts, prior_pulse_success_rate,
+-- active_intervention_flag.
+--
+-- Recommendation classes for evaluation:
+-- monitor_only; investigate_data_quality; review_match_configuration;
+-- review_median_benchmark; propose_controlled_opportunity_raise;
+-- propose_offer_pulse; no_action_guardrail.
+--
+-- Do not emit a regional Chewy price. Chewy publishes a national price for the
+-- documented scope; regional observations improve the national benchmark.

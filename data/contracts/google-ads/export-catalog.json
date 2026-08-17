@@ -7,6 +7,18 @@
   "sensitivity": "internal",
   "allowedUse": "workspace_validation_only",
   "scoringEligibility": "none",
+  "excludedFiles": [
+    {
+      "originalFile": "Location report.csv",
+      "renamedFile": "chewy-canada_configured-location-performance_postal-campaign-adgroup_cad.csv",
+      "localDirectory": "data/approved/google-ads/2026-07-14_2026-08-12/excluded",
+      "rows": 161762,
+      "sha256": "58371e430578ee81c55bc1564df4fea2e2ddef1e4fba2485a9a782d6af829b18",
+      "currency": "CAD",
+      "country": "Canada",
+      "reason": "Diagnostic export from a Canada account; incompatible with the U.S. market evaluator"
+    }
+  ],
   "files": [
     {"originalFile":"Location report (1).csv","renamedFile":"cvc_configured-targets_by-campaign-adgroup_us.csv","datasetRole":"configured_scope","accountCohort":"cvc","geography":"configured_target","grain":"target_x_campaign_x_ad_group","rows":5960,"sha256":"7d5f7c4a9541fbf6e6071a8f18a1942bb30d84a95ef9e98f18065fc80e9a6037"},
     {"originalFile":"Location report (2).csv","renamedFile":"careplus_configured-targets_by-campaign-adgroup_us.csv","datasetRole":"configured_scope","accountCohort":"careplus","geography":"configured_target","grain":"target_x_campaign_x_ad_group","rows":658,"sha256":"1063c31143d73769281a231e0778961f814ada931c8aa586cfa97647e25aa783"},

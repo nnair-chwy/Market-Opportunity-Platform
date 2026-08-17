@@ -1,5 +1,9 @@
 # Agent data-source guide
 
+Start with `data/AGENT_START_HERE.md` for decision-to-source routing. Return to
+this longer guide when source status, evidence boundaries, or unresolved
+questions affect the plan.
+
 Read this guide before proposing an evaluation plan, ingestion path, derived
 metric, or model. The source registry is the authoritative index; this guide
 explains what each source can contribute and what it cannot justify.
@@ -214,8 +218,8 @@ Availability has a specific meaning:
   30-day exports, and one Canada diagnostic are confirmed. Raw files stay
   outside Git.
 - **Initial diagnostic:** The Canada Search/Shopping export is excluded from
-  the U.S. evaluator. It demonstrated file shape only and is not organized
-  into the repository's local evidence directory.
+  the U.S. evaluator. It is retained under the local snapshot's `excluded/`
+  directory with an explicit Canada/CAD filename for auditability only.
 - **U.S. local files:** Start at
   `data/contracts/google-ads/export-catalog.json`. It maps every original
   Google download to a descriptive account, geography, grain, and role name.
@@ -301,7 +305,9 @@ Availability has a specific meaning:
   `PRODUCTS_UNIT_OF_MEASURE`. Promotions examples use singular `PDM.PROMOTION`
   plus CDM promotion-usage tables. MSO examples use
   `CHEWYBI.ORDER_LINE_COST_MEASURES` and a daily campaign-performance summary.
-  Validate these exact curated sources before requesting new permissions.
+  Snowflake validation found the curated competitor, Pricing Labs, Offer
+  Pulsing, order-cost, singular promotion, and three CDM promotion-usage objects
+  visible to the tested role. Do not request new permissions for them.
 - **Failed-lookup interpretation:** The Pharmacy cost-measures object is listed
   in onboarding as Vertica, Bidcoin is optional Marketing data, and the tested
   plural Promotions name does not match current Phoenix SQL. None is a proven
@@ -314,11 +320,12 @@ Availability has a specific meaning:
   records the seven prepared datasets, row counts, hashes, grains, and queries.
   `available-data-matrix.md` explains what each answers and the exact remaining
   access request.
-- **Before the first pilot:** Resolve only the questions that affect competitor
-  signal validity and controlled action: representative ZIPs, availability
-  codes, freshness, cost semantics, existing experiment outcomes, approval,
-  success metrics, and rollback. Resolve order geography, Bidcoin, promotions,
-  and cross-channel geography only when the chosen recommendation needs them.
+- **Before the first pilot:** The representative-ZIP method, availability codes,
+  freshness, median logic, experiment sources, and initial success metrics are
+  documented or directly observable. Data work should now build and profile the
+  joined recommendation mart, label historical actions/outcomes, and backtest
+  recommendation rules. Human confirmation is required for approving a live
+  action or resolving contradictory definitions—not for shadow evaluation.
 
 ### SRC-019 — Official Google Ads geographic documentation
 

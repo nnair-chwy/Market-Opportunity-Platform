@@ -85,34 +85,34 @@
     {
       "datasetId": "pricing_curated_competitor_snapshot",
       "table": "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.DAILY_COMPETITOR_COVERAGE_SNAPSHOT",
-      "status": "identified_in_phoenix_pricing_sql_not_yet_profiled",
+      "status": "workspace_visible_and_profiled_2026_08_17",
       "grain": "snapshot_date_x_product_part_number_x_competitor",
       "knownFields": ["SNAPSHOT_DATE", "PRODUCT_PART_NUMBER", "COMP_NAME_CONCAT", "PRICE_MATCHED", "PRICE", "AVAILABILITY", "SOURCE", "COUPON", "BUYBOX"],
       "intendedFile": "pricing-competitor-coverage_by-date-sku-competitor.csv",
       "use": "Curated competitor coverage, price, availability, coupon, MAP, and buy-box evidence used by Phoenix Pricing",
-      "limitations": ["Profile freshness, competitor normalization, and representative-ZIP behavior before preferring it to raw Bungee history"],
+      "limitations": ["Latest snapshot observed: 2026-08-17", "Last-30-day BT profile: 16,587,279 rows and 177,518 distinct SKUs", "Use raw Bungee history for ZIP-level traceability and median reconstruction"],
       "sourceIds": ["SRC-025"]
     },
     {
       "datasetId": "pricing_experiment_results",
       "table": "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.PRICING_LABS_RESULTS_SUMMARY",
-      "status": "identified_in_phoenix_pricing_sql_not_yet_profiled",
+      "status": "workspace_visible_and_profiled_2026_08_17",
       "grain": "pricing_experiment_x_cohort_x_result_period",
-      "knownFields": [],
+      "knownFields": ["COHORT", "DESCRIPTION", "EXP_GROUP", "START_DATE", "END_DATE", "SKU", "PERIOD", "SKU_ACTIVE", "MATCH_FLAG", "STICK_END_DATE", "MERCH_CLASS1"],
       "intendedFile": "pricing-labs-results_by-experiment-cohort.csv",
       "use": "Existing Pricing test cohorts, outcomes, match rate, success, and stickiness",
-      "limitations": ["Column contract and experiment-success definitions require owner validation"],
+      "limitations": ["Latest experiment start observed: 2026-08-12", "Last-730-day profile: 1,317,316 rows and 88,117 distinct SKUs", "Match rate uses AFTER-period active-SKU averages in Phoenix examples", "Do not generalize causal lift beyond each experiment design"],
       "sourceIds": ["SRC-025"]
     },
     {
       "datasetId": "pricing_offer_pulsing_results",
       "table": "EDLDB.PRICING_ANALYTICS_MSS_SANDBOX.OFFER_PULSING_STATS",
-      "status": "identified_in_phoenix_pricing_sql_not_yet_profiled",
+      "status": "workspace_visible_and_profiled_2026_08_17",
       "grain": "offer_pulsing_experiment_x_round_x_product",
-      "knownFields": [],
+      "knownFields": ["ROUND", "DESCRIPTION", "START_DATE", "END_DATE", "PRODUCT_PART_NUMBER", "PRODUCT_MERCH_CLASSIFICATION1", "SUCCESSFUL"],
       "intendedFile": "pricing-offer-pulsing_by-experiment-round.csv",
       "use": "Existing offer-pulsing rounds and success evidence for evaluation design",
-      "limitations": ["Column contract and success semantics require owner validation"],
+      "limitations": ["Latest round start observed: 2026-08-17", "Last-730-day profile: 44,991 rows and 21,124 distinct SKUs", "Phoenix examples compute success rate as SUM(SUCCESSFUL)/COUNT(SUCCESSFUL)", "Exclude currently active or overlapping interventions from counterfactual evaluation"],
       "sourceIds": ["SRC-025"]
     },
     {
