@@ -20,11 +20,31 @@ function configuredPlan(question: string) {
   return plan;
 }
 
-test("only the three approved starter questions receive configured demo plans", () => {
-  assert.equal(configuredPlan(DEMO_QUESTIONS.marketContext).planId, "plan-demo-market-context-phoenix");
+test("only the explicit synthetic clinic starter receives a configured demo plan", () => {
+  assert.equal(planConfiguredDemoQuestion(DEMO_QUESTIONS.marketContext), null);
   assert.equal(configuredPlan(DEMO_QUESTIONS.clinicPerformance).planId, "plan-demo-clinic-performance-synthetic");
-  assert.equal(configuredPlan(DEMO_QUESTIONS.growthTest).planId, "plan-demo-growth-test-phoenix");
+  assert.equal(planConfiguredDemoQuestion(DEMO_QUESTIONS.growthTest), null);
   assert.equal(planConfiguredDemoQuestion("What is another market?"), null);
+
+  for (const question of [
+    "What is this market, what public or descriptive evidence exists, and what remains unknown?",
+    "Is there a measurable regional opportunity, and what evidence and guardrails are required before testing it?",
+  ]) {
+    const plan = planEvaluation(question);
+    assert.equal(plan.status, "blocked");
+    assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, []);
+    assert.match(plan.intent.conciseInterpretation, /clarify/i);
+  }
+
+  const marketStarter = planEvaluation(DEMO_QUESTIONS.marketContext);
+  assert.equal(marketStarter.status, "partially_executable");
+  assert.deepEqual(marketStarter.geographyResolution.selectedCbsaCodes, ["12060"]);
+  assert.deepEqual(marketStarter.intent.selectedQueries, ["regional_context_by_cbsa", "clinic_context_by_cbsa", "google_ads_context_by_cbsa"]);
+
+  const growthStarter = planEvaluation(DEMO_QUESTIONS.growthTest);
+  assert.equal(growthStarter.status, "partially_executable");
+  assert.equal(growthStarter.intent.topic, "growth_test_screening");
+  assert.deepEqual(growthStarter.geographyResolution.selectedCbsaCodes, []);
 });
 
 test("blocked and ambiguous plans do not execute a registered query", async () => {
@@ -40,8 +60,8 @@ test("blocked and ambiguous plans do not execute a registered query", async () =
   }
 });
 
-actualSnapshotTest("replays the market-context question through Phoenix Parquet and public Census evidence", async () => {
-  const plan = configuredPlan(DEMO_QUESTIONS.marketContext);
+actualSnapshotTest("replays an explicitly named Phoenix market-context question through Parquet and public Census evidence", async () => {
+  const plan = planEvaluation("What is the population of Phoenix?");
   const first = await executeEvaluationPlanEvidence({ requestId: "replay-market", plan }, options);
   const second = await executeEvaluationPlanEvidence({ requestId: "replay-market", plan }, options);
   evidenceExecutionResponseSchema.parse(first);
@@ -77,25 +97,16 @@ actualSnapshotTest("replays the clinic-performance question as an explicitly syn
   assert.ok(result.guardrails.some((item) => /Do not use this illustrative rank/i.test(item)));
 });
 
-actualSnapshotTest("replays the growth-test question without joining Google Ads labels to Phoenix", async () => {
-  const plan = configuredPlan(DEMO_QUESTIONS.growthTest);
-  const result = await executeEvaluationPlanEvidence({ requestId: "replay-growth", plan }, options);
-  evidenceExecutionResponseSchema.parse(result);
-  assert.equal(result.status, "partial");
-  assert.equal(result.capability, "local_growth_test");
-  assert.equal(result.query, "growth_test_bundle");
-  assert.deepEqual(result.componentQueries, ["canonical_market_evidence", "google_ads_matched_location_context"]);
-  assert.ok(result.evidenceBundle.some((item) => item.metricId === "market.active_customer_yoy_growth" && item.geographyId === PHOENIX_DEMO_MARKET.marketId));
-  const ads = result.evidenceBundle.filter((item) => item.metricId === "google_ads.matched_location_observation_count");
-  assert.equal(ads.length, 2);
-  assert.ok(ads.every((item) => item.geographyId === null && item.structuredValue?.stableGeographyId === null));
-  assert.ok(result.missingEvidence.some((item) => /Stable Google Ads geography IDs/i.test(item)));
-  assert.ok(result.missingApprovals.includes("Growth-test design approval"));
-  assert.ok(result.guardrails.some((item) => /Do not launch or rank regions/i.test(item)));
+test("an explicitly named Phoenix growth question resolves Phoenix but remains gated", () => {
+  const plan = planEvaluation("Should we test a growth campaign in Phoenix?");
+  assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, [PHOENIX_DEMO_MARKET.cbsaCode]);
+  assert.equal(plan.capabilityId, "local_growth_test");
+  assert.equal(plan.status, "blocked");
+  assert.ok(plan.missingEvidence.length > 0);
 });
 
-actualSnapshotTest("routes a permitted clinic-site plan to local retrieval and blocks browser exposure", async () => {
-  const marketPlan = configuredPlan(DEMO_QUESTIONS.marketContext);
+actualSnapshotTest("routes a permitted clinic-site plan to an internal aggregate response", async () => {
+  const marketPlan = planEvaluation("What is the population of Phoenix?");
   const clinicSitePlan = evaluationPlanSchema.parse({
     ...marketPlan,
     planId: "plan-test-clinic-site-phoenix",
@@ -105,11 +116,12 @@ actualSnapshotTest("routes a permitted clinic-site plan to local retrieval and b
     evidenceBoundary: "Clinic evidence must remain inside the registered aggregate query boundary.",
   });
   const result = await executeEvaluationPlanEvidence({ requestId: "replay-clinic-site", plan: clinicSitePlan }, options);
-  assert.equal(result.status, "blocked");
+  assert.equal(result.status, "partial");
   assert.equal(result.query, "clinic_site_evidence_bundle");
   assert.deepEqual(result.componentQueries, ["canonical_clinic_performance"]);
-  assert.deepEqual(result.rows, []);
-  assert.deepEqual(result.evidenceBundle, []);
-  assert.equal(result.sensitivity, "confidential");
-  assert.ok(result.missingEvidence.some((item) => /cannot cross the browser or AI/i.test(item)));
+  assert.ok(result.rows.length > 0);
+  assert.ok(result.evidenceBundle.length > 0);
+  assert.equal(result.sensitivity, "internal");
+  assert.equal(result.allowedUse, "local_demo_aggregate_decision_support");
+  assert.ok(result.qualityWarnings.some((item) => /internal aggregate/i.test(item)));
 });

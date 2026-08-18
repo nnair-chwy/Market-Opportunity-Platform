@@ -17,43 +17,218 @@ function has(value: string, expression: RegExp) {
   return expression.test(value);
 }
 
+const DESCRIPTIVE_CLINIC_COMPARISON_METRICS: PlanningIntent["requestedMetrics"] = [
+  "total_orders",
+  "total_customers",
+  "rx_orders",
+  "net_sales",
+  "rx_net_sales",
+];
+
+const NORMALIZED_QUERY_BY_SOURCE = {
+  census: "regional_context_by_cbsa",
+  regional: "regional_context_by_cbsa",
+  clinic: "clinic_context_by_cbsa",
+  google_ads: "google_ads_context_by_cbsa",
+} as const;
+
+const CLINIC_LOCATION_DEFAULT_METRICS: PlanningIntent["requestedMetrics"] = [
+  "total_population",
+  "household_count",
+  "median_household_income",
+  "population_density",
+  "active_customer_count",
+  "active_customer_yoy_growth",
+  "active_customers_per_1000_households",
+  "regional_net_sales",
+  "clinic_count",
+  "total_customers",
+  "total_orders",
+  "net_sales",
+];
+
+function queryAwareClinicLocationIntent(question: string, intent: PlanningIntent): PlanningIntent {
+  if (intent.topic !== "clinic_location") return intent;
+  const hasNamedMarket = intent.requestedPlaces.length > 0;
+  if (!hasNamedMarket) {
+    return planningIntentSchema.parse({
+      ...intent,
+      selectedQueries: [],
+      rankingMode: "none",
+      sort: null,
+      conciseInterpretation: "Review national CVC footprint and public market context as investigation leads, then identify the governed evidence required before any market screening or clinic-opening decision.",
+    });
+  }
+  const sourceFamilies: PlanningIntent["sourceFamilies"] = ["census", "regional", "clinic"];
+  if (intent.sourceFamilies.includes("google_ads") || /\b(google ads?|ad spend|advertising|media)\b/i.test(question)) sourceFamilies.push("google_ads");
+  const selectedQueries: PlanningIntent["selectedQueries"] = ["regional_context_by_cbsa", "clinic_context_by_cbsa"];
+  if (sourceFamilies.includes("google_ads")) selectedQueries.push("google_ads_context_by_cbsa");
+  const requestedMetrics = [...new Set([...intent.requestedMetrics, ...CLINIC_LOCATION_DEFAULT_METRICS])].slice(0, 12) as PlanningIntent["requestedMetrics"];
+  const placeLabel = intent.requestedPlaces.map((place) => place.name).join(" and ");
+  return planningIntentSchema.parse({
+    ...intent,
+    requestedAction: intent.requestedAction === "approve" ? "approve" : "investigate",
+    requestedMetrics,
+    sourceFamilies,
+    selectedQueries,
+    rankingMode: "none",
+    sort: null,
+    conciseInterpretation: `Review connected market, regional, and aggregate clinic evidence for ${placeLabel}, then identify missing capacity, workforce, competitive, property, and economic evidence before considering a clinic.`,
+  });
+}
+
+export function validatePlanningIntentConsistency(intent: PlanningIntent): string[] {
+  const issues: string[] = [];
+  const querySet = new Set(intent.selectedQueries);
+
+  if (intent.topic === "multi_market_comparison") {
+    if (intent.requestedAction !== "compare") issues.push("Multi-market comparison requires compare action.");
+    if (intent.requestedPlaces.length < 2 || intent.requestedPlaces.length > 5) issues.push("Multi-market comparison requires two to five named markets.");
+  }
+  if (intent.topic === "multi_source_evidence" && intent.sourceFamilies.length < 2) {
+    issues.push("Multi-source evidence requires at least two source families.");
+  }
+  if (intent.topic === "source_coverage" && !querySet.has("supported_regions")) {
+    issues.push("Source coverage requires the supported-regions query.");
+  }
+  if (intent.topic === "growth_test_screening") {
+    if (intent.rankingMode !== "growth_test_screening_v1" || !querySet.has("growth_test_screening")) {
+      issues.push("Growth screening requires its registered ranking mode and query.");
+    }
+  } else if (intent.rankingMode !== "none") {
+    issues.push("Ranking mode is only valid for growth-test screening.");
+  }
+  if (intent.topic === "clinic_location") {
+    if (intent.rankingMode !== "none" || intent.sort !== null) issues.push("Clinic-location evidence review cannot carry a ranking mode or sort.");
+    if (intent.requestedPlaces.length) {
+      if (!querySet.has("regional_context_by_cbsa") || !querySet.has("clinic_context_by_cbsa")) {
+        issues.push("Named-market clinic-location review requires registered regional and clinic context queries.");
+      }
+      for (const family of ["census", "regional", "clinic"] as const) {
+        if (!intent.sourceFamilies.includes(family)) issues.push(`Named-market clinic-location review requires the ${family} source family.`);
+      }
+    } else if (intent.selectedQueries.length) {
+      issues.push("National clinic-location review cannot execute exact-CBSA queries without a selected geography.");
+    }
+  }
+  for (const family of intent.sourceFamilies) {
+    const expectedQuery = NORMALIZED_QUERY_BY_SOURCE[family];
+    if (["regional_context", "clinic_context", "google_ads_context", "multi_source_evidence", "multi_market_comparison", "clinic_location"].includes(intent.topic)
+      && intent.requestedPlaces.length > 0
+      && !querySet.has(expectedQuery)) {
+      issues.push(`${family} evidence requires ${expectedQuery}.`);
+    }
+  }
+  return issues;
+}
+
 export function inferPlanningIntent(question: string): PlanningIntent {
   const value = question.toLowerCase();
   const clinic = has(value, /\b(clinic|clinics|vet care|veterinary)\b/);
   const performance = clinic && has(value, /\b(performance|peer|underperform|operating)\b/);
+  const clinicMetric = has(value, /\b(rx|prescription|prescriptions|clinic orders?|clinic sales?|clinic customers?|total orders?|total customers?)\b/);
+  const ads = has(value, /\b(google ads?|ad spend|advertising|impressions?|clicks?|conversions?)\b/);
+  const coverage = has(value, /\b(coverage|available sources?|data availability|have both|has both)\b/)
+    || has(value, /\bwhat evidence (?:is|are) available\b/)
+    || has(value, /\bwhat (?:data|evidence) (?:is|are) available\b/);
   const growth = has(value, /\b(campaign|advertis|promotion|awareness|growth test|marketing|media|test market|control market|reach)\b/);
-  const location = clinic && has(value, /\b(open|opening|location|site|market|where|investigate)\b/) && !performance;
+  const growthScreening = has(value, /\b(strongest|rank|ranking|prioriti[sz]e|screen|candidates?)\b/)
+    && has(value, /\b(growth|regional opportunity|test market|growth test)\b/);
+  const pricing = has(value, /\b(price|pricing|elasticity|promo)\b/);
+  const location = clinic && has(value, /\b(open|opening|location|site|where|investigate)\b/) && !performance;
   const vague = has(value, /\bwhat should we do next\b/) || has(value, /\bwhat next\b/);
-  const requestedMeasure: PlanningIntent["requestedMeasure"] = performance || growth || vague
-    ? "none"
-    : has(value, /\bdens/) ? "population_density"
+  const requestedMeasure: PlanningIntent["requestedMeasure"] = has(value, /\bdens/) ? "population_density"
       : has(value, /\bincome|affluence|ability to pay/) ? "median_household_income"
         : has(value, /\bhousehold/) ? "household_count"
           : has(value, /\bhousing/) ? "housing_unit_count"
             : has(value, /\bpopulation|people|resident|market size/) ? "total_population"
-              : location ? "none" : "total_population";
-  const requestedAction: PlanningIntent["requestedAction"] = has(value, /\b(approve|authorize|sign)\b/) ? "approve"
+              : "none";
+  const requestedMetrics: PlanningIntent["requestedMetrics"] = [];
+  const addMetric = (metric: PlanningIntent["requestedMetrics"][number], expression: RegExp) => {
+    if (has(value, expression) && !requestedMetrics.includes(metric)) requestedMetrics.push(metric);
+  };
+  if (requestedMeasure !== "none") requestedMetrics.push(requestedMeasure);
+  addMetric("active_customer_yoy_growth", /\b(active customer|customer).{0,12}(growth|yoy|year.over.year)|\bgrowth.{0,12}(active customer|customer)/);
+  addMetric("active_customers_per_1000_households", /\bcustomers?.{0,18}(per|\/).{0,8}(1,?000|thousand).{0,10}households?|\bcustomer concentration/);
+  addMetric("active_customer_count", /\bactive customers?\b/);
+  addMetric("prior_year_active_customer_count", /\bprior.year customers?\b/);
+  addMetric("regional_net_sales", /\bregional (?:net )?sales\b/);
+  addMetric("clinic_count", /\bclinic count|number of clinics\b/);
+  addMetric("total_customers", /\b(?:aggregate |total )?clinic customers?|\btotal customers?\b/);
+  addMetric("total_orders", /\b(?:aggregate |total )?clinic orders?|\btotal orders?\b/);
+  addMetric("rx_orders", /\b(rx|prescription|prescriptions) orders?\b|\bprescriptions?\b/);
+  addMetric("net_sales", /\bclinic (?:net )?sales\b|\bnet sales\b/);
+  addMetric("rx_net_sales", /\b(rx|prescription) (?:net )?sales\b/);
+  if (clinic && has(value, /\bcustomers?\b/) && !requestedMetrics.includes("total_customers")) requestedMetrics.push("total_customers");
+  if (clinic && has(value, /\bsales?\b/) && !requestedMetrics.includes("net_sales")) requestedMetrics.push("net_sales");
+  if (clinic && has(value, /\bprescriptions?\b/) && has(value, /\bsales?\b/) && !requestedMetrics.includes("rx_net_sales")) requestedMetrics.push("rx_net_sales");
+  addMetric("google_ads_spend", /\b(google ads?|ad|advertising) spend\b/);
+  addMetric("google_ads_impressions", /\bimpressions?\b/);
+  addMetric("google_ads_clicks", /\bclicks?\b/);
+  addMetric("google_ads_conversions", /\bconversions?\b/);
+  if (coverage) requestedMetrics.push("source_coverage");
+  if (growthScreening) requestedMetrics.push("growth_test_screening_score");
+  const requestedAction: PlanningIntent["requestedAction"] = coverage ? "describe"
+    : has(value, /\b(approve|authorize|sign)\b/) ? "approve"
     : has(value, /\b(why|driver|investigate|underperform)\b/) ? "investigate"
-      : has(value, /\b(best|which|screen|prioritize|where)\b/) ? "screen"
-        : has(value, /\b(compare|versus| vs )\b/) ? "compare"
+      : has(value, /\b(compare|versus| vs |relative to)\b/) ? "compare"
+        : has(value, /\b(best|which|strongest|rank|ranking|screen|prioritize|prioritise|where)\b/) ? "screen"
           : "describe";
-  const topic: PlanningIntent["topic"] = performance ? "clinic_performance"
-    : location ? "clinic_location"
-      : growth ? "local_growth"
-        : vague ? "other"
-          : has(value, /\b(market|metro|city|population|household|income|density|cbsa)\b/) ? "market_context"
-            : "other";
   const requestedPlaces = extractRequestedPlaces(question);
-  const geographyGrain: PlanningIntent["geographyGrain"] = performance ? "portfolio"
+  const multiMarket = requestedPlaces.length >= 2 && requestedAction === "compare";
+  const mentionsRegional = has(value, /\b(regional|market|metro|cbsa|population|household|income|density|city)\b/);
+  if (has(value, /\bregional\b/) && has(value, /\bcustomers?\b/) && !requestedMetrics.includes("active_customer_count")) requestedMetrics.push("active_customer_count");
+  if (has(value, /\bregional\b/) && has(value, /\b(?:net )?sales\b/) && !requestedMetrics.includes("regional_net_sales")) requestedMetrics.push("regional_net_sales");
+  if (multiMarket && performance && !requestedMetrics.length) requestedMetrics.push(...DESCRIPTIVE_CLINIC_COMPARISON_METRICS);
+  const sourceFamilies: PlanningIntent["sourceFamilies"] = [];
+  if (requestedMeasure !== "none") sourceFamilies.push("census");
+  if ((has(value, /\bregional\b/) && !pricing) || has(value, /\bmarket\b(?=.{0,20}\b(evidence|context|signals?)\b)/) || requestedMetrics.some((metric) => ["active_customer_count", "prior_year_active_customer_count", "active_customer_yoy_growth", "active_customers_per_1000_households", "regional_net_sales"].includes(metric))) sourceFamilies.push("regional");
+  if (clinic || clinicMetric || requestedMetrics.some((metric) => ["clinic_count", "total_customers", "total_orders", "rx_orders", "net_sales", "rx_net_sales"].includes(metric))) sourceFamilies.push("clinic");
+  if (ads || requestedMetrics.some((metric) => metric.startsWith("google_ads_"))) sourceFamilies.push("google_ads");
+  if (has(value, /\bevidence\b/) && has(value, /\bmarket\b/) && (sourceFamilies.includes("clinic") || sourceFamilies.includes("google_ads"))) sourceFamilies.push("regional");
+  if (coverage && sourceFamilies.length === 0) sourceFamilies.push("census", "regional", "clinic", "google_ads");
+  const uniqueSourceFamilies = [...new Set(sourceFamilies)];
+  const explicitMultiSource = has(value, /\b(evidence|signals?|context)\b/) && uniqueSourceFamilies.length >= 2;
+  const topic: PlanningIntent["topic"] = growthScreening ? "growth_test_screening"
+    : coverage ? "source_coverage"
+      : multiMarket ? "multi_market_comparison"
+            : explicitMultiSource ? "multi_source_evidence"
+              : performance ? "clinic_performance"
+                : location ? "clinic_location"
+              : ads ? "google_ads_context"
+                : clinicMetric || (clinic && requestedMetrics.length > 0) ? "clinic_context"
+                  : mentionsRegional ? (uniqueSourceFamilies.includes("regional") ? "regional_context" : "market_context")
+                    : growth ? "local_growth"
+        : vague ? "other"
+          : "other";
+  const selectedQueries: PlanningIntent["selectedQueries"] = topic === "source_coverage" ? ["supported_regions"]
+    : topic === "growth_test_screening" ? ["growth_test_screening"]
+      : ["regional_context", "clinic_context", "google_ads_context", "multi_source_evidence", "multi_market_comparison"].includes(topic)
+        ? uniqueSourceFamilies.flatMap((family) => family === "clinic" ? ["clinic_context_by_cbsa" as const]
+        : family === "google_ads" ? ["google_ads_context_by_cbsa" as const]
+          : family === "regional" || family === "census" ? ["regional_context_by_cbsa" as const] : [])
+        : [];
+  const uniqueQueries = [...new Set(selectedQueries)];
+  const geographyGrain: PlanningIntent["geographyGrain"] = topic === "clinic_performance" ? "portfolio"
     : has(value, /\bsubmarket\b/) || (requestedPlaces.some((place) => /seattle/i.test(place.name)) && location)
       ? "submarket"
       : has(value, /\b(site|property|parcel)\b/) ? "site"
         : topic === "other" && !requestedPlaces.length ? "unknown"
           : "cbsa";
+  const unresolvedContext = requestedPlaces.length === 0
+    && (has(value, /\b(this|the selected|current) market\b/)
+      || has(value, /\b(this|the selected|current) clinic\b/)
+      || (has(value, /\bregional opportunity\b/) && !growthScreening));
   const clarificationRequired = vague
-    || (requestedAction === "compare" && requestedPlaces.length < 2 && topic === "market_context" && !has(value, /\b(u\.s\.|us |national|across)\b/))
+    || unresolvedContext
+    || requestedPlaces.length > 5
+    || (requestedAction === "compare" && requestedPlaces.length < 2 && !performance && !has(value, /\b(u\.s\.|us |national|across)\b/))
     || topic === "other";
-  const clarificationReason: PlanningIntent["clarificationReason"] = vague || topic === "other"
+  const clarificationReason: PlanningIntent["clarificationReason"] = requestedPlaces.length > 5
+    ? "ambiguous_comparison_cohort"
+    : unresolvedContext
+      ? "ambiguous_geography"
+    : vague || topic === "other"
     ? "ambiguous_decision"
     : requestedAction === "compare" && requestedPlaces.length < 2
       ? "ambiguous_comparison_cohort"
@@ -61,10 +236,26 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   const placeLabel = requestedPlaces.length
     ? requestedPlaces.map((place) => place.name).join(" and ")
     : "national CBSA context";
-  const conciseInterpretation = topic === "other" || vague
+  const conciseInterpretation = unresolvedContext
+    ? "Clarify the intended market or clinic before compiling evidence; no default geography or clinic is assumed."
+    : topic === "other" || vague
     ? "Clarify the decision, geography, and required output before compiling a governed evaluation."
     : topic === "clinic_performance"
       ? "Investigate operating-clinic performance against peers once approved aggregate evidence exists."
+      : topic === "clinic_context"
+        ? `Describe the requested aggregate clinic measures for ${placeLabel}; prescriptions are represented only by the supplied Rx-order fields.`
+        : topic === "regional_context"
+          ? `Describe the requested regional measures for ${placeLabel} from the registered normalized market context.`
+        : topic === "google_ads_context"
+          ? `Describe the requested Google Ads measures for ${placeLabel} using visibly inferred demo geography.`
+          : topic === "source_coverage"
+            ? "Identify markets with the requested normalized source coverage without treating coverage as opportunity."
+            : topic === "multi_source_evidence"
+              ? `Assemble ${uniqueSourceFamilies.join(", ")} evidence for ${placeLabel} while preserving each source's limitations.`
+              : topic === "multi_market_comparison"
+                ? `Compare ${placeLabel} on ${requestedMetrics.map((metric) => metric.replaceAll("_", " ")).join(", ") || "the requested compatible measures"}; this is descriptive aggregate clinic-market activity, not an approved operating KPI.`
+                : topic === "growth_test_screening"
+                  ? "Rank complete-evidence markets with the fixed growth-test-screening-v1 hypothesis score, report exclusions, and stop before launch or spend decisions."
       : topic === "local_growth"
         ? `Assess a local growth or campaign question for ${placeLabel} against approved measurement gates.`
         : topic === "clinic_location"
@@ -73,19 +264,31 @@ export function inferPlanningIntent(question: string): PlanningIntent {
             ? `Compare ${placeLabel} using the requested public market measure.`
             : `Describe ${placeLabel} with governed public market context.`;
 
-  return planningIntentSchema.parse({
+  const explicitSort = requestedAction === "compare" && requestedMetrics.length === 1 && has(value, /\b(sort|rank|ranking|highest|lowest|ascending|descending|largest|smallest)\b/)
+    ? { metric: requestedMetrics[0], direction: has(value, /\b(lowest|ascending|smallest)\b/) ? "asc" as const : "desc" as const }
+    : null;
+
+  return queryAwareClinicLocationIntent(question, planningIntentSchema.parse({
     topic,
     geographyGrain,
     requestedAction,
     requestedMeasure,
+    requestedMetrics: [...new Set(requestedMetrics)],
+    sourceFamilies: uniqueSourceFamilies,
+    selectedQueries: uniqueQueries,
+    sort: explicitSort,
+    rankingMode: growthScreening ? "growth_test_screening_v1" : "none",
     requestedPlaces,
     clarificationRequired: clarificationRequired && clarificationReason !== "none",
     clarificationReason: clarificationRequired ? clarificationReason : "none",
     conciseInterpretation,
-  });
+  }));
 }
 
 function requirementFor(intent: PlanningIntent): CapabilityQuestion["requirements"][number] {
+  if (intent.topic === "multi_market_comparison" && intent.sourceFamilies.includes("clinic")) {
+    return { capabilityId: "clinic_site_evaluation", outputId: "candidate_site_comparison", geographyGrain: "cbsa" };
+  }
   if (intent.topic === "clinic_performance") {
     return { capabilityId: "clinic_performance", outputId: "clinic_outcome_comparison", geographyGrain: "portfolio" };
   }
@@ -106,7 +309,135 @@ function requirementFor(intent: PlanningIntent): CapabilityQuestion["requirement
   if (intent.topic === "local_growth") {
     return { capabilityId: "local_growth_test", outputId: "growth_test_measurement", geographyGrain: "market" };
   }
+  if (intent.topic === "clinic_context") {
+    return { capabilityId: "clinic_site_evaluation", outputId: "candidate_site_comparison", geographyGrain: "cbsa" };
+  }
+  if (intent.topic === "google_ads_context" || intent.topic === "growth_test_screening") {
+    return { capabilityId: "local_growth_test", outputId: "growth_test_measurement", geographyGrain: "market" };
+  }
   return { capabilityId: "census_market_context", outputId: "market_context_profile", geographyGrain: "cbsa" };
+}
+
+function isNormalizedDemoTopic(topic: PlanningIntent["topic"]) {
+  return [
+    "regional_context",
+    "clinic_context",
+    "google_ads_context",
+    "source_coverage",
+    "multi_source_evidence",
+    "multi_market_comparison",
+    "growth_test_screening",
+    "clinic_location",
+  ].includes(topic);
+}
+
+function normalizedActionFor(intent: PlanningIntent): PlannedAction {
+  const places = intent.requestedPlaces.map((place) => place.name).join(" and ") || "the eligible market cohort";
+  const registeredEvidence = intent.selectedQueries.map((query) => `Registered query: ${query}`);
+  if (intent.topic === "clinic_location") return {
+    id: "review-clinic-location-evidence",
+    title: `Review clinic-location evidence for ${places}`,
+    summary: "Review connected market, regional, and aggregate clinic evidence, then assign the missing capacity, workforce, competitive, property, and economics validation work.",
+    owner: "CVC Strategy and Real Estate Analytics",
+    timing: "Before site screening or opening approval",
+    confidence: "Low",
+    evidence: registeredEvidence,
+    tradeoffs: ["Aggregate market and clinic activity does not establish site suitability", "No approved capacity, workforce, property, competitive-access, or clinic-economics evidence is connected"],
+    nextStep: "Validate the connected Phoenix evidence and assign owners to collect capacity, workforce, competitive access, property and trade-area feasibility, economics, and accountable approval requirements.",
+    outputId: "candidate_site_comparison",
+    requiresApproval: intent.requestedAction === "approve",
+  };
+  if (intent.topic === "clinic_context") return {
+    id: "review-clinic-context",
+    title: `Review aggregate clinic activity for ${places}`,
+    summary: "Confirm the reported clinic activity period and decide whether these descriptive aggregates are sufficient to frame a narrower operating question.",
+    owner: "CVC Analytics",
+    timing: "After evidence review",
+    confidence: "Medium",
+    evidence: registeredEvidence,
+    tradeoffs: ["Aggregate market activity is not a clinic-level operating KPI", "Rx orders are a supplied prescription proxy, not a complete prescription outcome"],
+    nextStep: "Validate the clinic activity timeframe and metric definitions, then specify any clinic-level outcome, maturity rule, and peer group needed for a real performance comparison.",
+    outputId: "candidate_site_comparison",
+    requiresApproval: false,
+  };
+  if (intent.topic === "regional_context") return {
+    id: "review-regional-context",
+    title: `Review regional customer and sales context for ${places}`,
+    summary: "Review customer context and calendar-year regional sales as separate descriptive observations before forming an opportunity hypothesis.",
+    owner: "Market Intelligence",
+    timing: "After evidence review",
+    confidence: "Medium",
+    evidence: registeredEvidence,
+    tradeoffs: ["Different source periods must remain separate", "Regional customer and sales levels do not establish incrementality"],
+    nextStep: "Confirm period completeness and metric definitions, then identify the outcome or comparison baseline required for the intended decision.",
+    outputId: "market_context_profile",
+    requiresApproval: false,
+  };
+  if (intent.topic === "google_ads_context") return {
+    id: "review-google-ads-context",
+    title: `Review Google Ads scope and geography for ${places}`,
+    summary: "Compare spend by report scope while keeping the matched-location-to-CBSA inference visible.",
+    owner: "Marketing Science",
+    timing: "Before using Ads evidence in a regional test",
+    confidence: "Low",
+    evidence: registeredEvidence,
+    tradeoffs: ["Matched-location labels are not provider-stable market keys", "Spend alone does not measure incremental demand or test validity"],
+    nextStep: "Review the two Ads report scopes and confirm a stable or human-reviewed geography bridge before using the values for regional selection or measurement.",
+    outputId: "growth_test_measurement",
+    requiresApproval: false,
+  };
+  if (intent.topic === "multi_market_comparison") return {
+    id: "review-descriptive-clinic-market-comparison",
+    title: `Review the descriptive clinic-market comparison for ${places}`,
+    summary: "Compare the five aggregate clinic activity measures market by market without converting them into an operating score or winner.",
+    owner: "CVC Analytics",
+    timing: "After evidence review",
+    confidence: "Medium",
+    evidence: registeredEvidence,
+    tradeoffs: ["Market aggregates do not measure individual clinic performance", "No approved KPI, maturity adjustment, or peer rule is applied"],
+    nextStep: "Confirm that the source period and market aggregates are comparable, then define an approved clinic-level KPI and peer rule if a performance conclusion is needed.",
+    outputId: "candidate_site_comparison",
+    requiresApproval: false,
+  };
+  if (intent.topic === "multi_source_evidence") return {
+    id: "reconcile-multi-source-evidence",
+    title: `Reconcile regional, clinic, and Ads evidence for ${places}`,
+    summary: "Review each source on its own period and scope, then identify which gaps prevent a combined market hypothesis.",
+    owner: "Market Intelligence with CVC Analytics and Marketing Science",
+    timing: "Before cross-source interpretation",
+    confidence: "Low",
+    evidence: registeredEvidence,
+    tradeoffs: ["Source periods and grains differ", "Inferred Ads geography cannot be treated as a confirmed join"],
+    nextStep: "Align the decision period, review the Ads geography mapping, and document which regional and clinic measures are compatible before combining them into a test hypothesis.",
+    outputId: "market_context_profile",
+    requiresApproval: false,
+  };
+  if (intent.topic === "source_coverage") return {
+    id: "review-source-coverage-gaps",
+    title: `Review evidence presence and gaps for ${places}`,
+    summary: "Use source-presence flags to decide what evidence can be reviewed next, without interpreting coverage as quality or attractiveness.",
+    owner: "Data Product and Market Intelligence",
+    timing: "Before analytical scoping",
+    confidence: "High",
+    evidence: registeredEvidence,
+    tradeoffs: ["Presence does not establish completeness or correctness", "Coverage is not an opportunity score"],
+    nextStep: "Inspect the present source families for freshness, grain, and metric usability, then request only the missing evidence required by the intended decision.",
+    outputId: "market_context_profile",
+    requiresApproval: false,
+  };
+  return {
+    id: "review-growth-test-screening",
+    title: "Review growth-test screening hypotheses",
+    summary: "Review score contributions, exclusions, and inferred Ads geography before selecting any market for test-design validation.",
+    owner: "Marketing Science and Program Leadership",
+    timing: "Before test-market selection or spend",
+    confidence: "Low",
+    evidence: registeredEvidence,
+    tradeoffs: ["Complete-case screening excludes markets with missing inputs", "The fixed score is Hypothesis evidence and is not a launch recommendation"],
+    nextStep: "Review the top candidates and excluded markets, then define outcome, control, exposure, contamination, budget, privacy, and stop rules before proposing a test.",
+    outputId: "growth_test_measurement",
+    requiresApproval: false,
+  };
 }
 
 function actionsFor(
@@ -129,6 +460,10 @@ function actionsFor(
       outputId: "market_context_profile",
       requiresApproval: false,
     }];
+  }
+
+  if (isNormalizedDemoTopic(intent.topic) && (intent.topic !== "clinic_location" || intent.selectedQueries.length > 0)) {
+    return [normalizedActionFor(intent)];
   }
 
   const context: PlannedAction = {
@@ -213,7 +548,7 @@ function actionsFor(
       ],
       nextStep: assessment.missingApprovals.length
         ? "Keep the material approval gate visible and request the governed evidence required for a decision."
-        : "Review the bounded clinic evaluation surface with source-linked limitations.",
+        : "Validate the bounded clinic evidence, source periods, and limitations, then define the demand, capacity, workforce, property, and economic checks required before any site recommendation.",
       outputId: requirementFor(intent).outputId,
       requiresApproval: assessment.missingApprovals.length > 0 || intent.requestedAction === "approve",
     };
@@ -246,35 +581,47 @@ export function compileEvaluationPlan(
   proposalMethod: EvaluationPlan["proposalMethod"] = "deterministic_fallback",
   perspectiveId?: EvaluationPlan["perspectiveId"],
 ): EvaluationPlan {
-  const normalizedIntent = planningIntentSchema.parse({
+  const normalizedIntent = queryAwareClinicLocationIntent(question, planningIntentSchema.parse({
     ...intent,
     requestedPlaces: normalizeRequestedPlaces(question, intent.requestedPlaces),
-  });
+  }));
+  const consistencyIssues = validatePlanningIntentConsistency(normalizedIntent);
+  const validatedIntent = consistencyIssues.length
+    ? planningIntentSchema.parse({
+        ...normalizedIntent,
+        clarificationRequired: true,
+        clarificationReason: normalizedIntent.topic === "multi_market_comparison"
+          ? "ambiguous_comparison_cohort"
+          : "ambiguous_requested_output",
+        conciseInterpretation: "Clarify the request because its topic, sources, geography, metrics, or registered queries do not form a consistent executable plan.",
+      })
+    : normalizedIntent;
   const resolvedPerspectiveId: EvaluationPlan["perspectiveId"] = perspectiveId
-    ?? (normalizedIntent.topic === "clinic_location" || normalizedIntent.topic === "clinic_performance" || /\b(clinic|clinics|cvc|veterinar|vet)\b/i.test(question)
+    ?? (validatedIntent.topic === "clinic_location" || validatedIntent.topic === "clinic_performance" || /\b(clinic|clinics|cvc|veterinar|vet)\b/i.test(question)
       ? "cvc"
-      : normalizedIntent.topic === "local_growth"
+      : validatedIntent.topic === "local_growth"
         ? "marketing"
         : /\b(price|pricing|elasticity|promo)\b/i.test(question)
           ? "pricing"
           : "marketing");
   const exploratoryQuestion = /\b(comparable|which|where|patterns?|worth investigating|differ)\b/i.test(question);
   const canAssumeNationalCohort = exploratoryQuestion
-    && normalizedIntent.requestedPlaces.length === 0
+    && validatedIntent.selectedQueries.length === 0
+    && validatedIntent.requestedPlaces.length === 0
     && (perspectiveId !== undefined || /\b(marketing|campaign|media|test market|control market|clinic|cvc|veterinar|vet)\b/i.test(question))
     && (resolvedPerspectiveId === "marketing" || resolvedPerspectiveId === "cvc")
-    && normalizedIntent.requestedAction !== "approve";
+    && validatedIntent.requestedAction !== "approve";
   const effectiveIntent = planningIntentSchema.parse(canAssumeNationalCohort ? {
-    ...normalizedIntent,
+    ...validatedIntent,
     topic: resolvedPerspectiveId === "cvc" ? "clinic_location" : "local_growth",
     geographyGrain: "cbsa",
-    requestedAction: normalizedIntent.requestedAction === "describe" ? "investigate" : normalizedIntent.requestedAction,
+    requestedAction: validatedIntent.requestedAction === "describe" ? "investigate" : validatedIntent.requestedAction,
     clarificationRequired: false,
     clarificationReason: "none",
     conciseInterpretation: resolvedPerspectiveId === "cvc"
       ? "Screen national metro markets for question-specific CVC footprint contrasts, then identify the evidence needed to validate each lead."
       : "Screen national metro markets for structurally comparable peers and regional contrasts, then identify the evidence needed to validate each lead.",
-  } : normalizedIntent);
+  } : validatedIntent);
   const requirement = requirementFor(effectiveIntent);
   const assessment = assessCapabilityQuestion({
     question,
@@ -283,8 +630,16 @@ export function compileEvaluationPlan(
     satisfiedApprovalIds: [],
   });
   const geography = resolveGeography(effectiveIntent);
+  const normalizedDemoExecutable = isNormalizedDemoTopic(effectiveIntent.topic)
+    && (effectiveIntent.topic === "source_coverage" || effectiveIntent.topic === "growth_test_screening" || geography.selectedCbsaCodes.length > 0);
   const status: EvaluationPlan["status"] = geography.mode === "clarification" || geography.mode === "unavailable"
     ? "blocked"
+    : effectiveIntent.topic === "clinic_location" && !effectiveIntent.selectedQueries.length && (geography.mode === "national" || geography.mode === "needs_selection")
+      ? "partially_executable"
+    : normalizedDemoExecutable
+      ? effectiveIntent.topic === "growth_test_screening" || effectiveIntent.topic === "google_ads_context" || effectiveIntent.topic === "multi_source_evidence" || effectiveIntent.topic === "clinic_location"
+        ? "partially_executable"
+        : "executable"
     : assessment.outcome === "supported"
       ? "executable"
       : assessment.outcome === "partially_supported"
@@ -296,6 +651,20 @@ export function compileEvaluationPlan(
     status,
     geography,
   });
+  const clinicLocationMissingEvidence = [
+    "Clinic access, staffed capacity, availability, utilization, and approved trade areas are not connected.",
+    "Veterinary workforce and competitive access evidence are not connected.",
+    "Property, permitting, trade-area feasibility, and physical-site constraints are not connected.",
+    "Clinic economics, cannibalization, mature outcomes, and an approved opening rule are not connected.",
+  ];
+  const missingEvidence = normalizedDemoExecutable
+    ? effectiveIntent.topic === "clinic_location" ? clinicLocationMissingEvidence : []
+    : assessment.missingEvidence;
+  const missingApprovals = normalizedDemoExecutable
+    ? effectiveIntent.topic === "clinic_location" && effectiveIntent.requestedAction === "approve"
+      ? ["Accountable material clinic-opening approval remains required after evidence validation."]
+      : []
+    : assessment.missingApprovals;
   const actions = actionsFor(effectiveIntent, assessment, geography, resultWorkspaceType);
   const findings = derivePlanFindings({
     intent: effectiveIntent,
@@ -304,8 +673,8 @@ export function compileEvaluationPlan(
     status,
     geography,
     actions,
-    missingEvidence: assessment.missingEvidence,
-    missingApprovals: assessment.missingApprovals,
+    missingEvidence,
+    missingApprovals,
     resultWorkspaceType,
   });
 
@@ -321,18 +690,20 @@ export function compileEvaluationPlan(
     geographyResolution: geography,
     resultWorkspaceType,
     status,
-    evidenceBoundary: requirement.capabilityId === "census_market_context"
+    evidenceBoundary: effectiveIntent.topic === "clinic_location"
+      ? "Connected market, regional, and aggregate clinic evidence supports a bounded investigation only. It does not establish site suitability or authorize a clinic opening."
+      : requirement.capabilityId === "census_market_context"
       ? "Public Census context describes compatible market measures. It does not rank business opportunity or authorize action."
       : "Only registry-supported prototype outputs may run. Consequential actions remain gated by approved evidence and human authority.",
-    missingEvidence: assessment.missingEvidence,
-    missingApprovals: assessment.missingApprovals,
+    missingEvidence,
+    missingApprovals,
     steps: buildPlanSteps({
       intent: effectiveIntent,
       capabilityId: requirement.capabilityId,
       status,
       geography,
-      missingEvidence: assessment.missingEvidence,
-      missingApprovals: assessment.missingApprovals,
+      missingEvidence,
+      missingApprovals,
     }),
     actions,
     findings,

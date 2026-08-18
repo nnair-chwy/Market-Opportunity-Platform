@@ -23,9 +23,41 @@ import {
   evidenceExecutionResponseSchema,
   type EvidenceExecutionResponse,
 } from "../evidence-snapshot/contracts.ts";
+import { METRIC_CATALOG } from "./metric-catalog.ts";
 
-export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
-export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v2" as const;
+export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v2" as const;
+export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v3" as const;
+
+export const packetAnswerSchema = z.object({
+  version: z.literal("packet-answer-v1"),
+  state: z.enum(["answered", "partial", "blocked", "unavailable"]),
+  topic: evaluationPlanSchema.shape.intent.shape.topic,
+  directAnswer: z.string().trim().min(1).max(1800),
+  facts: z.array(z.object({
+    evidenceId: z.string().trim().min(1),
+    metricId: z.string().trim().min(1),
+    metricLabel: z.string().trim().min(1),
+    geographyId: z.string().trim().min(1).nullable(),
+    geographyLabel: z.string().trim().min(1),
+    rawValue: z.number().finite().nullable(),
+    displayValue: z.string().trim().min(1),
+    unit: z.string().trim().min(1).nullable(),
+    periodLabel: z.string().trim().min(1),
+    reportScope: z.string().trim().min(1).nullable(),
+    sourceId: z.string().trim().min(1),
+    evidenceStatus: z.enum(["Confirmed", "Reported", "Derived", "Hypothesis", "Unknown"]),
+    warning: z.string().trim().min(1).nullable(),
+  }).strict()).max(60),
+  limitations: z.array(z.string().trim().min(1)).max(40),
+  proposedAction: z.object({
+    title: z.string().trim().min(1),
+    owner: z.string().trim().min(1),
+    nextStep: z.string().trim().min(1),
+    requiresApproval: z.boolean(),
+  }).strict(),
+}).strict();
+
+export type PacketAnswer = z.infer<typeof packetAnswerSchema>;
 
 const insightActionPlanSchema = z.object({
   version: z.literal("1.0.0"),
@@ -89,6 +121,7 @@ export const reviewableActionPacketSchema = z.object({
     executionMode: z.enum(["frozen_snapshot_demo", "synthetic_demo"]).nullable(),
   }).strict(),
   action: plannedActionSchema,
+  packetAnswer: packetAnswerSchema,
   findings: evaluationPlanSchema.shape.findings,
   execution: evaluationExecutionResultSchema.nullable().optional(),
   evidenceExecution: evidenceExecutionResponseSchema.nullable().optional(),
@@ -112,7 +145,17 @@ export const reviewableActionPacketSchema = z.object({
       inputs: z.array(z.string().trim().min(1)),
       method: z.string().trim().min(1),
       considerationEditsRecalculate: z.boolean(),
+      weightMode: z.enum(["none", "advisory", "fixed_calculation"]).optional(),
     }).strict(),
+    queryContract: z.object({
+      topic: evaluationPlanSchema.shape.intent.shape.topic,
+      geographyIds: z.array(z.string().trim().min(1)),
+      sourceFamilies: evaluationPlanSchema.shape.intent.shape.sourceFamilies,
+      registeredQueries: evaluationPlanSchema.shape.intent.shape.selectedQueries,
+      requestedMetrics: z.array(z.string().trim().min(1)),
+      scoringVersion: z.string().trim().min(1).nullable(),
+      missingDataRule: z.string().trim().min(1),
+    }).strict().optional(),
     considerations: z.array(z.object({
       id: z.string().trim().min(1),
       label: z.string().trim().min(1),
@@ -217,6 +260,147 @@ export function proposedActionFromPlan(plan: EvaluationPlan): PlannedAction {
   return plan.actions[0];
 }
 
+function packetMetricLabel(metricId: string) {
+  const normalized = metricId.replace(/^normalized\./, "") as keyof typeof METRIC_CATALOG;
+  if (METRIC_CATALOG[normalized]) return METRIC_CATALOG[normalized]!.label;
+  if (metricId === "growth_test_screening.score") return "Growth-test screening score";
+  if (metricId === "normalized.source_coverage") return "Requested source checks present";
+  if (metricId.includes("completed_appointments")) return "Completed appointments";
+  return metricId.replaceAll("_", " ").replaceAll(".", " ");
+}
+
+function packetDisplayValue(value: number | null, unit: string | null, currency: string | null) {
+  if (value === null) return "Structured evidence available";
+  if (unit === "ratio") return new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 }).format(value);
+  if (unit === "currency_units" && currency) return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
+  const formatted = new Intl.NumberFormat("en-US", { maximumFractionDigits: unit?.includes("score") ? 1 : 2 }).format(value);
+  return unit ? `${formatted} ${unit.replaceAll("_", " ")}` : formatted;
+}
+
+function factClause(fact: PacketAnswer["facts"][number]) {
+  return `${fact.metricLabel}: ${fact.displayValue} (${fact.periodLabel}${fact.reportScope ? `, ${fact.reportScope}` : ""})`;
+}
+
+function querySpecificDirectAnswer(
+  plan: EvaluationPlan,
+  evidenceExecution: EvidenceExecutionResponse,
+  facts: PacketAnswer["facts"],
+): string {
+  if (!facts.length) return `The registered execution returned no browser-eligible evidence for this question. ${evidenceExecution.missingEvidence.join(" ") || "The evidence gap remains explicit."}`;
+  if (plan.intent.topic === "clinic_context") {
+    return `${facts[0]!.geographyLabel} has ${facts.map(factClause).join("; ")}. These are aggregate clinic-market activity measures. Rx orders are the supplied prescription proxy, and the result is not a clinic-level operating performance judgment.`;
+  }
+  if (plan.intent.topic === "regional_context") {
+    return `${facts[0]!.geographyLabel} has ${facts.map(factClause).join("; ")}. Customer context and calendar-year sales are separate descriptive observations and do not establish incremental regional opportunity.`;
+  }
+  if (plan.intent.topic === "google_ads_context") {
+    return `${facts[0]!.geographyLabel} has ${facts.map(factClause).join("; ")}. Spend is intentionally separated by report scope, and the matched-location-to-CBSA mapping remains inferred demo context rather than a provider-stable geography join.`;
+  }
+  if (plan.intent.topic === "multi_market_comparison") {
+    const groups = new Map<string, PacketAnswer["facts"]>();
+    for (const fact of facts) groups.set(fact.geographyLabel, [...(groups.get(fact.geographyLabel) ?? []), fact]);
+    const comparisons = [...groups.entries()].map(([market, marketFacts]) => `${market}: ${marketFacts.map(factClause).join("; ")}`);
+    return `${comparisons.join(". ")}. This is a side-by-side comparison of descriptive aggregate clinic-market activity, not an approved clinic operating KPI, score, or winner.`;
+  }
+  if (plan.intent.topic === "multi_source_evidence") {
+    const sourceCount = new Set(facts.map((fact) => fact.sourceId)).size;
+    return `${facts[0]!.geographyLabel} has ${facts.length} canonical observations from ${sourceCount} registered sources. Highlights: ${facts.slice(0, 8).map(factClause).join("; ")}. Source periods, grains, and Ads geography quality remain separate and must be reconciled before forming one market hypothesis.`;
+  }
+  if (plan.intent.topic === "source_coverage") {
+    const row = evidenceExecution.rows[0] ?? {};
+    const status = (full: boolean, partial: boolean) => full ? "available" : partial ? "partial" : "missing";
+    const census = status(row.hasCensus === true, false);
+    const regional = status(row.hasMarketContext === true && row.hasRegionalDemand === true, row.hasMarketContext === true || row.hasRegionalDemand === true);
+    const clinic = status(row.hasClinicProfile === true && row.hasClinicActivity === true, row.hasClinicProfile === true || row.hasClinicActivity === true);
+    const ads = status(row.hasGoogleAds === true, false);
+    return `${String(row.cbsaName ?? facts[0]!.geographyLabel)} source presence is Census: ${census}; regional: ${regional}; clinic: ${clinic}; Google Ads: ${ads}. Presence means a normalized source row exists. It does not establish freshness, completeness, quality, or market attractiveness.`;
+  }
+  if (plan.intent.topic === "growth_test_screening") {
+    const top = evidenceExecution.rows.slice(0, 5).map((row) => `#${String(row.rank)} ${String(row.cbsaName)} (${Number(row.score).toFixed(1)})`);
+    return `The fixed complete-case hypothesis screen ranks ${top.join("; ")}. Each score uses the registered 30/25/20/15/10 weights, incomplete markets are excluded without weight redistribution, and the rank does not authorize a test, campaign, clinic opening, or spend.`;
+  }
+  if (plan.intent.topic === "clinic_performance") {
+    const selected = evidenceExecution.rows.find((row) => row.selected === true);
+    return selected
+      ? `${String(selected.clinicName)} is ${String(selected.rank)} of ${evidenceExecution.rows.length} in the explicitly synthetic peer group with ${new Intl.NumberFormat("en-US").format(Number(selected.value))} completed appointments at the shared 38-week maturity point. This is Hypothesis-only fixture output, not a real clinic performance judgment.`
+      : "The synthetic peer fixture executed, but no selected clinic row was identified, so no clinic-specific rank is claimed.";
+  }
+  if (plan.intent.topic === "clinic_location") {
+    const preferredMetrics = [
+      "normalized.total_population",
+      "normalized.household_count",
+      "normalized.active_customer_count",
+      "normalized.regional_net_sales",
+      "normalized.clinic_count",
+      "normalized.total_customers",
+      "normalized.total_orders",
+      "normalized.net_sales",
+    ];
+    const highlights = preferredMetrics.flatMap((metricId) => {
+      const matches = facts.filter((fact) => fact.metricId === metricId);
+      if (metricId === "normalized.regional_net_sales") return [matches.find((fact) => fact.periodLabel === "2025") ?? matches.at(-1)].filter(Boolean) as PacketAnswer["facts"];
+      return matches.slice(0, 1);
+    }).slice(0, 8);
+    const available = highlights.length ? highlights.map(factClause).join("; ") : facts.slice(0, 8).map(factClause).join("; ");
+    return `${facts[0]!.geographyLabel} has connected public and regional market context plus aggregate clinic activity. Available evidence includes ${available}. Still not connected are clinic access and staffed capacity, workforce, competitive veterinary access, property and trade-area feasibility, clinic economics, cannibalization, and an approved opening decision rule. This supports a bounded validation workplan, not site selection or approval to open a clinic.`;
+  }
+  return facts.slice(0, 8).map((fact) => `${fact.geographyLabel}: ${factClause(fact)} (${fact.sourceId}, ${fact.evidenceStatus})`).join(". ");
+}
+
+export function buildPacketAnswer(
+  plan: EvaluationPlan,
+  action: PlannedAction = proposedActionFromPlan(plan),
+  evidenceExecution: EvidenceExecutionResponse | null = null,
+): PacketAnswer {
+  const facts = (evidenceExecution?.evidenceBundle ?? []).slice(0, 60).map((item) => ({
+    evidenceId: item.evidenceId,
+    metricId: item.metricId,
+    metricLabel: packetMetricLabel(item.metricId),
+    geographyId: item.geographyId,
+    geographyLabel: item.geographyLabel,
+    rawValue: item.rawValue,
+    displayValue: packetDisplayValue(item.rawValue, item.unit, item.currency),
+    unit: item.unit,
+    periodLabel: item.period.label,
+    reportScope: item.reportScope,
+    sourceId: item.sourceId,
+    evidenceStatus: item.evidenceStatus,
+    warning: item.warning,
+  }));
+  const state: PacketAnswer["state"] = !evidenceExecution
+    ? "unavailable"
+    : evidenceExecution.status === "blocked" || evidenceExecution.status === "failed"
+      ? "blocked"
+      : evidenceExecution.status === "partial"
+        ? "partial"
+        : "answered";
+  const directAnswer = evidenceExecution
+    ? querySpecificDirectAnswer(plan, evidenceExecution, facts)
+    : "The validated plan is available, but no registered evidence execution was supplied, so this packet does not claim an analytical answer.";
+  const limitations = [...new Set([
+    ...(evidenceExecution?.qualityWarnings ?? []),
+    ...(evidenceExecution?.missingEvidence ?? []),
+    ...(evidenceExecution?.unknowns ?? []),
+    ...plan.missingEvidence,
+    ...plan.missingApprovals,
+  ])].slice(0, 40);
+
+  return packetAnswerSchema.parse({
+    version: "packet-answer-v1",
+    state,
+    topic: plan.intent.topic,
+    directAnswer,
+    facts,
+    limitations,
+    proposedAction: {
+      title: action.title,
+      owner: action.owner,
+      nextStep: action.nextStep,
+      requiresApproval: action.requiresApproval,
+    },
+  });
+}
+
 export function assembleReviewableActionPacket(
   plan: EvaluationPlan,
   action: PlannedAction = proposedActionFromPlan(plan),
@@ -287,6 +471,7 @@ export function assembleReviewableActionPacket(
       executionMode: evidenceExecution?.executionMode ?? null,
     },
     action,
+    packetAnswer: buildPacketAnswer(plan, action, evidenceExecution),
     findings: plan.findings,
     execution,
     evidenceExecution,
@@ -474,7 +659,9 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
       `  - Snapshot ID: ${item.snapshotId}`,
       `  - Evidence status: ${item.evidenceStatus}`,
       `  - Quality status: ${item.qualityStatus}`,
-      `  - Observation: ${item.observationStart && item.observationEnd ? `${item.observationStart} to ${item.observationEnd}` : item.observationEnd ?? "Not supplied"}`,
+      `  - Period: ${item.period.label}`,
+      `  - Report scope: ${item.reportScope ?? "Not supplied"}`,
+      `  - Currency: ${item.currency ?? "Not applicable or not supplied"}`,
       `  - Allowed use: ${item.allowedUse}`,
       ...(item.warning ? [`  - Warning: ${item.warning}`] : []),
     ]),
@@ -488,6 +675,23 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     bulletList(packet.evidenceExecution.guardrails, "None listed"),
     "",
   ] : [];
+  const packetAnswerSections = [
+    "## Evidence-backed answer",
+    `- State: ${packet.packetAnswer.state}`,
+    packet.packetAnswer.directAnswer,
+    "",
+    "### Source-backed facts",
+    ...(packet.packetAnswer.facts.length ? packet.packetAnswer.facts.flatMap((fact) => [
+      `- ${fact.geographyLabel}: ${fact.metricLabel} = ${fact.displayValue}`,
+      `  - Period: ${fact.periodLabel}${fact.reportScope ? `; scope: ${fact.reportScope}` : ""}`,
+      `  - Source: ${fact.sourceId}; evidence status: ${fact.evidenceStatus}`,
+      ...(fact.warning ? [`  - Warning: ${fact.warning}`] : []),
+    ]) : ["- No executed facts are available."]),
+    "",
+    "### Answer limitations",
+    bulletList(packet.packetAnswer.limitations, "None listed"),
+    "",
+  ];
 
   return [
     "# Draft action packet (reviewable)",
@@ -516,6 +720,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     "## Evidence boundary",
     packet.evidenceBoundary,
     "",
+    ...packetAnswerSections,
     "## Missing evidence",
     bulletList(packet.missingEvidence, "None listed"),
     "",
@@ -597,18 +802,12 @@ export function downloadReviewableActionPacket(packet: ReviewableActionPacket) {
 export function deterministicFindingsAndProposalSummary(
   plan: EvaluationPlan,
   action: PlannedAction = proposedActionFromPlan(plan),
+  evidenceExecution: EvidenceExecutionResponse | null = null,
 ): PacketFindingsSummary {
-  const interpretation = plan.findings.find((finding) => finding.kind === "interpretation")?.detail
-    ?? plan.intent.conciseInterpretation;
-  const geography = plan.findings.find((finding) => finding.kind === "geography")?.detail
-    ?? plan.geographyResolution.message;
-  const evidenceFinding = plan.findings.find((finding) => finding.kind === "evidence");
-  const unknownParts = [
-    plan.missingEvidence.length ? `Missing evidence: ${plan.missingEvidence.join("; ")}.` : null,
-    plan.missingApprovals.length ? `Missing approvals: ${plan.missingApprovals.join("; ")}.` : null,
-    evidenceFinding?.detail ?? null,
-    "This draft does not approve spend, leases, openings, campaigns, or other material actions.",
-  ].filter(Boolean);
+  const answer = buildPacketAnswer(plan, action, evidenceExecution);
+  const factSummary = answer.facts.slice(0, 3).map((fact) => `${fact.geographyLabel} ${fact.metricLabel}: ${fact.displayValue} (${fact.periodLabel}, ${fact.sourceId})`).join("; ");
+  const limitation = answer.limitations[0] ?? plan.evidenceBoundary;
+  const evidenceStatement = factSummary ? `Executed evidence: ${factSummary}.` : answer.directAnswer;
 
   return packetFindingsSummarySchema.parse({
     title: "Findings and proposed action",
@@ -618,7 +817,6 @@ export function deterministicFindingsAndProposalSummary(
     state: "deterministic_fallback",
     modelVersion: null,
     promptVersion: PACKET_SUMMARY_PROMPT_VERSION,
-    summary:
-      `${interpretation} Geographic focus: ${geography} Next, ${action.owner} should ${action.nextStep}. This action is relevant because ${action.summary} Key limitation: ${unknownParts.join(" ")}`,
+    summary: `${evidenceStatement} Proposed next step: ${action.owner} should ${action.nextStep} Key limitation: ${limitation} This draft does not approve spend, leases, openings, campaigns, or other material actions.`.slice(0, 1400),
   });
 }

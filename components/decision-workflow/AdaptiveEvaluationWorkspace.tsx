@@ -24,9 +24,9 @@ type SavedPacketPreview = {
 };
 
 const starterQuestions = [
-  "What is this market, what public or descriptive evidence exists, and what remains unknown?",
+  "Show regional, clinic, and Google Ads evidence for Atlanta.",
   "How is this clinic performing relative to an approved peer group, and how reliable is that comparison?",
-  "Is there a measurable regional opportunity, and what evidence and guardrails are required before testing it?",
+  "Rank regional growth-test candidates.",
 ] as const;
 
 type AdaptiveEvaluationWorkspaceProps = {

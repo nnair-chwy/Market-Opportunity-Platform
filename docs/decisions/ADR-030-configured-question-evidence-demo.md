@@ -2,25 +2,27 @@
 
 ## Status
 
-Proposed for repository-owner review.
+Superseded.
+
+ADR-032 and ADR-033 supersede the configured market and growth behavior. The
+synthetic clinic workflow remains the only configured demo plan.
 
 Date proposed: 2026-08-17.
 
 ## Context
 
-The local demo must answer one market-context, clinic-performance, and
-growth-test question from the existing question-first product shell. The
-ordinary planner correctly blocks missing production clinic and growth inputs,
-but the user approved a named Phoenix scenario and a clearly synthetic clinic
-comparison for demonstration.
+The original local demo design used one named Phoenix scenario and one clearly
+synthetic clinic comparison. Later normalized-market routing made the hidden
+Phoenix default unnecessary and unsafe for generic wording.
 
 ## Decision
 
-Recognize only the three exact approved starter questions as configured demo
-scenarios. Market and growth evidence use Phoenix-Mesa-Chandler, AZ, with exact
-key `cbsa:38060`. Clinic performance uses Synthetic South Clinic against all
-three checked-in synthetic clinics on completed appointments at the shared
-38-week maturity point.
+Only the clinic-performance starter remains a configured scenario. It proposes
+Synthetic South Clinic against all three checked-in synthetic clinics on
+completed appointments at the shared 38-week maturity point and requires
+reviewer confirmation. Generic “this market,” “this clinic,” and unspecified
+regional-opportunity wording requires clarification. Phoenix is selected only
+when Phoenix is named explicitly in the submitted question.
 
 The configured plans remain distinct from ordinary question planning. Generic,
 ambiguous, or blocked plans do not inherit the demo defaults. Growth execution
@@ -35,10 +37,10 @@ decisions, or represent synthetic clinic results as production evidence.
 
 ## Consequences
 
-The three presentation questions are deterministic and replayable against the
-same local snapshot. Their defaults are visible, versioned, and testable rather
-than inferred. Questions outside those exact scenarios retain existing planning
-and blocking behavior.
+The synthetic clinic presentation question remains deterministic and
+replayable. Market, comparison, source-coverage, multi-source, Google Ads, and
+growth-screening questions now use ADR-031 and ADR-032 registered normalized
+queries. No generic question inherits a hidden geography.
 
 The demo is intentionally partial. Regional SEO is unregistered, pricing and
 dedicated competitor files are unavailable, real clinic evidence cannot cross

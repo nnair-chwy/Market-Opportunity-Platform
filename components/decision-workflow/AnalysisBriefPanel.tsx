@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   analysisBriefWeightTotal,
   type AnalysisBrief,
@@ -9,7 +9,7 @@ import {
 
 type AnalysisBriefPanelProps = {
   brief: AnalysisBrief;
-  onConfirm: (brief: AnalysisBrief) => void;
+  onConfirm: (brief: AnalysisBrief, change: { questionChanged: boolean }) => void;
 };
 
 function roleLabel(role: AnalysisConsideration["role"]) {
@@ -27,13 +27,10 @@ function evidenceLabel(status: AnalysisConsideration["evidenceStatus"]) {
 export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps) {
   const [editing, setEditing] = useState(brief.status !== "confirmed");
   const [draft, setDraft] = useState(brief);
-  useEffect(() => {
-    setDraft(brief);
-    setEditing(brief.status !== "confirmed");
-  }, [brief]);
   const weightTotal = useMemo(() => analysisBriefWeightTotal(draft), [draft]);
   const weightedItems = draft.considerations.filter((item) => item.weightPercent !== null);
   const hasWeights = weightedItems.length > 0;
+  const fixedCalculationWeights = draft.currentScreen.weightMode === "fixed_calculation";
   const weightsValid = !hasWeights || (Math.abs(weightTotal - 100) < 0.001 && weightedItems.every((item) => (item.weightPercent ?? 0) > 0));
 
   function updateConsideration(id: string, patch: Partial<AnalysisConsideration>) {
@@ -53,7 +50,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
       status: "confirmed",
       confirmedAt: new Date().toISOString(),
     };
-    onConfirm(confirmed);
+    onConfirm(confirmed, { questionChanged: confirmed.rewrittenQuestion !== brief.rewrittenQuestion.trim() });
     setEditing(false);
   }
 
@@ -92,6 +89,14 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
             <div><dt>Geography</dt><dd>{brief.geography}</dd></div>
             <div><dt>Data period</dt><dd>{brief.timeframe}</dd></div>
           </dl>
+          {brief.queryContract ? (
+            <dl aria-label="Registered query contract">
+              <div><dt>Topic</dt><dd>{brief.queryContract.topic.replaceAll("_", " ")}</dd></div>
+              <div><dt>Geography IDs</dt><dd>{brief.queryContract.geographyIds.join(", ") || "National registered cohort"}</dd></div>
+              <div><dt>Sources</dt><dd>{brief.queryContract.sourceFamilies.join(", ").replaceAll("_", " ")}</dd></div>
+              <div><dt>Registered queries</dt><dd>{brief.queryContract.registeredQueries.join(", ")}</dd></div>
+            </dl>
+          ) : null}
           <div className="analysis-brief-assumptions">
             <strong>Working assumptions</strong>
             {editing ? (
@@ -113,13 +118,15 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
             </div>
             <b>{brief.currentScreen.considerationEditsRecalculate
                 ? "These weights directly control the calculation. No hidden weights are added."
+                : fixedCalculationWeights
+                  ? "These are the fixed registered calculation weights. Change the question or scoring version to change the calculation."
                 : hasWeights
                   ? "Weights define intended decision influence. Missing must-pass evidence can still block a recommendation."
                   : "This question uses gates and comparisons rather than a blended score."}</b>
           </div>
           <div className="analysis-brief-consideration-heading">
             <div><strong>Considerations</strong><span>What can influence, gate, or contextualize the conclusion</span></div>
-            {hasWeights ? <span className={weightsValid ? "valid" : "invalid"}>{weightTotal}% assigned</span> : <span>No blended score</span>}
+            {hasWeights ? <span className={weightsValid ? "valid" : "invalid"}>{weightTotal}% {fixedCalculationWeights ? "fixed" : "assigned"}</span> : <span>No blended score</span>}
           </div>
           <div className="analysis-brief-table" role="table">
             <div className="analysis-brief-table-header" role="row">
@@ -149,7 +156,7 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
                 </div>
                 <div role="cell" className="analysis-brief-weight">
                   {item.weightPercent !== null ? (
-                    editing ? <label><input type="number" min="1" max="100" value={item.weightPercent ?? 0} onChange={(event) => updateConsideration(item.id, { weightPercent: Number(event.target.value) })} /><span>%</span></label> : <strong>{item.weightPercent}%</strong>
+                    editing && !fixedCalculationWeights ? <label><input type="number" min="1" max="100" value={item.weightPercent ?? 0} onChange={(event) => updateConsideration(item.id, { weightPercent: Number(event.target.value) })} /><span>%</span></label> : <strong>{item.weightPercent}%</strong>
                   ) : <span>—</span>}
                 </div>
                 <small className="analysis-brief-rationale" title={item.whyItMatters}>{item.whyItMatters}</small>
@@ -158,7 +165,9 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
           </div>
           <p className="analysis-brief-weight-note">
             {hasWeights
-              ? "The analyst proposed these weights from your question. They define intended influence and are preserved in the analysis contract. A must-pass item can still block a recommendation, and unavailable evidence is never given an invented score."
+              ? fixedCalculationWeights
+                ? "These fixed weights belong to the registered scoring version and are shown for confirmation, not edited independently. Incomplete markets are excluded without weight redistribution."
+                : "The analyst proposed these weights from your question. They define intended influence and are preserved in the analysis contract. A must-pass item can still block a recommendation, and unavailable evidence is never given an invented score."
               : "These considerations guide peer selection and validity checks. Combining them into one weighted score would be misleading for this question."}
           </p>
         </section>

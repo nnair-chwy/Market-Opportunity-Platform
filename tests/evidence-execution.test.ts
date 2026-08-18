@@ -135,13 +135,13 @@ actualSnapshotTest("surfaces a stale frozen-source warning without changing valu
   assert.ok(result.qualityWarnings.some((item) => /exceeding the 400-day demo freshness threshold/i.test(item)));
 });
 
-actualSnapshotTest("blocks confidential clinic evidence at the response boundary", async () => {
+actualSnapshotTest("returns approved internal clinic aggregates at the response boundary", async () => {
   const result = await executeEvidenceRequest({ ...requestBase, requestId: "clinic-request", query: "canonical_clinic_performance", parameters: { marketId: "cbsa:38060" } }, { snapshotDir, databasePath });
-  assert.equal(result.status, "blocked");
-  assert.equal(result.sensitivity, "confidential");
-  assert.deepEqual(result.rows, []);
-  assert.deepEqual(result.evidenceBundle, []);
-  assert.ok(result.missingEvidence.some((item) => /cannot cross the browser or AI/i.test(item)));
+  assert.ok(["complete", "partial"].includes(result.status));
+  assert.equal(result.sensitivity, "internal");
+  assert.ok(result.rows.length > 0);
+  assert.ok(result.evidenceBundle.length > 0);
+  assert.ok(result.evidenceBundle.every((item) => item.sensitivity === "internal" && item.allowedUse !== "none"));
 });
 
 actualSnapshotTest("returns structured failure for missing snapshots without opening DuckDB", async () => {

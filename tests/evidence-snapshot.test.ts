@@ -44,8 +44,11 @@ test("validates typed queries, rejects arbitrary SQL, and preserves reproducible
   const first = await querySnapshot({ query: "market_context_by_cbsa", snapshotVersion, cbsaCode: "10180" }, { snapshotDir: fixture, databasePath });
   const second = await querySnapshot({ query: "market_context_by_cbsa", snapshotVersion, cbsaCode: "10180" }, { snapshotDir: fixture, databasePath });
   assert.deepEqual(first.rows, second.rows);
-  await assert.rejects(() => querySnapshot({ query: "regional_demand_by_zip_year", snapshotVersion, zip: "10001", year: 2026 }, { snapshotDir: fixture, databasePath }), /confidential or restricted/);
+  await assert.rejects(() => querySnapshot({ query: "regional_demand_by_zip_year", snapshotVersion, zip: "10001", year: 2026 }, { snapshotDir: fixture, databasePath }), /CBSA aggregate/);
   assert.equal(snapshotQueryRequestSchema.safeParse({ query: "regional_demand_by_cbsa_year", snapshotVersion, cbsaName: "Abilene, TX", year: 2026 }).success, true);
+  const cbsaAggregate = await querySnapshot({ query: "regional_demand_by_cbsa_year", snapshotVersion, cbsaName: "Abilene, TX", year: 2026 }, { snapshotDir: fixture, databasePath });
+  assert.equal(cbsaAggregate.query, "regional_demand_by_cbsa_year");
+  assert.ok(cbsaAggregate.rows.length > 0);
 });
 
 test("requires an explicit Google Ads contract and never treats missing conversions as zero", () => {

@@ -65,7 +65,10 @@ test("existing packet format preserves executed evidence metadata and human-revi
     execution,
   );
   reviewableActionPacketSchema.parse(packet);
-  assert.equal(packet.packetVersion, "reviewable-action-packet-v1");
+  assert.equal(packet.packetVersion, "reviewable-action-packet-v2");
+  assert.equal(packet.packetAnswer.state, "partial");
+  assert.equal(packet.packetAnswer.facts.length, 3);
+  assert.ok(packet.packetAnswer.facts.every((fact) => fact.sourceId === "SRC-002" && fact.evidenceStatus === "Hypothesis"));
   assert.equal(packet.evidenceExecution?.executionMode, "synthetic_demo");
   assert.deepEqual(packet.calculationVersions.evidenceSourceIds, ["SRC-002"]);
   assert.ok(packet.calculationVersions.evidenceSnapshotIds.includes("synthetic-clinic-performance-v1"));
@@ -74,6 +77,8 @@ test("existing packet format preserves executed evidence metadata and human-revi
   assert.ok(packet.missingApprovals.includes("Production peer-group approval"));
   const document = formatReviewableActionPacketDocument(packet);
   assert.match(document, /Executed evidence bundle/);
+  assert.match(document, /Evidence-backed answer/);
+  assert.match(document, /Source-backed facts/);
   assert.match(document, /Source ID: SRC-002/);
   assert.match(document, /Snapshot ID: synthetic-clinic-performance-v1/);
   assert.match(document, /Evidence status: Hypothesis/);
@@ -89,10 +94,31 @@ test("deterministic findings summary produces one concise action blurb", () => {
   assert.equal(summary.title, "Findings and proposed action");
   assert.equal(summary.origin, "deterministic_fallback");
   assert.match(summary.draftOnlyNotice, /draft only|human review/i);
-  assert.match(summary.summary, /interprets the question|Geographic focus/i);
+  assert.match(summary.summary, /no registered evidence execution was supplied/i);
   assert.match(summary.summary, new RegExp(action.owner.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(summary.summary, new RegExp(action.nextStep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(summary.summary, /Missing evidence|human review|does not approve/i);
+});
+
+test("packet summary is grounded in executed facts before optional AI wording", async () => {
+  const plan = planConfiguredDemoQuestion(DEMO_QUESTIONS.clinicPerformance);
+  assert.ok(plan);
+  const action = proposedActionFromPlan(plan);
+  const execution = await executeEvaluationPlanEvidence({ requestId: "summary-grounding", plan });
+  const fallback = deterministicFindingsAndProposalSummary(plan, action, execution);
+  assert.match(fallback.summary, /Completed appointments/i);
+  assert.match(fallback.summary, /SRC-002/);
+  assert.match(fallback.summary, /812/);
+
+  const ai = await explainFindingsAndProposal(plan, action, execution, async (packet) => {
+    assert.equal(packet.packetAnswer.facts.some((fact) => fact.rawValue === 812), true);
+    return {
+      output: { summary: `The synthetic packet reports 812 completed appointments for Synthetic South Clinic. ${action.owner} should confirm the synthetic selection and review the result as a draft for human review.` },
+      model: "test-model",
+    };
+  });
+  assert.equal(ai.origin, "ai");
+  assert.match(ai.summary, /812 completed appointments/i);
 });
 
 test("packet AI summary falls back when the model is unavailable", async () => {
@@ -134,7 +160,7 @@ test("reviewable packet exports the human-confirmed question and considerations"
   assert.equal(packet.analysisBrief?.status, "confirmed");
   assert.match(document, /Confirmed analysis framing/);
   assert.match(document, /Rewritten question/);
-  assert.match(document, /Demand and capacity/);
+  assert.match(document, /Capacity and access/);
   assert.doesNotMatch(document, /weighted preference/);
   assert.match(document, /Human consideration edits recalculate this screen: no/);
 });
@@ -207,8 +233,9 @@ test("download report contains connected evidence, limitations, and an actionabl
   );
   const document = formatReviewableActionPacketDocument(packet);
   assert.match(document, /Analyst screening/);
-  assert.match(document, /Confirmed formula: Current CVC footprint 15%/);
-  assert.match(document, /Demand and capacity 35%/);
+  assert.doesNotMatch(document, /Confirmed formula:/);
+  assert.match(document, /Capacity and access/);
+  assert.doesNotMatch(document, /Which 3[–-]5 U\.S\. metro areas|rank the top/i);
   assert.match(document, /published CVC clinic/i);
   assert.match(document, /public market context/i);
   assert.doesNotMatch(document, /synthetic/i);

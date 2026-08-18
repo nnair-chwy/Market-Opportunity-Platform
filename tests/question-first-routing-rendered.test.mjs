@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 
 const workflow = fs.readFileSync(new URL("../components/decision-workflow/DecisionWorkflowApp.tsx", import.meta.url), "utf8");
+assert.match(workflow, /plan\.intent\.topic !== "clinic_location"/);
 const market = fs.readFileSync(new URL("../components/decision-workflow/AdaptiveMarketWorkspace.tsx", import.meta.url), "utf8");
 const focusMap = fs.readFileSync(new URL("../components/decision-workflow/GeographicFocusMap.tsx", import.meta.url), "utf8");
 const investigationPanel = fs.readFileSync(new URL("../components/decision-workflow/MarketInvestigationPanel.tsx", import.meta.url), "utf8");
@@ -28,9 +29,9 @@ test("the default CVC perspective does not override question inference", () => {
 
 test("opening experience exposes exactly the three approved evidence questions", () => {
   const approved = [
-    "What is this market, what public or descriptive evidence exists, and what remains unknown?",
+    "Show regional, clinic, and Google Ads evidence for Atlanta.",
     "How is this clinic performing relative to an approved peer group, and how reliable is that comparison?",
-    "Is there a measurable regional opportunity, and what evidence and guardrails are required before testing it?",
+    "Rank regional growth-test candidates.",
   ];
   for (const question of approved) assert.match(questionWorkspace, new RegExp(question.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(questionWorkspace, /What works now/);
@@ -51,6 +52,11 @@ test("request state is transparent before a plan is treated as final", () => {
   assert.match(workflow, /AnalysisBriefPanel/);
   assert.match(workflow, /onConfirm=\{confirmAndRun\}/);
   assert.match(workflow, /setPhase\("confirming"\)/);
+  assert.match(workflow, /change\.questionChanged/);
+  assert.match(workflow, /Regenerating the intent, metrics, geography, capability, and registered queries/);
+  assert.match(workflow, /Review the changed interpretation and confirm again before any query runs/);
+  assert.match(workflow, /validateAnalysisBriefConsistency/);
+  assert.match(workflow, /Execution was stopped before any query ran/);
 });
 
 test("confirmed analysis keeps evidence lineage and decision boundaries visible", () => {
@@ -59,6 +65,14 @@ test("confirmed analysis keeps evidence lineage and decision boundaries visible"
   assert.match(workflow, /reviewablePacket/);
   assert.match(workflow, /Draft for accountable review/);
   assert.match(workflow, /downloadReviewableActionPacket/);
+  assert.match(workflow, /saved-action-packet-v2/);
+  assert.match(workflow, /evidenceExecution,/);
+  assert.match(workflow, /packetAnswer: reviewablePacket\.packetAnswer/);
+  assert.match(workflow, /packetSummary,/);
+  assert.match(workflow, /reviewablePacket,/);
+  assert.match(workflow, /packet\.plan \? evaluationPlanSchema\.safeParse/);
+  assert.match(workflow, /No replanning or query execution occurred/);
+  assert.match(workflow, /setPersistedReviewablePacket/);
 });
 
 test("review page routes result workspace types without interactive comparison", () => {

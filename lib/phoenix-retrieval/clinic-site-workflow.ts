@@ -98,10 +98,7 @@ export async function runClinicSiteWorkflow(
     year: null,
   })));
   const available = evidenceBundles.flatMap((bundle) => bundle.results.filter((result) => result.rows.length > 0));
-  const missingEvidence = [...new Set([
-    ...plan.missingEvidence,
-    ...evidenceBundles.flatMap((bundle) => bundle.missingEvidence),
-  ])];
+  const missingEvidence = [...new Set(evidenceBundles.flatMap((bundle) => bundle.missingEvidence))];
   const warnings = [...new Set(evidenceBundles.flatMap((bundle) => bundle.warnings))];
   const supportedFindings = available.length
     ? [

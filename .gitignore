@@ -57,5 +57,7 @@ next-env.d.ts
 
 # local DuckDB evidence layer
 /.local/
+/.local-data/
+/.worktrees/
 *.duckdb
 *.duckdb.wal

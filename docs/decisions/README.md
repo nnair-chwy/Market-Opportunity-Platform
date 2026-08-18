@@ -47,3 +47,7 @@ Current records:
 - [ADR-028: Register Google Ads as matched-location context only](ADR-028-google-ads-matched-location-context.md)
 - [ADR-029: One typed service executes canonical frozen snapshots](ADR-029-canonical-frozen-snapshot-execution.md)
 - [ADR-030: Configure three bounded question-to-evidence demo workflows](ADR-030-configured-question-evidence-demo.md)
+- [ADR-031: Normalize non-SEO demo data with visible Census-assisted inference](ADR-031-demo-geography-normalization.md)
+- [ADR-032: Route question-faithful normalized evidence and isolate growth-test screening](ADR-032-question-faithful-normalized-evidence-routing.md)
+- [ADR-033: Build evidence-backed answers and durable review packets](ADR-033-evidence-backed-answers-and-durable-packets.md)
+- [ADR-034: Keep clinic-location interpretation aligned with the executable query contract](ADR-034-query-aware-clinic-location-interpretation.md)

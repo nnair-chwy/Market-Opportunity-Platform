@@ -1,4 +1,5 @@
 import { evaluationPlanSchema, plannedActionSchema } from "@/lib/planning";
+import { evidenceExecutionResponseSchema } from "@/lib/evidence-snapshot/contracts";
 import { explainFindingsAndProposal } from "@/lib/planning/packet-ai-summary";
 import {
   packetFindingsSummarySchema,
@@ -11,6 +12,7 @@ const headers = { "cache-control": "no-store" };
 const requestSchema = z.object({
   plan: evaluationPlanSchema,
   actionId: z.string().trim().min(1).optional(),
+  evidenceExecution: evidenceExecutionResponseSchema.nullable().optional(),
 }).strict();
 
 export async function POST(request: Request) {
@@ -44,7 +46,7 @@ export async function POST(request: Request) {
   }
   plannedActionSchema.parse(action);
 
-  const summary = await explainFindingsAndProposal(plan, action);
+  const summary = await explainFindingsAndProposal(plan, action, parsed.data.evidenceExecution ?? null);
   return Response.json(
     {
       status: "ok",

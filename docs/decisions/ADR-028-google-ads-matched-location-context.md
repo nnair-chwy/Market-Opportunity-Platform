@@ -1,5 +1,9 @@
 # ADR-028: Register Google Ads as matched-location context only
 
+The source-adapter boundary in this decision remains active. ADR-031 adds a
+separate, explicitly Hypothesis-labeled local-demo geography normalization
+layer without changing the original reported Google Ads grain.
+
 ## Status
 
 Proposed for repository-owner review.

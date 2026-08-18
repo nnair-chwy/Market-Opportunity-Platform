@@ -173,7 +173,7 @@ const demandRows = regionalDemand.rows.map((row) => ({
   year: integerOrNull(row.YEAR),
   netSalesExcludingRefunds: numberOrNull(row.NET_SALES_EXCLUDING_REFUNDS),
   netSales: numberOrNull(row.NET_SALES),
-  source: source(regionalDemand.file, "one customer-address ZIP x year", "confidential"),
+  source: source(regionalDemand.file, "one customer-address ZIP x year", "internal"),
 }));
 
 const clinicByMarket = new Map<string, {
@@ -219,7 +219,7 @@ const clinicMarketRows = [...clinicByMarket.values()].map((row) => ({
     ? (row.clinicCount / (censusForMarket(row.marketId)?.householdCount ?? 1)) * 10000
     : null,
   clinicDensityStatus: "Derived · clinic profile row count; physical-location identity rule still required",
-  source: source(clinicProfile.file, "one CBSA name x clinic aggregate", "confidential"),
+  source: source(clinicProfile.file, "one CBSA name x clinic aggregate", "internal"),
   status: "Reported · approved internal extract · physical-location rule still required",
 }));
 
@@ -268,7 +268,7 @@ const clinicPerformanceRows = [...clinicPerformanceByMarket.values()].map((row) 
   ...row,
   cbsaCode: row.marketId?.replace("cbsa:", "") ?? null,
   timeframes: [...row.timeframes].sort(),
-  source: source(clinicActivity.file, "one CBSA name x clinic performance aggregate", "confidential"),
+  source: source(clinicActivity.file, "one CBSA name x clinic performance aggregate", "internal"),
   status: "Reported · approved internal extract · outcome and maturity configuration required",
 }));
 
@@ -351,7 +351,8 @@ const manifest = {
   outputs,
   exclusions: [
     "Raw clinic IDs and row-level clinic activity are not stored in the snapshot.",
-    "Customer-address ZIP sales remain aggregate but confidential.",
+    "Customer-address ZIP sales are exposed only after CBSA aggregation in the local demo.",
+    "Clinic profile and activity evidence is exposed only through aggregate registered queries; raw rows remain outside browser responses.",
     "Prescription-level and customer-level fields are excluded.",
     "Market and clinic records retain quality warnings and are not silently repaired.",
   ],

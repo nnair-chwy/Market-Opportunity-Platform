@@ -3,6 +3,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { ASK_AI_MODEL } from "../ai/insights.ts";
 import type { EvaluationPlan, PlannedAction } from "./contracts.ts";
+import type { EvidenceExecutionResponse } from "../evidence-snapshot/contracts.ts";
 import {
   PACKET_SUMMARY_PROMPT_VERSION,
   assembleReviewableActionPacket,
@@ -106,10 +107,11 @@ async function callOpenAi(packet: ReviewableActionPacket) {
 function fallbackWithState(
   plan: EvaluationPlan,
   action: PlannedAction,
+  evidenceExecution: EvidenceExecutionResponse | null,
   state: PacketFindingsSummary["state"],
 ): PacketFindingsSummary {
   return packetFindingsSummarySchema.parse({
-    ...deterministicFindingsAndProposalSummary(plan, action),
+    ...deterministicFindingsAndProposalSummary(plan, action, evidenceExecution),
     draftOnlyNotice:
       "Draft summary for human review only. It restates the validated plan and proposed action packet and is not a final real-estate or business decision.",
     state,
@@ -120,11 +122,14 @@ function fallbackWithState(
 export async function explainFindingsAndProposal(
   plan: EvaluationPlan,
   action: PlannedAction = proposedActionFromPlan(plan),
-  callModel: PacketSummaryModelCaller = callOpenAi,
+  evidenceOrCaller: EvidenceExecutionResponse | PacketSummaryModelCaller | null = null,
+  suppliedCaller: PacketSummaryModelCaller = callOpenAi,
 ): Promise<PacketFindingsSummary> {
-  const packet = assembleReviewableActionPacket(plan, action);
+  const evidenceExecution = typeof evidenceOrCaller === "function" ? null : evidenceOrCaller;
+  const callModel = typeof evidenceOrCaller === "function" ? evidenceOrCaller : suppliedCaller;
+  const packet = assembleReviewableActionPacket(plan, action, new Date().toISOString(), undefined, [], undefined, undefined, undefined, undefined, undefined, null, evidenceExecution);
   if (callModel === callOpenAi && !process.env.OPENAI_API_KEY?.trim()) {
-    return fallbackWithState(plan, action, "not_configured");
+    return fallbackWithState(plan, action, evidenceExecution, "not_configured");
   }
   try {
     const result = await callModel(packet);
@@ -140,7 +145,7 @@ export async function explainFindingsAndProposal(
       summary: output.summary,
     });
   } catch (error) {
-    if (error instanceof PacketSummaryError) return fallbackWithState(plan, action, error.code);
-    return fallbackWithState(plan, action, error instanceof z.ZodError ? "invalid_structure" : "provider_error");
+    if (error instanceof PacketSummaryError) return fallbackWithState(plan, action, evidenceExecution, error.code);
+    return fallbackWithState(plan, action, evidenceExecution, error instanceof z.ZodError ? "invalid_structure" : "provider_error");
   }
 }

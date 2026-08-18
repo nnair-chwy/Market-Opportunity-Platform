@@ -174,6 +174,11 @@ function canonicalEvidence(rows: Record<string, unknown>[], snapshotVersion: str
       qualityStatus: String(row.quality_status) as ExecutionEvidenceItem["qualityStatus"],
       observationStart: null,
       observationEnd: stringOrNull(row.observed_at),
+      period: stringOrNull(row.observed_at)
+        ? { kind: "as_of" as const, start: null, end: String(row.observed_at).slice(0, 10), label: `As of ${String(row.observed_at).slice(0, 10)}` }
+        : { kind: "not_provided" as const, start: null, end: null, label: "Period not provided" },
+      reportScope: null,
+      currency: null,
       allowedUse: String(row.allowed_use),
       sensitivity: String(row.sensitivity) as ExecutionEvidenceItem["sensitivity"],
       warning: stringOrNull(row.warning),
@@ -209,6 +214,14 @@ function googleAdsEvidence(rows: Record<string, unknown>[]): ExecutionEvidenceIt
     qualityStatus: String(row.qualityStatus) as ExecutionEvidenceItem["qualityStatus"],
     observationStart: stringOrNull(row.observationStart),
     observationEnd: stringOrNull(row.observationEnd),
+    period: {
+      kind: "date_range" as const,
+      start: String(row.observationStart).slice(0, 10),
+      end: String(row.observationEnd).slice(0, 10),
+      label: `${String(row.observationStart).slice(0, 10)} to ${String(row.observationEnd).slice(0, 10)}`,
+    },
+    reportScope: String(row.reportScope),
+    currency: String(row.currency),
     allowedUse: String(row.allowedUse),
     sensitivity: String(row.sensitivity) as ExecutionEvidenceItem["sensitivity"],
     warning: Array.isArray(row.warnings) && row.warnings.length ? row.warnings.map(String).join(" ") : null,

@@ -36,6 +36,9 @@ function result(overrides = {}) {
       qualityStatus: "warning",
       observationStart: null,
       observationEnd: "2026-07-31",
+      period: { kind: "as_of", start: null, end: "2026-07-31", label: "As of 2026-07-31" },
+      reportScope: null,
+      currency: null,
       allowedUse: "descriptive_context_only",
       sensitivity: "internal",
       warning: "Interpretation warning.",
@@ -70,7 +73,7 @@ async function component(t) {
 test("shared evidence view renders the required ordered market result and provenance", async (t) => {
   const EvidenceBundlePanel = await component(t);
   const html = renderToStaticMarkup(createElement(EvidenceBundlePanel, { result: result(), action: { nextStep: "Review missing evidence." } }));
-  const headings = ["Original question", "Answer available with limits", "Evidence used", "Calculation or comparison", "Reliability", "Unknowns", "Limitations", "Required approvals", "Proposed next action"];
+  const headings = ["Original question", "Answer available with limits", "Evidence-backed answer", "Calculation or comparison", "Evidence used", "Reliability", "Unknowns", "Limitations", "Required approvals", "Proposed next action"];
   let prior = -1;
   for (const heading of headings) {
     const index = html.indexOf(heading);
@@ -123,4 +126,37 @@ test("shared evidence view renders a controlled blocked state", async (t) => {
   assert.match(html, /Blocked by evidence gate/);
   assert.match(html, /An exact geography is required/);
   assert.doesNotMatch(html, /NaN|undefined/);
+});
+
+test("shared evidence view renders normalized comparison, coverage, and hypothesis screening tables", async (t) => {
+  const EvidenceBundlePanel = await component(t);
+  const comparisonHtml = renderToStaticMarkup(createElement(EvidenceBundlePanel, { result: result({
+    query: "multi_market_comparison_bundle",
+    originalQuestion: "Compare clinic orders in Seattle and Atlanta.",
+    geographyIds: ["cbsa:42660", "cbsa:12060"],
+    rows: [
+      { cbsaCode: "42660", cbsaName: "Seattle-Tacoma-Bellevue, WA", metricId: "total_orders", value: 244445, unit: "orders", evidenceStatus: "Derived" },
+      { cbsaCode: "12060", cbsaName: "Atlanta-Sandy Springs-Roswell, GA", metricId: "total_orders", value: 200000, unit: "orders", evidenceStatus: "Derived" },
+    ],
+  }) }));
+  assert.match(comparisonHtml, /Seattle-Tacoma-Bellevue/);
+  assert.match(comparisonHtml, /Atlanta-Sandy Springs-Roswell/);
+  assert.match(comparisonHtml, /No universal score was added/);
+
+  const coverageHtml = renderToStaticMarkup(createElement(EvidenceBundlePanel, { result: result({
+    query: "source_coverage_bundle",
+    rows: [{ cbsaCode: "42660", cbsaName: "Seattle-Tacoma-Bellevue, WA", hasClinicProfile: true, hasClinicActivity: true, hasGoogleAds: true, hasMarketContext: true, hasRegionalDemand: true }],
+  }) }));
+  assert.match(coverageHtml, /Source coverage indicates data presence only|Coverage does not indicate opportunity/);
+
+  const screeningHtml = renderToStaticMarkup(createElement(EvidenceBundlePanel, { result: result({
+    query: "growth_test_screening_bundle",
+    calculationVersion: "growth-test-screening-v1",
+    rows: [{ cbsaCode: "19740", cbsaName: "Denver-Aurora-Centennial, CO", rank: 1, score: 87.3, evidenceStatus: "Hypothesis" }],
+    guardrails: ["Do not use this screening rank to authorize campaign launch, spend, clinic opening, or a causal claim."],
+  }) }));
+  assert.match(screeningHtml, /Denver-Aurora-Centennial/);
+  assert.match(screeningHtml, /87\.3/);
+  assert.match(screeningHtml, /Hypothesis/);
+  assert.match(screeningHtml, /Do not use this screening rank/);
 });

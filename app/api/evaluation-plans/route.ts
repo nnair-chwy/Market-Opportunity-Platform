@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return Response.json({ status: "error", message: "Enter an evaluation question between 3 and 600 characters." }, { status: 400, headers });
   const configuredDemoPlan = planConfiguredDemoQuestion(parsed.data.question);
   let plan = configuredDemoPlan ?? planEvaluation(parsed.data.question, parsed.data.perspectiveId);
-  if (!configuredDemoPlan && process.env.OPENAI_API_KEY?.trim()) {
+  if (!configuredDemoPlan && plan.intent.selectedQueries.length === 0 && process.env.OPENAI_API_KEY?.trim()) {
     try { plan = await proposeEvaluationPlanWithAi(parsed.data.question, parsed.data.perspectiveId); }
     catch (error) { console.error("[evaluation-plan]", error instanceof Error ? error.name : "UnknownError"); }
   }

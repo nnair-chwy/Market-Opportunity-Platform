@@ -33,6 +33,20 @@ export function deriveResultWorkspaceType(input: {
   ) {
     return "clarification";
   }
+  if ([
+    "regional_context",
+    "clinic_context",
+    "google_ads_context",
+    "source_coverage",
+    "multi_source_evidence",
+    "multi_market_comparison",
+    "growth_test_screening",
+  ].includes(intent.topic)) {
+    return "adaptive_market_workspace";
+  }
+  if (intent.topic === "clinic_location" && !intent.selectedQueries.length && (geography.mode === "national" || geography.mode === "needs_selection")) {
+    return "evidence_readiness";
+  }
   if (capabilityId === "clinic_performance" || capabilityId === "local_growth_test") {
     return "evidence_readiness";
   }

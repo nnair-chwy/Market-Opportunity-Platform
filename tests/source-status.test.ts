@@ -73,9 +73,10 @@ actualSnapshotTest("records source hashes, quality states, and browser or AI bou
   assert.equal(presentFiles.every((file) => /^[a-f0-9]{64}$/.test(file.sha256) && file.rowCount > 0), true);
   assert.equal(presentFiles.every((file) => !file.file.startsWith("/") && !file.file.includes("..")), true);
 
-  const confidential = presentFiles.filter((file) => file.sensitivity === "confidential");
-  assert.ok(confidential.length > 0);
-  assert.equal(confidential.every((file) => file.browserAiExposure === "none"), true);
+  const clinicFiles = sourceFamily(status, "clinic").files;
+  assert.equal(clinicFiles.every((file) => file.sensitivity === "internal"), true);
+  assert.equal(clinicFiles.every((file) => file.browserAiExposure === "aggregate_only"), true);
+  assert.equal(presentFiles.filter((file) => file.sensitivity === "confidential").length, 0);
   assert.equal(sourceFamily(status, "seo").files.every((file) => file.browserAiExposure === "none"), true);
   assert.equal(sourceFamily(status, "google_ads").files.every((file) => file.browserAiExposure === "aggregate_only"), true);
 });

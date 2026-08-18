@@ -90,7 +90,7 @@ test("ambiguous and unavailable AI geography remains blocked without invented id
 test("clinic approval requests preserve the human approval gate", () => {
   const plan = planEvaluation("Where should Chewy approve opening a new clinic?");
   assert.equal(plan.capabilityId, "clinic_site_evaluation");
-  assert.equal(plan.resultWorkspaceType, "clinic_evaluation_surface");
+  assert.equal(plan.resultWorkspaceType, "evidence_readiness");
   assert.equal(plan.actions.some((action) => action.requiresApproval), true);
   assert.match(plan.missingApprovals.join(" "), /material site decision approval/i);
   assert.ok(plan.steps.some((step) => /permitted evaluation|accountable review|evidence gates/i.test(step.label)));

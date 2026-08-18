@@ -380,11 +380,13 @@ Each observation has:
 - `scoringEligibility: none`; and
 - `rankingEligibility: none`.
 
-The matched-location label must not be fuzzy-matched or silently treated as a
-CBSA, ZIP, DMA, trade area, or service area. The observations remain in a
-separate Parquet table rather than the canonical market observation table.
-Exact market joins and regional comparisons require a registered stable Google
-location ID and an approved deterministic geography bridge.
+The source-adapter observation must not silently treat the matched-location
+label as a CBSA, ZIP, DMA, trade area, or service area. The original observation
+remains in a separate Parquet table. Under ADR-031, a separate normalized
+local-demo table may attach an intuitive Census-assisted CBSA candidate. That
+candidate preserves its method, confidence, alternatives, warning, and
+`Hypothesis` status when appropriate. Exact production joins and regional
+ranking still require a stable Google location ID or reviewed bridge.
 
 CTR, average CPC, and cost per conversion are checked against their available
 reported inputs using declared rounding tolerances. The adapter preserves the
@@ -417,8 +419,9 @@ with no rows or evidence bundle. Synthetic evidence must be labeled
 The initial registered queries are:
 
 - exact-CBSA canonical market evidence;
-- exact-CBSA clinic performance readiness, which currently blocks confidential
-  rows from the response boundary; and
+- exact-CBSA clinic performance readiness. Aggregate clinic evidence classified
+  `internal` under ADR-031 may cross the local-demo response boundary, while
+  confidential or restricted rows remain blocked; and
 - Google Ads matched-location context, which returns descriptive source-label
   evidence while keeping stable geography IDs `null` and regional ranking
   blocked.
@@ -663,11 +666,12 @@ blockers, readiness flags, version metadata, and an optional draft packet. A
 comparison-ready state is impossible without a recorded `confirm` response.
 ## Configured local demo workflows
 
-The local presentation registers three exact starter questions in
-`lib/demo/scenarios.ts`. Market context and growth testing resolve to exact key
-`cbsa:38060`; the clinic comparison resolves to the checked-in synthetic
-three-clinic cohort. These defaults apply only to exact registered questions and
-must not leak into generic planning.
+The local presentation retains one exact configured synthetic clinic question
+in `lib/demo/scenarios.ts`. It proposes Synthetic South Clinic and the
+checked-in three-clinic cohort, requires reviewer confirmation, and remains
+`Hypothesis` evidence. Generic “this market,” “this clinic,” or unspecified
+regional-opportunity wording requires clarification. Phoenix is selected only
+when Phoenix is explicitly named in the submitted question.
 
 `lib/planning/execute-plan.ts` composes the low-level evidence responses into
 market-context, clinic-performance, clinic-site, or growth-test bundles. The
@@ -675,7 +679,95 @@ bundle preserves the original question, capability, plan ID, exact geography,
 component queries, missing approvals, and guardrails.
 
 The shared browser presentation renders every evidence item with source ID,
-snapshot ID, evidence status, quality status, observation period, allowed use,
-and execution mode. The existing `reviewable-action-packet-v1` packet may carry
-the same executed evidence response. It remains a draft for human review and
-does not authorize or send an action.
+snapshot ID, evidence status, quality status, typed period, report scope,
+currency, allowed use, and execution mode. `reviewable-action-packet-v2`
+carries the same executed evidence response and a deterministic
+`packet-answer-v1`. It remains a draft for human review and does not authorize
+or send an action.
+
+## Normalized local market-data layer
+
+ADR-031 adds `market-data-normalization-v1` for the twelve supplied non-SEO
+General Regional, Clinic, and Google Ads files. `lib/data-normalization/` owns:
+
+- a declarative source catalog with required columns, source grain, geographic
+  strategy, sensitivity, allowed use, and browser exposure;
+- a canonical registry sourced from the checked-in July 2023 Census CBSA
+  universe;
+- strict U.S. ZIP handling that never converts Canadian postal codes into U.S.
+  ZIPs;
+- explicit exact, high, medium, low, and unresolved geography states;
+- visible source-value, method, confidence, candidate, warning, evidence, and
+  review metadata;
+- aggregate regional, clinic, and inferred Google Ads tables;
+- a source-level coverage report, Parquet outputs, and one local DuckDB file;
+  and
+- registered `supported_regions`, `regional_context_by_cbsa`,
+  `clinic_context_by_cbsa`, `google_ads_context_by_cbsa`, and
+  `normalization_coverage` queries, plus the isolated
+  `growth_test_screening` calculation.
+
+The normalized layer never accepts arbitrary SQL. Its API returns aggregate
+local-demo evidence only and has scoring eligibility `none`. Medium- and
+low-confidence CBSA assignments are `Hypothesis`. State-only and national
+sources remain at their reported grain rather than being forced into CBSAs.
+Raw CSV files and the Downloads path are not copied into the snapshot or
+returned by the query contract.
+
+### Question-faithful normalized planning
+
+ADR-032 extends the constrained planning intent with requested metric IDs,
+source families, registered normalized queries, optional explicit metric
+sorting, and a ranking mode. Regional, clinic, Google Ads, coverage,
+multi-source, and two-to-five-market questions compile to that typed boundary.
+An ordinary descriptive or comparison plan has ranking mode `none` and cannot
+receive a hidden composite score. Editing the interpreted question creates a
+new plan and requires confirmation before execution.
+
+ADR-034 extends that boundary to clinic-location questions. A resolved named
+market compiles to `clinic_location` with exact CBSA IDs and registered
+`regional_context_by_cbsa` and `clinic_context_by_cbsa` queries. Google Ads is
+included only when requested and retains inferred-geography warnings. The
+composed response is `clinic_location_evidence_bundle`, has no ranking mode or
+scoring version, and preserves unavailable capacity, workforce, competitive,
+property, trade-area, economic, outcome, and approval evidence.
+
+The analysis brief carries the same structured topic, geography IDs, source
+families, requested metrics, and registered queries as the executable plan.
+Browser execution stops when those structured fields differ. National
+clinic-location questions without a registered deterministic ranking contract
+remain evidence-readiness investigations and cannot display a fabricated
+shortlist or market rank.
+
+`growth-test-screening-v1` is the only normalized cross-source ranking mode. It
+uses fixed weights of 30 percent 2024-to-2025 regional demand growth, 25 percent
+active customers per 1,000 households, 20 percent active-customer year-over-year
+growth, 15 percent veterinary-search Google Ads conversions, and 10 percent
+household count. Complete-cohort percentiles produce weighted contributions on
+a zero-to-100 scale. A market missing any input is excluded, weights are not
+redistributed, and tied scores use ascending CBSA code. The output records the
+configuration fingerprint and exclusions and is `Hypothesis` evidence with
+`local_demo_growth_test_screening_only` use.
+
+### Evidence-backed answer and durable saved packet
+
+ADR-033 adds a typed evidence period with `date_range`, `as_of`,
+`calendar_year`, `timeframe`, and `not_provided` states. Google Ads evidence
+also carries report scope and ISO currency. Query execution projects only the
+requested canonical metrics. Source-specific precedence removes duplicate
+representations while preserving distinct source periods and report scopes.
+
+`packet-answer-v1` contains:
+
+- answer state and planning topic;
+- a deterministic direct answer;
+- zero or more source-backed facts with metric, geography, raw and display
+  value, unit, period, report scope, source ID, evidence status, and warning;
+- explicit limitations; and
+- one proposed action with owner, next step, and approval state.
+
+`saved-action-packet-v2` stores the exact evaluation plan, executed evidence,
+packet answer, summary, full reviewable packet, and all snapshot, query, and
+calculation versions. Reopening v2 restores those artifacts without planning or
+query execution. A pre-v2 packet may be reconstructed only with a visible
+legacy notice.

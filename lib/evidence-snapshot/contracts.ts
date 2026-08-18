@@ -18,6 +18,17 @@ export const GOOGLE_ADS_SOURCE_REGISTRY = {
 } as const;
 
 export const evidenceStatusSchema = z.enum(["Confirmed", "Reported", "Derived", "Hypothesis", "Unknown"]);
+export const evidencePeriodSchema = z.object({
+  kind: z.enum(["date_range", "as_of", "calendar_year", "timeframe", "not_provided"]),
+  start: z.string().date().nullable(),
+  end: z.string().date().nullable(),
+  label: z.string().trim().min(1).max(120),
+}).strict().superRefine((value, ctx) => {
+  if (value.start && value.end && value.end < value.start) ctx.addIssue({ code: "custom", message: "Evidence period end must not precede start.", path: ["end"] });
+  if (value.kind === "date_range" && (!value.start || !value.end)) ctx.addIssue({ code: "custom", message: "Date-range evidence requires start and end dates.", path: ["start"] });
+  if ((value.kind === "as_of" || value.kind === "calendar_year") && !value.end) ctx.addIssue({ code: "custom", message: "As-of and calendar-year evidence require an end date.", path: ["end"] });
+});
+export type EvidencePeriod = z.infer<typeof evidencePeriodSchema>;
 export const snapshotManifestSchema = z.object({
   manifestVersion: z.string().min(1),
   snapshotVersion: z.string().min(1),
@@ -111,6 +122,9 @@ export const executionEvidenceItemSchema = z.object({
   qualityStatus: z.enum(["accepted", "valid", "warning", "rejected", "unknown"]),
   observationStart: z.string().nullable(),
   observationEnd: z.string().nullable(),
+  period: evidencePeriodSchema.default({ kind: "not_provided", start: null, end: null, label: "Period not provided" }),
+  reportScope: z.string().trim().min(1).max(160).nullable().default(null),
+  currency: z.string().length(3).nullable().default(null),
   allowedUse: z.string().min(1),
   sensitivity: z.enum(["public", "internal", "confidential", "restricted"]),
   warning: z.string().nullable(),
@@ -135,7 +149,12 @@ export const evidenceResponseQuerySchema = z.enum([
   "market_context_bundle",
   "clinic_performance_bundle",
   "clinic_site_evidence_bundle",
+  "clinic_location_evidence_bundle",
   "growth_test_bundle",
+  "normalized_evidence_bundle",
+  "multi_market_comparison_bundle",
+  "source_coverage_bundle",
+  "growth_test_screening_bundle",
 ]);
 
 export const evidenceExecutionResponseSchema = z.object({
@@ -145,7 +164,17 @@ export const evidenceExecutionResponseSchema = z.object({
   queryVersion: z.string().min(1),
   calculationVersion: z.string().min(1).nullable(),
   query: evidenceResponseQuerySchema,
-  componentQueries: z.array(z.enum(["canonical_market_evidence", "canonical_clinic_performance", "google_ads_matched_location_context"])),
+  componentQueries: z.array(z.enum([
+    "canonical_market_evidence",
+    "canonical_clinic_performance",
+    "google_ads_matched_location_context",
+    "supported_regions",
+    "regional_context_by_cbsa",
+    "clinic_context_by_cbsa",
+    "google_ads_context_by_cbsa",
+    "normalization_coverage",
+    "growth_test_screening",
+  ])),
   capability: executionCapabilitySchema.nullable(),
   planId: z.string().min(1).nullable(),
   originalQuestion: z.string().min(3).max(600).nullable(),
