@@ -29,12 +29,12 @@ const starterQuestions: Record<PerspectiveId, readonly [string, string]> = {
     "Which comparable metros have different CVC footprints, and what should we validate next?",
   ],
   marketing: [
-    "What regional marketing patterns are worth investigating?",
-    "Which comparable metros could support a test-and-control feasibility check?",
+    "Where is paid search response concentrated, and which regions need validation?",
+    "Which comparable metros have different paid search response percentiles?",
   ],
   pricing: [
-    "What regional pricing patterns are worth investigating?",
-    "Where might customer response to price or promotion differ, and what evidence would test it?",
+    "Where does monitored competitor availability differ by region?",
+    "Which comparable metros have different competitor-availability percentiles?",
   ],
 };
 
@@ -42,7 +42,7 @@ type AdaptiveEvaluationWorkspaceProps = {
   question: string;
   savedPackets: SavedPacketPreview[];
   onQuestionChange: (value: string) => void;
-  onSubmit: (perspectiveId?: PerspectiveId) => void;
+  onSubmit: (perspectiveId?: PerspectiveId, activeViewId?: PerspectiveViewId) => void;
   onPerspectiveChange: (perspectiveId: PerspectiveId) => void;
   onOpenSaved: () => void;
 };
@@ -60,6 +60,8 @@ export function AdaptiveEvaluationWorkspace({
   const [activeViews, setActiveViews] = useState(createDefaultActiveViews);
   const [perspectiveOpen, setPerspectiveOpen] = useState(false);
   const [mapMode, setMapMode] = useState<MapViewMode>("single");
+  const [layerManagerOpen, setLayerManagerOpen] = useState(false);
+  const [comparisonViewId, setComparisonViewId] = useState<PerspectiveViewId | null>(null);
   const [category, setCategory] = useState<WorkflowCategory>("all");
   const [includeMicropolitan, setIncludeMicropolitan] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -67,6 +69,7 @@ export function AdaptiveEvaluationWorkspace({
   const perspectives = listPerspectives();
   const activePerspective = getPerspective(perspectiveId);
   const views = listViewsForPerspective(perspectiveId);
+  const visibleViews = views.filter((view) => view.evidenceAvailability === "available");
   const activeViewId = activeViews[perspectiveId];
   const activeViewSelection = selectPerspectiveView(perspectiveId, activeViewId);
   const activeView =
@@ -75,6 +78,32 @@ export function AdaptiveEvaluationWorkspace({
       : activeViewSelection;
   const presentation = useMemo(() => resolveMapPresentation(activeView), [activeView]);
   const activeMapMode = coerceSupportedMapMode(mapMode, presentation);
+  const compatibleComparisonViews = visibleViews.filter(
+    (view) =>
+      view.viewId !== activeView.viewId &&
+      view.evidenceAvailability === "available" &&
+      view.geographyGrain === activeView.geographyGrain &&
+      view.mapBinding.kind === activeView.mapBinding.kind &&
+      (view.mapBinding.kind === "census_percentile" || view.mapBinding.kind === "workspace_snapshot"),
+  );
+  const comparisonView = comparisonViewId
+    ? compatibleComparisonViews.find((view) => view.viewId === comparisonViewId) ?? null
+    : null;
+
+  useEffect(() => {
+    setActiveViews((current) => {
+      const defaults = createDefaultActiveViews();
+      const next = { ...current };
+      let changed = false;
+      for (const perspective of listPerspectives()) {
+        if (!perspective.views.some((view) => view.viewId === current[perspective.perspectiveId])) {
+          next[perspective.perspectiveId] = defaults[perspective.perspectiveId];
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, []);
 
   useEffect(() => {
     if (!perspectiveOpen) return;
@@ -96,15 +125,25 @@ export function AdaptiveEvaluationWorkspace({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit(perspectiveExplicitlySelected ? perspectiveId : undefined);
+    onSubmit(
+      perspectiveExplicitlySelected ? perspectiveId : undefined,
+      perspectiveExplicitlySelected ? activeView.viewId : undefined,
+    );
   }
 
   function choosePerspective(next: PerspectiveId) {
     setPerspectiveId(next);
     setPerspectiveExplicitlySelected(true);
     setPerspectiveOpen(false);
+    setComparisonViewId(null);
     onPerspectiveChange(next);
-    const nextView = getPerspectiveView(next, activeViews[next]);
+    const nextViewSelection = selectPerspectiveView(next, activeViews[next]);
+    const nextView = "status" in nextViewSelection
+      ? getPerspectiveView(next, getPerspective(next).defaultViewId)
+      : nextViewSelection;
+    if (!resolveMapPresentation(nextView).supportsLayerMode) {
+      setLayerManagerOpen(false);
+    }
     setMapMode((current) =>
       coerceSupportedMapMode(current, resolveMapPresentation(nextView)),
     );
@@ -114,6 +153,10 @@ export function AdaptiveEvaluationWorkspace({
     const selected = selectPerspectiveView(perspectiveId, viewId);
     if ("status" in selected) return;
     setActiveViews((current) => ({ ...current, [perspectiveId]: viewId }));
+    setComparisonViewId(null);
+    if (!resolveMapPresentation(selected).supportsLayerMode) {
+      setLayerManagerOpen(false);
+    }
     setMapMode((current) =>
       coerceSupportedMapMode(current, resolveMapPresentation(selected)),
     );
@@ -175,7 +218,7 @@ export function AdaptiveEvaluationWorkspace({
           aria-label={`${activePerspective.label} views`}
         >
           <span>{activePerspective.label} views</span>
-          {views.map((view) => (
+          {visibleViews.map((view) => (
             <button
               key={view.viewId}
               type="button"
@@ -190,54 +233,110 @@ export function AdaptiveEvaluationWorkspace({
         </div>
 
         <div className="adaptive-view-controls" data-view-a-control="true">
-          <span>View A</span>
-          <select
-            aria-label="View A measure"
-            value={activeView.viewId}
-            onChange={(event) => chooseView(event.target.value as PerspectiveViewId)}
-          >
-            {views.map((view) => (
-              <option key={view.viewId} value={view.viewId}>
-                {view.label}
-              </option>
-            ))}
-          </select>
-          <div className="adaptive-mode-switch" role="group" aria-label="Map view mode">
-            <button
-              className={activeMapMode === "single" ? "active" : undefined}
-              type="button"
-              aria-pressed={activeMapMode === "single"}
-              onClick={() => setMapMode("single")}
+          <div className="adaptive-view-primary-row" data-view-row="a">
+            <label htmlFor="adaptive-view-a-select">View A</label>
+            <select
+              id="adaptive-view-a-select"
+              aria-label="View A measure"
+              value={activeView.viewId}
+              onChange={(event) => chooseView(event.target.value as PerspectiveViewId)}
             >
-              Single
-            </button>
+              {visibleViews.map((view) => (
+                <option key={view.viewId} value={view.viewId}>
+                  {view.label}
+                </option>
+              ))}
+            </select>
+            <div className="adaptive-mode-switch" role="group" aria-label="Analysis view">
+              <button
+                className={activeMapMode === "single" ? "active" : undefined}
+                type="button"
+                aria-pressed={activeMapMode === "single"}
+                onClick={() => {
+                  setMapMode("single");
+                  setLayerManagerOpen(false);
+                }}
+              >
+                Explore
+              </button>
+              <button
+                className={activeMapMode === "compare" ? "active" : undefined}
+                type="button"
+                aria-pressed={activeMapMode === "compare"}
+                disabled={!presentation.supportsComparison}
+                title={
+                  presentation.supportsComparison
+                    ? "Compare two to five regions"
+                    : "Compare mode is not supported for this view"
+                }
+                onClick={() => {
+                  setMapMode("compare");
+                  setLayerManagerOpen(false);
+                  setComparisonViewId(null);
+                }}
+              >
+                Compare regions
+              </button>
+            </div>
+          </div>
+          {comparisonView ? (
+            <div className="adaptive-view-b-control" id="adaptive-view-b-control">
+              <label htmlFor="adaptive-view-b-select">View B</label>
+              <select
+                id="adaptive-view-b-select"
+                aria-label="View B measure"
+                value={comparisonView.viewId}
+                onChange={(event) =>
+                  setComparisonViewId(event.target.value as PerspectiveViewId)
+                }
+              >
+                {compatibleComparisonViews.map((view) => (
+                  <option key={view.viewId} value={view.viewId}>{view.label}</option>
+                ))}
+              </select>
+              <div>
+                <strong>Compare views</strong>
+                <small>Drag the divider on the map. Both sides use the same geography and cohort.</small>
+              </div>
+              <button type="button" onClick={() => setComparisonViewId(null)} aria-label="Remove View B">×</button>
+            </div>
+          ) : null}
+          <div className="adaptive-view-secondary-actions" data-controls-owner={comparisonView ? "view-b" : "view-a"}>
             <button
-              className={activeMapMode === "compare" ? "active" : undefined}
+              className={`adaptive-layer-trigger${layerManagerOpen ? " active" : ""}`}
               type="button"
-              aria-pressed={activeMapMode === "compare"}
-              disabled={!presentation.supportsComparison}
-              title={
-                presentation.supportsComparison
-                  ? "Compare two to five regions"
-                  : "Compare mode is not supported for this view"
-              }
-              onClick={() => setMapMode("compare")}
-            >
-              Compare
-            </button>
-            <button
-              className={activeMapMode === "layer" ? "active" : undefined}
-              type="button"
-              aria-pressed={activeMapMode === "layer"}
+              aria-expanded={layerManagerOpen}
+              aria-controls="adaptive-map-layer-manager"
               disabled={!presentation.supportsLayerMode}
               title={
                 presentation.supportsLayerMode
-                  ? "Toggle approved regional layers"
-                  : "Layer mode is not supported for this view"
+                  ? "Show or hide compatible map overlays"
+                  : "Map layers are not available for this view"
               }
-              onClick={() => setMapMode("layer")}
+              onClick={() => setLayerManagerOpen((open) => !open)}
             >
-              Layer
+              <span aria-hidden="true">◇</span> Map layers
+            </button>
+            <button
+              className={`adaptive-add-view-trigger${comparisonView ? " active" : ""}`}
+              type="button"
+              aria-expanded={Boolean(comparisonView)}
+              aria-controls="adaptive-view-b-control"
+              disabled={!compatibleComparisonViews.length}
+              title={
+                compatibleComparisonViews.length
+                  ? "Add a second compatible measure and compare with a draggable divider"
+                  : "No second compatible view is available"
+              }
+              onClick={() => {
+                setMapMode("single");
+                setLayerManagerOpen(false);
+                setComparisonViewId((current) =>
+                  current ? null : compatibleComparisonViews[0]?.viewId ?? null,
+                );
+              }}
+            >
+              <span aria-hidden="true">＋</span>{comparisonView ? "Compare views" : "Add view"}
             </button>
           </div>
         </div>
@@ -246,7 +345,9 @@ export function AdaptiveEvaluationWorkspace({
       <AdaptiveMarketWorkspace
         opening
         activeView={activeView}
+        comparisonView={comparisonView}
         mapMode={activeMapMode}
+        showLayerManager={layerManagerOpen}
         category={category}
         onCategoryChange={setCategory}
         includeMicropolitan={includeMicropolitan}

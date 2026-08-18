@@ -23,8 +23,12 @@
       "grain": "activity_date_x_product_part_number",
       "knownFields": ["ACTIVITY_DATE", "PRODUCT_PART_NUMBER", "COUNTRY", "PRODUCT_MERCH_CLASSIFICATION1", "PRODUCT_MERCH_CLASSIFICATION2", "PRODUCT_MERCH_CLASSIFICATION3", "PRODUCT_MANUFACTURER_NAME", "CHEWY_PRICEBOT_PRICE", "LIST_PRICE", "MIN_COMPETITOR_PRICE", "PSE_COST", "RAW_PRODUCT_COST", "PRODUCT_COST", "NET_SALES", "UNITS_SOLD", "TOTAL_DISCOUNTS", "SHIPPING_REVENUE", "ELASTICITY", "PRICING_STRATEGY", "PRICE_DRIVER"],
       "intendedFile": "pse-pricing-economics_by-us-sku-current-day.csv",
+      "approvedSnapshot": "data/approved/pricing-economics/current.json",
+      "approvedDatasetId": "pricing_chewy_economics_daily_v1",
+      "approvedOutputGrain": "current_date_x_us_top_level_merchandise_category",
+      "approvedStatus": "checked_in_and_runtime_validated_2026-08-17",
       "use": "Product economics, price position, materiality, and sensitivity context",
-      "limitations": ["PSE cost, raw product cost, and modeled product cost have distinct definitions", "Coverage and historical restatement behavior require profiling", "The table contains Canada rows and must be filtered to USA", "SKU economics are not destination-specific cost-to-serve"],
+      "limitations": ["PSE cost, raw product cost, and modeled product cost have distinct definitions", "Coverage and historical restatement behavior require profiling", "The table contains Canada rows and must be filtered to USA", "SKU economics are not destination-specific cost-to-serve", "The checked-in current-day snapshot contains no non-zero net-sales rows and is not outcome evidence"],
       "sourceIds": ["SRC-025", "SRC-026"]
     },
     {

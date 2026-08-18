@@ -118,6 +118,58 @@ function fallbackWithState(
   });
 }
 
+function fallbackFromPacket(
+  packet: ReviewableActionPacket,
+  state: PacketFindingsSummary["state"],
+): PacketFindingsSummary {
+  const section = (id: ReviewableActionPacket["finalAnswer"]["sections"][number]["sectionId"]) =>
+    packet.finalAnswer.sections.find((item) => item.sectionId === id)?.content ?? "Not available.";
+  return packetFindingsSummarySchema.parse({
+    title: "Findings and proposed action",
+    draftOnlyNotice: "Draft summary for human review only. It restates the validated action packet and is not a final real-estate or business decision.",
+    origin: "deterministic_fallback",
+    state,
+    modelVersion: null,
+    promptVersion: PACKET_SUMMARY_PROMPT_VERSION,
+    evidenceIndicates: boundedPacketText(section("direct_answer")),
+    whyActionRelevant: boundedPacketText(`${packet.action.title}: ${packet.action.summary}`),
+    ownerNextStep: boundedPacketText(`${packet.action.owner} should ${packet.action.nextStep} Timing: ${packet.action.timing}.`),
+    remainsUnknown: boundedPacketText(section("missing_evidence")),
+  });
+}
+
+function boundedPacketText(value: string, maximum = 600) {
+  const normalized = value.trim();
+  if (normalized.length <= maximum) return normalized;
+  const clipped = normalized.slice(0, maximum - 1);
+  return `${clipped.slice(0, Math.max(1, clipped.lastIndexOf(" ")))}…`;
+}
+
+export async function explainReviewablePacket(
+  packet: ReviewableActionPacket,
+  callModel: PacketSummaryModelCaller = callOpenAi,
+): Promise<PacketFindingsSummary> {
+  if (callModel === callOpenAi && !process.env.OPENAI_API_KEY?.trim()) {
+    return fallbackFromPacket(packet, "not_configured");
+  }
+  try {
+    const result = await callModel(packet);
+    const output = validateModelSummary(result.output, packet);
+    return packetFindingsSummarySchema.parse({
+      title: "Findings and proposed action",
+      draftOnlyNotice: "AI-generated draft summary for human review only. It restates the validated action packet and is not a final real-estate or business decision.",
+      origin: "ai",
+      state: "available",
+      modelVersion: result.model,
+      promptVersion: PACKET_SUMMARY_PROMPT_VERSION,
+      ...output,
+    });
+  } catch (error) {
+    if (error instanceof PacketSummaryError) return fallbackFromPacket(packet, error.code);
+    return fallbackFromPacket(packet, error instanceof z.ZodError ? "invalid_structure" : "provider_error");
+  }
+}
+
 export async function explainFindingsAndProposal(
   plan: EvaluationPlan,
   action: PlannedAction = proposedActionFromPlan(plan),

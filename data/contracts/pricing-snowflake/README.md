@@ -20,6 +20,14 @@ data/approved/snowflake/pricing/<snapshot-date>/raw/
 No pricing CSV is checked in. Table documentation and a sample SQL statement do
 not establish workspace access or repository approval.
 
+The minimized, checksum-verified national category snapshot is checked in at
+`data/approved/pricing-economics/current.json` and registered as
+`pricing_chewy_economics_daily_v1`. It retains eight top-level merchandise
+categories from 13,359 source rows and removes SKU, manufacturer, customer,
+order, address, and postal identifiers. Its current-day export has no non-zero
+net-sales rows, so it is price/cost context only—not sales, regional outcome, or
+local-profitability evidence.
+
 ## Recommended extraction order
 
 1. Competitor price, availability, coupon, and equalized price by ZIP, SKU,
@@ -75,3 +83,13 @@ automatically recommend a price change.
 
 Local validation and model-preparation files are descriptively named under
 `data/approved/snowflake/pricing/2026-08-17/raw/` and remain ignored by Git.
+
+Regional Chewy outcomes must validate against
+`regionalPricingOutcomeSnapshotSchema` before use. The contract requires week ×
+CBSA × top-level category aggregates, at least 50 distinct orders per retained
+cell, no direct identifiers or postal codes, and explicit completeness states
+for cost and contribution. No approved regional output is registered yet:
+`ORDER_LINE` exposes economics and a sensitive `CUSTOMER_ADDRESS_ID`, but the
+current discovery artifacts do not identify an approved destination-geography
+join. Local profitability therefore remains blocked instead of being inferred
+from national economics or fulfillment `SITE_ID`.

@@ -19,7 +19,7 @@ Introduce a typed perspective and view catalog in `lib/perspectives/` that
 defines Pricing, Marketing, and CVC perspectives. Each view declares its
 measure namespace, geography grain, source IDs, evidence status, allowed use,
 scoring eligibility, legend, empty state, supported question types, and whether
-comparison or layer modes are allowed.
+regional comparison or optional display overlays are allowed.
 
 The opening page keeps the existing full-viewport map, floating perspective
 dropdown, view pills, and question composer. Active view state is stored per
@@ -27,10 +27,23 @@ perspective. View changes update the map title, measure binding, legend, source
 label, and evidence boundary through deterministic presentation resolution.
 
 Unavailable or evidence-needed views render an explicit empty state. They do
-not invent synthetic values. Available CVC public measures remain
+not invent synthetic values. Pricing defaults to observed competitor
+availability and Marketing defaults to matched-postal paid-search response
+when their approved aggregate workspace snapshot is packaged. Available CVC public measures remain
 `market_context_only` with scoring eligibility `none`. Perspective measure IDs
 are namespaced and cannot enter another perspective’s calculations. No
 universal cross-perspective score is created.
+
+`Explore` and `Compare regions` are analysis modes. Compare builds a deliberate
+two-to-five-region set at one compatible measure, geography, source, vintage,
+and cohort, then shows raw values, percentiles, and differences from the first
+selection. A map click previews a region; it does not silently add it.
+
+`Map layers` is a separate display drawer rather than an analysis mode. The
+primary measure stays visible. Optional workflow, current-location, and
+missing-data overlays use separate symbols and legends, remain display-only,
+and never create a blended or hidden score. Source and evidence details are
+available on demand.
 
 Canonical planning and execution stay in `lib/evaluation-contracts.ts`,
 `lib/evaluation-operators.ts`, `lib/capability-registry.ts`, and
@@ -39,11 +52,16 @@ selection.
 
 ## Consequences
 
-- Pricing and Marketing opening views fail safely until approved sources exist.
+- Pricing and Marketing render their approved descriptive workspace snapshots;
+  unsupported price, customer-response, incrementality, economics, and action
+  views continue to fail safely.
 - Household demand and market expansion context use `SRC-016` as public context
   only.
 - Clinic footprint uses confirmed public clinic locations without choropleth
   scoring.
+- Region selection now produces an explicit same-cohort comparison result
+  instead of an unexplained collection of map chips.
+- Display overlays remain separate from analytical comparison and scoring.
 - Question-to-plan-to-action-packet, saved packets, packet-scoped Ask AI, sector
   routes, and governed adapters remain unchanged.
 

@@ -71,8 +71,8 @@ const APPROVED_MAP_LAYERS: Record<ApprovedMapLayerId, ApprovedMapLayer> = {
   },
   workflow_category: {
     layerId: "workflow_category",
-    label: "Workflow or category",
-    legendLabel: "Workflow category context",
+    label: "Workflow status",
+    legendLabel: "Show Current, Potential, Evaluated, and unclassified market status.",
     sourceIds: ["SYN-MARKET-WORKFLOW-01"],
     vintage: "workflow-v1",
     evidenceStatus: "Hypothesis",
@@ -87,8 +87,8 @@ const APPROVED_MAP_LAYERS: Record<ApprovedMapLayerId, ApprovedMapLayer> = {
   },
   current_locations: {
     layerId: "current_locations",
-    label: "Current locations",
-    legendLabel: "Current clinic locations",
+    label: "Current clinic locations",
+    legendLabel: "Show confirmed public clinic locations as pins.",
     sourceIds: ["SRC-009"],
     vintage: "public-clinic-directory",
     evidenceStatus: "Confirmed",
@@ -119,8 +119,8 @@ const APPROVED_MAP_LAYERS: Record<ApprovedMapLayerId, ApprovedMapLayer> = {
   },
   non_scored_unavailable: {
     layerId: "non_scored_unavailable",
-    label: "Non-scored or unavailable",
-    legendLabel: "Non-scored / unavailable regions",
+    label: "Regions with missing data",
+    legendLabel: "Keep regions without a value visible instead of hiding them.",
     sourceIds: ["SRC-016"],
     vintage: "view-bound",
     evidenceStatus: "Unknown",
@@ -155,8 +155,8 @@ export function resolveApprovedMapLayer(
 export function createDefaultLayerVisibility(): Record<ApprovedMapLayerId, boolean> {
   return {
     active_measure: true,
-    workflow_category: true,
-    current_locations: true,
+    workflow_category: false,
+    current_locations: false,
     public_context: true,
     non_scored_unavailable: true,
   };
@@ -184,7 +184,9 @@ export function resolveLayerForPresentation(
           ? "acs-2024-5yr"
           : presentation.mapBinding.kind === "clinic_locations"
             ? "public-clinic-directory"
-            : "unavailable",
+            : presentation.mapBinding.kind === "workspace_snapshot"
+              ? presentation.mapBinding.datasetId
+              : "unavailable",
       evidenceStatus:
         presentation.evidenceAvailability === "available" ? "Confirmed" : "Unknown",
       evidenceAvailability: presentation.evidenceAvailability,

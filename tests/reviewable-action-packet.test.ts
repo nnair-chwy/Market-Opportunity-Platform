@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  actionForInvestigationLead,
   assembleReviewableActionPacket,
   buildInsightActionPlan,
   deterministicFindingsAndProposalSummary,
+  formatDecisionBriefDocument,
   formatReviewableActionPacketDocument,
   planEvaluation,
   proposedActionFromPlan,
@@ -28,6 +30,7 @@ test("reviewable action packet preserves action fields and provenance for downlo
   assert.match(packet.evidenceBoundary, /does not rank business opportunity/i);
   assert.match(packet.reviewDisclaimer, /does not approve/i);
   assert.match(packet.reviewDisclaimer, /was not sent by email, Slack/i);
+  assert.deepEqual(packet.answerContract, plan.answerContract);
 
   const document = formatReviewableActionPacketDocument(packet);
   assert.match(document, /Draft action packet \(reviewable\)/);
@@ -39,9 +42,27 @@ test("reviewable action packet preserves action fields and provenance for downlo
   assert.match(document, /Missing evidence/);
   assert.match(document, /Missing approvals/);
   assert.match(document, /Calculation and evidence versions/);
+  assert.match(document, /Final-answer contract/);
   assert.match(document, new RegExp(action.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(document, new RegExp(action.nextStep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(document, /approved for execution|message sent/i);
+});
+
+test("selected investigation evidence replaces the generic plan action in the decision brief", () => {
+  const plan = planEvaluation("Which region are we paying more than we should for ads?", "marketing");
+  const investigation = runMarketInvestigation(plan);
+  const lead = investigation.leads[0];
+  const action = actionForInvestigationLead(proposedActionFromPlan(plan), investigation, lead);
+  const packet = assembleReviewableActionPacket(plan, action, "2026-08-18T12:00:00.000Z", investigation);
+  const document = formatDecisionBriefDocument(packet);
+
+  assert.equal(action.title, `Validate ${lead.title}`);
+  assert.equal(action.nextStep, lead.nextEvidence);
+  assert.match(action.evidence.join(" "), /cost per attributed conversion/i);
+  assert.match(document, /higher paid-search cost with weaker attributed conversion efficiency than comparable markets/i);
+  assert.match(document, /Portfolio pattern/);
+  assert.match(document, /not a time trend/i);
+  assert.doesNotMatch(document, /name the decision, geography or cohort, and required output, then resubmit/i);
 });
 
 test("deterministic findings summary covers the four required review points", () => {
@@ -56,6 +77,21 @@ test("deterministic findings summary covers the four required review points", ()
   assert.match(summary.ownerNextStep, new RegExp(action.owner.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(summary.ownerNextStep, new RegExp(action.nextStep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(summary.remainsUnknown, /Missing evidence|human review|does not approve/i);
+});
+
+test("deterministic findings summary bounds long unknowns instead of crashing review", () => {
+  const plan = planEvaluation("Which region are we paying more than we should for ads?", "marketing", "paid_search_cpc");
+  const longPlan = {
+    ...plan,
+    missingEvidence: Array.from(
+      { length: 24 },
+      (_, index) => `Evidence requirement ${index + 1} needs an approved owner, definition, geography, timeframe, and source lineage`,
+    ),
+  };
+  const summary = deterministicFindingsAndProposalSummary(longPlan, proposedActionFromPlan(plan));
+  assert.ok(summary.remainsUnknown.length <= 600);
+  assert.match(summary.remainsUnknown, /Missing evidence/i);
+  assert.match(summary.remainsUnknown, /…$/);
 });
 
 test("packet AI summary falls back when the model is unavailable", async () => {
@@ -118,7 +154,7 @@ test("reviewable packet exports evidence readiness and the generated execution p
     evidencePlan,
     definition,
   );
-  assert.equal(packet.evidencePlan?.items.find((item) => item.id === "media_exposure")?.availability, "missing");
+  assert.equal(packet.evidencePlan?.items.find((item) => item.id === "media_exposure")?.availability, "partial");
   assert.equal(packet.evaluationDefinition?.status, "partially_executable");
   const document = formatReviewableActionPacketDocument(packet);
   assert.match(document, /Evidence readiness and generated execution plan/);
@@ -183,4 +219,36 @@ test("download report contains connected evidence, limitations, and an actionabl
   assert.match(document, /Hold:/);
   assert.match(document, /Stop:/);
   assert.match(document, /Done when:/);
+});
+
+test("decision brief leads with the answer and leaves audit mechanics in the appendix", () => {
+  const plan = planEvaluation("Where should we open the next CVC clinic?", "cvc");
+  const proposed = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  const brief = { ...proposed, status: "confirmed" as const, confirmedAt: "2026-08-17T18:00:00.000Z" };
+  const investigation = runConfirmedMarketInvestigation(plan, brief);
+  const actionPlan = buildInsightActionPlan(plan, investigation, investigation.leads[0], brief, brief.confirmedAt);
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-17T18:01:00.000Z",
+    investigation,
+    [],
+    brief,
+    undefined,
+    undefined,
+    { selectedLeadId: investigation.leads[0].id, contextMetric: "household_count" },
+    actionPlan,
+  );
+  const document = formatDecisionBriefDocument(packet);
+  assert.match(document, /^# Decision brief:/);
+  assert.match(document, /## Recommendation/);
+  assert.match(document, /## What the evidence supports/);
+  assert.match(document, /## Screening signals—not final findings/);
+  assert.match(document, /## What is still unknown/);
+  assert.match(document, /## Checks that could change the conclusion/);
+  assert.match(document, /## Recommended next action/);
+  assert.match(document, /audit appendix contains/);
+  assert.doesNotMatch(document, /## Final-answer contract/);
+  assert.doesNotMatch(document, /## Structured packet \(JSON\)/);
+  assert.ok(document.length < formatReviewableActionPacketDocument(packet).length / 2);
 });

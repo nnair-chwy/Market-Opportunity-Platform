@@ -181,6 +181,77 @@ Public map percentiles use `compare_cohort` with one compatible `SRC-016`
 measure and an explicit metro/micro and workflow cohort. Missing values remain
 unranked. The output is `market_context_only` and has no scoring eligibility.
 
+### Pre-investigation answer contract
+
+Evaluation plan version `1.1.0` includes the versioned `AnswerContract` defined
+in `lib/planning/answer-contract.ts`. Deterministic code creates it after the
+intent, geography, capability, and execution status are validated and before
+investigation begins. The contract records:
+
+- intended decision, primary user, accountable reviewer, geography, timeframe,
+  and comparison cohort;
+- answer mode, strongest permitted conclusion, prohibited conclusions, and a
+  safe fallback outcome;
+- required direct-answer, findings, contrary-evidence, uncertainty,
+  missing-evidence, source/version, and permitted-next-action sections;
+- shared claim rules and deterministic completion criteria; and
+- Clinic, Marketing, or Pricing validity questions with source IDs and explicit
+  `connected`, `documented_not_approved`, `missing`, or `not_applicable`
+  readiness.
+
+`documented_not_approved` means the evidence can inform discovery or explain a
+blocker but cannot satisfy an approved evidence requirement. The answer
+contract does not select evidence, change an `EvaluationContract`, add an
+operator, approve a source, calculate a result, or authorize an action. It is
+shown at the human checkpoint and retained in the reviewable packet.
+
+The contract also records a decision owner, unit of analysis, and framing
+proposal provenance. An AI proposal may emphasize only requirement IDs from
+the selected versioned domain pack and may ask unresolved questions. The
+deterministic compiler preserves the canonical decision restatement and drops
+unknown requirement IDs.
+
+### Answer-domain packs and semantic validation
+
+`lib/planning/answer-domain-packs.ts` contains versioned Clinic, Marketing, and
+Pricing vocabulary, validity requirements, possible source IDs, prohibited
+conclusions, and bounded examples. The packs do not connect or approve their
+listed evidence.
+
+`validateAnswerContract` returns a versioned validation report. It checks
+structure plus plan identity, perspective, decision owner, decision boundary,
+unit of analysis, required evidence references, reviewed domain-pack
+membership, completion criteria, and conclusion authority. Coverage and
+composition stop when this report is invalid.
+
+### Investigation coverage and final-answer composition
+
+`checkInvestigationCoverage` compares a validated contract with the attached
+`MarketInvestigation`. Each required answer section and domain requirement is
+recorded as `covered`, `unsupported`, `blocked`, or `not_applicable`, with
+source IDs and investigation-lead IDs where available. A finding does not
+satisfy a domain requirement whose evidence is missing or
+`documented_not_approved`.
+
+`composeFinalAnswer` deterministically fills the seven required sections:
+direct answer, evidence-backed findings, contrary evidence, uncertainty,
+missing evidence, sources and versions, and permitted next action. Each section
+is separately labeled `supported`, `unsupported`, or `blocked`. The composed
+answer retains the coverage version, unsupported requirement IDs, strongest
+supported conclusion, accountable reviewer, and draft-only disclaimer.
+
+The reviewable packet contains all three artifacts separately: the original
+pre-investigation contract, the post-investigation coverage report, and the
+contract-complete draft answer.
+
+### Answer evaluation fixtures
+
+Versioned fixtures compare expected answer mode, fallback, domain requirement
+IDs, final status, seven-section shape, and prohibited-conclusion boundary.
+Current cases are labeled `synthetic_regression`. They must not be described as
+analyst-approved historical validation until a reviewer supplies and approves
+representative questions, expected contracts, and expected conclusions.
+
 ### Review-page geographic focus
 
 `lib/planning/map-focus.ts` resolves a deterministic review-map focus from the
@@ -240,6 +311,24 @@ support, and a deterministic map binding.
 Perspective measures remain isolated by namespace. Public Census bindings stay
 `market_context_only` with scoring eligibility `none`. Unavailable views expose
 an explicit empty state and do not impute values or create a universal score.
+
+The checked-in `workspace-snapshot-v1` bundle adds eight descriptive, aggregate
+CBSA views. Pricing exposes monitored competitor availability, offer-row-
+weighted equalized price, monitored offer volume, and summed observed SKU
+breadth. Marketing exposes paid-search clicks, impressions, recomputed click-
+through rate, and recomputed average cost per click. The deterministic build
+uses the versioned Census ZCTA
+representative-point file to assign source postal geographies to CBSA polygons,
+records input and mapped coverage, and leaves unmapped areas unscored. The
+browser receives only CBSA values and coverage metadata, not either raw export.
+
+Both views use `allowed_use: internal_shadow_evaluation_only` and
+`scoring_eligibility: none`. Their displayed percentiles are within-cohort
+descriptive positions, not an attractiveness, price-opportunity, marketing-
+opportunity, or cross-perspective score. The Pricing view cannot establish
+complete competitor coverage, Chewy economics, customer response, or pricing
+authority. The Marketing view cannot establish total demand, unique reach,
+incrementality, or budget authority.
 
 ### Deterministic operator boundary
 
@@ -599,3 +688,39 @@ The process-local run records status, a visible seven-step plan, allowlisted
 tool invocations, evidence receipts, the segmentation request and response,
 blockers, readiness flags, version metadata, and an optional draft packet. A
 comparison-ready state is impossible without a recorded `confirm` response.
+
+## Joined regional paid-search investigation snapshot
+
+The approved paid-search investigation bundle is derived from the same retail
+matched-postal Google Ads export and fixed 30-day window as `SRC-018`. Postal
+prefixes are treated as 2025 ZCTAs and their internal points are assigned to
+2024 CBSA polygons. The output contains only aggregate CBSA measures and source
+metadata; no customer, order, address, query, or campaign identifiers enter the
+checked-in bundle.
+
+The bundle preserves cost, impressions, clicks, attributed conversions, and
+their deterministic derived rates: click-through rate, average cost per click,
+attributed conversion rate, and cost per attributed conversion. Rates are
+recomputed from aggregate numerators and denominators rather than averaged
+across postal rows. Each retained CBSA may be joined to `SRC-016` population,
+households, median household income, and population density at the same CBSA
+grain. Census measures remain context only and are never relabeled as pet
+ownership, customer demand, or advertising outcomes.
+
+For questions about possible advertising overpayment, the investigator first
+restricts to the highest-CPC quintile and then orders candidates
+lexicographically by higher cost per attributed conversion, lower attributed
+conversion rate, and higher CPC. It does not calculate a blended opportunity or
+efficiency score. Platform conversions remain descriptive because conversion-
+action semantics, campaign/query/device mix, privacy-safe regional orders, new
+customers, net sales, contribution, and incrementality are not connected at a
+compatible geography and period.
+
+The prior adaptive-workspace state dog-ownership table is restored as optional
+coarse context. It may be shown only when a CBSA is wholly within one state and
+that state has a reported value. It is never allocated to a CBSA, used in lead
+ordering, or labeled as metro pet-owner density. Multi-state CBSAs and states
+without survey values remain unfilled. The source is the AVMA Pet Ownership &
+Demographics Sourcebook 2017–2018 edition, Table 16; its estimates are dated and
+cannot substitute for a current regional pet-household or Chewy customer
+denominator.

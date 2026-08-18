@@ -3,14 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
 import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
-import { DecisionGraphAnimation } from "@/components/decision-workflow/DecisionGraphAnimation";
+import { AnswerCoveragePanel } from "@/components/decision-workflow/AnswerCoveragePanel";
+import { DecisionGraphAnimation, type DecisionGraphStep } from "@/components/decision-workflow/DecisionGraphAnimation";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
 import { InsightActionPlanPanel } from "@/components/decision-workflow/InsightActionPlanPanel";
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
+import { RecommendationRevisionBar } from "@/components/decision-workflow/RecommendationRevisionBar";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
-import type { PerspectiveId } from "@/lib/perspectives";
+import type { PerspectiveId, PerspectiveViewId } from "@/lib/perspectives";
 import { buildAnalysisBrief, type AnalysisBrief } from "@/lib/planning/analysis-brief";
 import {
   buildEvidencePlan,
@@ -20,6 +22,8 @@ import {
 } from "@/lib/planning/evidence-plan";
 import {
   answerInvestigationFollowUp,
+  recommendedInvestigationRevision,
+  reviseMarketInvestigation,
   runConfirmedMarketInvestigation,
   runMarketInvestigation,
   type InvestigationFollowUp,
@@ -28,9 +32,11 @@ import {
 } from "@/lib/planning/market-investigation";
 import {
   assembleReviewableActionPacket,
+  actionForInvestigationLead,
   buildInsightActionPlan,
   buildSisterFollowUpQuestion,
   deterministicFindingsAndProposalSummary,
+  downloadDecisionBrief,
   downloadReviewableActionPacket,
   evaluationPlanErrorSchema,
   evaluationPlanResponseSchema,
@@ -68,6 +74,18 @@ type SavedPacket = {
   evaluationDefinition?: EvaluationDefinitionDraft;
   selectedLeadId?: string | null;
   selectedContextMetric?: CbsaAcsMetricKey;
+  recommendationDrafts?: RecommendationDraft[];
+  activeDraftId?: string | null;
+};
+
+type RecommendationDraft = {
+  id: string;
+  number: number;
+  investigation: MarketInvestigation;
+  selectedLeadId: string | null;
+  selectedContextMetric: CbsaAcsMetricKey;
+  followUps: InvestigationFollowUp[];
+  analystPrompt?: string;
 };
 
 function nowLabel() {
@@ -78,12 +96,6 @@ function nowLabel() {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date());
-}
-
-function statusForStep(index: number, activeStep: number) {
-  if (activeStep > index) return "complete";
-  if (activeStep === index) return "active";
-  return "pending";
 }
 
 function proposalMethodLabel(method: EvaluationPlan["proposalMethod"]) {
@@ -101,6 +113,28 @@ function workspaceHeading(plan: EvaluationPlan, investigation?: MarketInvestigat
 
 function geographyModeLabel(plan: EvaluationPlan) {
   return plan.geographyResolution.mode.replaceAll("_", " ");
+}
+
+function questionMapMetric(plan: EvaluationPlan): CbsaAcsMetricKey {
+  if (plan.intent.requestedMeasure !== "none") return plan.intent.requestedMeasure;
+  if (plan.perspectiveId === "marketing") return "population_density";
+  if (plan.perspectiveId === "pricing") return "median_household_income";
+  return "household_count";
+}
+
+function defaultLeadForQuestion(plan: EvaluationPlan, investigation: MarketInvestigation) {
+  const patternByMeasure: Partial<Record<EvaluationPlan["intent"]["requestedMeasure"], RegExp>> = {
+    total_population: /\bpopulation\b/i,
+    household_count: /\bhouseholds?\b/i,
+    median_household_income: /\bincome\b/i,
+    housing_unit_count: /\bhousing\b/i,
+    population_density: /\bdens(?:ity|e)\b/i,
+  };
+  const pattern = patternByMeasure[plan.intent.requestedMeasure];
+  if (!pattern) return investigation.leads[0] ?? null;
+  return investigation.leads.find((lead) => pattern.test(`${lead.title} ${lead.observation} ${lead.businessMeaning}`))
+    ?? investigation.leads[0]
+    ?? null;
 }
 
 export function DecisionWorkflowApp() {
@@ -124,6 +158,8 @@ export function DecisionWorkflowApp() {
   const [evidencePlan, setEvidencePlan] = useState<EvidencePlan | null>(null);
   const [evaluationDefinition, setEvaluationDefinition] = useState<EvaluationDefinitionDraft | null>(null);
   const [selectedContextMetric, setSelectedContextMetric] = useState<CbsaAcsMetricKey>("household_count");
+  const [recommendationDrafts, setRecommendationDrafts] = useState<RecommendationDraft[]>([]);
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
 
@@ -140,6 +176,11 @@ export function DecisionWorkflowApp() {
   const selectedLead = useMemo(
     () => investigation?.leads.find((lead) => lead.id === selectedLeadId) ?? investigation?.leads[0] ?? null,
     [investigation, selectedLeadId],
+  );
+
+  const packetAction = useMemo(
+    () => selectedAction ? actionForInvestigationLead(selectedAction, investigation, selectedLead) : undefined,
+    [investigation, selectedAction, selectedLead],
   );
 
   const displayedGeographicFocus = useMemo<GeographicFocus | null>(() => {
@@ -176,10 +217,10 @@ export function DecisionWorkflowApp() {
   );
 
   const reviewablePacket = useMemo(
-    () => (plan && selectedAction
+    () => (plan && packetAction
       ? assembleReviewableActionPacket(
         plan,
-        selectedAction,
+        packetAction,
         new Date().toISOString(),
         investigation ?? undefined,
         investigationFollowUps,
@@ -190,8 +231,41 @@ export function DecisionWorkflowApp() {
         insightActionPlan ?? undefined,
       )
       : null),
-    [analysisBrief, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId],
+    [analysisBrief, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, packetAction, plan, selectedContextMetric, selectedLeadId],
   );
+
+  const evidenceGraphSteps = useMemo<DecisionGraphStep[]>(() => {
+    if (!investigation || !reviewablePacket) return graphSteps;
+    const challengeCount = investigation.rejectedPatterns.length
+      + investigation.leads.filter((lead) => lead.challenge.trim()).length;
+    return [
+      ...investigation.investigationPath.map((step) => ({
+        id: step.id,
+        label: step.label,
+        detail: step.result,
+        result: step.result,
+        evidenceState: step.status === "completed"
+          ? "complete" as const
+          : step.status === "waiting_for_evidence"
+            ? "waiting" as const
+            : "pending" as const,
+      })),
+      {
+        id: "challenge_interpretation",
+        label: "Challenge the interpretation",
+        detail: `${challengeCount} alternative explanations or rejected readings recorded.`,
+        result: `${challengeCount} alternative explanations or rejected readings recorded.`,
+        evidenceState: "complete" as const,
+      },
+      {
+        id: "synthesize_supported_answer",
+        label: "Synthesize the supported answer",
+        detail: `${reviewablePacket.answerCoverage.coveredRequiredCount} of ${reviewablePacket.answerCoverage.requiredCount} required items covered. ${reviewablePacket.finalAnswer.strongestSupportedConclusion}`,
+        result: reviewablePacket.finalAnswer.strongestSupportedConclusion,
+        evidenceState: "complete" as const,
+      },
+    ];
+  }, [graphSteps, investigation, reviewablePacket]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -207,10 +281,10 @@ export function DecisionWorkflowApp() {
   }, []);
 
   useEffect(() => {
-    if (phase !== "running" || !graphSteps.length) return;
+    if (phase !== "running" || !evidenceGraphSteps.length) return;
     const timer = window.setInterval(() => {
       setActiveStep((current) => {
-        if (current >= graphSteps.length - 1) {
+        if (current >= evidenceGraphSteps.length - 1) {
           window.clearInterval(timer);
           window.setTimeout(() => setPhase("packet"), 450);
           return current;
@@ -219,23 +293,34 @@ export function DecisionWorkflowApp() {
       });
     }, 850);
     return () => window.clearInterval(timer);
-  }, [graphSteps.length, phase]);
+  }, [evidenceGraphSteps.length, phase]);
 
   useEffect(() => {
-    if ((phase !== "packet" && phase !== "saved") || !plan || !selectedAction) {
+    if ((phase !== "packet" && phase !== "saved") || !plan || !packetAction) {
       setPacketSummary(null);
       setPacketSummaryState("idle");
       return;
     }
     let cancelled = false;
     setPacketSummaryState("loading");
-    setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
+    setPacketSummary(deterministicFindingsAndProposalSummary(plan, packetAction, investigation ?? undefined));
     void (async () => {
       try {
         const response = await fetch("/api/evaluation-plans/summary", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ plan, actionId: selectedAction.id }),
+          body: JSON.stringify({
+            packet: assembleReviewableActionPacket(
+              plan,
+              packetAction,
+              new Date().toISOString(),
+              investigation ?? undefined,
+              investigationFollowUps,
+              analysisBrief ?? undefined,
+              evidencePlan ?? undefined,
+              evaluationDefinition ?? undefined,
+            ),
+          }),
         });
         const payload: unknown = await response.json();
         const parsed = packetFindingsSummarySchema.safeParse(
@@ -247,21 +332,25 @@ export function DecisionWorkflowApp() {
         if (parsed.success) {
           setPacketSummary(parsed.data);
         } else {
-          setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
+          setPacketSummary(deterministicFindingsAndProposalSummary(plan, packetAction, investigation ?? undefined));
         }
         setPacketSummaryState("ready");
       } catch {
         if (cancelled) return;
-        setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
+        setPacketSummary(deterministicFindingsAndProposalSummary(plan, packetAction, investigation ?? undefined));
         setPacketSummaryState("ready");
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [investigation, phase, plan, selectedAction, selectedLead]);
+  }, [analysisBrief, evaluationDefinition, evidencePlan, investigation, investigationFollowUps, packetAction, phase, plan, selectedLead]);
 
-  async function startWorkflow(nextQuestion = question, nextPerspectiveId?: PerspectiveId) {
+  async function startWorkflow(
+    nextQuestion = question,
+    nextPerspectiveId?: PerspectiveId,
+    activeViewId?: PerspectiveViewId,
+  ) {
     if (!nextQuestion.trim()) return;
     const normalizedQuestion = nextQuestion.trim();
     setQuestion(normalizedQuestion);
@@ -280,6 +369,8 @@ export function DecisionWorkflowApp() {
     setAnalysisBrief(null);
     setEvidencePlan(null);
     setEvaluationDefinition(null);
+    setRecommendationDrafts([]);
+    setActiveDraftId(null);
     setPhase("interpreting");
     try {
       const response = await fetch("/api/evaluation-plans", {
@@ -288,6 +379,7 @@ export function DecisionWorkflowApp() {
         body: JSON.stringify({
           question: normalizedQuestion,
           ...(nextPerspectiveId ? { perspectiveId: nextPerspectiveId } : {}),
+          ...(activeViewId ? { activeViewId } : {}),
         }),
       });
       const payload: unknown = await response.json();
@@ -299,7 +391,7 @@ export function DecisionWorkflowApp() {
         return;
       }
       setPlan(parsed.data.plan);
-      setSelectedContextMetric(parsed.data.plan.perspectiveId === "marketing" ? "population_density" : parsed.data.plan.perspectiveId === "pricing" ? "median_household_income" : "household_count");
+      setSelectedContextMetric(questionMapMetric(parsed.data.plan));
       const nextInvestigation = runMarketInvestigation(parsed.data.plan);
       const nextBrief = buildAnalysisBrief(parsed.data.plan, nextInvestigation);
       const nextEvidencePlan = buildEvidencePlan(parsed.data.plan);
@@ -324,7 +416,18 @@ export function DecisionWorkflowApp() {
     setInvestigation(nextInvestigation);
     setEvidencePlan(nextEvidencePlan);
     setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, nextInvestigation, nextEvidencePlan));
-    setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
+    setSelectedLeadId(defaultLeadForQuestion(plan, nextInvestigation)?.id ?? null);
+    const initialLeadId = defaultLeadForQuestion(plan, nextInvestigation)?.id ?? null;
+    const initialDraft: RecommendationDraft = {
+      id: `draft-1-${Date.now().toString(36)}`,
+      number: 1,
+      investigation: nextInvestigation,
+      selectedLeadId: initialLeadId,
+      selectedContextMetric,
+      followUps: [],
+    };
+    setRecommendationDrafts([initialDraft]);
+    setActiveDraftId(initialDraft.id);
     setActiveStep(0);
     setPhase("running");
     setClinicWorkflow(null);
@@ -363,6 +466,8 @@ export function DecisionWorkflowApp() {
     setAnalysisBrief(null);
     setEvidencePlan(null);
     setEvaluationDefinition(null);
+    setRecommendationDrafts([]);
+    setActiveDraftId(null);
     setPhase("question");
     setSelectedContextMetric("household_count");
   }
@@ -384,6 +489,8 @@ export function DecisionWorkflowApp() {
       evaluationDefinition: evaluationDefinition ?? undefined,
       selectedLeadId,
       selectedContextMetric,
+      recommendationDrafts,
+      activeDraftId,
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
@@ -396,18 +503,32 @@ export function DecisionWorkflowApp() {
     setQuestion(packet.question);
     setPlan(restoredPlan);
     setClinicWorkflow(null);
-    setSelectedContextMetric(packet.selectedContextMetric ?? (restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count"));
+    setSelectedContextMetric(packet.selectedContextMetric ?? questionMapMetric(restoredPlan));
     const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
     setInvestigation(restoredInvestigation);
     setSelectedLeadId(packet.selectedLeadId && restoredInvestigation.leads.some((lead) => lead.id === packet.selectedLeadId)
       ? packet.selectedLeadId
-      : restoredInvestigation.leads[0]?.id ?? null);
+      : defaultLeadForQuestion(restoredPlan, restoredInvestigation)?.id ?? null);
     setInvestigationFollowUps(packet.followUps ?? []);
     const restoredBrief = packet.analysisBrief ?? buildAnalysisBrief(restoredPlan, restoredInvestigation);
     const restoredEvidencePlan = packet.evidencePlan ?? buildEvidencePlan(restoredPlan);
     setAnalysisBrief(restoredBrief);
     setEvidencePlan(restoredEvidencePlan);
     setEvaluationDefinition(packet.evaluationDefinition ?? generateEvaluationDefinitionDraft(restoredBrief, restoredInvestigation, restoredEvidencePlan));
+    const restoredDraft: RecommendationDraft = {
+      id: `draft-1-${Date.now().toString(36)}`,
+      number: 1,
+      investigation: restoredInvestigation,
+      selectedLeadId: packet.selectedLeadId ?? null,
+      selectedContextMetric: packet.selectedContextMetric ?? questionMapMetric(restoredPlan),
+      followUps: packet.followUps ?? [],
+    };
+    const restoredDrafts = packet.recommendationDrafts?.length ? packet.recommendationDrafts : [restoredDraft];
+    const restoredActiveDraftId = packet.activeDraftId && restoredDrafts.some((draft) => draft.id === packet.activeDraftId)
+      ? packet.activeDraftId
+      : restoredDrafts.at(-1)?.id ?? restoredDraft.id;
+    setRecommendationDrafts(restoredDrafts);
+    setActiveDraftId(restoredActiveDraftId);
     setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
     setRequestError(null);
     setSisterFollowUpNotice(null);
@@ -438,6 +559,8 @@ export function DecisionWorkflowApp() {
     setAnalysisBrief(null);
     setEvidencePlan(null);
     setEvaluationDefinition(null);
+    setRecommendationDrafts([]);
+    setActiveDraftId(null);
     setSelectedActionId("");
     setActiveStep(-1);
     setRequestError(null);
@@ -451,6 +574,42 @@ export function DecisionWorkflowApp() {
     );
     setActiveView("workflow");
     setPhase("question");
+  }
+
+  function reviseRecommendation(analystPrompt: string) {
+    if (!investigation) return;
+    const nextNumber = Math.max(0, ...recommendationDrafts.map((draft) => draft.number)) + 1;
+    const nextInvestigation = reviseMarketInvestigation(investigation, analystPrompt, nextNumber);
+    const retainedLeadId = selectedLeadId && nextInvestigation.leads.some((lead) => lead.id === selectedLeadId)
+      ? selectedLeadId
+      : nextInvestigation.leads[0]?.id ?? null;
+    const nextDraft: RecommendationDraft = {
+      id: `draft-${nextNumber}-${Date.now().toString(36)}`,
+      number: nextNumber,
+      investigation: nextInvestigation,
+      selectedLeadId: retainedLeadId,
+      selectedContextMetric,
+      followUps: investigationFollowUps,
+      analystPrompt,
+    };
+    setRecommendationDrafts((drafts) => [...drafts, nextDraft]);
+    setActiveDraftId(nextDraft.id);
+    setInvestigation(nextInvestigation);
+    setSelectedLeadId(retainedLeadId);
+    setPacketSummary(null);
+    setPacketSummaryState("idle");
+    setPhase("packet");
+  }
+
+  function openRecommendationDraft(draft: RecommendationDraft) {
+    setActiveDraftId(draft.id);
+    setInvestigation(draft.investigation);
+    setSelectedLeadId(draft.selectedLeadId);
+    setSelectedContextMetric(draft.selectedContextMetric);
+    setInvestigationFollowUps(draft.followUps);
+    setPacketSummary(null);
+    setPacketSummaryState("idle");
+    setPhase("packet");
   }
 
   const showPacket = phase === "packet" || phase === "saved";
@@ -520,7 +679,7 @@ export function DecisionWorkflowApp() {
                 setQuestion(value);
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
               }}
-              onSubmit={(nextPerspectiveId) => void startWorkflow(question, nextPerspectiveId)}
+              onSubmit={(nextPerspectiveId, activeViewId) => void startWorkflow(question, nextPerspectiveId, activeViewId)}
               onPerspectiveChange={(nextPerspectiveId) => {
                 setQuestion("");
                 setSisterFollowUpNotice(null);
@@ -540,7 +699,7 @@ export function DecisionWorkflowApp() {
               <h1>Review the analysis plan</h1>
               <p>Confirm the question, method, and evidence boundaries before the analyst runs.</p>
             </div>
-            <AnalysisBriefPanel brief={analysisBrief} onConfirm={confirmAndRun} />
+            <AnalysisBriefPanel brief={analysisBrief} answerContract={plan.answerContract} onConfirm={confirmAndRun} />
           </section>
         ) : null}
 
@@ -557,7 +716,7 @@ export function DecisionWorkflowApp() {
                 phase="running"
                 question={question || plan?.originalQuestion || ""}
                 selectedActionId={selectedActionId}
-                steps={graphSteps}
+                steps={evidenceGraphSteps}
                 actions={actionOptions.map((action) => ({ id: action.id, title: action.title }))}
               />
             </div>
@@ -573,22 +732,23 @@ export function DecisionWorkflowApp() {
               ) : null}
               {phase === "running" && plan ? (
                 <>
-                  <div className="eyebrow">Decision graph in progress</div>
-                  <h1 id="graph-title">Tracing the validated plan</h1>
+                  <div className="eyebrow">Evidence graph in progress</div>
+                  <h1 id="graph-title">Building the answer from checked evidence</h1>
                   <p className="plan-method-ribbon" data-proposal-method={plan.proposalMethod}>
                     {proposalMethodLabel(plan.proposalMethod)} · {plan.capabilityId.replaceAll("_", " ")} · {plan.status.replaceAll("_", " ")}
                   </p>
-                  <ol className="animation-step-list">
-                    {graphSteps.map((step, index) => (
-                      <li className={statusForStep(index, activeStep)} key={step.id}>
-                        <strong>{step.label}</strong>
-                        <span>{activeStep > index ? step.result : activeStep === index ? "Working" : "Pending"}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  <div className="animation-current-step">
+                    <small>Stage {Math.min(activeStep + 1, evidenceGraphSteps.length)} of {evidenceGraphSteps.length}</small>
+                    <strong>{evidenceGraphSteps[activeStep]?.label ?? "Preparing the evidence graph"}</strong>
+                    <span>{evidenceGraphSteps[activeStep]?.evidenceState === "waiting"
+                      ? "Waiting for compatible outcome evidence. This stage is not complete."
+                      : evidenceGraphSteps[activeStep]?.evidenceState === "pending"
+                        ? "Not run because an earlier evidence stage is incomplete."
+                        : evidenceGraphSteps[activeStep]?.result ?? "Checking evidence and conclusion boundary."}</span>
+                  </div>
                   <div className="graph-footer">
                     <span className="progress-pulse" aria-hidden="true" />
-                    {graphSteps[activeStep]?.label ?? "Preparing the decision graph"}
+                    {evidenceGraphSteps[activeStep]?.label ?? "Preparing the evidence graph"}
                   </div>
                 </>
               ) : null}
@@ -626,14 +786,32 @@ export function DecisionWorkflowApp() {
                   <p className="lead">{investigation?.readiness.summary ?? packetSummaryFromPlan(plan)}</p>
                 </div>
                 <div className="packet-heading-actions">
-                  <span className="draft-pill">{phase === "saved" ? "Saved draft" : "Draft for review"}</span>
+                  {recommendationDrafts.length ? (
+                    <div className="draft-ledger" role="tablist" aria-label="Recommendation drafts">
+                      {recommendationDrafts.map((draft) => (
+                        <button
+                          key={draft.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={draft.id === activeDraftId}
+                          onClick={() => openRecommendationDraft(draft)}
+                          title={draft.analystPrompt ? `Revised to consider: ${draft.analystPrompt}` : "Original recommendation"}
+                        >
+                          Draft {draft.number}
+                        </button>
+                      ))}
+                    </div>
+                  ) : <span className="draft-pill">{phase === "saved" ? "Saved draft" : "Draft 1"}</span>}
                   <button className="secondary-action" onClick={restart}>New question</button>
                 </div>
               </div>
 
               <div className="question-ribbon packet-question">
-                <span>Confirmed question</span>
-                <strong>{analysisBrief?.rewrittenQuestion ?? plan.originalQuestion}</strong>
+                <span>Your question</span>
+                <strong>{plan.originalQuestion}</strong>
+                {analysisBrief?.rewrittenQuestion && analysisBrief.rewrittenQuestion !== plan.originalQuestion ? (
+                  <small><b>Investigation framing</b>{analysisBrief.rewrittenQuestion}</small>
+                ) : null}
               </div>
 
               {displayedGeographicFocus ? (
@@ -642,31 +820,44 @@ export function DecisionWorkflowApp() {
                     focus={displayedGeographicFocus}
                     modeLabel={geographyModeLabel(plan)}
                     contextMetric={selectedContextMetric}
+                    measureOrigin={plan.evidenceSelection.datasetId || plan.intent.requestedMeasure !== "none" ? "Confirmed question measure" : "Supporting context measure"}
                     findings={investigation?.leads ?? []}
                     selectedLeadId={selectedLeadId}
                     onSelectFinding={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
+                    questionContext={`Original question: ${plan.originalQuestion} Analyst-framed question: ${analysisBrief?.rewrittenQuestion ?? plan.originalQuestion}`}
+                    sourceIds={investigation?.sourceIds ?? ["SRC-016"]}
+                    workspaceDatasetId={plan.evidenceSelection.datasetId === "marketing_paid_search_cpc" && investigation?.leads.some((lead) => lead.supportingMeasures?.some((item) => item.id === "cost_per_conversion"))
+                      ? "marketing_paid_search_cost_per_conversion"
+                      : plan.evidenceSelection.datasetId}
+                    evidenceStage={investigation?.evidenceStage}
                   />
                 </div>
               ) : null}
 
               {investigation ? (
-                <MarketInvestigationPanel
-                  investigation={investigation}
-                  selectedLeadId={selectedLead?.id ?? null}
-                  onSelectLead={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
-                  followUps={investigationFollowUps.filter((turn) => turn.leadId === selectedLead?.id)}
-                  onAskFollowUp={(followUpQuestion) => {
-                    if (!selectedLead) return;
-                    setInvestigationFollowUps((turns) => [...turns, {
-                      id: `follow-up-${Date.now().toString(36)}`,
-                      leadId: selectedLead.id,
-                      question: followUpQuestion.trim(),
-                      answer: answerInvestigationFollowUp(selectedLead, followUpQuestion),
-                    }]);
-                  }}
-                  selectedContextMetric={selectedContextMetric}
-                  onContextMetricChange={setSelectedContextMetric}
-                />
+                <>
+                  <MarketInvestigationPanel
+                    investigation={investigation}
+                    selectedLeadId={selectedLead?.id ?? null}
+                    onSelectLead={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
+                    followUps={investigationFollowUps.filter((turn) => turn.leadId === selectedLead?.id)}
+                    onAskFollowUp={(followUpQuestion) => {
+                      if (!selectedLead) return;
+                      setInvestigationFollowUps((turns) => [...turns, {
+                        id: `follow-up-${Date.now().toString(36)}`,
+                        leadId: selectedLead.id,
+                        question: followUpQuestion.trim(),
+                        answer: answerInvestigationFollowUp(selectedLead, followUpQuestion),
+                      }]);
+                    }}
+                    selectedContextMetric={selectedContextMetric}
+                    onContextMetricChange={setSelectedContextMetric}
+                  />
+                  <RecommendationRevisionBar
+                    recommendedPrompt={recommendedInvestigationRevision(investigation)}
+                    onRevise={reviseRecommendation}
+                  />
+                </>
               ) : null}
 
               <div className="decision-review-primary">
@@ -680,8 +871,8 @@ export function DecisionWorkflowApp() {
                     ) : (
                       <>
                         <div className="section-label">Action packet</div>
-                        <h2>{selectedLead ? `Validate ${selectedLead.title}` : selectedAction.title}</h2>
-                        <p>{selectedLead?.businessMeaning ?? selectedAction.summary}</p>
+                        <h2>{packetAction.title}</h2>
+                        <p>{packetAction.summary}</p>
                         <section
                           className="packet-findings"
                           aria-labelledby="findings-summary-title"
@@ -727,6 +918,13 @@ export function DecisionWorkflowApp() {
                       </>
                     )}
 
+                    {reviewablePacket ? (
+                      <AnswerCoveragePanel
+                        coverage={reviewablePacket.answerCoverage}
+                        answer={reviewablePacket.finalAnswer}
+                      />
+                    ) : null}
+
                     {!insightActionPlan ? <details
                       className="packet-action-details"
                       open={actionDetailsOpen}
@@ -734,20 +932,20 @@ export function DecisionWorkflowApp() {
                     >
                       <summary>Action details</summary>
                       <dl>
-                        <div><dt>Owner</dt><dd>{selectedAction.owner}</dd></div>
-                        <div><dt>Timing</dt><dd>{selectedAction.timing}</dd></div>
-                        <div><dt>Confidence</dt><dd><span className={`confidence ${selectedAction.confidence.toLowerCase()}`}>{selectedAction.confidence}</span></dd></div>
-                        <div><dt>Next step</dt><dd>{selectedAction.nextStep}</dd></div>
+                        <div><dt>Owner</dt><dd>{packetAction.owner}</dd></div>
+                        <div><dt>Timing</dt><dd>{packetAction.timing}</dd></div>
+                        <div><dt>Confidence</dt><dd><span className={`confidence ${packetAction.confidence.toLowerCase()}`}>{packetAction.confidence}</span></dd></div>
+                        <div><dt>Next step</dt><dd>{packetAction.nextStep}</dd></div>
                       </dl>
                       <div className="packet-evidence">
                         <strong>Evidence considered</strong>
-                        {selectedAction.evidence.map((item) => (
+                        {packetAction.evidence.map((item) => (
                           <span key={item}><i aria-hidden="true">✓</i>{item}</span>
                         ))}
                       </div>
                       <div className="packet-evidence tradeoffs">
                         <strong>Tradeoffs to review</strong>
-                        {selectedAction.tradeoffs.map((item) => (
+                        {packetAction.tradeoffs.map((item) => (
                           <span key={item}><i aria-hidden="true">!</i>{item}</span>
                         ))}
                       </div>
@@ -766,15 +964,24 @@ export function DecisionWorkflowApp() {
                     <div className="packet-card-footer">
                       <div className="packet-card-actions">
                         <button
+                          className="primary-action"
+                          type="button"
+                          onClick={() => {
+                            if (reviewablePacket) downloadDecisionBrief(reviewablePacket);
+                          }}
+                        >
+                          Download decision brief
+                        </button>
+                        <button
                           className="secondary-action"
                           type="button"
                           onClick={() => {
                             if (reviewablePacket) downloadReviewableActionPacket(reviewablePacket);
                           }}
                         >
-                          Download full report
+                          Download audit appendix
                         </button>
-                        <button className="primary-action" onClick={savePacket}>
+                        <button className="secondary-action" onClick={savePacket}>
                           {phase === "saved" ? "Saved" : "Save action packet"} <span aria-hidden="true">✓</span>
                         </button>
                       </div>

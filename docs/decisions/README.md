@@ -44,3 +44,6 @@ Current records:
 - [ADR-025: Review-page draft action packet download and AI summary](ADR-025-reviewable-action-packet-download.md)
 - [ADR-026: Deterministic sister geographies on decision review](ADR-026-deterministic-sister-geographies.md)
 - [ADR-027: Cinematic decision graph animation in the post-question workflow](ADR-027-cinematic-decision-graph-animation.md)
+- [ADR-028: Google Ads evaluation gates](ADR-028-google-ads-evaluation-gates.md)
+- [ADR-029: Define the final-answer contract before investigation](ADR-029-pre-investigation-answer-contract.md)
+- [ADR-030: Enforce answer-contract coverage before composition](ADR-030-contract-coverage-and-answer-composition.md)

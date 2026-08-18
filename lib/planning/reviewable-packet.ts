@@ -6,7 +6,7 @@ import {
   type EvaluationPlan,
   type PlannedAction,
 } from "./contracts.ts";
-import type { InvestigationFollowUp, MarketInvestigation } from "./market-investigation.ts";
+import type { InvestigationFollowUp, InvestigationLead, MarketInvestigation } from "./market-investigation.ts";
 import type { AnalysisBrief } from "./analysis-brief.ts";
 import type { InsightActionPlan } from "./insight-action-plan.ts";
 import {
@@ -19,6 +19,14 @@ import {
   evaluationExecutionResultSchema,
   type EvaluationExecutionResult,
 } from "./execution.ts";
+import {
+  checkInvestigationCoverage,
+  investigationCoverageReportSchema,
+} from "./investigation-coverage.ts";
+import {
+  composeFinalAnswer,
+  composedFinalAnswerSchema,
+} from "./final-answer-composer.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v1" as const;
 export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v1" as const;
@@ -73,6 +81,9 @@ export const reviewableActionPacketSchema = z.object({
   evidenceBoundary: evaluationPlanSchema.shape.evidenceBoundary,
   missingEvidence: evaluationPlanSchema.shape.missingEvidence,
   missingApprovals: evaluationPlanSchema.shape.missingApprovals,
+  answerContract: evaluationPlanSchema.shape.answerContract,
+  answerCoverage: investigationCoverageReportSchema,
+  finalAnswer: composedFinalAnswerSchema,
   calculationVersions: z.object({
     evaluationPlanVersion: evaluationPlanSchema.shape.version,
     capabilityRegistryVersion: z.literal(CAPABILITY_REGISTRY_VERSION),
@@ -133,6 +144,29 @@ export const reviewableActionPacketSchema = z.object({
     toolsRun: z.array(z.string().trim().min(1)),
     measuresExamined: z.array(z.string().trim().min(1)),
     comparisonsExamined: z.number().int().nonnegative(),
+    portfolioPattern: z.object({
+      headline: z.string().trim().min(1),
+      summary: z.string().trim().min(1),
+      implication: z.string().trim().min(1),
+      segments: z.array(z.object({
+        label: z.string().trim().min(1),
+        eligibleMarkets: z.number().int().nonnegative(),
+        highCpcMarkets: z.number().int().nonnegative(),
+        dualPressureMarkets: z.number().int().nonnegative(),
+      }).strict()).min(1),
+    }).strict().optional(),
+    mediaScope: z.object({
+      included: z.string().trim().min(1),
+      excluded: z.array(z.string().trim().min(1)).min(1),
+      bundlingRule: z.string().trim().min(1),
+    }).strict().optional(),
+    analystRevision: z.object({
+      draftNumber: z.number().int().positive(),
+      prompt: z.string().trim().min(1).max(600),
+      summary: z.string().trim().min(1),
+      effectOnRecommendation: z.string().trim().min(1),
+      recommendedFollowUp: z.string().trim().min(1),
+    }).strict().optional(),
     screeningScope: z.object({
       marketUniverse: z.number().int().nonnegative(),
       eligibleCohort: z.string().trim().min(1),
@@ -152,12 +186,43 @@ export const reviewableActionPacketSchema = z.object({
       strength: z.string().trim().min(1),
       challenge: z.string().trim().min(1),
       nextEvidence: z.string().trim().min(1),
+      measureValue: z.object({
+        label: z.string().trim().min(1),
+        rawValue: z.number().finite(),
+        formattedValue: z.string().trim().min(1),
+        percentile: z.number().int().min(1).max(100),
+        rangeMeaning: z.string().trim().min(1),
+      }).strict().optional(),
+      supportingMeasures: z.array(z.object({
+        id: z.string().trim().min(1),
+        label: z.string().trim().min(1),
+        formattedValue: z.string().trim().min(1),
+        percentile: z.number().int().min(1).max(100),
+        rangeMeaning: z.string().trim().min(1),
+        role: z.enum(["cost", "response", "attributed_outcome", "comparison", "market_context"]),
+      }).strict()).optional(),
     }).strict()).max(10),
     rejectedPatterns: z.array(z.string().trim().min(1)),
     limitations: z.array(z.string().trim().min(1)),
     sourceIds: z.array(z.string().trim().min(1)),
-    allowedUse: z.literal("market_context_only"),
+    allowedUse: z.enum(["market_context_only", "internal_shadow_evaluation_only"]),
     scoringEligibility: z.literal("none"),
+    evidenceStage: z.enum(["signal", "triangulated_finding"]),
+    nextPass: z.object({
+      status: z.enum(["waiting_for_evidence", "ready_to_run"]),
+      question: z.string().trim().min(1),
+      evidenceNeeded: z.array(z.string().trim().min(1)).min(1),
+      completionRule: z.string().trim().min(1),
+    }).strict(),
+    investigationPath: z.array(z.object({
+      id: z.string().trim().min(1),
+      label: z.string().trim().min(1),
+      purpose: z.string().trim().min(1),
+      contributionToAnswer: z.string().trim().min(1),
+      status: z.enum(["completed", "waiting_for_evidence", "pending"]),
+      sourceIds: z.array(z.string().trim().min(1)),
+      result: z.string().trim().min(1),
+    }).strict()).min(1),
     formula: z.array(z.object({
       id: z.string().trim().min(1),
       label: z.string().trim().min(1),
@@ -197,6 +262,17 @@ export const packetFindingsSummarySchema = z.object({
 
 export type PacketFindingsSummary = z.infer<typeof packetFindingsSummarySchema>;
 
+function boundedSummaryText(value: string, maximum = 600) {
+  const normalized = value.trim();
+  if (normalized.length <= maximum) return normalized;
+  const clipped = normalized.slice(0, maximum - 1);
+  const lastWordBoundary = clipped.lastIndexOf(" ");
+  const readableEnd = lastWordBoundary >= Math.floor(maximum * 0.7)
+    ? lastWordBoundary
+    : clipped.length;
+  return `${clipped.slice(0, readableEnd).trimEnd()}…`;
+}
+
 function evidenceSourceIdsFor(plan: EvaluationPlan): string[] {
   if (plan.capabilityId === "census_market_context") {
     return ["SRC-014", "SRC-015", "SRC-016"];
@@ -209,6 +285,30 @@ function evidenceSourceIdsFor(plan: EvaluationPlan): string[] {
 
 export function proposedActionFromPlan(plan: EvaluationPlan): PlannedAction {
   return plan.actions[0];
+}
+
+export function actionForInvestigationLead(
+  action: PlannedAction,
+  investigation: MarketInvestigation | null,
+  lead: InvestigationLead | null,
+): PlannedAction {
+  if (!investigation || !lead) return action;
+  return plannedActionSchema.parse({
+    ...action,
+    title: `Validate ${lead.title}`,
+    summary: lead.businessMeaning,
+    confidence: investigation.evidenceStage === "triangulated_finding" ? action.confidence : "Low",
+    evidence: [
+      `Observed signal: ${lead.observation}`,
+      `Selection method: ${lead.method}`,
+      `Evidence boundary: ${lead.challenge}`,
+    ],
+    tradeoffs: [
+      lead.challenge,
+      ...investigation.limitations.slice(0, 2),
+    ],
+    nextStep: lead.nextEvidence,
+  });
 }
 
 export function assembleReviewableActionPacket(
@@ -246,6 +346,8 @@ export function assembleReviewableActionPacket(
   if (actionPlan && (actionPlan.planId !== plan.planId || !investigation?.leads.some((lead) => lead.id === actionPlan.leadId))) {
     throw new Error("The action plan does not belong to this evaluation plan and investigation.");
   }
+  const answerCoverage = checkInvestigationCoverage(plan, investigation, action);
+  const finalAnswer = composeFinalAnswer(plan, investigation, action, answerCoverage);
 
   return reviewableActionPacketSchema.parse({
     packetKind: "draft_action_packet",
@@ -268,6 +370,9 @@ export function assembleReviewableActionPacket(
     evidenceBoundary: plan.evidenceBoundary,
     missingEvidence: plan.missingEvidence,
     missingApprovals: plan.missingApprovals,
+    answerContract: plan.answerContract,
+    answerCoverage,
+    finalAnswer,
     calculationVersions: {
       evaluationPlanVersion: plan.version,
       capabilityRegistryVersion: CAPABILITY_REGISTRY_VERSION,
@@ -325,6 +430,66 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     ]),
     "",
   ] : [];
+  const answerContractSections = [
+    "## Final-answer contract",
+    `- Contract version: ${packet.answerContract.version}`,
+    `- Answer mode: ${packet.answerContract.answerMode.replaceAll("_", " ")}`,
+    `- Framing origin: ${packet.answerContract.framingProposal.origin.replaceAll("_", " ")}${packet.answerContract.framingProposal.modelVersion ? ` (${packet.answerContract.framingProposal.modelVersion})` : ""}`,
+    `- Primary user: ${packet.answerContract.audience.primaryUser}`,
+    `- Decision owner: ${packet.answerContract.audience.decisionOwner}`,
+    `- Accountable reviewer: ${packet.answerContract.audience.accountableReviewer}`,
+    `- Unit of analysis: ${packet.answerContract.decisionFrame.unitOfAnalysis}`,
+    `- Strongest permitted conclusion: ${packet.answerContract.strongestPermittedConclusion}`,
+    `- Fallback outcome: ${packet.answerContract.fallbackOutcome.replaceAll("_", " ")}`,
+    `- Unresolved framing questions: ${packet.answerContract.framingProposal.unresolvedQuestions.join("; ") || "None"}`,
+    "",
+    "### Required answer sections",
+    ...packet.answerContract.requiredSections.map((section) => `- ${section.label}: ${section.purpose}`),
+    "",
+    `### ${packet.answerContract.perspectiveId.toUpperCase()} answer requirements`,
+    ...packet.answerContract.domainRequirements.flatMap((requirement) => [
+      `- ${requirement.label}: ${requirement.readiness.replaceAll("_", " ")}`,
+      `  - Must answer: ${requirement.questionToAnswer}`,
+      `  - Sources: ${requirement.sourceIds.join(", ") || "No governed source identified"}`,
+      `  - If unmet: ${requirement.ifUnmet}`,
+    ]),
+    "",
+    "### Completion criteria",
+    ...packet.answerContract.completionCriteria.map((criterion) => `- ${criterion.label}`),
+    "",
+    "### Prohibited conclusions",
+    ...packet.answerContract.prohibitedConclusions.map((conclusion) => `- ${conclusion}`),
+    "",
+  ];
+  const answerCoverageSections = [
+    "## Investigation coverage against the answer contract",
+    `- Coverage version: ${packet.answerCoverage.version}`,
+    `- Overall status: ${packet.answerCoverage.overallStatus}`,
+    `- Required items covered: ${packet.answerCoverage.coveredRequiredCount} of ${packet.answerCoverage.requiredCount}`,
+    `- Strongest supported conclusion: ${packet.answerCoverage.permittedConclusion}`,
+    "",
+    "### Required answer-section coverage",
+    ...packet.answerCoverage.sectionCoverage.map((item) => `- ${item.label}: ${item.status} — ${item.explanation}`),
+    "",
+    "### Domain-requirement coverage",
+    ...packet.answerCoverage.domainCoverage.map((item) => `- ${item.label}: ${item.status} — ${item.explanation}`),
+    "",
+  ];
+  const finalAnswerSections = [
+    "## Contract-complete draft answer",
+    `- Status: ${packet.finalAnswer.status.replaceAll("_", " ")}`,
+    `- Composer version: ${packet.finalAnswer.version}`,
+    `- Review required by: ${packet.finalAnswer.reviewRequiredBy}`,
+    "",
+    packet.finalAnswer.disclaimer,
+    "",
+    ...packet.finalAnswer.sections.flatMap((section) => [
+      `### ${section.label} — ${section.supportStatus}`,
+      section.content,
+      ...(section.sourceIds.length ? [`Sources: ${section.sourceIds.join(", ")}`] : []),
+      "",
+    ]),
+  ];
   const evidencePlanningSections = packet.evidencePlan && packet.evaluationDefinition ? [
     "## Evidence readiness and generated execution plan",
     `- Status: ${packet.evaluationDefinition.status.replaceAll("_", " ")}`,
@@ -374,6 +539,19 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `- Measures examined: ${packet.analysisAppendix.measuresExamined.join("; ")}`,
     `- Process: ${packet.analysisAppendix.toolsRun.join(" → ")}`,
     `- Readiness: ${packet.analysisAppendix.readiness.label} — ${packet.analysisAppendix.readiness.summary}`,
+    ...(packet.analysisAppendix.portfolioPattern ? [
+      `- Portfolio pattern: ${packet.analysisAppendix.portfolioPattern.headline}. ${packet.analysisAppendix.portfolioPattern.summary}`,
+      `- Pattern boundary: ${packet.analysisAppendix.portfolioPattern.implication}`,
+    ] : []),
+    ...(packet.analysisAppendix.mediaScope ? [
+      `- Media included: ${packet.analysisAppendix.mediaScope.included}`,
+      `- Channel bundling rule: ${packet.analysisAppendix.mediaScope.bundlingRule}`,
+      `- Media not included: ${packet.analysisAppendix.mediaScope.excluded.join("; ")}`,
+    ] : []),
+    ...(packet.analysisAppendix.analystRevision ? [
+      `- Draft ${packet.analysisAppendix.analystRevision.draftNumber} analyst direction: ${packet.analysisAppendix.analystRevision.prompt}`,
+      `- Revision effect: ${packet.analysisAppendix.analystRevision.effectOnRecommendation}`,
+    ] : []),
     `- Source IDs: ${packet.analysisAppendix.sourceIds.join(", ")}`,
     ...(packet.analysisAppendix.formula?.length ? [
       `- Confirmed formula: ${packet.analysisAppendix.formula.map((item) => `${item.label} ${item.weightPercent}%`).join("; ")}`,
@@ -506,6 +684,9 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
       "",
     ]),
     ...actionPlanSections,
+    ...answerContractSections,
+    ...answerCoverageSections,
+    ...finalAnswerSections,
     ...framingSections,
     ...evidencePlanningSections,
     ...reviewContextSections,
@@ -524,22 +705,146 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
   ].join("\n");
 }
 
+function finalAnswerSection(
+  packet: ReviewableActionPacket,
+  sectionId: ReviewableActionPacket["finalAnswer"]["sections"][number]["sectionId"],
+) {
+  return packet.finalAnswer.sections.find((section) => section.sectionId === sectionId);
+}
+
+export function formatDecisionBriefDocument(packet: ReviewableActionPacket): string {
+  const directAnswer = finalAnswerSection(packet, "direct_answer");
+  const nextAction = finalAnswerSection(packet, "permitted_next_action");
+  const owner = packet.actionPlan?.decisionOwner ?? packet.action.owner;
+  const reviewDate = packet.actionPlan?.decisionDueDate ?? packet.action.timing;
+  const recommendation = packet.actionPlan?.recommendation ?? packet.action.summary;
+  const places = packet.geographicFocus.placeLabels.join("; ") || packet.geographicFocus.message;
+  const coveragePercent = packet.answerCoverage.requiredCount
+    ? Math.round((packet.answerCoverage.coveredRequiredCount / packet.answerCoverage.requiredCount) * 100)
+    : 0;
+  const isDecisionReady = packet.answerCoverage.overallStatus === "complete";
+  const evidenceLabel = packet.analysisAppendix?.evidenceStage === "triangulated_finding"
+    ? "Triangulated findings"
+    : "Screening signals—not final findings";
+  const selectedLead = packet.reviewContext?.selectedLeadId
+    ? packet.analysisAppendix?.leads.find((lead) => lead.id === packet.reviewContext?.selectedLeadId)
+    : packet.analysisAppendix?.leads[0];
+  const orderedLeads = packet.analysisAppendix
+    ? [
+      ...(selectedLead ? [selectedLead] : []),
+      ...packet.analysisAppendix.leads.filter((lead) => lead.id !== selectedLead?.id),
+    ].slice(0, 4)
+    : [];
+  const unmetRequirements = packet.answerCoverage.domainCoverage
+    .filter((item) => item.required && item.status !== "covered" && item.status !== "not_applicable")
+    .slice(0, 5);
+  const challengeNotes = Array.from(new Set([
+    ...(selectedLead?.challenge ? [selectedLead.challenge] : []),
+    ...(packet.analysisAppendix?.rejectedPatterns ?? []),
+    ...(packet.analysisAppendix?.limitations ?? []),
+  ])).slice(0, 4);
+  const firstWorkstream = packet.actionPlan?.workstreams[0];
+  const sourceIds = packet.analysisAppendix?.sourceIds
+    ?? packet.calculationVersions.evidenceSourceIds;
+  const decisionStatus = isDecisionReady
+    ? "Ready for accountable review"
+    : "Research needed before a decision-level recommendation";
+  const boundedRecommendation = isDecisionReady
+    ? recommendation
+    : `Do not treat the current ${packet.analysisAppendix?.evidenceStage === "signal" ? "screening signal" : "partial evidence"} as authorization for a material action. ${recommendation}`;
+
+  return [
+    `# Decision brief: ${packet.originalQuestion}`,
+    "",
+    `> **${decisionStatus}.** ${packet.reviewDisclaimer}`,
+    "",
+    "## Recommendation",
+    boundedRecommendation,
+    "",
+    `- **Decision owner:** ${owner}`,
+    `- **Review timing:** ${reviewDate}`,
+    `- **Geography:** ${places}`,
+    `- **Evidence coverage:** ${packet.answerCoverage.coveredRequiredCount} of ${packet.answerCoverage.requiredCount} required items (${coveragePercent}%)`,
+    "",
+    "## What the evidence supports",
+    directAnswer?.content ?? packet.answerCoverage.permittedConclusion,
+    "",
+    ...(packet.analysisAppendix?.portfolioPattern ? [
+      "## Portfolio pattern",
+      `**${packet.analysisAppendix.portfolioPattern.headline}.**`,
+      packet.analysisAppendix.portfolioPattern.summary,
+      "",
+      packet.analysisAppendix.portfolioPattern.implication,
+      "",
+    ] : []),
+    ...(packet.analysisAppendix?.analystRevision ? [
+      `## Draft ${packet.analysisAppendix.analystRevision.draftNumber} analyst revision`,
+      `**Direction:** ${packet.analysisAppendix.analystRevision.prompt}`,
+      "",
+      packet.analysisAppendix.analystRevision.effectOnRecommendation,
+      "",
+    ] : []),
+    `## ${evidenceLabel}`,
+    ...(orderedLeads.length ? orderedLeads.flatMap((lead) => [
+      `### ${lead.title}`,
+      `- **Observed:** ${lead.observation}`,
+      `- **Why it matters:** ${lead.businessMeaning}`,
+      `- **Interpretation boundary:** ${lead.challenge}`,
+      "",
+    ]) : ["No question-compatible regional finding was produced from the permitted evidence.", ""]),
+    "## What is still unknown",
+    ...(unmetRequirements.length
+      ? unmetRequirements.map((item) => `- **${item.label}:** ${item.explanation}`)
+      : ["- No required evidence gap remains in the answer contract."]),
+    "",
+    "## Checks that could change the conclusion",
+    ...(challengeNotes.length ? challengeNotes.map((item) => `- ${item}`) : ["- No additional challenge was recorded."]),
+    "",
+    "## Recommended next action",
+    ...(firstWorkstream ? [
+      `**${firstWorkstream.title}**`,
+      "",
+      `- **Owner:** ${firstWorkstream.owner}`,
+      `- **Due:** ${firstWorkstream.dueDate}`,
+      `- **Action:** ${firstWorkstream.action}`,
+      `- **Deliverable:** ${firstWorkstream.deliverable}`,
+      `- **Done when:** ${firstWorkstream.completionCriteria}`,
+    ] : [nextAction?.content ?? `${packet.action.owner} should ${packet.action.nextStep}`]),
+    "",
+    "## Evidence and review record",
+    `- **Answer status:** ${packet.finalAnswer.status.replaceAll("_", " ")}`,
+    `- **Strongest permitted conclusion:** ${packet.finalAnswer.strongestSupportedConclusion}`,
+    `- **Sources:** ${sourceIds.join(", ") || "No governed source recorded"}`,
+    `- **Snapshot:** ${packet.analysisAppendix ? `${packet.analysisAppendix.dataSnapshotLabel} (${packet.analysisAppendix.dataSnapshotVersion})` : "See audit appendix"}`,
+    `- **Accountable reviewer:** ${packet.finalAnswer.reviewRequiredBy}`,
+    "",
+    "---",
+    "The audit appendix contains the full answer contract, calculation method, coverage checks, limitations, source versions, and structured record.",
+    "",
+  ].join("\n");
+}
+
 export function reviewableActionPacketFilename(packet: ReviewableActionPacket): string {
   const stamp = packet.generatedAt.slice(0, 10);
   const slug = packet.action.id.replace(/[^a-z0-9-]+/gi, "-").toLowerCase();
   return `draft-action-packet-${slug}-${stamp}.md`;
 }
 
-export function downloadReviewableActionPacket(packet: ReviewableActionPacket) {
+export function decisionBriefFilename(packet: ReviewableActionPacket): string {
+  const stamp = packet.generatedAt.slice(0, 10);
+  const slug = packet.action.id.replace(/[^a-z0-9-]+/gi, "-").toLowerCase();
+  return `draft-decision-brief-${slug}-${stamp}.md`;
+}
+
+function downloadMarkdown(content: string, filename: string) {
   if (typeof document === "undefined") {
-    throw new Error("Action packet download requires a browser document.");
+    throw new Error("Document download requires a browser document.");
   }
-  const content = formatReviewableActionPacketDocument(packet);
   const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = reviewableActionPacketFilename(packet);
+  anchor.download = filename;
   anchor.rel = "noopener";
   document.body.appendChild(anchor);
   anchor.click();
@@ -547,9 +852,18 @@ export function downloadReviewableActionPacket(packet: ReviewableActionPacket) {
   URL.revokeObjectURL(url);
 }
 
+export function downloadDecisionBrief(packet: ReviewableActionPacket) {
+  downloadMarkdown(formatDecisionBriefDocument(packet), decisionBriefFilename(packet));
+}
+
+export function downloadReviewableActionPacket(packet: ReviewableActionPacket) {
+  downloadMarkdown(formatReviewableActionPacketDocument(packet), reviewableActionPacketFilename(packet));
+}
+
 export function deterministicFindingsAndProposalSummary(
   plan: EvaluationPlan,
   action: PlannedAction = proposedActionFromPlan(plan),
+  investigation?: MarketInvestigation,
 ): PacketFindingsSummary {
   const interpretation = plan.findings.find((finding) => finding.kind === "interpretation")?.detail
     ?? plan.intent.conciseInterpretation;
@@ -557,6 +871,7 @@ export function deterministicFindingsAndProposalSummary(
     ?? plan.geographyResolution.message;
   const evidenceFinding = plan.findings.find((finding) => finding.kind === "evidence");
   const unknownParts = [
+    investigation?.readiness.missing.length ? `Investigation gaps: ${investigation.readiness.missing.join("; ")}.` : null,
     plan.missingEvidence.length ? `Missing evidence: ${plan.missingEvidence.join("; ")}.` : null,
     plan.missingApprovals.length ? `Missing approvals: ${plan.missingApprovals.join("; ")}.` : null,
     evidenceFinding?.detail ?? null,
@@ -571,12 +886,21 @@ export function deterministicFindingsAndProposalSummary(
     state: "deterministic_fallback",
     modelVersion: null,
     promptVersion: PACKET_SUMMARY_PROMPT_VERSION,
-    evidenceIndicates:
-      `The validated plan interprets the question as: ${interpretation} Geographic focus: ${geography} Evidence boundary: ${plan.evidenceBoundary}`,
-    whyActionRelevant:
-      `The proposed action “${action.title}” is the governed next step compiled for capability ${plan.capabilityId.replaceAll("_", " ")} with ${action.confidence.toLowerCase()} confidence. ${action.summary}`,
-    ownerNextStep:
-      `${action.owner} should ${action.nextStep} Timing: ${action.timing}.`,
-    remainsUnknown: unknownParts.join(" "),
+    evidenceIndicates: boundedSummaryText(
+      investigation?.leads.length
+        ? `${investigation.evidenceStage === "signal" ? "Joined screening signals" : "Findings"}: ${investigation.leads.slice(0, 3).map((lead) => `${lead.title} — ${lead.observation}`).join(" ")}`
+        : `The validated plan interprets the question as: ${interpretation} Geographic focus: ${geography} Evidence boundary: ${plan.evidenceBoundary}`,
+    ),
+    whyActionRelevant: boundedSummaryText(
+      investigation?.leads[0]
+        ? `${investigation.leads[0].businessMeaning} Important boundary: ${investigation.leads[0].challenge}`
+        : `The proposed action “${action.title}” is the governed next step compiled for capability ${plan.capabilityId.replaceAll("_", " ")} with ${action.confidence.toLowerCase()} confidence. ${action.summary}`,
+    ),
+    ownerNextStep: boundedSummaryText(
+      investigation
+        ? `${action.owner} should answer the next evidence question: ${investigation.nextPass.question} Required evidence: ${investigation.nextPass.evidenceNeeded.join("; ")}.`
+        : `${action.owner} should ${action.nextStep} Timing: ${action.timing}.`,
+    ),
+    remainsUnknown: boundedSummaryText(unknownParts.join(" ")),
   });
 }

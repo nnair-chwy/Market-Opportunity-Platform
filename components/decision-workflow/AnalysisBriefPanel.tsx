@@ -6,9 +6,11 @@ import {
   type AnalysisBrief,
   type AnalysisConsideration,
 } from "@/lib/planning/analysis-brief";
+import type { AnswerContract } from "@/lib/planning/answer-contract";
 
 type AnalysisBriefPanelProps = {
   brief: AnalysisBrief;
+  answerContract: AnswerContract;
   onConfirm: (brief: AnalysisBrief) => void;
 };
 
@@ -24,7 +26,7 @@ function evidenceLabel(status: AnalysisConsideration["evidenceStatus"]) {
   return "Needed";
 }
 
-export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps) {
+export function AnalysisBriefPanel({ brief, answerContract, onConfirm }: AnalysisBriefPanelProps) {
   const [editing, setEditing] = useState(brief.status !== "confirmed");
   const [draft, setDraft] = useState(brief);
   useEffect(() => {
@@ -102,6 +104,52 @@ export function AnalysisBriefPanel({ brief, onConfirm }: AnalysisBriefPanelProps
               />
             ) : <ul>{brief.assumptions.map((item) => <li key={item}>{item}</li>)}</ul>}
           </div>
+        </section>
+
+        <section className="answer-contract-preview" aria-labelledby="answer-contract-title" data-answer-mode={answerContract.answerMode}>
+          <header>
+            <div>
+              <span>Final-answer contract · {answerContract.version}</span>
+              <h3 id="answer-contract-title">What a useful answer must contain</h3>
+            </div>
+            <b>{answerContract.answerMode.replaceAll("_", " ")}</b>
+          </header>
+          <div className="answer-contract-boundary">
+            <strong>Strongest permitted conclusion</strong>
+            <p>{answerContract.strongestPermittedConclusion}</p>
+            <small>
+              Decision owner: {answerContract.audience.decisionOwner}
+              {" · "}Unit: {answerContract.decisionFrame.unitOfAnalysis}
+              {" · "}Framing: {answerContract.framingProposal.origin.replaceAll("_", " ")}
+            </small>
+          </div>
+          <div className="answer-contract-columns">
+            <div>
+              <strong>Required answer sections</strong>
+              <ol>{answerContract.requiredSections.map((section) => <li key={section.sectionId}>{section.label}</li>)}</ol>
+            </div>
+            <div>
+              <strong>{brief.perspectiveId.toUpperCase()} questions the answer must resolve</strong>
+              <ul>{answerContract.domainRequirements.map((requirement) => (
+                <li
+                  key={requirement.requirementId}
+                  data-readiness={requirement.readiness}
+                  data-emphasized={answerContract.framingProposal.emphasizedRequirementIds.includes(requirement.requirementId)}
+                >
+                  <span>{requirement.label}</span>
+                  <small>{requirement.readiness.replaceAll("_", " ")}</small>
+                </li>
+              ))}</ul>
+            </div>
+          </div>
+          <details>
+            <summary>Completion tests and prohibited conclusions</summary>
+            <div className="answer-contract-details">
+              <div><strong>Done when</strong><ul>{answerContract.completionCriteria.map((criterion) => <li key={criterion.criterionId}>{criterion.label}</li>)}</ul></div>
+              <div><strong>Must not conclude</strong><ul>{answerContract.prohibitedConclusions.map((item) => <li key={item}>{item}</li>)}</ul></div>
+              <div><strong>Questions still to resolve</strong><ul>{answerContract.framingProposal.unresolvedQuestions.map((item) => <li key={item}>{item}</li>)}</ul></div>
+            </div>
+          </details>
         </section>
 
         <section className="analysis-brief-considerations" aria-label="Analysis considerations">

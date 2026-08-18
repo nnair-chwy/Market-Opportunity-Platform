@@ -16,6 +16,10 @@ test("stores the exact submitted question with a CVC investigation", () => {
   assert.ok(investigation.comparisonsExamined > investigation.leads.length);
   assert.deepEqual(investigation.sourceIds, ["SRC-009", "SRC-016"]);
   assert.equal(investigation.scoringEligibility, "none");
+  assert.match(investigation.leads[0].title, /lightly covered relative to its household size/i);
+  assert.match(investigation.leads[0].observation, /This metro has .* households and .* published CVC clinic/i);
+  assert.match(investigation.leads[0].businessMeaning, /priority for demand and capacity validation—not proof/i);
+  assert.doesNotMatch(investigation.leads[0].observation, /produce .* households per clinic/i);
 });
 
 test("screens question-specific marketing peers without pretending to assign test markets", () => {
@@ -26,9 +30,12 @@ test("screens question-specific marketing peers without pretending to assign tes
   assert.equal(plan.intent.topic, "local_growth");
   assert.equal(investigation.originalQuestion, question);
   assert.equal(investigation.perspectiveId, "marketing");
-  assert.equal(investigation.leads.length, 6);
-  assert.match(investigation.readiness.summary, /cannot assign a valid test\/control market/i);
-  assert.deepEqual(investigation.sourceIds, ["SRC-016"]);
+  assert.equal(investigation.leads.length, 5);
+  assert.match(investigation.readiness.summary, /selected approved snapshot/i);
+  assert.deepEqual(investigation.sourceIds, ["SRC-018", "SRC-016"]);
+  assert.ok(investigation.leads.every((lead) => (lead.supportingMeasures?.length ?? 0) >= 12));
+  assert.deepEqual(investigation.investigationPath.slice(0, 3).map((step) => step.status), ["completed", "completed", "completed"]);
+  assert.equal(investigation.dataSnapshotVersion.includes("google-ads"), true);
 });
 
 test("suppresses generic patterns when connected evidence cannot answer the question", () => {
@@ -36,16 +43,116 @@ test("suppresses generic patterns when connected evidence cannot answer the ques
   const investigation = runMarketInvestigation(plan);
 
   assert.equal(investigation.perspectiveId, "pricing");
-  assert.equal(investigation.readiness.label, "Context only");
-  assert.equal(investigation.leads.length, 0);
+  assert.equal(investigation.readiness.label, "Partial answer");
+  assert.equal(investigation.leads.length, 5);
+  assert.deepEqual(investigation.sourceIds, ["SRC-025", "SRC-028", "SRC-030", "SRC-016"]);
+  assert.ok(investigation.leads.every((lead) => (lead.supportingMeasures?.length ?? 0) >= 8));
+  assert.deepEqual(investigation.investigationPath.slice(0, 3).map((step) => step.status), ["completed", "completed", "completed"]);
   assert.ok(investigation.rejectedPatterns.length > 0);
+});
+
+test("an explicitly selected Pricing view remains Pricing for a generic question", () => {
+  const plan = planEvaluation(
+    "Which regions need a closer review?",
+    "pricing",
+    "competitor_availability",
+  );
+  const investigation = runMarketInvestigation(plan);
+
+  assert.equal(plan.perspectiveId, "pricing");
+  assert.equal(investigation.perspectiveId, "pricing");
+  assert.match(investigation.readiness.summary, /competitor availability/i);
+  assert.ok(investigation.leads.every((lead) => lead.measureValue?.percentile));
+});
+
+test("pricing language does not accidentally resolve Price, Utah", () => {
+  const plan = planEvaluation(
+    "which market should we price differently",
+    "pricing",
+    "competitor_availability",
+  );
+  const investigation = runMarketInvestigation(plan);
+
+  assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, []);
+  assert.notEqual(plan.geographyResolution.message.includes("Price, UT"), true);
+  assert.equal(investigation.leads.length, 5);
+  assert.ok(investigation.comparisonsExamined > 0);
+});
+
+test("a CPC question consumes the selected CSV-derived snapshot without claiming overpayment", () => {
+  const plan = planEvaluation("Which region are we paying more than we should for ads?", "marketing");
+  const investigation = runMarketInvestigation(plan);
+  assert.equal(plan.evidenceSelection.datasetId, "marketing_paid_search_cpc");
+  assert.deepEqual(investigation.measuresExamined.slice(0, 8), [
+    "Cost",
+    "Average CPC",
+    "Impressions",
+    "Clicks",
+    "Click-through rate",
+    "Attributed conversions",
+    "Attributed conversion rate",
+    "Cost per attributed conversion",
+  ]);
+  assert.equal(investigation.leads.length, 5);
+  assert.ok(investigation.leads.every((lead) => lead.measureValue?.formattedValue.startsWith("$")));
+  assert.ok(investigation.leads.every((lead) => (lead.supportingMeasures?.length ?? 0) >= 6));
+  assert.match(investigation.leads[0].challenge, /not governed orders/i);
+  assert.match(investigation.rejectedPatterns.join(" "), /overpayment/i);
+  assert.equal(investigation.evidenceStage, "signal");
+  assert.doesNotMatch(investigation.leads[0].observation, /cost divided by clicks|google-ads-\d/i);
+  assert.match(investigation.leads[0].observation, /closest measured metros by population, households, income, and density/i);
+  assert.match(investigation.leads[0].observation, /average CPC .*cost per attributed conversion .*attributed conversion rate/i);
+  assert.match(investigation.leads[0].businessMeaning, /before changing spend/i);
+  assert.match(investigation.leads[0].nextEvidence, /before changing spend/i);
+  assert.match(investigation.nextPass.question, /orders, new customers, net sales, and contribution/i);
+  assert.deepEqual(investigation.investigationPath.map((step) => step.status), ["completed", "completed", "completed", "completed", "waiting_for_evidence", "waiting_for_evidence"]);
+  assert.match(investigation.investigationPath[2].contributionToAnswer, /attributed conversion efficiency/i);
+  assert.match(investigation.investigationPath[5].contributionToAnswer, /business value/i);
+});
+
+test("spending more than we should routes to comparable-market efficiency analysis", () => {
+  const question = "where are we spending more than we should on ads";
+  const plan = planEvaluation(question, "marketing");
+  const investigation = runMarketInvestigation(plan);
+
+  assert.equal(plan.evidenceSelection.datasetId, "marketing_paid_search_cpc");
+  assert.match(plan.intent.conciseInterpretation, /cost per click is high and attributed conversion efficiency is weak/i);
+  assert.equal(investigation.leads.length, 5);
+  assert.ok(investigation.leads.every((lead) => /comparable markets|similar markets/i.test(lead.title)));
+  assert.ok(investigation.leads.every((lead) => /20 closest measured metros/i.test(lead.observation)));
+  assert.doesNotMatch(investigation.leads.map((lead) => lead.title).join(" "), /generated more click volume/i);
+});
+
+test("different Pricing views run different snapshot measures", () => {
+  const availability = runMarketInvestigation(planEvaluation("Review regional competition", "pricing", "competitor_availability"));
+  const price = runMarketInvestigation(planEvaluation("Review regional offer levels", "pricing", "observed_equalized_price"));
+  assert.notEqual(availability.dataSnapshotLabel, price.dataSnapshotLabel);
+  assert.notEqual(availability.measuresExamined[0], price.measuresExamined[0]);
+  assert.notDeepEqual(availability.leads.map((lead) => lead.id), price.leads.map((lead) => lead.id));
+});
+
+test("an uncovered named Pricing market returns a clear zero-result state", () => {
+  const plan = planEvaluation(
+    "Review competitor availability in Abilene",
+    "pricing",
+    "competitor_availability",
+  );
+  const investigation = runMarketInvestigation(plan);
+
+  assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, ["10180"]);
+  assert.equal(investigation.comparisonsExamined, 0);
+  assert.equal(Object.is(investigation.comparisonsExamined, -0), false);
+  assert.equal(investigation.leads.length, 0);
+  assert.equal(investigation.readiness.label, "Context only");
+  assert.match(investigation.readiness.summary, /no compatible observed competitor availability row for Abilene/i);
+  assert.match(investigation.screeningScope.selectionRule, /do not substitute a different market/i);
 });
 
 test("a lead-scoped follow-up stays grounded in the selected lead", () => {
   const investigation = runMarketInvestigation(planEvaluation("Which markets differ in CVC clinic footprint?", "cvc"));
   const lead = investigation.leads[0];
   const answer = answerInvestigationFollowUp(lead, "Why does this matter and what should I check?");
-  assert.match(answer, new RegExp(lead.strength.split(" ")[0].replace("×", "\\×")));
+  assert.match(answer, new RegExp(`${lead.strength.split("×")[0]} times`, "i"));
   assert.match(answer, /Important boundary:/);
   assert.match(answer, /Best next check:/);
 });

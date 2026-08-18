@@ -205,8 +205,15 @@ export function extractRequestedPlaces(question: string): RequestedPlace[] {
     const pattern = new RegExp(`\\b${entry.key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
     const match = pattern.exec(value);
     if (!match || match.index === undefined) continue;
+    const before = value.slice(Math.max(0, match.index - 12), match.index);
     const after = value.slice(match.index + match[0].length, match.index + match[0].length + 8);
     const stateMatch = /^(?:\s*,\s*|\s+)([a-z]{2})\b/.exec(after);
+    const hasPlaceCue = /\b(?:in|near|around|for)\s*$/.test(before);
+    // "Price" is both a Utah city and a core pricing verb. Only resolve it as
+    // geography when the question supplies place syntax such as "in Price" or
+    // "Price, UT"; otherwise a question like "which market should we price
+    // differently" is accidentally narrowed to CBSA 39220.
+    if (entry.key === "price" && !stateMatch && !hasPlaceCue) continue;
     const stateHint = stateMatch ? normalizeStateHint(stateMatch[1]) : null;
     found.push({
       name: entry.candidates[0]?.matchName ?? entry.key,

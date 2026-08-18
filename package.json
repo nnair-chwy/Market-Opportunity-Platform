@@ -16,6 +16,8 @@
     "data:build:esri-demo": "node --experimental-strip-types scripts/build-esri-demo.ts",
     "data:build:market-attractiveness": "node --experimental-strip-types scripts/build-market-attractiveness.ts",
     "data:organize:google-ads": "node --experimental-strip-types scripts/organize-google-ads-exports.ts",
+    "data:build:perspective-map-signals": "node --experimental-strip-types scripts/build-perspective-map-signals.ts",
+    "data:build:pricing-economics": "node --experimental-strip-types scripts/build-pricing-economics-snapshot.ts",
     "data:audit:snowflake-csvs": "node --experimental-strip-types scripts/audit-snowflake-csvs.ts",
     "data:prepare:snowflake-playbook": "node --experimental-strip-types scripts/prepare-snowflake-playbook.ts",
     "data:build:approved-snowflake-snapshot": "node --experimental-strip-types scripts/build-approved-snowflake-snapshot.ts",
