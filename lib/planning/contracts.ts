@@ -174,6 +174,7 @@ export type SisterGeographySuggestion = z.infer<typeof sisterGeographySuggestion
 export const evaluationPlanRequestSchema = z.object({
   question: z.string().trim().min(3).max(600),
   perspectiveId: z.enum(["pricing", "marketing", "cvc"]).optional(),
+  selectedCbsaCodes: z.array(z.string().trim().regex(/^\d{5}$/)).max(3).default([]),
 }).strict();
 
 export const evaluationPlanResponseSchema = z.object({

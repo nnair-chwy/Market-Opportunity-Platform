@@ -2,10 +2,39 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   compileEvaluationPlan,
+  evaluationPlanRequestSchema,
   evaluationPlanSchema,
   inferPlanningIntent,
   planEvaluation,
 } from "../lib/planning/index.ts";
+
+test("selected geographic context overrides ambiguous question geography in stable order", () => {
+  const plan = planEvaluation("Which markets should we investigate?", "cvc", [
+    { cbsaCode: "19740", cbsaName: "Denver-Aurora-Centennial, CO" },
+    { cbsaCode: "38060", cbsaName: "Phoenix-Mesa-Chandler, AZ" },
+    { cbsaCode: "42660", cbsaName: "Seattle-Tacoma-Bellevue, WA" },
+  ]);
+  assert.equal(plan.geographyResolution.mode, "compare");
+  assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, ["19740", "38060", "42660"]);
+  assert.match(plan.geographyResolution.message, /analyst-selected order/);
+  evaluationPlanSchema.parse(plan);
+});
+
+test("evaluation plan requests accept at most three five-digit CBSA context IDs", () => {
+  const parsed = evaluationPlanRequestSchema.parse({
+    question: "Compare these markets",
+    selectedCbsaCodes: ["19740", "38060", "42660"],
+  });
+  assert.deepEqual(parsed.selectedCbsaCodes, ["19740", "38060", "42660"]);
+  assert.throws(() => evaluationPlanRequestSchema.parse({
+    question: "Compare these markets",
+    selectedCbsaCodes: ["19740", "38060", "42660", "12060"],
+  }));
+  assert.throws(() => evaluationPlanRequestSchema.parse({
+    question: "Compare these markets",
+    selectedCbsaCodes: ["Denver"],
+  }));
+});
 
 test("public market questions compile to governed Census context", () => {
   const plan = planEvaluation("Which U.S. markets have the highest population density?");

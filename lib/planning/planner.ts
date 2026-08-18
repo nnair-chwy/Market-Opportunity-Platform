@@ -12,6 +12,7 @@ import {
 import { derivePlanFindings, deriveResultWorkspaceType } from "./findings.ts";
 import { extractRequestedPlaces, normalizeRequestedPlaces, resolveGeography } from "./geography.ts";
 import { buildPlanSteps } from "./steps.ts";
+import type { SelectedGeographicContext } from "./geographic-context.ts";
 
 function has(value: string, expression: RegExp) {
   return expression.test(value);
@@ -245,6 +246,7 @@ export function compileEvaluationPlan(
   intent: PlanningIntent,
   proposalMethod: EvaluationPlan["proposalMethod"] = "deterministic_fallback",
   perspectiveId?: EvaluationPlan["perspectiveId"],
+  selectedGeographicContext: readonly SelectedGeographicContext[] = [],
 ): EvaluationPlan {
   const normalizedIntent = planningIntentSchema.parse({
     ...intent,
@@ -283,7 +285,23 @@ export function compileEvaluationPlan(
     availableEvidenceIds: [],
     satisfiedApprovalIds: [],
   });
-  const geography = resolveGeography(effectiveIntent);
+  const resolvedGeography = resolveGeography(effectiveIntent);
+  const geography = selectedGeographicContext.length
+    ? {
+        mode: selectedGeographicContext.length === 1 ? "single" as const : "compare" as const,
+        places: selectedGeographicContext.map((context) => ({
+          requestedName: context.cbsaName,
+          status: "resolved" as const,
+          cbsaCode: context.cbsaCode,
+          cbsaName: context.cbsaName,
+          candidates: [{ cbsaCode: context.cbsaCode, cbsaName: context.cbsaName }],
+        })),
+        selectedCbsaCodes: selectedGeographicContext.map((context) => context.cbsaCode),
+        message: selectedGeographicContext.length === 1
+          ? `Focus the workspace on ${selectedGeographicContext[0].cbsaName} (CBSA ${selectedGeographicContext[0].cbsaCode}).`
+          : `Compare ${selectedGeographicContext.map((context) => context.cbsaName).join(", ")} in the analyst-selected order.`,
+      }
+    : resolvedGeography;
   const status: EvaluationPlan["status"] = effectiveIntent.clarificationRequired || geography.mode === "clarification" || geography.mode === "unavailable"
     ? "blocked"
     : assessment.outcome === "supported"
@@ -340,6 +358,10 @@ export function compileEvaluationPlan(
   });
 }
 
-export function planEvaluation(question: string, perspectiveId?: EvaluationPlan["perspectiveId"]) {
-  return compileEvaluationPlan(question, inferPlanningIntent(question), "deterministic_fallback", perspectiveId);
+export function planEvaluation(
+  question: string,
+  perspectiveId?: EvaluationPlan["perspectiveId"],
+  selectedGeographicContext: readonly SelectedGeographicContext[] = [],
+) {
+  return compileEvaluationPlan(question, inferPlanningIntent(question), "deterministic_fallback", perspectiveId, selectedGeographicContext);
 }

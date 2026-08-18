@@ -93,6 +93,12 @@ test("View A Single, Compare, and Layer modes render with synchronized selection
       onQuestionChange() {},
       onSubmit() {},
       onOpenSaved() {},
+      selectedGeographicContexts: [
+        { cbsaCode: "19740", cbsaName: "Denver-Aurora-Centennial, CO" },
+        { cbsaCode: "38060", cbsaName: "Phoenix-Mesa-Chandler, AZ" },
+      ],
+      onGeographicContextSelect() {},
+      onGeographicContextRemove() {},
     }),
   );
   assert.match(opening, /data-view-a-control="true"/);
@@ -105,6 +111,10 @@ test("View A Single, Compare, and Layer modes render with synchronized selection
   assert.match(opening, /data-perspective="cvc"/);
   assert.match(opening, /data-active-view="household_demand"/);
   assert.match(opening, /data-map-mode="single"/);
+  assert.match(opening, /Geographic context/);
+  assert.match(opening, /Denver-Aurora-Centennial, CO/);
+  assert.match(opening, /Phoenix-Mesa-Chandler, AZ/);
+  assert.match(opening, /Remove Denver-Aurora-Centennial, CO/);
 });
 
 test("View A source wiring preserves mode switching, sync, and fail-safe unsupported layers", async () => {
@@ -120,6 +130,8 @@ test("View A source wiring preserves mode switching, sync, and fail-safe unsuppo
   assert.match(homepage, /mapMode=\{activeMapMode\}/);
   assert.match(homepage, /coerceSupportedMapMode/);
   assert.match(homepage, /adaptive-question-composer/);
+  assert.match(homepage, /selectedGeographicContexts/);
+  assert.match(homepage, /onGeographicContextRemove/);
   assert.match(homepage, /setPerspectiveId|choosePerspective/);
   assert.match(homepage, /setActiveViews|chooseView/);
 
@@ -130,8 +142,9 @@ test("View A source wiring preserves mode switching, sync, and fail-safe unsuppo
   assert.match(market, /compare_cohort/);
   assert.match(market, /preserveMissingNumeric/);
   assert.match(market, /MAX_COMPARISON_REGIONS/);
-  assert.match(market, /setSelectedCode\(market\.code\)/);
-  assert.match(market, /onChooseMarket=\{setSelectedCode\}/);
+  assert.match(market, /selectMarket\(market\.code\)/);
+  assert.match(market, /onChooseMarket=\{selectMarket\}/);
+  assert.match(market, /onGeographicContextSelect/);
   assert.match(market, /resolveLayerForPresentation/);
   assert.match(market, /layerVisibilityChangesScoringInputs/);
   assert.match(market, /assertNoHiddenLayerScore/);

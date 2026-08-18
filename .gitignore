@@ -44,6 +44,7 @@ next-env.d.ts
 /outputs/
 /work/
 /.cache/
+/.worktrees/
 
 # local artifact-generation workspaces
 /.codex-ppt-remake/

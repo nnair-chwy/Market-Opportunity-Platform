@@ -48,6 +48,7 @@ import {
   type PacketFindingsSummary,
   type SisterGeographySuggestion,
 } from "@/lib/planning";
+import { MAX_SELECTED_GEOGRAPHIC_CONTEXTS, type SelectedGeographicContext } from "@/lib/planning/geographic-context";
 import {
   clinicSiteWorkflowResultSchema,
   type ClinicSiteWorkflowResult,
@@ -70,6 +71,7 @@ type SavedPacket = {
   evaluationDefinition?: EvaluationDefinitionDraft;
   selectedLeadId?: string | null;
   selectedContextMetric?: CbsaAcsMetricKey;
+  selectedGeographicContexts?: SelectedGeographicContext[];
 };
 
 function nowLabel() {
@@ -126,6 +128,8 @@ export function DecisionWorkflowApp() {
   const [evidencePlan, setEvidencePlan] = useState<EvidencePlan | null>(null);
   const [evaluationDefinition, setEvaluationDefinition] = useState<EvaluationDefinitionDraft | null>(null);
   const [selectedContextMetric, setSelectedContextMetric] = useState<CbsaAcsMetricKey>("household_count");
+  const [selectedGeographicContexts, setSelectedGeographicContexts] = useState<SelectedGeographicContext[]>([]);
+  const [geographicContextNotice, setGeographicContextNotice] = useState<string | null>(null);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
 
@@ -296,6 +300,7 @@ export function DecisionWorkflowApp() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           question: normalizedQuestion,
+          selectedCbsaCodes: selectedGeographicContexts.map((context) => context.cbsaCode),
           ...(nextPerspectiveId ? { perspectiveId: nextPerspectiveId } : {}),
         }),
       });
@@ -393,6 +398,7 @@ export function DecisionWorkflowApp() {
       evaluationDefinition: evaluationDefinition ?? undefined,
       selectedLeadId,
       selectedContextMetric,
+      selectedGeographicContexts,
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
@@ -401,8 +407,11 @@ export function DecisionWorkflowApp() {
   }
 
   function openSavedPacket(packet: SavedPacket) {
-    const restoredPlan = planEvaluation(packet.question, packet.perspectiveId);
+    const restoredGeographicContexts = packet.selectedGeographicContexts ?? [];
+    const restoredPlan = planEvaluation(packet.question, packet.perspectiveId, restoredGeographicContexts);
     setQuestion(packet.question);
+    setSelectedGeographicContexts(restoredGeographicContexts);
+    setGeographicContextNotice(null);
     setPlan(restoredPlan);
     setClinicWorkflow(null);
     setSelectedContextMetric(packet.selectedContextMetric ?? (restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count"));
@@ -510,7 +519,7 @@ export function DecisionWorkflowApp() {
 
         {activeView === "saved" ? (
           <section className="decision-content">
-            <SavedPacketsView packets={savedPackets} onOpen={openSavedPacket} onStart={() => { setActiveView("workflow"); setPhase("question"); setSisterFollowUpNotice(null); }} />
+            <SavedPacketsView packets={savedPackets} onOpen={openSavedPacket} onStart={() => { setActiveView("workflow"); setPhase("question"); setQuestion(""); setSelectedGeographicContexts([]); setGeographicContextNotice(null); setSisterFollowUpNotice(null); }} />
           </section>
         ) : null}
 
@@ -535,6 +544,23 @@ export function DecisionWorkflowApp() {
                 setSisterFollowUpNotice(null);
               }}
               onOpenSaved={() => setActiveView("saved")}
+              selectedGeographicContexts={selectedGeographicContexts}
+              onGeographicContextSelect={(context) => {
+                setGeographicContextNotice(null);
+                setSelectedGeographicContexts((current) => {
+                  if (current.some((item) => item.cbsaCode === context.cbsaCode)) return current;
+                  if (current.length >= MAX_SELECTED_GEOGRAPHIC_CONTEXTS) {
+                    setGeographicContextNotice(`You can add up to ${MAX_SELECTED_GEOGRAPHIC_CONTEXTS} CBSA regions.`);
+                    return current;
+                  }
+                  return [...current, context];
+                });
+              }}
+              onGeographicContextRemove={(cbsaCode) => {
+                setSelectedGeographicContexts((current) => current.filter((context) => context.cbsaCode !== cbsaCode));
+                setGeographicContextNotice(null);
+              }}
+              geographicContextNotice={geographicContextNotice}
             />
           </section>
         ) : null}

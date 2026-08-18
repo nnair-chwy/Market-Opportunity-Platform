@@ -93,6 +93,7 @@ type AdaptiveMarketWorkspaceProps = {
   onCategoryChange?: (category: WorkflowCategory) => void;
   activeView?: PerspectiveView;
   mapMode?: MapViewMode;
+  onGeographicContextSelect?: (context: { cbsaCode: string; cbsaName: string }) => void;
 };
 
 export function AdaptiveMarketWorkspace({
@@ -109,6 +110,7 @@ export function AdaptiveMarketWorkspace({
   onCategoryChange,
   activeView,
   mapMode = "single",
+  onGeographicContextSelect,
 }: AdaptiveMarketWorkspaceProps) {
   const [metricState, setMetricState] = useState<CbsaAcsMetricKey>(initialMetric);
   const [includeMicropolitanState, setIncludeMicropolitanState] = useState(false);
@@ -145,6 +147,12 @@ export function AdaptiveMarketWorkspace({
       : presentation.mapBinding.kind === "clinic_locations" ||
         presentation.supportsLayerMode;
   const compareEnabled = mapMode === "compare" && presentation.supportsComparison;
+
+  function selectMarket(code: string) {
+    setSelectedCode(code);
+    const market = publicMarkets.find((candidate) => candidate.cbsa_code === code);
+    if (market) onGeographicContextSelect?.({ cbsaCode: code, cbsaName: market.cbsa_name });
+  }
 
   function setMetric(value: CbsaAcsMetricKey) {
     setMetricState(value);
@@ -476,7 +484,7 @@ export function AdaptiveMarketWorkspace({
                     ? "adaptive-compare-chip active"
                     : "adaptive-compare-chip"
                 }
-                onClick={() => setSelectedCode(market.code)}
+                onClick={() => selectMarket(market.code)}
               >
                 <span>
                   {index + 1}. {market.name}
@@ -628,7 +636,7 @@ export function AdaptiveMarketWorkspace({
         marketScoreBoundary={scoreBoundary}
         locations={showClinicOverlay ? clinicLocations : []}
         selectedLocationId={null}
-        onChooseMarket={setSelectedCode}
+        onChooseMarket={selectMarket}
         onAddMarketToComparison={addSelected}
         onRemoveMarketFromComparison={(code) =>
           setComparisonCodes((current) => removeComparisonRegion(current, code))
@@ -663,7 +671,7 @@ export function AdaptiveMarketWorkspace({
                 role="option"
                 aria-selected={activeSelectedCode === market.cbsa_code}
                 className={activeSelectedCode === market.cbsa_code ? "active" : ""}
-                onClick={() => setSelectedCode(market.cbsa_code)}
+                onClick={() => selectMarket(market.cbsa_code)}
               >
                 <span>
                   <strong>{market.cbsa_name}</strong>
@@ -753,7 +761,7 @@ export function AdaptiveMarketWorkspace({
               className="adaptive-compare-row"
               type="button"
               key={market.code}
-              onClick={() => setSelectedCode(market.code)}
+              onClick={() => selectMarket(market.code)}
             >
               <span>{market.name}</span>
               <b>

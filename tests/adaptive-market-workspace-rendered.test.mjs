@@ -23,10 +23,10 @@ test("the adaptive workspace keeps the map controls and deterministic comparison
   assert.match(market, /Include micropolitan/);
   assert.match(market, /compare_cohort/);
   assert.match(market, /marketScoreLabel=\{scoreLabel\}/);
-  assert.match(market, /onChooseMarket=\{setSelectedCode\}/);
+  assert.match(market, /onChooseMarket=\{selectMarket\}/);
   assert.match(market, /MAX_COMPARISON_REGIONS/);
   assert.match(market, /not an opportunity score or recommendation/i);
-  assert.match(market, /setSelectedCode\(market\.cbsa_code\)/);
+  assert.match(market, /selectMarket\(market\.cbsa_code\)/);
 });
 
 test("View A Single Compare and Layer controls are wired on the opening page", () => {

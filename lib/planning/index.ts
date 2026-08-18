@@ -2,6 +2,7 @@ export * from "./contracts.ts";
 export * from "./execution.ts";
 export * from "./evidence-plan.ts";
 export * from "./findings.ts";
+export * from "./geographic-context.ts";
 export * from "./geography.ts";
 export * from "./insight-action-plan.ts";
 export * from "./map-focus.ts";

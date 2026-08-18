@@ -16,6 +16,7 @@ import {
   type PerspectiveViewId,
 } from "@/lib/perspectives";
 import type { WorkflowCategory } from "@/lib/workflow/market-workflow";
+import type { SelectedGeographicContext } from "@/lib/planning/geographic-context";
 
 type SavedPacketPreview = {
   id: string;
@@ -45,6 +46,10 @@ type AdaptiveEvaluationWorkspaceProps = {
   onSubmit: (perspectiveId?: PerspectiveId) => void;
   onPerspectiveChange: (perspectiveId: PerspectiveId) => void;
   onOpenSaved: () => void;
+  selectedGeographicContexts: readonly SelectedGeographicContext[];
+  onGeographicContextSelect: (context: SelectedGeographicContext) => void;
+  onGeographicContextRemove: (cbsaCode: string) => void;
+  geographicContextNotice?: string | null;
 };
 
 export function AdaptiveEvaluationWorkspace({
@@ -54,6 +59,10 @@ export function AdaptiveEvaluationWorkspace({
   onSubmit,
   onPerspectiveChange,
   onOpenSaved,
+  selectedGeographicContexts = [],
+  onGeographicContextSelect,
+  onGeographicContextRemove,
+  geographicContextNotice,
 }: AdaptiveEvaluationWorkspaceProps) {
   const [perspectiveId, setPerspectiveId] = useState<PerspectiveId>("cvc");
   const [perspectiveExplicitlySelected, setPerspectiveExplicitlySelected] = useState(false);
@@ -251,6 +260,7 @@ export function AdaptiveEvaluationWorkspace({
         onCategoryChange={setCategory}
         includeMicropolitan={includeMicropolitan}
         onIncludeMicropolitanChange={setIncludeMicropolitan}
+        onGeographicContextSelect={onGeographicContextSelect}
       />
 
       <div className="adaptive-question-composer">
@@ -259,6 +269,25 @@ export function AdaptiveEvaluationWorkspace({
             <label htmlFor="adaptive-evaluation-goal">
               <strong>Evaluation question</strong>
             </label>
+            {selectedGeographicContexts.length > 0 ? (
+              <div className="adaptive-geographic-context" aria-label="Selected geographic context">
+                <span className="adaptive-geographic-context-label">Geographic context</span>
+                <div className="adaptive-geographic-context-chips">
+                  {selectedGeographicContexts.map((context) => (
+                    <span className="adaptive-geographic-context-chip" key={context.cbsaCode}>
+                      <span>{context.cbsaName}</span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${context.cbsaName}`}
+                        onClick={() => onGeographicContextRemove(context.cbsaCode)}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <div className="adaptive-composer-row">
               <textarea
                 id="adaptive-evaluation-goal"
@@ -270,6 +299,11 @@ export function AdaptiveEvaluationWorkspace({
                 Run decision graph <span aria-hidden="true">→</span>
               </button>
             </div>
+            {geographicContextNotice ? (
+              <small className="adaptive-geographic-context-notice" role="status">
+                {geographicContextNotice}
+              </small>
+            ) : null}
             <div className="adaptive-starter-questions" aria-label={`${activePerspective.label} example questions`}>
               {starterQuestions[perspectiveId].map((starter) => (
                 <button key={starter} type="button" onClick={() => onQuestionChange(starter)}>
