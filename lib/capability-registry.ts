@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CAPABILITY_REGISTRY_VERSION = "1.1.0" as const;
+export const CAPABILITY_REGISTRY_VERSION = "1.2.0" as const;
 
 const identifierSchema = z.string().trim().min(1).max(180);
 const descriptionSchema = z.string().trim().min(1).max(800);
@@ -74,6 +74,7 @@ export const workspaceCapabilitySchema = z.object({
     "clinic_performance",
     "clinic_site_evaluation",
     "local_growth_test",
+    "consumer_insights",
   ]),
   version: identifierSchema,
   status: capabilityStatusSchema,
@@ -107,7 +108,7 @@ export type WorkspaceCapability = z.infer<typeof workspaceCapabilitySchema>;
 
 export const capabilityRegistrySchema = z.object({
   registryVersion: z.literal(CAPABILITY_REGISTRY_VERSION),
-  capabilities: z.array(workspaceCapabilitySchema).length(4),
+  capabilities: z.array(workspaceCapabilitySchema).length(5),
 }).strict().superRefine((registry, context) => {
   if (new Set(registry.capabilities.map((item) => item.capabilityId)).size !== registry.capabilities.length) {
     context.addIssue({ code: "custom", path: ["capabilities"], message: "Capability identifiers must be unique." });
@@ -385,6 +386,32 @@ export const capabilityRegistry = capabilityRegistrySchema.parse({
         "Observed advertising efficiency does not establish causal lift, total demand, pricing power, or site suitability.",
         "Precise customer locations are prohibited.",
         "A 30-minute launch-marketing area is not automatically an approved site-scoring trade area.",
+      ],
+    },
+    {
+      capabilityId: "consumer_insights",
+      version: "1.0.0",
+      status: "connected",
+      supportedGeographyGrains: ["cbsa", "market"],
+      supportedOutputs: [
+        { outputId: "consumer_insights_profile", label: "Consumer-insights DMA profile aligned to CBSA", requiredEvidenceIds: ["brand_health_snapshot"], approvalRequirementIds: [] },
+        { outputId: "brand_health_review", label: "Brand-health funnel, relevance, driver, and generation review", requiredEvidenceIds: ["brand_health_snapshot"], approvalRequirementIds: [] },
+      ],
+      requiredEvidence: [{
+        evidenceId: "brand_health_snapshot",
+        label: "Normalized Brand Health Tracker snapshot",
+        required: true,
+        availableByDefault: true,
+        sourceIds: ["SRC-033"],
+        limitation: "The snapshot is a dated reported survey. DMA-to-CBSA alignment is intuitive local-demo context and is not a Nielsen boundary equivalence.",
+      }],
+      permittedDeterministicOperators: ["filter", "exact_geography_join", "compare", "aggregate"],
+      approvalRequirements: [],
+      knownLimitations: [
+        "The source covers 32 DMAs and the April 11 to May 15, 2024 survey wave only.",
+        "The DMA-to-CBSA crosswalk is Derived, intuitive, and requires owner review before external or production use.",
+        "BDI, CDI, funnel, relevance, and driver observations are descriptive and have no clinic-site scoring eligibility.",
+        "Narrative, correlation, and causal claims are outside the registered output boundary.",
       ],
     },
   ],

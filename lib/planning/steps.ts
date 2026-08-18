@@ -159,6 +159,31 @@ export function buildPlanSteps(input: StepInput): PlanStep[] {
     ];
   }
 
+  if (capabilityId === "consumer_insights") {
+    return [
+      interpret,
+      resolveGeography,
+      step(
+        "validate-consumer-snapshot",
+        "Validate consumer-insights snapshot",
+        "Confirm the dated survey wave, source provenance, sample, missingness, and requested BDI/CDI or brand-health measures.",
+        "Normalized snapshot and registered queries validated",
+      ),
+      step(
+        "align-dma-to-cbsa",
+        "Align DMA to CBSA",
+        "Use the versioned intuitive metro-name crosswalk and preserve its Derived status, confidence, and owner-review state.",
+        "Intuitive local-demo geography alignment visible",
+      ),
+      step(
+        "prepare-consumer-review",
+        "Prepare consumer-insights review",
+        "Return source-linked descriptive evidence without scoring, causal interpretation, or site-selection action.",
+        status === "blocked" ? "Review blocked by geography" : "Consumer-insights packet prepared",
+      ),
+    ];
+  }
+
   if (capabilityId === "local_growth_test") {
     return [
       interpret,

@@ -221,8 +221,6 @@ export function UnifiedEvaluatorMap({
   });
   const [ready, setReady] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [fallbackResetSelectionKey, setFallbackResetSelectionKey] =
-    useState<string | null>(null);
 
   const selectedLocation =
     locations.find((location) => location.id === selectedLocationId) ?? null;
@@ -235,8 +233,6 @@ export function UnifiedEvaluatorMap({
     (feature) => feature.properties.cbsa_code === selectedMarketCode,
   );
   const useFallback = config.status !== "configured" || loadFailed;
-  const selectionKey = `${selectedMarketCode}:${selectedLocationId ?? ""}`;
-  const fallbackNational = fallbackResetSelectionKey === selectionKey;
 
   useEffect(() => {
     callbacksRef.current = { onChooseMarket, onChooseLocation };
@@ -732,7 +728,6 @@ export function UnifiedEvaluatorMap({
   }, [locations, ready, selectedLocationId, visibleLocations]);
 
   function resetMap() {
-    setFallbackResetSelectionKey(selectionKey);
     mapRef.current?.fitBounds(MAINLAND_MARKET_BOUNDS, {
       padding: 20,
       duration: 650,
@@ -740,9 +735,7 @@ export function UnifiedEvaluatorMap({
     onReset();
   }
 
-  const fallbackView = fallbackNational
-    ? NATIONAL_VIEW_BOX
-    : fallbackViewBox(collection, selectedMarketCode, selectedLocation);
+  const fallbackView = fallbackViewBox(collection, selectedMarketCode, selectedLocation);
 
   return (
     <section
@@ -954,10 +947,11 @@ export function UnifiedEvaluatorMap({
 
         <button
           type="button"
-          className={`market-reset-map${useFallback ? "" : " with-navigation"}`}
+          className="market-reset-map"
+          aria-label="Reset map to national view"
           onClick={resetMap}
         >
-          Reset map
+          Reset
         </button>
 
         {useFallback ? (

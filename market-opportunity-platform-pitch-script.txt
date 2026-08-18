@@ -1,0 +1,103 @@
+MARKET OPPORTUNITY PLATFORM
+Two-person executive pitch, approximately 9 minutes of presentation and 10 minutes of Q&A
+
+Presenter A: opening, stakeholders, problem, platform, first proof point
+Presenter B: demo, evidence domains, future stakeholders, company impact
+Presenter A: ask and Q&A bridge
+
+SLIDE 1 - OPENING THESIS - PRESENTER A - 0:45
+
+“Chewy already has the signals to find opportunity. We have evidence about clinics, growth, customers, markets, and geography.
+
+The opportunity is to make those signals usable in decisions: comparable across places, clear about what they support, and connected to an action that someone can own.
+
+That is the Market Opportunity Platform: a shared decision layer for growth, expansion, insights, and strategy.”
+
+SLIDE 2 - STAKEHOLDERS USING IT TODAY - PRESENTER A - 0:55
+
+“The first users are not one team. They are several teams asking different versions of the same underlying question.
+
+Clinic and CVC expansion leaders ask where we should investigate next. Growth marketing asks which local test to run. Consumer insights asks which need or barrier matters. Market intelligence and strategy ask where leadership should focus.
+
+Their decisions differ, but the evidence challenge is shared: they need local, comparable, actionable context before they act.”
+
+SLIDE 3 - THE SHARED PROBLEM - PRESENTER A - 0:55
+
+“Today, evidence is fragmented across the decision journey.
+
+The question may start in one team, the evidence may live in several systems, and the synthesis may happen manually. That creates repeated research, hidden gaps, and ownership that arrives too late.
+
+The problem is not simply that data is scattered. The problem is that the decision trail does not scale with the data.”
+
+SLIDE 4 - THE PLATFORM - PRESENTER A - 0:55
+
+“The Market Opportunity Platform turns a question into a reviewable next action.
+
+It starts by defining the decision. It assembles governed evidence, compares markets or opportunities transparently, exposes uncertainty, and prepares the next action for human review.
+
+AI helps interpret and explain the evidence. Deterministic systems own geography, calculations, comparisons, and policy. The business owner remains accountable for the decision.”
+
+SLIDE 5 - FIRST PROOF POINT - PRESENTER A - 0:45
+
+“Clinic expansion is the first proof point because it is a difficult, high-value decision with many interacting evidence needs.
+
+But the product we are proving is not a clinic score. It is a reusable evaluation protocol: define the question, assemble the evidence, compare transparently, make uncertainty visible, and hand off an action that a person can own.
+
+That protocol can extend beyond the first vertical.”
+
+HANDOFF TO PRESENTER B
+
+“I’ll hand it to [Presenter B] to show the workflow in action.”
+
+SLIDE 6 - LIVE DEMO - PRESENTER B - 2:45
+
+“We will follow one market question through four steps: explore, assemble, compare, and review.”
+
+During the demo:
+
+1. “We begin with market context. This helps us orient the question and identify where investigation should focus.”
+2. “Next, we assemble the evidence ledger. The platform keeps the source and evidence state visible instead of blending everything into one answer.”
+3. “Now we compare using visible criteria. The calculation is deterministic, so the reviewer can understand how the comparison was produced.”
+4. “Finally, the platform prepares a grounded next action. It explains what the evidence supports, what needs further investigation, and who should review it.”
+
+DEMO FALLBACK
+
+“If the live path is unavailable, the prepared screens show the same progression. The important point is the decision flow: the platform turns a broad question into a clearer, reviewable handoff.”
+
+SLIDE 7 - EVIDENCE DOMAINS - PRESENTER B - 0:55
+
+“The platform connects the evidence teams already use.
+
+Clinic exploration contributes footprint, capacity, and access context. Growth marketing contributes demand signals and test framing. Consumer insights contributes customer needs and barriers. Census contributes consistent public geographic context.
+
+The value comes from the decision context created across these sources. A market answer can change when demand, customer context, geography, and operational feasibility are considered together.”
+
+SLIDE 8 - FUTURE STAKEHOLDERS - PRESENTER B - 0:55
+
+“The next stakeholders are every team making a geographic decision.
+
+The platform can expand from clinic and CVC, growth marketing, consumer insights, and market strategy to portfolio strategy, real estate and operations, finance and planning, and other teams responsible for geographic choices.
+
+This is not another team-specific dashboard. It is a shared operating layer with different questions, evidence, owners, and next actions by use case.”
+
+SLIDE 9 - COMPANY IMPACT - PRESENTER B - 0:55
+
+“The company impact is better decisions at greater scale.
+
+If teams can evaluate more questions, duplicate less research, see evidence gaps earlier, and reuse the same evaluation pattern, the value compounds across the company.
+
+We should measure the operating improvement first: decision speed, evidence quality, reuse, clarity of ownership, and reviewer confidence. Those measures give us a credible path to downstream business impact without claiming outcomes we have not yet measured.”
+
+SLIDE 10 - THE ASK - PRESENTER A - 0:45
+
+“The ask is to prove one recurring decision end to end.
+
+We need one accountable owner, one governed data path, one success measure, and a recurring review cadence. We can run the platform alongside the current process and measure whether it improves speed, quality, reuse, and decision confidence.
+
+If we can show better decisions with less duplicated investigation, we will have demonstrated a platform worth scaling across Chewy.
+
+The vision is simple: move from where should we open to where should we act, with evidence people can trust and decisions people still own.”
+
+Q&A BRIDGE - PRESENTER A
+
+“We would love to use the next ten minutes to pressure-test the first recurring decision, the accountable owner, the data path, and the success measure.”

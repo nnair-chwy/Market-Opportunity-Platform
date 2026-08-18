@@ -6,9 +6,9 @@ import {
   capabilityRegistrySchema,
 } from "../lib/capability-registry.ts";
 
-test("publishes a valid versioned registry with the four initial capabilities", () => {
+test("publishes a valid versioned registry with the five connected capabilities", () => {
   assert.equal(capabilityRegistrySchema.safeParse(capabilityRegistry).success, true);
-  assert.equal(capabilityRegistry.registryVersion, "1.1.0");
+  assert.equal(capabilityRegistry.registryVersion, "1.2.0");
   assert.deepEqual(
     capabilityRegistry.capabilities.map((item) => item.capabilityId),
     [
@@ -16,6 +16,7 @@ test("publishes a valid versioned registry with the four initial capabilities", 
       "clinic_performance",
       "clinic_site_evaluation",
       "local_growth_test",
+      "consumer_insights",
     ],
   );
   for (const capability of capabilityRegistry.capabilities) {

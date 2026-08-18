@@ -162,15 +162,18 @@ export function buildEvidencePlan(plan: EvaluationPlan): EvidencePlan {
       sourceIds: query === "regional_context_by_cbsa" ? ["SRC-016", "SNOWFLAKE-CSV-MARKET-CONTEXT", "SNOWFLAKE-CSV-REGIONAL-DEMAND"]
         : query === "clinic_context_by_cbsa" ? ["SNOWFLAKE-CSV-CLINIC-PROFILE", "SNOWFLAKE-CSV-CLINIC-ACTIVITY"]
           : query === "google_ads_context_by_cbsa" ? ["SRC-018"]
+            : query.endsWith("_by_cbsa") && query.includes("consumer") || query.includes("brand_") ? ["SRC-033"]
             : query === "growth_test_screening" ? ["SRC-016", "SRC-018", "SNOWFLAKE-CSV-MARKET-CONTEXT", "SNOWFLAKE-CSV-REGIONAL-DEMAND"]
               : ["SRC-014"],
-      reason: query === "google_ads_context_by_cbsa"
+      reason: query.includes("consumer") || query.includes("brand_")
+        ? "The normalized Brand Health Tracker snapshot exposes this registered DMA observation with an intuitive Derived CBSA alignment."
+        : query === "google_ads_context_by_cbsa"
         ? "Aggregate Google Ads measures are connected through visible Census-assisted demo geography inference."
         : query === "growth_test_screening"
           ? "All five configured metrics are connected for a complete-case subset; incomplete markets are excluded."
           : "The normalized frozen snapshot exposes this registered aggregate query.",
-      allowedUse: query === "growth_test_screening" ? "Hypothesis-only local demo screening; no launch, spend, or causal conclusion." : "Local demo aggregate descriptive decision support only.",
-      nextAction: "Inspect returned source IDs, missingness, geography confidence, and warnings before drawing a decision conclusion.",
+      allowedUse: query.includes("consumer") || query.includes("brand_") ? "Local demo consumer-insights descriptive context only; no scoring, causal, or site-selection conclusion." : query === "growth_test_screening" ? "Hypothesis-only local demo screening; no launch, spend, or causal conclusion." : "Local demo aggregate descriptive decision support only.",
+      nextAction: query.includes("consumer") || query.includes("brand_") ? "Review the survey period, slide provenance, missingness, and intuitive DMA-to-CBSA mapping before using the evidence beyond local context." : "Inspect returned source IDs, missingness, geography confidence, and warnings before drawing a decision conclusion.",
     }));
     return {
       version: "evidence-plan-v0.1",

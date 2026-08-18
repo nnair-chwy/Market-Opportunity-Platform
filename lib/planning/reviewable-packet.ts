@@ -258,6 +258,9 @@ function evidenceSourceIdsFor(plan: EvaluationPlan): string[] {
   if (plan.capabilityId === "clinic_site_evaluation") {
     return ["SRC-009", "SRC-014", "SRC-015", "SRC-016"];
   }
+  if (plan.capabilityId === "consumer_insights") {
+    return ["SRC-033"];
+  }
   return [];
 }
 
@@ -294,6 +297,9 @@ function querySpecificDirectAnswer(
   if (!facts.length) return `The registered execution returned no browser-eligible evidence for this question. ${evidenceExecution.missingEvidence.join(" ") || "The evidence gap remains explicit."}`;
   if (plan.intent.topic === "clinic_context") {
     return `${facts[0]!.geographyLabel} has ${facts.map(factClause).join("; ")}. These are aggregate clinic-market activity measures. Rx orders are the supplied prescription proxy, and the result is not a clinic-level operating performance judgment.`;
+  }
+  if (plan.intent.topic === "consumer_insights") {
+    return `${facts[0]!.geographyLabel} has ${facts.map(factClause).join("; ")}. These are reported survey observations from the 2024 Brand Health Tracker, aligned from the source DMA to the selected CBSA through an intuitive Derived local-demo crosswalk. The evidence is descriptive context only and does not establish demand, market share, causality, or site suitability.`;
   }
   if (plan.intent.topic === "regional_context") {
     return `${facts[0]!.geographyLabel} has ${facts.map(factClause).join("; ")}. Customer context and calendar-year sales are separate descriptive observations and do not establish incremental regional opportunity.`;

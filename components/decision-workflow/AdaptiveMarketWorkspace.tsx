@@ -649,7 +649,10 @@ export function AdaptiveMarketWorkspace({
           })
         }
         onChooseLocation={() => undefined}
-        onReset={() => setSelectedCode("")}
+        onReset={() => {
+          setSelectedCode("");
+          setComparisonCodes(clearComparisonRegions());
+        }}
       />
 
       <div className="adaptive-market-detail" id="adaptive-market-detail">

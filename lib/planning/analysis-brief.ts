@@ -176,7 +176,7 @@ function normalizedQuestionBrief(plan: EvaluationPlan, investigation: MarketInve
     .filter((place) => place.status === "resolved")
     .map((place) => place.cbsaName ?? place.requestedName);
   const placeLabel = placeNames.length ? placeNames.join(" and ") : "the complete eligible normalized-market cohort";
-  const sourceLabels = plan.intent.sourceFamilies.map((family) => family === "google_ads" ? "Google Ads matched-location aggregates" : family === "clinic" ? "aggregate clinic activity" : family === "regional" ? "regional customer and demand aggregates" : "public Census context");
+  const sourceLabels = plan.intent.sourceFamilies.map((family) => family === "google_ads" ? "Google Ads matched-location aggregates" : family === "clinic" ? "aggregate clinic activity" : family === "regional" ? "regional customer and demand aggregates" : family === "consumer_insights" ? "Brand Health Tracker consumer-insights aggregates" : "public Census context");
 
   const rewrittenQuestion = plan.intent.topic === "clinic_context"
     ? `Report ${metricLabels.join(", ")} for ${placeLabel}, with source, period, quality, and missingness visible.`

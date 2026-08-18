@@ -3063,18 +3063,21 @@ button {
   border-radius: 8px;
   color: var(--blue);
   cursor: pointer;
+  align-items: center;
+  display: inline-flex;
   font-size: 10px;
   font-weight: 800;
+  justify-content: center;
   min-height: 34px;
+  max-width: calc(100% - 2rem);
   padding: 0 11px;
   position: absolute;
   right: 12px;
+  text-align: center;
   top: 12px;
+  width: max-content;
+  white-space: nowrap;
   z-index: 2;
-}
-
-.market-reset-map.with-navigation {
-  top: 82px;
 }
 
 .market-boundary-layer path {
@@ -6151,7 +6154,6 @@ button {
 
 .question-page:has(.adaptive-opening) .decision-content { padding: 0; overflow-x: hidden; }
 .adaptive-opening .map-comparison-tray { display: none !important; }
-.adaptive-opening .market-reset-map,
 .adaptive-opening .map-note { display: none !important; }
 
 @media print {
@@ -6360,9 +6362,10 @@ button {
 .adaptive-view-unavailable small { margin: 0; color: #607891; font-size: .78rem; line-height: 1.4; }
 .adaptive-opening .map-note { position: absolute; left: 50%; bottom: 5.25rem; transform: translateX(-50%); z-index: 2; width: min(92vw, 870px); border: 0; background: rgba(255,255,255,.6); color: #637996; text-align: center; opacity: .82; }
 .adaptive-opening .workflow-map-legend { top: auto; right: 1rem; bottom: 5.2rem; left: auto; z-index: 2; max-width: min(42vw, 280px); border-radius: 1rem; opacity: .9; }
+.adaptive-opening .unified-maplibre .maplibregl-ctrl-top-right { top: 14rem; right: 1rem; z-index: 4; }
 .adaptive-opening[data-map-mode="layer"] .workflow-map-legend { bottom: 5.2rem; right: 1rem; }
 .adaptive-opening[data-map-mode="compare"] .workflow-map-legend { bottom: 5.2rem; }
-.adaptive-opening .market-reset-map { right: 1rem; bottom: 6.8rem; z-index: 3; }
+.adaptive-opening .market-reset-map { top: 10.5rem; right: 1rem; bottom: auto; z-index: 3; }
 .adaptive-opening .map-comparison-tray { display: none; }
 .adaptive-opening .adaptive-question-composer { position: absolute; left: 50%; bottom: 1.4rem; z-index: 5; display: block; width: min(72vw, 865px); max-width: calc(100vw - 2rem); transform: translateX(-50%); margin: 0; padding: .8rem 1rem .65rem; border-radius: 1.35rem; background: rgba(255,255,255,.84); box-shadow: 0 18px 45px rgba(42,65,100,.18); backdrop-filter: blur(18px); }
 .adaptive-opening .adaptive-composer-input form { gap: .35rem; }
