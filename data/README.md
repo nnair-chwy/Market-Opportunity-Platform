@@ -148,6 +148,21 @@ outcome, maturity, geography, or owner-review requirements.
 
 Data files added later must document owner, source, observation date, geography, sensitivity, allowed use, and retention.
 
+## Consumer insights snapshot
+
+The supplied Chewy Brand Health Tracker PPTX is extracted with:
+
+```sh
+pnpm data:build:consumer-insights -- --input /absolute/path/to/brand-health.pptx --output data/approved/consumer-insights/chewy-brand-health-2024-dma-generation-v1
+```
+
+The generated Parquet snapshot is confidential, workspace-only, and reported
+survey evidence. It supports dated DMA consumer and brand context after owner
+approval. It has no DMA-to-CBSA join, no clinic-site scoring eligibility, and
+no causal or current-demand interpretation. Use the registered consumer-
+insights query boundary rather than reading Parquet directly from browser or
+AI code.
+
 ## Minimized Esri demo fixture
 
 `data/sample/esri/2026-07-30/` is a deterministic, minimized internal-demo
