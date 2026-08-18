@@ -33,12 +33,13 @@ test("opening page renders the perspective dropdown with Pricing, Marketing, and
 
 test("each perspective renders its own view options and keeps per-perspective active state", () => {
   assert.match(homepage, /listViewsForPerspective\(perspectiveId\)/);
+  assert.match(homepage, /visibleViews = views\.filter\(\(view\) => view\.evidenceAvailability === "available"\)/);
   assert.match(homepage, /createDefaultActiveViews/);
   assert.match(homepage, /activeViews\[perspectiveId\]/);
   assert.match(homepage, /setActiveViews\(\(current\) => \(\{ \.\.\.current, \[perspectiveId\]: viewId \}\)\)/);
   assert.match(homepage, /aria-label=\{`\$\{activePerspective\.label\} views`\}/);
-  assert.match(catalog, /defaultViewId: "price_index"/);
-  assert.match(catalog, /defaultViewId: "customer_demand"/);
+  assert.match(catalog, /defaultViewId: "competitor_availability"/);
+  assert.match(catalog, /defaultViewId: "paid_search_response"/);
   assert.match(catalog, /defaultViewId: "household_demand"/);
 });
 
@@ -93,7 +94,8 @@ test("governed planning, packets, AI summary, and persistence remain wired", () 
   assert.match(workflow, /evaluationPlanResponseSchema\.safeParse/);
   assert.match(workflow, /setPhase\("interpreting"\)/);
   assert.match(workflow, /Save action packet/);
-  assert.match(workflow, /Download full report/);
+  assert.match(workflow, /Download decision brief/);
+  assert.match(workflow, /Download audit appendix/);
   assert.match(workflow, /Findings and proposed action/);
   assert.doesNotMatch(workflow, /AskAiPanel/);
   assert.match(workflow, /market-intelligence-action-packets/);

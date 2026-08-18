@@ -1,6 +1,6 @@
 export const INVESTIGATION_LEAD_COLORS = [
   "#2f6bdb",
-  "#d85b3f",
+  "#d8a414",
   "#7a4db3",
   "#118a72",
   "#c48a12",

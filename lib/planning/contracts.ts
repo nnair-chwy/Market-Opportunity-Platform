@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  perspectiveMeasureIdSchema,
+  perspectiveViewIdSchema,
+} from "../perspectives/contracts.ts";
+import { workspaceSnapshotDatasetIdSchema } from "../perspectives/workspace-snapshot.ts";
+import { answerContractSchema } from "./answer-contract.ts";
 
 export const requestedPlaceSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -163,9 +169,18 @@ export const resultWorkspaceTypeSchema = z.enum([
   "evidence_readiness",
 ]);
 
+export const evidenceSelectionSchema = z.object({
+  viewId: perspectiveViewIdSchema,
+  measureId: perspectiveMeasureIdSchema,
+  datasetId: workspaceSnapshotDatasetIdSchema.nullable(),
+  sourceIds: z.array(z.string().trim().min(1).max(180)).min(1),
+  selectionReason: z.enum(["explicit_view", "question_inference", "perspective_default"]),
+  evidenceBoundary: z.string().trim().min(1).max(600),
+}).strict();
+
 export const evaluationPlanSchema = z.object({
   planId: z.string().trim().min(1),
-  version: z.literal("1.0.0"),
+  version: z.literal("1.1.0"),
   originalQuestion: z.string().trim().min(3).max(600),
   perspectiveId: z.enum(["pricing", "marketing", "cvc"]),
   proposalMethod: z.enum(["ai_proposed", "deterministic_fallback"]),
@@ -179,6 +194,7 @@ export const evaluationPlanSchema = z.object({
   geographyGrain: z.enum(["cbsa", "submarket", "site", "portfolio"]),
   geographyResolution: geographyResolutionSchema,
   resultWorkspaceType: resultWorkspaceTypeSchema,
+  evidenceSelection: evidenceSelectionSchema,
   status: z.enum(["executable", "partially_executable", "blocked"]),
   evidenceBoundary: z.string().trim().min(1),
   missingEvidence: z.array(z.string().trim().min(1)),
@@ -186,6 +202,7 @@ export const evaluationPlanSchema = z.object({
   steps: z.array(planStepSchema).min(1),
   actions: z.array(plannedActionSchema).min(1),
   findings: z.array(planFindingSchema).min(1).max(6),
+  answerContract: answerContractSchema,
 }).strict();
 
 export const sisterGeographySignalSchema = z.object({
@@ -219,6 +236,7 @@ export type PlannedAction = z.infer<typeof plannedActionSchema>;
 export type PlanFinding = z.infer<typeof planFindingSchema>;
 export type PlanStep = z.infer<typeof planStepSchema>;
 export type ResultWorkspaceType = z.infer<typeof resultWorkspaceTypeSchema>;
+export type EvidenceSelection = z.infer<typeof evidenceSelectionSchema>;
 export type SisterGeographySignal = z.infer<typeof sisterGeographySignalSchema>;
 export type SisterGeographySuggestion = z.infer<typeof sisterGeographySuggestionSchema>;
 
@@ -226,6 +244,7 @@ export const evaluationPlanRequestSchema = z.object({
   question: z.string().trim().min(3).max(600),
   perspectiveId: z.enum(["pricing", "marketing", "cvc"]).optional(),
   selectedCbsaCodes: z.array(z.string().trim().regex(/^\d{5}$/)).max(3).default([]),
+  activeViewId: perspectiveViewIdSchema.optional(),
 }).strict();
 
 export const evaluationPlanResponseSchema = z.object({

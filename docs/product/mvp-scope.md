@@ -28,9 +28,28 @@ This scope is provisional until the owner of the existing internal site-selectio
 - Keep market workflow state separate from public context and location results
 - Compile a plain-language question into a validated plan against the versioned
   capability registry, with a deterministic fallback when AI is unavailable
+- Define a versioned final-answer contract before investigation, including
+  shared answer sections, domain validity questions, claim rules, completion
+  tests, strongest permitted conclusion, and safe fallback outcome
+- Validate the answer contract semantically, including its decision owner,
+  unit of analysis, evidence requirements, domain pack, completion tests, and
+  conclusion authority
+- Check every required answer section and domain promise against the completed
+  investigation, preserving `covered`, `unsupported`, `blocked`, and
+  `not_applicable` separately
+- Compose a seven-section draft answer from structured investigation coverage,
+  explicitly labeling unsupported portions and retaining the result in the
+  reviewable packet
+- Allow AI to propose advisory decision framing and unresolved questions while
+  deterministic code preserves the canonical decision, reviewed requirement
+  IDs, evidence readiness, and strongest permitted conclusion
+- Run versioned synthetic answer-lifecycle regressions until analysts supply
+  approved historical cases and expected conclusions
 - Explore one `SRC-016` public measure on a full-width national CBSA map with
   workflow and metro/micro filters, synchronized selection, percentile scale,
   and a comparison set of up to five markets
+- Keep optional map overlays in a separate display drawer and produce an
+  explicit same-cohort comparison table after two or more regions are selected
 - Validate required fields, types, ranges, freshness, and provenance
 - Calculate deterministic metric normalizations
 - Apply an explicitly approved and versioned weight configuration

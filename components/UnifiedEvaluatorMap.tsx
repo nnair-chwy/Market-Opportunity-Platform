@@ -43,6 +43,9 @@ const CBSA_FILL_LAYER_ID = "unified-public-cbsa-fill";
 const CBSA_OUTLINE_LAYER_ID = "unified-public-cbsa-outline";
 const CBSA_COMPARISON_LAYER_ID = "unified-public-cbsa-comparison";
 const CBSA_SELECTED_LAYER_ID = "unified-public-cbsa-selected";
+const SECONDARY_CBSA_SOURCE_ID = "unified-secondary-public-cbsa";
+const SECONDARY_CBSA_FILL_LAYER_ID = "unified-secondary-public-cbsa-fill";
+const SECONDARY_CBSA_OUTLINE_LAYER_ID = "unified-secondary-public-cbsa-outline";
 const SEATTLE_OVERLAY_SOURCE_ID = "seattle-illustrative-submarkets";
 const SEATTLE_AREA_FILL_LAYER_ID = "seattle-illustrative-area-fill";
 const SEATTLE_AREA_LINE_LAYER_ID = "seattle-illustrative-area-line";
@@ -79,6 +82,21 @@ type UnifiedEvaluatorMapProps = {
   };
   marketScoreLabel?: string;
   marketScoreBoundary?: string;
+  marketDetailByCode?: Readonly<Record<string, {
+    valueLabel: string;
+    formattedValue: string;
+    interpretation: string;
+  }>>;
+  hideLegend?: boolean;
+  secondaryMarketScores?: Readonly<Record<string, number>> | null;
+  secondaryMarketScoreLabel?: string | null;
+  secondaryMarketDetailByCode?: Readonly<Record<string, {
+    valueLabel: string;
+    formattedValue: string;
+    interpretation: string;
+  }>>;
+  swipePercent?: number;
+  onSwipePercentChange?: (value: number) => void;
   locations: readonly UnifiedMapLocation[];
   selectedLocationId: string | null;
   seattleDeepDiveOverlay?: SeattleIllustrativeOverlay | null;
@@ -92,6 +110,38 @@ type UnifiedEvaluatorMapProps = {
   onChooseLocation: (location: UnifiedMapLocation) => void;
   onReset: () => void;
 };
+
+const SECONDARY_SCORE_COLORS = {
+  notScored: "#eee9d8",
+  low: "#fff7cf",
+  lowMid: "#f9e58c",
+  mid: "#efc94c",
+  highMid: "#c99a18",
+  high: "#7f5d00",
+} as const;
+
+function secondaryScoreColor(score: number | null | undefined): string {
+  if (score === null || score === undefined || !Number.isFinite(score)) {
+    return SECONDARY_SCORE_COLORS.notScored;
+  }
+  const bounded = Math.min(100, Math.max(0, score));
+  if (bounded <= 20) return SECONDARY_SCORE_COLORS.low;
+  if (bounded <= 40) return SECONDARY_SCORE_COLORS.lowMid;
+  if (bounded <= 60) return SECONDARY_SCORE_COLORS.mid;
+  if (bounded <= 80) return SECONDARY_SCORE_COLORS.highMid;
+  return SECONDARY_SCORE_COLORS.high;
+}
+
+function secondaryScoreFillExpression(
+  scores: Readonly<Record<string, number>>,
+): ExpressionSpecification {
+  const expression: unknown[] = ["match", ["get", "cbsa_code"]];
+  for (const [cbsaCode, score] of Object.entries(scores)) {
+    expression.push(cbsaCode, secondaryScoreColor(score));
+  }
+  expression.push(SECONDARY_SCORE_COLORS.notScored);
+  return expression as ExpressionSpecification;
+}
 
 function visibilityFilter(codes: ReadonlySet<string>): FilterSpecification {
   return [
@@ -190,6 +240,13 @@ export function UnifiedEvaluatorMap({
   marketScoreMetadata,
   marketScoreLabel = "Synthetic attractiveness score",
   marketScoreBoundary = "Synthetic screening only. Not a market recommendation.",
+  marketDetailByCode = {},
+  hideLegend = false,
+  secondaryMarketScores = null,
+  secondaryMarketScoreLabel = null,
+  secondaryMarketDetailByCode = {},
+  swipePercent = 50,
+  onSwipePercentChange,
   locations,
   selectedLocationId,
   seattleDeepDiveOverlay = null,
@@ -204,11 +261,19 @@ export function UnifiedEvaluatorMap({
   onReset,
 }: UnifiedEvaluatorMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapCanvasRef = useRef<HTMLDivElement>(null);
+  const secondaryContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const secondaryMapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef<Map<string, MapLibreMarker>>(new Map());
   const comparisonMarkerRefs = useRef<Map<string, MapLibreMarker>>(new Map());
   const callbacksRef = useRef({ onChooseMarket, onChooseLocation });
-  const marketDetailsRef = useRef({ marketScores, marketCategories, marketScoreLabel, marketScoreBoundary });
+  const marketDetailsRef = useRef({ marketScores, marketCategories, marketScoreLabel, marketScoreBoundary, marketDetailByCode });
+  const swipeDetailsRef = useRef({
+    enabled: false,
+    secondaryMarketScoreLabel,
+    secondaryMarketDetailByCode,
+  });
   const seattleOverlayRef = useRef(seattleDeepDiveOverlay);
   const seattleOverlayCallbackRef = useRef(onChooseSeattleSubmarket);
   const locationsRef = useRef(locations);
@@ -235,6 +300,9 @@ export function UnifiedEvaluatorMap({
     (feature) => feature.properties.cbsa_code === selectedMarketCode,
   );
   const useFallback = config.status !== "configured" || loadFailed;
+  const swipeEnabled =
+    workspaceMode === "markets" &&
+    Boolean(secondaryMarketScores && secondaryMarketScoreLabel);
   const selectionKey = `${selectedMarketCode}:${selectedLocationId ?? ""}`;
   const fallbackNational = fallbackResetSelectionKey === selectionKey;
 
@@ -244,8 +312,16 @@ export function UnifiedEvaluatorMap({
   }, [locations, onChooseLocation, onChooseMarket]);
 
   useEffect(() => {
-    marketDetailsRef.current = { marketScores, marketCategories, marketScoreLabel, marketScoreBoundary };
-  }, [marketCategories, marketScoreBoundary, marketScoreLabel, marketScores]);
+    marketDetailsRef.current = { marketScores, marketCategories, marketScoreLabel, marketScoreBoundary, marketDetailByCode };
+  }, [marketCategories, marketDetailByCode, marketScoreBoundary, marketScoreLabel, marketScores]);
+
+  useEffect(() => {
+    swipeDetailsRef.current = {
+      enabled: swipeEnabled,
+      secondaryMarketScoreLabel,
+      secondaryMarketDetailByCode,
+    };
+  }, [secondaryMarketDetailByCode, secondaryMarketScoreLabel, swipeEnabled]);
 
   useEffect(() => {
     seattleOverlayRef.current = seattleDeepDiveOverlay;
@@ -472,18 +548,28 @@ export function UnifiedEvaluatorMap({
               const properties = event.features?.[0]?.properties;
               const details = marketDetailsRef.current;
               const score = details.marketScores[code];
+              const marketDetail = details.marketDetailByCode[code];
+              if (swipeDetailsRef.current.enabled) return;
               const popup = document.createElement("div");
+              popup.className = "unified-map-region-detail";
               const title = document.createElement("strong");
               title.textContent = String(properties?.cbsa_name ?? "Selected market");
+              popup.append(title);
               const value = document.createElement("p");
-              value.textContent = score === undefined
-                ? "No value is available for the active view."
-                : `${details.marketScoreLabel}: ${score.toFixed(1)}`;
+              value.textContent = marketDetail
+                ? `${marketDetail.valueLabel}: ${marketDetail.formattedValue}`
+                : score === undefined
+                  ? "No value is available for the active view."
+                  : `${details.marketScoreLabel}: ${score.toFixed(1)}`;
+              const interpretation = document.createElement("p");
+              interpretation.textContent = marketDetail?.interpretation ?? "";
               const category = document.createElement("p");
               category.textContent = `Market status: ${details.marketCategories[code] ?? "context only"}`;
               const boundary = document.createElement("small");
               boundary.textContent = details.marketScoreBoundary;
-              popup.append(title, value, category, boundary);
+              popup.append(value);
+              if (marketDetail) popup.append(interpretation);
+              popup.append(category, boundary);
               new Popup({ closeButton: true, offset: 8 })
                 .setLngLat(event.lngLat)
                 .setDOMContent(popup)
@@ -528,6 +614,112 @@ export function UnifiedEvaluatorMap({
       mapRef.current = null;
     };
   }, [collection, config, loadFailed]);
+
+  useEffect(() => {
+    if (
+      !swipeEnabled ||
+      config.status !== "configured" ||
+      loadFailed ||
+      !ready ||
+      !secondaryContainerRef.current ||
+      !secondaryMarketScores
+    ) {
+      secondaryMapRef.current?.remove();
+      secondaryMapRef.current = null;
+      return;
+    }
+    const configuredStyleUrl = config.styleUrl;
+    const primaryMap = mapRef.current;
+    let disposed = false;
+    let secondaryMap: MapLibreMap | null = null;
+    let synchronizeCamera: (() => void) | null = null;
+
+    async function initializeSecondaryMap() {
+      const { Map } = await import("maplibre-gl");
+      if (disposed || !secondaryContainerRef.current || !primaryMap) return;
+      secondaryMap = new Map({
+        container: secondaryContainerRef.current,
+        style: configuredStyleUrl,
+        center: primaryMap.getCenter(),
+        zoom: primaryMap.getZoom(),
+        bearing: primaryMap.getBearing(),
+        pitch: primaryMap.getPitch(),
+        maxBounds: MAINLAND_MARKET_BOUNDS,
+        maxZoom: 14,
+        renderWorldCopies: false,
+        interactive: false,
+        attributionControl: false,
+      });
+      secondaryMapRef.current = secondaryMap;
+      secondaryMap.once("load", () => {
+        if (disposed || !secondaryMap) return;
+        secondaryMap.addSource(SECONDARY_CBSA_SOURCE_ID, {
+          type: "geojson",
+          data: collection,
+          generateId: false,
+        });
+        const beforeId = firstSymbolLayer(secondaryMap);
+        secondaryMap.addLayer(
+          {
+            id: SECONDARY_CBSA_FILL_LAYER_ID,
+            type: "fill",
+            source: SECONDARY_CBSA_SOURCE_ID,
+            filter: visibilityFilter(visibleMarketCodes),
+            paint: {
+              "fill-color": secondaryScoreFillExpression(secondaryMarketScores),
+              "fill-opacity": MARKET_SCORE_FILL_OPACITY,
+            },
+          },
+          beforeId,
+        );
+        secondaryMap.addLayer(
+          {
+            id: SECONDARY_CBSA_OUTLINE_LAYER_ID,
+            type: "line",
+            source: SECONDARY_CBSA_SOURCE_ID,
+            filter: visibilityFilter(visibleMarketCodes),
+            paint: {
+              "line-color": "#80620b",
+              "line-opacity": 0.76,
+              "line-width": 0.7,
+            },
+          },
+          beforeId,
+        );
+      });
+      synchronizeCamera = () => {
+        if (!secondaryMap || !primaryMap) return;
+        secondaryMap.jumpTo({
+          center: primaryMap.getCenter(),
+          zoom: primaryMap.getZoom(),
+          bearing: primaryMap.getBearing(),
+          pitch: primaryMap.getPitch(),
+        });
+      };
+      primaryMap.on("move", synchronizeCamera);
+      primaryMap.on("resize", synchronizeCamera);
+    }
+
+    void initializeSecondaryMap();
+    return () => {
+      disposed = true;
+      if (primaryMap && synchronizeCamera) {
+        primaryMap.off("move", synchronizeCamera);
+        primaryMap.off("resize", synchronizeCamera);
+      }
+      secondaryMap?.remove();
+      if (secondaryMapRef.current === secondaryMap) secondaryMapRef.current = null;
+    };
+  }, [
+    collection,
+    config,
+    loadFailed,
+    ready,
+    secondaryMarketScores,
+    secondaryMarketScoreLabel,
+    swipeEnabled,
+    visibleMarketCodes,
+  ]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -646,7 +838,7 @@ export function UnifiedEvaluatorMap({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!ready || !map || !selectedMarketCode) return;
+    if (!ready || !map || !selectedMarketCode || swipeEnabled) return;
     const bounds = selectedMarketBounds(collection, selectedMarketCode);
     if (!bounds) return;
     map.fitBounds(bounds, {
@@ -654,7 +846,7 @@ export function UnifiedEvaluatorMap({
       maxZoom: PUBLIC_MARKET_MAX_FIT_ZOOM,
       duration: 650,
     });
-  }, [collection, ready, selectedMarketCode]);
+  }, [collection, ready, selectedMarketCode, swipeEnabled]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -740,6 +932,29 @@ export function UnifiedEvaluatorMap({
     onReset();
   }
 
+  function setSwipeFromPointer(clientX: number) {
+    const bounds = mapCanvasRef.current?.getBoundingClientRect();
+    if (!bounds?.width) return;
+    const next = Math.min(95, Math.max(5, ((clientX - bounds.left) / bounds.width) * 100));
+    onSwipePercentChange?.(Math.round(next));
+  }
+
+  function moveSwipeDivider(event: React.PointerEvent<HTMLDivElement>) {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    setSwipeFromPointer(event.clientX);
+  }
+
+  function moveSwipeDividerWithKeyboard(event: React.KeyboardEvent<HTMLDivElement>) {
+    let next = swipePercent;
+    if (event.key === "ArrowLeft" || event.key === "ArrowDown") next -= 2;
+    else if (event.key === "ArrowRight" || event.key === "ArrowUp") next += 2;
+    else if (event.key === "Home") next = 5;
+    else if (event.key === "End") next = 95;
+    else return;
+    event.preventDefault();
+    onSwipePercentChange?.(Math.min(95, Math.max(5, next)));
+  }
+
   const fallbackView = fallbackNational
     ? NATIONAL_VIEW_BOX
     : fallbackViewBox(collection, selectedMarketCode, selectedLocation);
@@ -819,7 +1034,7 @@ export function UnifiedEvaluatorMap({
         </section>
       ) : null}
 
-      <div className="unified-map-canvas">
+      <div ref={mapCanvasRef} className="unified-map-canvas">
         {useFallback ? (
           <svg
             viewBox={fallbackView}
@@ -952,6 +1167,103 @@ export function UnifiedEvaluatorMap({
           />
         )}
 
+        {swipeEnabled ? (
+          <>
+            {useFallback ? (
+              <svg
+                className="unified-swipe-fallback"
+                viewBox={fallbackView}
+                aria-hidden="true"
+                style={{ clipPath: `inset(0 ${100 - swipePercent}% 0 0)` }}
+              >
+                <g className="market-boundary-layer secondary-market-boundary-layer">
+                  {collection.features.map((feature) => {
+                    const code = feature.properties.cbsa_code;
+                    if (!visibleMarketCodes.has(code)) return null;
+                    return (
+                      <path
+                        key={code}
+                        d={fallbackPath(feature) ?? undefined}
+                        style={{ fill: secondaryScoreColor(secondaryMarketScores?.[code]) }}
+                      />
+                    );
+                  })}
+                </g>
+              </svg>
+            ) : (
+              <div
+                className="unified-swipe-map"
+                style={{ clipPath: `inset(0 ${100 - swipePercent}% 0 0)` }}
+                aria-hidden="true"
+              >
+                <div ref={secondaryContainerRef} className="unified-maplibre" />
+              </div>
+            )}
+            <div className="unified-swipe-label secondary" style={{ right: `${100 - swipePercent}%` }}>
+              <i aria-hidden="true" /> View B · {secondaryMarketScoreLabel}
+            </div>
+            <div className="unified-swipe-label primary" style={{ left: `${swipePercent}%` }}>
+              <i aria-hidden="true" /> View A · {marketScoreLabel}
+            </div>
+            <div
+              className="unified-swipe-divider"
+              style={{ left: `${swipePercent}%` }}
+              role="slider"
+              tabIndex={0}
+              aria-label={`Compare ${secondaryMarketScoreLabel} with ${marketScoreLabel}`}
+              aria-valuemin={5}
+              aria-valuemax={95}
+              aria-valuenow={swipePercent}
+              aria-valuetext={`${swipePercent}% ${secondaryMarketScoreLabel}, ${100 - swipePercent}% ${marketScoreLabel}`}
+              onPointerDown={(event) => {
+                event.preventDefault();
+                event.currentTarget.setPointerCapture(event.pointerId);
+                setSwipeFromPointer(event.clientX);
+              }}
+              onPointerMove={moveSwipeDivider}
+              onKeyDown={moveSwipeDividerWithKeyboard}
+            >
+              <span>↔</span>
+            </div>
+          </>
+        ) : null}
+
+        {swipeEnabled && selectedMarketFeature ? (() => {
+          const code = selectedMarketFeature.properties.cbsa_code;
+          const primaryDetail = marketDetailByCode[code];
+          const secondaryDetail = secondaryMarketDetailByCode[code];
+          return (
+            <aside
+              className="unified-map-region-comparison"
+              role="dialog"
+              aria-label={`Compare views for ${selectedMarketFeature.properties.cbsa_name}`}
+            >
+              <header>
+                <div>
+                  <span>Selected region</span>
+                  <strong>{selectedMarketFeature.properties.cbsa_name}</strong>
+                </div>
+                <button type="button" onClick={() => onChooseMarket("")} aria-label="Close region comparison">×</button>
+              </header>
+              <div className="unified-map-region-comparison-grid">
+                <section className="unified-map-region-comparison-view secondary">
+                  <span>View B</span>
+                  <small>{secondaryDetail?.valueLabel ?? secondaryMarketScoreLabel ?? "Comparison view"}</small>
+                  <b>{secondaryDetail?.formattedValue ?? "Unavailable"}</b>
+                  <p>{secondaryDetail?.interpretation ?? "No approved value is available for this region in View B."}</p>
+                </section>
+                <section className="unified-map-region-comparison-view primary">
+                  <span>View A</span>
+                  <small>{primaryDetail?.valueLabel ?? marketScoreLabel}</small>
+                  <b>{primaryDetail?.formattedValue ?? "Unavailable"}</b>
+                  <p>{primaryDetail?.interpretation ?? "No approved value is available for this region in View A."}</p>
+                </section>
+              </div>
+              <small className="unified-map-region-comparison-note">Same region · two approved measures · no combined score</small>
+            </aside>
+          );
+        })() : null}
+
         <button
           type="button"
           className={`market-reset-map${useFallback ? "" : " with-navigation"}`}
@@ -971,7 +1283,7 @@ export function UnifiedEvaluatorMap({
           </p>
         ) : null}
 
-        <div
+        {!hideLegend ? <div
           className={`workflow-map-legend ${workspaceMode === "markets" ? "market-score-legend" : ""}`}
           aria-label={workspaceMode === "markets" ? `${marketScoreLabel} legend` : "Location status legend"}
         >
@@ -1011,7 +1323,7 @@ export function UnifiedEvaluatorMap({
               ))}
             </>
           )}
-        </div>
+        </div> : null}
       </div>
 
       <div className="map-note">

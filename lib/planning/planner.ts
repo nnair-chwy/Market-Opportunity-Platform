@@ -13,6 +13,30 @@ import { derivePlanFindings, deriveResultWorkspaceType } from "./findings.ts";
 import { extractRequestedPlaces, normalizeRequestedPlaces, resolveGeography } from "./geography.ts";
 import { buildPlanSteps } from "./steps.ts";
 import type { SelectedGeographicContext } from "./geographic-context.ts";
+import { buildAnswerContract } from "./answer-contract.ts";
+import { validateAnswerContract } from "./answer-contract-validator.ts";
+import type { DecisionFramingProposal } from "./decision-framing.ts";
+import type { PerspectiveViewId } from "../perspectives/contracts.ts";
+import { getDefaultView, selectPerspectiveView } from "../perspectives/index.ts";
+
+const MARKETING_COST_INTENT = /\b(cost per click|cpc|ad cost|ad costs|ad spend|media spend|spend|spending|paying|overpay\w*|paid too much|too much on ads?|spend efficiency|budget efficiency)\b/;
+
+function inferredViewId(question: string, perspectiveId: EvaluationPlan["perspectiveId"]): PerspectiveViewId | undefined {
+  const value = question.toLowerCase();
+  if (perspectiveId === "marketing") {
+    if (MARKETING_COST_INTENT.test(value)) return "paid_search_cpc";
+    if (/\b(click-through|click through|ctr)\b/.test(value)) return "paid_search_ctr";
+    if (/\b(impressions?|delivery|reach)\b/.test(value)) return "paid_search_impressions";
+    if (/\b(clicks?|response)\b/.test(value)) return "paid_search_response";
+  }
+  if (perspectiveId === "pricing") {
+    if (/\b(observed price|offer price|price level)\b/.test(value)) return "observed_equalized_price";
+    if (/\b(observation volume|observations?|coverage)\b/.test(value)) return "offer_observation_volume";
+    if (/\b(assortment|breadth)\b/.test(value)) return "assortment_breadth";
+    if (/\b(competitor availability|competitive availability)\b/.test(value)) return "competitor_availability";
+  }
+  return undefined;
+}
 
 function has(value: string, expression: RegExp) {
   return expression.test(value);
@@ -123,6 +147,47 @@ export function validatePlanningIntentConsistency(intent: PlanningIntent): strin
   return issues;
 }
 
+function decisionInterpretationForView(
+  question: string,
+  perspectiveId: EvaluationPlan["perspectiveId"],
+  activeViewId: PerspectiveViewId | undefined,
+  fallback: string,
+) {
+  const value = question.toLowerCase();
+
+  if (perspectiveId === "marketing") {
+    if (activeViewId === "paid_search_cpc" || has(value, MARKETING_COST_INTENT)) {
+      return "Identify regions where paid-search cost per click is high and attributed conversion efficiency is weak versus structurally comparable markets, then test campaign mix and commercial outcomes before calling it overpayment.";
+    }
+    if (activeViewId === "paid_search_ctr" || has(value, /\b(click-through|click through|ctr)\b/)) {
+      return "Identify regions where paid-search click-through rate differs from comparable campaign and geography cohorts, then determine which audience, creative, and placement evidence could explain the contrast.";
+    }
+    if (activeViewId === "paid_search_impressions" || has(value, /\b(impressions?|delivery|reach)\b/)) {
+      return "Identify regions where paid-search impression delivery is unusually high or low, then test whether demand, budget allocation, targeting, or auction availability explains the pattern.";
+    }
+    if (activeViewId === "paid_search_response" || has(value, /\b(clicks?|response)\b/)) {
+      return "Identify regions where paid-search response differs from comparable geography cohorts, then determine which campaign, audience, and outcome evidence is needed to explain and validate the pattern.";
+    }
+  }
+
+  if (perspectiveId === "pricing") {
+    if (activeViewId === "observed_equalized_price" || has(value, /\b(observed price|offer price|price level)\b/)) {
+      return "Identify regions where observed equalized offer prices differ, then validate product comparability, observation coverage, timing, and business outcomes before recommending a pricing action.";
+    }
+    if (activeViewId === "offer_observation_volume" || has(value, /\b(observation volume|observations?|coverage)\b/)) {
+      return "Identify regions with unusually strong or weak offer-observation coverage and determine whether the evidence is sufficient for a defensible regional pricing comparison.";
+    }
+    if (activeViewId === "assortment_breadth" || has(value, /\b(assortment|breadth)\b/)) {
+      return "Identify regional differences in observed assortment breadth, then test whether retailer coverage, product mix, and observation quality explain the contrast.";
+    }
+    if (activeViewId === "competitor_availability" || has(value, /\b(competitor availability|competitive availability)\b/)) {
+      return "Identify regions where monitored competitor availability differs, then validate retailer coverage, assortment comparability, and timing before drawing a pricing conclusion.";
+    }
+  }
+
+  return fallback;
+}
+
 export function inferPlanningIntent(question: string): PlanningIntent {
   const value = question.toLowerCase();
   const clinic = has(value, /\b(clinic|clinics|vet care|veterinary)\b/);
@@ -136,7 +201,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   const growthScreening = has(value, /\b(strongest|rank|ranking|prioriti[sz]e|screen|candidates?)\b/)
     && has(value, /\b(growth|regional opportunity|test market|growth test)\b/);
   const growthDecision = has(value, /\b(geo.?test|test markets?|acquisition efficiency|incrementality|causal lift)\b/);
-  const pricing = has(value, /\b(price|pricing|elasticity|promo)\b/);
+  const pricing = has(value, /\b(prices?|pricing|elasticity|promo)\b/);
   const location = clinic && has(value, /\b(open|opening|location|site|where|investigate)\b/) && !performance;
   const vague = has(value, /\bwhat should we do next\b/) || has(value, /\bwhat next\b/);
   const requestedMeasure: PlanningIntent["requestedMeasure"] = has(value, /\bdens/) ? "population_density"
@@ -200,6 +265,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
                 : location ? "clinic_location"
               : ads && requestedPlaces.length > 0 ? "google_ads_context"
                 : clinicMetric || (clinic && requestedMetrics.length > 0) ? "clinic_context"
+                  : pricing && (requestedAction === "screen" || requestedAction === "approve") ? "other"
                   : mentionsRegional ? (uniqueSourceFamilies.includes("regional") ? "regional_context" : "market_context")
                     : growth ? "local_growth"
         : vague ? "other"
@@ -584,11 +650,22 @@ export function compileEvaluationPlan(
   proposalMethod: EvaluationPlan["proposalMethod"] = "deterministic_fallback",
   perspectiveId?: EvaluationPlan["perspectiveId"],
   selectedGeographicContext: readonly SelectedGeographicContext[] = [],
+  framingProposal?: DecisionFramingProposal,
+  activeViewId?: PerspectiveViewId,
 ): EvaluationPlan {
-  const normalizedIntent = queryAwareClinicLocationIntent(question, planningIntentSchema.parse({
+  const queryNormalizedIntent = queryAwareClinicLocationIntent(question, planningIntentSchema.parse({
     ...intent,
     requestedPlaces: normalizeRequestedPlaces(question, intent.requestedPlaces),
   }));
+  const normalizedIntent = planningIntentSchema.parse(
+    perspectiveId && activeViewId && queryNormalizedIntent.topic === "other"
+      ? {
+          ...queryNormalizedIntent,
+          clarificationRequired: false,
+          clarificationReason: "none",
+        }
+      : queryNormalizedIntent,
+  );
   const consistencyIssues = validatePlanningIntentConsistency(normalizedIntent);
   const validatedIntent = consistencyIssues.length
     ? planningIntentSchema.parse({
@@ -605,28 +682,46 @@ export function compileEvaluationPlan(
       ? "cvc"
       : validatedIntent.topic === "local_growth"
         ? "marketing"
-        : /\b(price|pricing|elasticity|promo)\b/i.test(question)
+        : /\b(prices?|pricing|elasticity|promo)\b/i.test(question)
           ? "pricing"
           : "marketing");
+  const questionViewId = inferredViewId(question, resolvedPerspectiveId);
+  const selectedViewId = questionViewId ?? activeViewId ?? getDefaultView(resolvedPerspectiveId).viewId;
+  const selectedViewResult = selectPerspectiveView(resolvedPerspectiveId, selectedViewId);
+  const selectedView = "status" in selectedViewResult ? getDefaultView(resolvedPerspectiveId) : selectedViewResult;
   const exploratoryQuestion = /\b(comparable|which|where|patterns?|worth investigating|differ)\b/i.test(question);
   const canAssumeNationalCohort = exploratoryQuestion
     && validatedIntent.selectedQueries.length === 0
     && validatedIntent.requestedPlaces.length === 0
-    && (perspectiveId !== undefined || /\b(marketing|campaign|media|test market|control market|clinic|cvc|veterinar|vet)\b/i.test(question))
+    && (perspectiveId !== undefined || /\b(marketing|campaign|media|ads?|advertis\w*|paid search|test market|control market|clinic|cvc|veterinar|vet)\b/i.test(question))
     && (resolvedPerspectiveId === "marketing" || resolvedPerspectiveId === "cvc")
     && validatedIntent.requestedAction !== "approve";
+  const viewAwareInterpretation = decisionInterpretationForView(
+    question,
+    resolvedPerspectiveId,
+    activeViewId,
+    validatedIntent.conciseInterpretation,
+  );
   const effectiveIntent = planningIntentSchema.parse(canAssumeNationalCohort ? {
     ...validatedIntent,
     topic: resolvedPerspectiveId === "cvc" ? "clinic_location" : "local_growth",
     geographyGrain: "cbsa",
     requestedAction: validatedIntent.requestedAction === "describe" ? "investigate" : validatedIntent.requestedAction,
-    requestedMeasure: "none",
+    requestedMeasure: validatedIntent.requestedMeasure,
     clarificationRequired: false,
     clarificationReason: "none",
     conciseInterpretation: resolvedPerspectiveId === "cvc"
       ? "Screen national metro markets for question-specific CVC footprint contrasts, then identify the evidence needed to validate each lead."
-      : "Screen national metro markets for structurally comparable peers and regional contrasts, then identify the evidence needed to validate each lead.",
-  } : validatedIntent);
+      : decisionInterpretationForView(
+        question,
+        resolvedPerspectiveId,
+        activeViewId,
+        "Screen national metro markets for structurally comparable peers and regional contrasts, then identify the evidence needed to validate each lead.",
+      ),
+  } : {
+    ...validatedIntent,
+    conciseInterpretation: viewAwareInterpretation,
+  });
   const requirement = requirementFor(effectiveIntent);
   const assessment = assessCapabilityQuestion({
     question,
@@ -699,9 +794,9 @@ export function compileEvaluationPlan(
     resultWorkspaceType,
   });
 
-  return evaluationPlanSchema.parse({
-    planId: `plan-${effectiveIntent.topic}-${geography.mode}-${requirement.capabilityId}`,
-    version: "1.0.0",
+  const planWithoutAnswerContract: Omit<EvaluationPlan, "answerContract"> = {
+    planId: `plan-${effectiveIntent.topic}-${geography.mode}-${requirement.capabilityId}-${selectedView.viewId}`,
+    version: "1.1.0",
     originalQuestion: question,
     perspectiveId: resolvedPerspectiveId,
     proposalMethod,
@@ -710,11 +805,21 @@ export function compileEvaluationPlan(
     geographyGrain: requirement.geographyGrain === "market" ? "cbsa" : requirement.geographyGrain,
     geographyResolution: geography,
     resultWorkspaceType,
+    evidenceSelection: {
+      viewId: selectedView.viewId,
+      measureId: selectedView.activeMeasure,
+      datasetId: selectedView.mapBinding.kind === "workspace_snapshot" ? selectedView.mapBinding.datasetId : null,
+      sourceIds: selectedView.sourceIds,
+      selectionReason: questionViewId ? "question_inference" : activeViewId ? "explicit_view" : "perspective_default",
+      evidenceBoundary: selectedView.evidenceBoundary,
+    },
     status,
     evidenceBoundary: effectiveIntent.topic === "clinic_location"
       ? "Connected market, regional, and aggregate clinic evidence supports a bounded investigation only. It does not establish site suitability or authorize a clinic opening."
       : requirement.capabilityId === "census_market_context"
       ? "Public Census context describes compatible market measures. It does not rank business opportunity or authorize action."
+      : selectedView.mapBinding.kind === "workspace_snapshot"
+        ? selectedView.evidenceBoundary
       : "Only registry-supported prototype outputs may run. Consequential actions remain gated by approved evidence and human authority.",
     missingEvidence,
     missingApprovals,
@@ -728,13 +833,42 @@ export function compileEvaluationPlan(
     }),
     actions,
     findings,
+  };
+
+  const answerContract = buildAnswerContract(planWithoutAnswerContract, framingProposal);
+  const validation = validateAnswerContract(answerContract, {
+    planId: planWithoutAnswerContract.planId,
+    perspectiveId: planWithoutAnswerContract.perspectiveId,
+  });
+  if (!validation.valid) {
+    throw new Error(`The compiled answer contract failed validation: ${validation.issues.map((item) => item.message).join("; ")}`);
+  }
+
+  return evaluationPlanSchema.parse({
+    ...planWithoutAnswerContract,
+    answerContract,
   });
 }
 
 export function planEvaluation(
   question: string,
   perspectiveId?: EvaluationPlan["perspectiveId"],
-  selectedGeographicContext: readonly SelectedGeographicContext[] = [],
+  selectedGeographicContextOrActiveView: readonly SelectedGeographicContext[] | PerspectiveViewId = [],
+  activeViewId?: PerspectiveViewId,
 ) {
-  return compileEvaluationPlan(question, inferPlanningIntent(question), "deterministic_fallback", perspectiveId, selectedGeographicContext);
+  const selectedGeographicContext = typeof selectedGeographicContextOrActiveView === "string"
+    ? []
+    : selectedGeographicContextOrActiveView;
+  const selectedActiveViewId = typeof selectedGeographicContextOrActiveView === "string"
+    ? selectedGeographicContextOrActiveView
+    : activeViewId;
+  return compileEvaluationPlan(
+    question,
+    inferPlanningIntent(question),
+    "deterministic_fallback",
+    perspectiveId,
+    selectedGeographicContext,
+    undefined,
+    selectedActiveViewId,
+  );
 }

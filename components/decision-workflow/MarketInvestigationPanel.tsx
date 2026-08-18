@@ -70,31 +70,68 @@ export function MarketInvestigationPanel({
   const [showAll, setShowAll] = useState(false);
   const [followUpQuestion, setFollowUpQuestion] = useState("");
   const visibleLeads = showAll ? investigation.leads : investigation.leads.slice(0, 3);
+  const evidenceTerm = investigation.evidenceStage === "signal" ? "Signal" : "Finding";
+  const investigationTitle = investigation.perspectiveId === "cvc"
+    ? "Published footprint and public-context contrasts"
+    : investigation.perspectiveId === "marketing"
+      ? "Regional marketing evidence contrasts"
+      : "Regional pricing evidence contrasts";
 
   return (
     <section className="market-investigation" aria-labelledby="market-investigation-title">
       <header className="market-investigation-heading">
         <div>
           <div className="eyebrow">Connected-evidence screening</div>
-          <h2 id="market-investigation-title">Published footprint and public-context contrasts</h2>
+          <h2 id="market-investigation-title">{investigationTitle}</h2>
           <p>{investigation.readiness.summary}</p>
         </div>
         <div className="market-investigation-counts" aria-label="Screening coverage">
-          <strong>{investigation.comparisonsExamined.toLocaleString()}</strong>
+          <strong>{Math.max(0, investigation.comparisonsExamined).toLocaleString()}</strong>
           <span>comparisons screened</span>
           <strong>{investigation.leads.length}</strong>
-          <span>review leads kept</span>
+          <span>{evidenceTerm.toLowerCase()}s to review</span>
         </div>
       </header>
 
-      <div className="market-investigation-method">
-        <div><strong>Looked at</strong><span>{investigation.measuresExamined.join(" · ")}</span></div>
-        <div><strong>How</strong><span>{investigation.toolsRun.join(" → ")}</span></div>
-        <div><strong>Coverage</strong><span>{`${investigation.screeningScope.eligibleComparisons.toLocaleString()} eligible comparisons from ${investigation.screeningScope.marketUniverse} metros; not all ${investigation.screeningScope.allMarketPairs.toLocaleString()} possible metro pairs`}</span></div>
-        <div><strong>Selection</strong><span>{investigation.screeningScope.selectionRule}</span></div>
-        <div><strong>Data</strong><span>{investigation.dataSnapshotLabel} · {investigation.dataSnapshotVersion}</span></div>
-        <div><strong>Runtime</strong><span>Fixed arithmetic over the checked-in snapshot. No live research, recommendation score, or causal inference.</span></div>
-      </div>
+      <section className="investigation-question-context" aria-label="Question being investigated">
+        <span>Question being answered</span>
+        <strong>{investigation.originalQuestion}</strong>
+      </section>
+
+      {investigation.portfolioPattern ? (
+        <section className="portfolio-pattern" aria-label="Portfolio pattern">
+          <span>Portfolio pattern</span>
+          <h3>{investigation.portfolioPattern.headline}</h3>
+          <p>{investigation.portfolioPattern.summary}</p>
+          <div>
+            {investigation.portfolioPattern.segments.map((segment) => (
+              <article key={segment.label}>
+                <strong>{segment.label}</strong>
+                <b>{segment.dualPressureMarkets} of {segment.eligibleMarkets}</b>
+                <small>metros with high click and conversion cost</small>
+              </article>
+            ))}
+          </div>
+          <small>{investigation.portfolioPattern.implication}</small>
+        </section>
+      ) : null}
+
+      {investigation.mediaScope ? (
+        <section className="media-scope-note" aria-label="Advertising channel scope">
+          <div><span>Channel scope</span><strong>{investigation.mediaScope.included}</strong></div>
+          <p>{investigation.mediaScope.bundlingRule}</p>
+          <small>Not included: {investigation.mediaScope.excluded.join(" · ")}</small>
+        </section>
+      ) : null}
+
+      {investigation.analystRevision ? (
+        <section className="analyst-revision-note" aria-label={`Draft ${investigation.analystRevision.draftNumber} analyst direction`}>
+          <span>Added in Draft {investigation.analystRevision.draftNumber}</span>
+          <h3>{investigation.analystRevision.summary}</h3>
+          <p><strong>Human direction</strong>{investigation.analystRevision.prompt}</p>
+          <p>{investigation.analystRevision.effectOnRecommendation}</p>
+        </section>
+      ) : null}
 
       {visibleLeads.length ? (
         <ol className="market-investigation-leads">
@@ -107,10 +144,11 @@ export function MarketInvestigationPanel({
                 onClick={() => onSelectLead(lead)}
                 style={{ "--lead-color": investigationLeadColor(index) } as CSSProperties}
               >
-                <span className="market-investigation-rank"><i />Finding {index + 1} · {lead.marketIds.length === 1 ? "individual" : "pair"}</span>
+                <span className="market-investigation-rank"><i />{evidenceTerm} {index + 1} · {lead.marketIds.length === 1 ? "individual" : "pair"}</span>
                 <strong>{lead.title}</strong>
                 <p>{lead.observation}</p>
                 <span className="market-investigation-meaning">Why it matters: {lead.businessMeaning}</span>
+                <span className="market-investigation-next"><b>Next check</b>{lead.nextEvidence}</span>
                 <small>{lead.strength} · n={lead.sampleSize} · Select to focus the map</small>
               </button>
             </li>
@@ -118,14 +156,15 @@ export function MarketInvestigationPanel({
         </ol>
       ) : (
         <div className="market-investigation-empty">
-          <strong>No defensible market lead from the connected data</strong>
-          <p>The loop suppressed generic outliers instead of returning an unrelated answer.</p>
+          <strong>No supported regional signal for this question</strong>
+          <p>{investigation.readiness.summary}</p>
+          <small>Needed next: {investigation.readiness.missing.join(" · ")}</small>
         </div>
       )}
 
       {investigation.leads.length > 3 ? (
         <button className="secondary-action market-investigation-more" type="button" onClick={() => setShowAll((open) => !open)}>
-          {showAll ? "Show strongest 3" : `Show all ${investigation.leads.length} leads`}
+          {showAll ? "Show strongest 3" : `Show all ${investigation.leads.length} ${evidenceTerm.toLowerCase()}s`}
         </button>
       ) : null}
 
@@ -136,9 +175,20 @@ export function MarketInvestigationPanel({
         return (
           <section className="lead-evidence-snapshot" aria-label="Selected lead evidence">
             <header>
-              <div><span>Selected lead evidence</span><strong>Source values behind the highlighted markets</strong></div>
-              <small>Public context—not a score</small>
+              <div><span>Selected lead evidence</span><strong>Joined measures behind the highlighted market</strong></div>
+              <small>Transparent measures—not a blended score</small>
             </header>
+            {selectedLead.supportingMeasures?.length ? (
+              <div className="lead-joined-measures" aria-label="Joined investigation measures">
+                {selectedLead.supportingMeasures.map((item) => (
+                  <article key={item.id} data-role={item.role}>
+                    <span>{item.label}</span>
+                    <strong>{item.formattedValue}</strong>
+                    <small>P{item.percentile} · {item.rangeMeaning}</small>
+                  </article>
+                ))}
+              </div>
+            ) : null}
             <div className="lead-evidence-metrics" role="group" aria-label="Map evidence measure">
               {METRICS.map((item) => (
                 <button key={item.id} type="button" aria-pressed={selectedContextMetric === item.id} onClick={() => onContextMetricChange(item.id)}>{item.label}</button>
@@ -158,10 +208,50 @@ export function MarketInvestigationPanel({
                 );
               })}
             </div>
-            <p>Changing the measure updates the map context layer. The blue highlighted markets still come only from the selected lead.</p>
+            <p>Changing the measure updates the map context layer. The highlighted A/B markets still come only from the selected lead.</p>
           </section>
         );
       })() : null}
+
+      <details className="analysis-behind-scenes">
+        <summary>How the analysis worked <span>Methods, coverage, and remaining checks</span></summary>
+        <div className="market-investigation-method">
+          <div><strong>Looked at</strong><span>{investigation.measuresExamined.join(" · ")}</span></div>
+          <div><strong>How</strong><span>{investigation.toolsRun.join(" → ")}</span></div>
+          <div><strong>Coverage</strong><span>{investigation.screeningScope.eligibleCohort} · {investigation.screeningScope.eligibleComparisons.toLocaleString()} compatible pairwise comparisons examined</span></div>
+          <div><strong>Selection</strong><span>{investigation.screeningScope.selectionRule}</span></div>
+          <div><strong>Data</strong><span>{investigation.dataSnapshotLabel} · {investigation.dataSnapshotVersion}</span></div>
+          <div><strong>Runtime</strong><span>Fixed arithmetic over the checked-in snapshot. No live research, recommendation score, or causal inference.</span></div>
+        </div>
+        <section className="investigation-continuation" aria-label="Continuous investigation status">
+          <header>
+            <div><span>Investigation continues</span><strong>{investigation.measuresExamined.length > 4
+              ? "The connected measures produced a joined signal. Commercial outcomes and explanation checks decide whether it becomes a finding."
+              : "One measure found a signal. Outcome evidence decides whether it becomes a finding."}</strong></div>
+            <small>{investigation.nextPass.status === "waiting_for_evidence" ? "Waiting for compatible data" : "Ready for the next pass"}</small>
+          </header>
+          <div className="investigation-evidence-flow" aria-label="Evidence progression">
+            {investigation.investigationPath.map((step) => (
+              <div key={step.id} className={step.status === "completed" ? "complete" : step.status === "waiting_for_evidence" ? "current" : undefined}>
+                <i />{step.label}<small>{step.status === "completed" ? "Complete" : step.status === "waiting_for_evidence" ? "Next" : "Pending"}</small>
+              </div>
+            ))}
+          </div>
+          <div className="investigation-path-explanation">
+            {investigation.investigationPath.map((step) => (
+              <article key={step.id}>
+                <strong>{step.label}</strong>
+                <p><b>Why it ran</b>{step.purpose}</p>
+                <p><b>Adds to the answer</b>{step.contributionToAnswer}</p>
+                <small>{step.result}</small>
+              </article>
+            ))}
+          </div>
+          <p><b>Next question</b>{investigation.nextPass.question}</p>
+          <p><b>Data needed</b>{investigation.nextPass.evidenceNeeded.join(" · ")}</p>
+          <small>{investigation.nextPass.completionRule}</small>
+        </section>
+      </details>
 
       {selectedLeadId ? (
         <section className="market-investigation-chat" aria-label="Lead follow-up">

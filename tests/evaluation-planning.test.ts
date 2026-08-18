@@ -220,6 +220,51 @@ test("exploratory CVC and Marketing questions assume a national cohort instead o
   assert.equal(cvc.actions[0].id, "review-cvc-market-leads");
 });
 
+test("exploratory questions preserve an explicitly requested map measure", () => {
+  const density = planEvaluation(
+    "Which CVC footprint patterns stand out in high-density markets?",
+    "cvc",
+  );
+  assert.equal(density.geographyResolution.mode, "national");
+  assert.equal(density.intent.requestedMeasure, "population_density");
+  assert.equal(density.intent.clarificationRequired, false);
+});
+
+test("Marketing cost questions preserve the decision and selected CPC view in the answer framing", () => {
+  const question = "Which region are we paying more than we should for ads?";
+  const inferredFromQuestion = planEvaluation(question, "marketing");
+  const selectedFromMap = planEvaluation(
+    "Which regions need a closer efficiency review?",
+    "marketing",
+    "paid_search_cpc",
+  );
+
+  for (const plan of [inferredFromQuestion, selectedFromMap]) {
+    assert.equal(plan.geographyResolution.mode, "national");
+    assert.equal(plan.intent.topic, "local_growth");
+    assert.match(plan.intent.conciseInterpretation, /cost per click/i);
+    assert.match(plan.intent.conciseInterpretation, /campaign mix/i);
+    assert.match(plan.intent.conciseInterpretation, /before calling it overpayment/i);
+    assert.doesNotMatch(plan.intent.conciseInterpretation, /structurally comparable peers and regional contrasts/i);
+    assert.equal(plan.answerContract.decisionFrame.decisionToInform, plan.intent.conciseInterpretation);
+    assert.equal(plan.answerContract.framingProposal.decisionRestatement, plan.intent.conciseInterpretation);
+    assert.equal(plan.evidenceSelection.viewId, "paid_search_cpc");
+    assert.equal(plan.evidenceSelection.datasetId, "marketing_paid_search_cpc");
+    assert.deepEqual(plan.evidenceSelection.sourceIds, ["SRC-018"]);
+  }
+
+  const aiStyleIntent = {
+    ...inferPlanningIntent(question),
+    clarificationRequired: true as const,
+    clarificationReason: "ambiguous_decision" as const,
+  };
+  const compiledAiProposal = compileEvaluationPlan(question, aiStyleIntent, "ai_proposed", "marketing");
+  assert.equal(compiledAiProposal.geographyResolution.mode, "national");
+  assert.equal(compiledAiProposal.intent.clarificationRequired, false);
+  assert.equal(compiledAiProposal.answerContract.answerMode, "research_needed");
+  assert.notEqual(compiledAiProposal.resultWorkspaceType, "clarification");
+});
+
 test("Google Ads questions route to blocked Marketing evidence readiness", () => {
   const national = planEvaluation(
     "Which U.S. DMAs show promising Google Ads demand and acquisition efficiency?",

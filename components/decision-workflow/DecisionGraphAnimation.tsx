@@ -9,6 +9,7 @@ export type DecisionGraphStep = {
   label: string;
   detail?: string;
   result?: string;
+  evidenceState?: "complete" | "waiting" | "pending";
 };
 
 export type DecisionGraphAction = {
@@ -34,6 +35,7 @@ type GraphNode = {
   x: number;
   y: number;
   stepIndex?: number;
+  evidenceState?: DecisionGraphStep["evidenceState"];
 };
 
 type GraphEdge = {
@@ -53,10 +55,12 @@ function truncate(value: string, max: number) {
 }
 
 function stepLayout(count: number, index: number) {
-  const mid = (count - 1) / 2;
-  const t = count <= 1 ? 0 : (index - mid) / Math.max(mid, 1);
-  const x = 280 + index * (count > 4 ? 118 : 140);
-  const y = 420 + Math.sin(t * Math.PI) * 150 + (index % 2 === 0 ? -36 : 42);
+  if (count <= 3) return { x: 340 + index * 280, y: 420 };
+  const columnCount = count <= 8 ? 4 : 3;
+  const row = Math.floor(index / columnCount);
+  const column = index % columnCount;
+  const x = columnCount === 4 ? 270 + column * 250 : 330 + column * 320;
+  const y = 275 + row * 300;
   return { x, y };
 }
 
@@ -97,6 +101,7 @@ function buildGraph(
       kind: "step" as const,
       label: step.label,
       detail: step.detail,
+      evidenceState: step.evidenceState,
       x: point.x,
       y: point.y,
       stepIndex: index,
@@ -216,7 +221,7 @@ function nodeStatus(
   settled: boolean,
   selectedActionId: string,
   seedMode: boolean,
-): "hidden" | "pending" | "active" | "complete" | "selected" {
+): "hidden" | "pending" | "waiting" | "active" | "complete" | "selected" {
   if (node.kind === "question") {
     if (seedMode && activeStep < 0 && !settled) return "active";
     return settled || activeStep >= 0 ? "complete" : "active";
@@ -225,8 +230,16 @@ function nodeStatus(
   if (node.kind === "step") {
     const index = node.stepIndex ?? 0;
     if (seedMode && !settled && activeStep < 0) return "pending";
-    if (settled || activeStep > index) return "complete";
-    if (activeStep === index) return "active";
+    if (settled || activeStep > index) {
+      if (node.evidenceState === "waiting") return "waiting";
+      if (node.evidenceState === "pending") return "pending";
+      return "complete";
+    }
+    if (activeStep === index) {
+      if (node.evidenceState === "waiting") return "waiting";
+      if (node.evidenceState === "pending") return "pending";
+      return "active";
+    }
     if (activeStep + 1 === index) return "pending";
     return activeStep >= index - 1 ? "pending" : "hidden";
   }
@@ -289,7 +302,7 @@ export function DecisionGraphAnimation({
       data-selected-action={selectedActionId || undefined}
     >
       <div className="decision-graph-toolbar">
-        <span>Decision graph</span>
+        <span>Live evidence graph</span>
         <small>{statusLabel}</small>
       </div>
 
@@ -405,10 +418,10 @@ export function DecisionGraphAnimation({
             const status = nodeStatus(node, activeStep, settled, selectedActionId, seedMode);
             if (status === "hidden") return null;
             const interactive = Boolean(onSelectNode) && (node.kind === "step" || node.kind === "action");
-            const width = node.kind === "question" || node.kind === "packet" ? 168 : 150;
-            const height = node.kind === "question" ? 78 : 68;
+            const width = node.kind === "question" || node.kind === "packet" ? 190 : 220;
+            const height = node.kind === "question" ? 88 : 92;
             const label = truncate(node.label, node.kind === "action" ? 28 : 26);
-            const detail = node.detail ? truncate(node.detail, 34) : undefined;
+            const detail = node.detail ? truncate(node.detail, 52) : undefined;
 
             return (
               <g
@@ -445,7 +458,8 @@ export function DecisionGraphAnimation({
       <div className="decision-graph-legend" aria-hidden="true">
         <span><i className="legend-complete" />Complete</span>
         <span><i className="legend-active" />Active</span>
-        <span><i className="legend-path" />Action path</span>
+        <span><i className="legend-waiting" />Waiting for evidence</span>
+        <span><i className="legend-pending" />Not run</span>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { evidenceExecutionResponseSchema } from "@/lib/evidence-snapshot/contrac
 import { explainFindingsAndProposal } from "@/lib/planning/packet-ai-summary";
 import {
   packetFindingsSummarySchema,
-  proposedActionFromPlan,
+  reviewableActionPacketSchema,
 } from "@/lib/planning/reviewable-packet";
 import { z } from "zod";
 

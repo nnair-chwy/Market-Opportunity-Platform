@@ -17,6 +17,8 @@ test("the root route renders the adaptive workspace as its initial experience", 
 
 test("the adaptive workspace keeps the map controls and deterministic comparison boundary", () => {
   assert.match(market, /<UnifiedEvaluatorMap/);
+  assert.doesNotMatch(market, /key=\{`\$\{presentation\.viewId\}/);
+  assert.match(market, /marketScores=\{scores\}/);
   assert.match(market, /Measure/);
   assert.match(market, /<select/);
   assert.match(market, /Workflow/);
@@ -29,18 +31,23 @@ test("the adaptive workspace keeps the map controls and deterministic comparison
   assert.match(market, /selectMarket\(market\.cbsa_code\)/);
 });
 
-test("View A Single Compare and Layer controls are wired on the opening page", () => {
+test("Explore, Compare regions, Add view, and Map layers controls are wired on the opening page", () => {
   assert.match(homepage, /data-view-a-control="true"/);
-  assert.match(homepage, />\s*Single\s*</);
-  assert.match(homepage, />\s*Compare\s*</);
-  assert.match(homepage, />\s*Layer\s*</);
+  assert.match(homepage, />\s*Explore\s*</);
+  assert.match(homepage, />\s*Compare regions\s*</);
+  assert.match(homepage, /Map layers/);
+  assert.match(homepage, /Add view/);
+  assert.match(homepage, /Compare views/);
+  assert.match(homepage, /adaptive-view-b-control/);
   assert.match(homepage, /mapMode=\{activeMapMode\}/);
   assert.match(homepage, /aria-pressed=\{activeMapMode === "compare"\}/);
-  assert.match(homepage, /aria-pressed=\{activeMapMode === "layer"\}/);
+  assert.match(homepage, /showLayerManager=\{layerManagerOpen\}/);
   assert.match(market, /data-map-mode=\{mapMode\}/);
   assert.match(market, /data-view-a-mode="compare"/);
-  assert.match(market, /data-view-a-mode="layer"/);
+  assert.match(market, /data-layer-manager="true"/);
   assert.match(market, /data-view-a-mode="single"/);
+  assert.match(market, /secondaryMarketScores/);
+  assert.match(market, /swipePercent/);
 });
 
 test("adaptive homepage transition retains the governed plan and action-packet workflow", () => {
@@ -49,7 +56,8 @@ test("adaptive homepage transition retains the governed plan and action-packet w
   assert.match(workflow, /setPhase\("running"\)/);
   assert.match(workflow, /setPhase\("packet"\)/);
   assert.match(workflow, /Save action packet/);
-  assert.match(workflow, /Download full report/);
+  assert.match(workflow, /Download decision brief/);
+  assert.match(workflow, /Download audit appendix/);
   assert.match(workflow, /Findings and proposed action/);
   assert.doesNotMatch(workflow, /AskAiPanel/);
   assert.match(workflow, /data-proposal-method/);
