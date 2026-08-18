@@ -57,7 +57,7 @@ test("confirmed CVC opening questions stay on connected evidence without a fabri
   const investigation = runConfirmedMarketInvestigation(plan, confirmed);
   assert.equal(investigation.scoringEligibility, "none");
   assert.equal(investigation.leads.length, 6);
-  assert.equal(investigation.formula?.reduce((total, item) => total + item.weightPercent, 0), 100);
+  assert.equal(investigation.formula?.reduce((total, item) => total + item.weightPercent, 0), 0);
   assert.deepEqual(investigation.sourceIds, ["SRC-009", "SRC-016"]);
   assert.match(investigation.readiness.summary, /cannot yet rank clinic opportunity/i);
 });

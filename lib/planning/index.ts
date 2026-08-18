@@ -1,6 +1,7 @@
 export * from "./contracts.ts";
 export * from "./execution.ts";
 export * from "./evidence-plan.ts";
+export * from "./evidence-bundle-view.ts";
 export * from "./findings.ts";
 export * from "./geographic-context.ts";
 export * from "./geography.ts";

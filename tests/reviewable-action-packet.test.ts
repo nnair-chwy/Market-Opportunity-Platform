@@ -13,6 +13,8 @@ import { answerInvestigationFollowUp, runConfirmedMarketInvestigation, runMarket
 import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
 import { buildEvidencePlan, generateEvaluationDefinitionDraft } from "../lib/planning/evidence-plan.ts";
 import { explainFindingsAndProposal } from "../lib/planning/packet-ai-summary.ts";
+import { DEMO_QUESTIONS, planConfiguredDemoQuestion } from "../lib/demo/scenarios.ts";
+import { executeEvaluationPlanEvidence } from "../lib/planning/execute-plan.ts";
 
 test("reviewable action packet preserves action fields and provenance for download", () => {
   const plan = planEvaluation("Compare Austin and Denver by population density.");
@@ -44,6 +46,47 @@ test("reviewable action packet preserves action fields and provenance for downlo
   assert.doesNotMatch(document, /approved for execution|message sent/i);
 });
 
+test("existing packet format preserves executed evidence metadata and human-review boundaries", async () => {
+  const plan = planConfiguredDemoQuestion(DEMO_QUESTIONS.clinicPerformance);
+  assert.ok(plan);
+  const execution = await executeEvaluationPlanEvidence({ requestId: "packet-clinic-demo", plan });
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-17T00:00:00.000Z",
+    undefined,
+    [],
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    null,
+    undefined,
+    execution,
+  );
+  reviewableActionPacketSchema.parse(packet);
+  assert.equal(packet.packetVersion, "reviewable-action-packet-v2");
+  assert.equal(packet.packetAnswer.state, "partial");
+  assert.equal(packet.packetAnswer.facts.length, 3);
+  assert.ok(packet.packetAnswer.facts.every((fact) => fact.sourceId === "SRC-002" && fact.evidenceStatus === "Hypothesis"));
+  assert.equal(packet.evidenceExecution?.executionMode, "synthetic_demo");
+  assert.deepEqual(packet.calculationVersions.evidenceSourceIds, ["SRC-002"]);
+  assert.ok(packet.calculationVersions.evidenceSnapshotIds.includes("synthetic-clinic-performance-v1"));
+  assert.equal(packet.calculationVersions.evidenceCalculationVersion, "synthetic-clinic-rank-v1");
+  assert.ok(packet.evidenceExecution?.evidenceBundle.every((item) => item.evidenceStatus === "Hypothesis"));
+  assert.ok(packet.missingApprovals.includes("Production peer-group approval"));
+  const document = formatReviewableActionPacketDocument(packet);
+  assert.match(document, /Executed evidence bundle/);
+  assert.match(document, /Evidence-backed answer/);
+  assert.match(document, /Source-backed facts/);
+  assert.match(document, /Source ID: SRC-002/);
+  assert.match(document, /Snapshot ID: synthetic-clinic-performance-v1/);
+  assert.match(document, /Evidence status: Hypothesis/);
+  assert.match(document, /Quality status:/);
+  assert.match(document, /synthetic demo/);
+  assert.doesNotMatch(document, /approved for execution|final site recommendation|spend authorized/i);
+});
 test("deterministic findings summary produces one concise action blurb", () => {
   const plan = planEvaluation("Why are operating clinics underperforming their peers?");
   const action = proposedActionFromPlan(plan);
@@ -51,10 +94,31 @@ test("deterministic findings summary produces one concise action blurb", () => {
   assert.equal(summary.title, "Findings and proposed action");
   assert.equal(summary.origin, "deterministic_fallback");
   assert.match(summary.draftOnlyNotice, /draft only|human review/i);
-  assert.match(summary.summary, /interprets the question|Geographic focus/i);
+  assert.match(summary.summary, /no registered evidence execution was supplied/i);
   assert.match(summary.summary, new RegExp(action.owner.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(summary.summary, new RegExp(action.nextStep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(summary.summary, /Missing evidence|human review|does not approve/i);
+});
+
+test("packet summary is grounded in executed facts before optional AI wording", async () => {
+  const plan = planConfiguredDemoQuestion(DEMO_QUESTIONS.clinicPerformance);
+  assert.ok(plan);
+  const action = proposedActionFromPlan(plan);
+  const execution = await executeEvaluationPlanEvidence({ requestId: "summary-grounding", plan });
+  const fallback = deterministicFindingsAndProposalSummary(plan, action, execution);
+  assert.match(fallback.summary, /Completed appointments/i);
+  assert.match(fallback.summary, /SRC-002/);
+  assert.match(fallback.summary, /812/);
+
+  const ai = await explainFindingsAndProposal(plan, action, execution, async (packet) => {
+    assert.equal(packet.packetAnswer.facts.some((fact) => fact.rawValue === 812), true);
+    return {
+      output: { summary: `The synthetic packet reports 812 completed appointments for Synthetic South Clinic. ${action.owner} should confirm the synthetic selection and review the result as a draft for human review.` },
+      model: "test-model",
+    };
+  });
+  assert.equal(ai.origin, "ai");
+  assert.match(ai.summary, /812 completed appointments/i);
 });
 
 test("packet AI summary falls back when the model is unavailable", async () => {
@@ -64,7 +128,7 @@ test("packet AI summary falls back when the model is unavailable", async () => {
   });
   assert.equal(summary.origin, "deterministic_fallback");
   assert.equal(summary.state, "provider_error");
-  assert.match(summary.summary, /Select a measure and market|Explore governed market context|Inspect the resolved market context|Compare resolved markets/i);
+  assert.match(summary.summary, /select a measure and market|Explore governed market context|Inspect the resolved market context|Compare resolved markets/i);
 });
 
 test("reviewable packet carries the exact analyst screening and lead follow-up", () => {
@@ -96,7 +160,7 @@ test("reviewable packet exports the human-confirmed question and considerations"
   assert.equal(packet.analysisBrief?.status, "confirmed");
   assert.match(document, /Confirmed analysis framing/);
   assert.match(document, /Rewritten question/);
-  assert.match(document, /Demand and capacity/);
+  assert.match(document, /Capacity and access/);
   assert.doesNotMatch(document, /weighted preference/);
   assert.match(document, /Human consideration edits recalculate this screen: no/);
 });
@@ -169,8 +233,9 @@ test("download report contains connected evidence, limitations, and an actionabl
   );
   const document = formatReviewableActionPacketDocument(packet);
   assert.match(document, /Analyst screening/);
-  assert.match(document, /Confirmed formula: Current CVC footprint 15%/);
-  assert.match(document, /Demand and capacity 35%/);
+  assert.doesNotMatch(document, /Confirmed formula:/);
+  assert.match(document, /Capacity and access/);
+  assert.doesNotMatch(document, /Which 3[–-]5 U\.S\. metro areas|rank the top/i);
   assert.match(document, /published CVC clinic/i);
   assert.match(document, /public market context/i);
   assert.doesNotMatch(document, /synthetic/i);

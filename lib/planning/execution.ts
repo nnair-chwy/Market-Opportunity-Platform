@@ -101,7 +101,7 @@ export function executeEvaluationPlan(
     return blockedResult(plan, plan.missingEvidence[0] ?? "This capability is not executable in the approved local snapshot.");
   }
   if (plan.intent.requestedMeasure === "none") {
-    return blockedResult(plan, "Select one supported Census market measure before execution.");
+    return blockedResult(plan, "Select one supported Census market measure with observations before execution.");
   }
 
   const metricKey = plan.intent.requestedMeasure as CbsaAcsMetricKey;

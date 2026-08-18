@@ -1,5 +1,6 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
+import { resolve } from "node:path";
 import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
 
@@ -42,6 +43,16 @@ export default defineConfig(async ({ command, mode }) => {
 
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.
   const { cloudflare } = await import("@cloudflare/vite-plugin");
+  const localEvidenceBindings = command === "serve"
+    ? {
+        vars: {
+          NORMALIZED_MARKET_DATA_DIR: process.env.NORMALIZED_MARKET_DATA_DIR ?? resolve(process.cwd(), ".local-data/normalized-market-data"),
+          CLINIC_MARKET_SNAPSHOT_DIR: process.env.CLINIC_MARKET_SNAPSHOT_DIR ?? resolve(process.cwd(), ".local-data/clinic-market-snapshot"),
+          DUCKDB_PATH: process.env.DUCKDB_PATH ?? resolve(process.cwd(), ".local/evidence-snapshot.duckdb"),
+          LOCAL_EVIDENCE_SERVICE_URL: process.env.LOCAL_EVIDENCE_SERVICE_URL ?? "",
+        },
+      }
+    : {};
 
   return {
     // Vinext's development server and production build both optimize React
@@ -66,7 +77,7 @@ export default defineConfig(async ({ command, mode }) => {
       sites(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
-        config: localBindingConfig,
+        config: { ...localBindingConfig, ...localEvidenceBindings },
       }),
     ],
   };

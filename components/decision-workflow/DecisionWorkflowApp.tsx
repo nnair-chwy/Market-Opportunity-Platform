@@ -9,10 +9,12 @@ import { InsightActionPlanPanel } from "@/components/decision-workflow/InsightAc
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { ValidationWorkplanPanel } from "@/components/decision-workflow/ValidationWorkplanPanel";
+import { EvidenceBundlePanel } from "@/components/evidence/EvidenceBundlePanel";
+import { evidenceExecutionResponseSchema, type EvidenceExecutionResponse } from "@/lib/evidence-snapshot/contracts";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
 import type { PerspectiveId } from "@/lib/perspectives";
-import { buildAnalysisBrief, type AnalysisBrief } from "@/lib/planning/analysis-brief";
+import { buildAnalysisBrief, validateAnalysisBriefConsistency, type AnalysisBrief } from "@/lib/planning/analysis-brief";
 import {
   buildEvidencePlan,
   generateEvaluationDefinitionDraft,
@@ -34,6 +36,7 @@ import {
   buildSisterFollowUpQuestion,
   deterministicFindingsAndProposalSummary,
   downloadReviewableActionPacket,
+  evaluationPlanSchema,
   evaluationPlanErrorSchema,
   evaluationPlanResponseSchema,
   focusPlaceLabelsForRewrite,
@@ -41,11 +44,14 @@ import {
   packetSummaryFromPlan,
   planEvaluation,
   proposedActionFromPlan,
+  reviewableActionPacketSchema,
   resolveGeographicFocus,
   suggestSisterGeographiesFromPlan,
   type EvaluationPlan,
   type GeographicFocus,
   type PacketFindingsSummary,
+  type PacketAnswer,
+  type ReviewableActionPacket,
   type SisterGeographySuggestion,
 } from "@/lib/planning";
 import { MAX_SELECTED_GEOGRAPHIC_CONTEXTS, type SelectedGeographicContext } from "@/lib/planning/geographic-context";
@@ -57,6 +63,7 @@ import {
 type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error";
 
 type SavedPacket = {
+  schemaVersion?: "saved-action-packet-v2";
   id: string;
   question: string;
   title: string;
@@ -72,7 +79,33 @@ type SavedPacket = {
   selectedLeadId?: string | null;
   selectedContextMetric?: CbsaAcsMetricKey;
   selectedGeographicContexts?: SelectedGeographicContext[];
+  plan?: EvaluationPlan;
+  evidenceExecution?: EvidenceExecutionResponse | null;
+  packetAnswer?: PacketAnswer;
+  packetSummary?: PacketFindingsSummary | null;
+  reviewablePacket?: ReviewableActionPacket;
 };
+
+function parseSavedPacket(value: unknown): SavedPacket | null {
+  if (!value || typeof value !== "object") return null;
+  const item = value as Record<string, unknown>;
+  if (!["id", "question", "title", "actionId", "savedAt"].every((key) => typeof item[key] === "string")) return null;
+  const plan = evaluationPlanSchema.safeParse(item.plan);
+  const reviewablePacket = reviewableActionPacketSchema.safeParse(item.reviewablePacket);
+  const evidenceExecution = item.evidenceExecution === null
+    ? null
+    : evidenceExecutionResponseSchema.safeParse(item.evidenceExecution);
+  const packetSummary = item.packetSummary === null
+    ? null
+    : packetFindingsSummarySchema.safeParse(item.packetSummary);
+  return {
+    ...(item as SavedPacket),
+    ...(plan.success ? { plan: plan.data } : {}),
+    ...(reviewablePacket.success ? { reviewablePacket: reviewablePacket.data, packetAnswer: reviewablePacket.data.packetAnswer } : {}),
+    ...(evidenceExecution === null ? { evidenceExecution: null } : evidenceExecution.success ? { evidenceExecution: evidenceExecution.data } : {}),
+    ...(packetSummary === null ? { packetSummary: null } : packetSummary.success ? { packetSummary: packetSummary.data } : {}),
+  };
+}
 
 function nowLabel() {
   return new Intl.DateTimeFormat("en-US", {
@@ -127,6 +160,9 @@ export function DecisionWorkflowApp() {
   const [analysisBrief, setAnalysisBrief] = useState<AnalysisBrief | null>(null);
   const [evidencePlan, setEvidencePlan] = useState<EvidencePlan | null>(null);
   const [evaluationDefinition, setEvaluationDefinition] = useState<EvaluationDefinitionDraft | null>(null);
+  const [evidenceExecution, setEvidenceExecution] = useState<EvidenceExecutionResponse | null>(null);
+  const [persistedReviewablePacket, setPersistedReviewablePacket] = useState<ReviewableActionPacket | null>(null);
+  const [replanNotice, setReplanNotice] = useState<string | null>(null);
   const [selectedContextMetric, setSelectedContextMetric] = useState<CbsaAcsMetricKey>("household_count");
   const [selectedGeographicContexts, setSelectedGeographicContexts] = useState<SelectedGeographicContext[]>([]);
   const [geographicContextNotice, setGeographicContextNotice] = useState<string | null>(null);
@@ -162,7 +198,7 @@ export function DecisionWorkflowApp() {
   }, [geographicFocus, selectedLead]);
 
   const sisterGeographies = useMemo(
-    () => (plan && geographicFocus?.state === "focused"
+    () => (plan && plan.intent.topic !== "clinic_location" && geographicFocus?.state === "focused"
       ? suggestSisterGeographiesFromPlan(plan, undefined, geographicFocus.cbsaCodes)
       : []),
     [plan, geographicFocus],
@@ -187,7 +223,9 @@ export function DecisionWorkflowApp() {
   );
 
   const reviewablePacket = useMemo(
-    () => (plan && selectedAction
+    () => (persistedReviewablePacket && plan && persistedReviewablePacket.planId === plan.planId
+      ? persistedReviewablePacket
+      : plan && selectedAction
       ? assembleReviewableActionPacket(
         plan,
         selectedAction,
@@ -201,9 +239,10 @@ export function DecisionWorkflowApp() {
         insightActionPlan ?? undefined,
         null,
         validationWorkplan ?? undefined,
+        evidenceExecution,
       )
       : null),
-    [analysisBrief, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, plan, selectedAction, selectedContextMetric, selectedLeadId, validationWorkplan],
+    [analysisBrief, evidenceExecution, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, persistedReviewablePacket, plan, selectedAction, selectedContextMetric, selectedLeadId, validationWorkplan],
   );
 
   useEffect(() => {
@@ -211,7 +250,8 @@ export function DecisionWorkflowApp() {
       const stored = window.localStorage.getItem("market-intelligence-action-packets");
       if (!stored) return;
       try {
-        setSavedPackets(JSON.parse(stored) as SavedPacket[]);
+        const raw: unknown = JSON.parse(stored);
+        setSavedPackets(Array.isArray(raw) ? raw.map(parseSavedPacket).filter((item): item is SavedPacket => item !== null) : []);
       } catch {
         window.localStorage.removeItem("market-intelligence-action-packets");
       }
@@ -236,19 +276,21 @@ export function DecisionWorkflowApp() {
 
   useEffect(() => {
     if ((phase !== "packet" && phase !== "saved") || !plan || !selectedAction) {
-      setPacketSummary(null);
-      setPacketSummaryState("idle");
+      return;
+    }
+    if (phase === "saved" && persistedReviewablePacket) {
       return;
     }
     let cancelled = false;
-    setPacketSummaryState("loading");
-    setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
     void (async () => {
+      if (cancelled) return;
+      setPacketSummaryState("loading");
+      setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction, evidenceExecution));
       try {
         const response = await fetch("/api/evaluation-plans/summary", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ plan, actionId: selectedAction.id }),
+          body: JSON.stringify({ plan, actionId: selectedAction.id, evidenceExecution }),
         });
         const payload: unknown = await response.json();
         const parsed = packetFindingsSummarySchema.safeParse(
@@ -260,19 +302,19 @@ export function DecisionWorkflowApp() {
         if (parsed.success) {
           setPacketSummary(parsed.data);
         } else {
-          setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
+          setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction, evidenceExecution));
         }
         setPacketSummaryState("ready");
       } catch {
         if (cancelled) return;
-        setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction));
+        setPacketSummary(deterministicFindingsAndProposalSummary(plan, selectedAction, evidenceExecution));
         setPacketSummaryState("ready");
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [investigation, phase, plan, selectedAction, selectedLead]);
+  }, [evidenceExecution, investigation, persistedReviewablePacket, phase, plan, selectedAction, selectedLead]);
 
   async function startWorkflow(nextQuestion = question, nextPerspectiveId?: PerspectiveId) {
     if (!nextQuestion.trim()) return;
@@ -293,6 +335,9 @@ export function DecisionWorkflowApp() {
     setAnalysisBrief(null);
     setEvidencePlan(null);
     setEvaluationDefinition(null);
+    setEvidenceExecution(null);
+    setPersistedReviewablePacket(null);
+    setReplanNotice(null);
     setPhase("interpreting");
     try {
       const response = await fetch("/api/evaluation-plans", {
@@ -330,19 +375,81 @@ export function DecisionWorkflowApp() {
     }
   }
 
-  async function confirmAndRun(nextBrief: AnalysisBrief) {
+  async function confirmAndRun(nextBrief: AnalysisBrief, change: { questionChanged: boolean }) {
     if (!plan) return;
+    if (change.questionChanged) {
+      setRequestError(null);
+      setReplanNotice("The edited question changed the analysis contract. Regenerating the intent, metrics, geography, capability, and registered queries before execution.");
+      try {
+        const response = await fetch("/api/evaluation-plans", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ question: nextBrief.rewrittenQuestion.trim() }),
+        });
+        const payload: unknown = await response.json();
+        const parsed = evaluationPlanResponseSchema.safeParse(payload);
+        if (!response.ok || !parsed.success) {
+          const error = evaluationPlanErrorSchema.safeParse(payload);
+          setRequestError(error.success ? error.data.message : "The edited question could not be replanned.");
+          return;
+        }
+        const replanned = parsed.data.plan;
+        const nextInvestigation = runMarketInvestigation(replanned);
+        setQuestion(replanned.originalQuestion);
+        setPlan(replanned);
+        setAnalysisBrief(buildAnalysisBrief(replanned, nextInvestigation));
+        setEvidencePlan(buildEvidencePlan(replanned));
+        setEvaluationDefinition(null);
+        setEvidenceExecution(null);
+        setPersistedReviewablePacket(null);
+        setInvestigation(null);
+        setSelectedLeadId(null);
+        setSelectedActionId(proposedActionFromPlan(replanned).id);
+        setReplanNotice("Plan regenerated from the edited question. Review the changed interpretation and confirm again before any query runs.");
+        setPhase("confirming");
+      } catch {
+        setRequestError("The edited question could not be replanned because the planning service is unavailable.");
+      }
+      return;
+    }
+    const briefConsistencyIssues = validateAnalysisBriefConsistency(plan, nextBrief);
+    if (briefConsistencyIssues.length) {
+      setRequestError(`The analysis contract no longer matches the validated plan. ${briefConsistencyIssues.join(" ")}`);
+      setReplanNotice("Execution was stopped before any query ran. Regenerate or edit the question to restore one consistent topic, geography, source, and query contract.");
+      return;
+    }
+    setReplanNotice(null);
     const nextInvestigation = runConfirmedMarketInvestigation(plan, nextBrief);
+    const configuredEvidenceDemo = plan.planId.startsWith("plan-demo-");
+    const normalizedEvidencePlan = plan.intent.selectedQueries.length > 0;
     const nextEvidencePlan = evidencePlan ?? buildEvidencePlan(plan);
     setAnalysisBrief(nextBrief);
-    setInvestigation(nextInvestigation);
+    setInvestigation(configuredEvidenceDemo || normalizedEvidencePlan ? null : nextInvestigation);
     setEvidencePlan(nextEvidencePlan);
     setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, nextInvestigation, nextEvidencePlan));
-    setSelectedLeadId(nextInvestigation.leads[0]?.id ?? null);
+    setSelectedLeadId(configuredEvidenceDemo || normalizedEvidencePlan ? null : nextInvestigation.leads[0]?.id ?? null);
     setActiveStep(0);
     setPhase("running");
     setClinicWorkflow(null);
-    if (plan.capabilityId !== "clinic_site_evaluation") return;
+    setEvidenceExecution(null);
+    setPersistedReviewablePacket(null);
+    let executedEvidence: EvidenceExecutionResponse | null = null;
+    try {
+      const response = await fetch("/api/evaluation-plans/execute", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ requestId: `workflow-${plan.planId}-${Date.now()}`, plan }),
+      });
+      const payload: unknown = await response.json();
+      const parsed = evidenceExecutionResponseSchema.safeParse(payload);
+      if (parsed.success) {
+        executedEvidence = parsed.data;
+        setEvidenceExecution(parsed.data);
+      }
+    } catch {
+      // The review page retains the validated plan when local evidence execution is unavailable.
+    }
+    if (plan.capabilityId !== "clinic_site_evaluation" || normalizedEvidencePlan || !executedEvidence || executedEvidence.status === "blocked" || executedEvidence.status === "failed") return;
     try {
       const response = await fetch("/api/clinic-site-evaluation", {
         method: "POST",
@@ -377,13 +484,17 @@ export function DecisionWorkflowApp() {
     setAnalysisBrief(null);
     setEvidencePlan(null);
     setEvaluationDefinition(null);
+    setEvidenceExecution(null);
+    setPersistedReviewablePacket(null);
+    setReplanNotice(null);
     setPhase("question");
     setSelectedContextMetric("household_count");
   }
 
   function savePacket() {
-    if (!plan || !selectedAction) return;
+    if (!plan || !selectedAction || !reviewablePacket) return;
     const packet: SavedPacket = {
+      schemaVersion: "saved-action-packet-v2",
       id: `packet-${Date.now().toString(36)}`,
       question: plan.originalQuestion,
       title: selectedAction.title,
@@ -399,27 +510,47 @@ export function DecisionWorkflowApp() {
       selectedLeadId,
       selectedContextMetric,
       selectedGeographicContexts,
+      plan,
+      evidenceExecution,
+      packetAnswer: reviewablePacket.packetAnswer,
+      packetSummary,
+      reviewablePacket,
     };
     const next = [packet, ...savedPackets.filter((item) => item.question !== packet.question)].slice(0, 10);
     setSavedPackets(next);
     window.localStorage.setItem("market-intelligence-action-packets", JSON.stringify(next));
+    setPersistedReviewablePacket(reviewablePacket);
     setPhase("saved");
   }
 
   function openSavedPacket(packet: SavedPacket) {
     const restoredGeographicContexts = packet.selectedGeographicContexts ?? [];
-    const restoredPlan = planEvaluation(packet.question, packet.perspectiveId, restoredGeographicContexts);
+    const savedPlan = packet.plan ? evaluationPlanSchema.safeParse(packet.plan) : null;
+    const restoredPlan = savedPlan?.success ? savedPlan.data : planEvaluation(packet.question, packet.perspectiveId, restoredGeographicContexts);
+    const savedReviewablePacket = packet.reviewablePacket ? reviewableActionPacketSchema.safeParse(packet.reviewablePacket) : null;
+    const restoredEvidenceExecution = packet.evidenceExecution !== undefined
+      ? packet.evidenceExecution
+      : savedReviewablePacket?.success
+        ? savedReviewablePacket.data.evidenceExecution ?? null
+        : null;
     setQuestion(packet.question);
     setSelectedGeographicContexts(restoredGeographicContexts);
     setGeographicContextNotice(null);
     setPlan(restoredPlan);
     setClinicWorkflow(null);
+    setEvidenceExecution(restoredEvidenceExecution);
+    setPersistedReviewablePacket(savedReviewablePacket?.success ? savedReviewablePacket.data : null);
+    setPacketSummary(packet.packetSummary ?? null);
+    setPacketSummaryState("ready");
     setSelectedContextMetric(packet.selectedContextMetric ?? (restoredPlan.perspectiveId === "marketing" ? "population_density" : restoredPlan.perspectiveId === "pricing" ? "median_household_income" : "household_count"));
     const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
-    setInvestigation(restoredInvestigation);
-    setSelectedLeadId(packet.selectedLeadId && restoredInvestigation.leads.some((lead) => lead.id === packet.selectedLeadId)
-      ? packet.selectedLeadId
-      : restoredInvestigation.leads[0]?.id ?? null);
+    const usesRegisteredEvidence = restoredPlan.planId.startsWith("plan-demo-") || restoredPlan.intent.selectedQueries.length > 0;
+    setInvestigation(usesRegisteredEvidence ? null : restoredInvestigation);
+    setSelectedLeadId(usesRegisteredEvidence
+      ? null
+      : packet.selectedLeadId && restoredInvestigation.leads.some((lead) => lead.id === packet.selectedLeadId)
+        ? packet.selectedLeadId
+        : restoredInvestigation.leads[0]?.id ?? null);
     setInvestigationFollowUps(packet.followUps ?? []);
     const restoredBrief = packet.analysisBrief ?? buildAnalysisBrief(restoredPlan, restoredInvestigation);
     const restoredEvidencePlan = packet.evidencePlan ?? buildEvidencePlan(restoredPlan);
@@ -429,6 +560,9 @@ export function DecisionWorkflowApp() {
     setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
     setRequestError(null);
     setSisterFollowUpNotice(null);
+    setReplanNotice(savedPlan?.success
+      ? "Restored the saved plan and executed evidence exactly as recorded. No replanning or query execution occurred."
+      : "Legacy saved packet restored. Its original plan was not stored, so the current deterministic planner reconstructed the review context.");
     setActiveView("workflow");
     setPhase("saved");
   }
@@ -456,6 +590,8 @@ export function DecisionWorkflowApp() {
     setAnalysisBrief(null);
     setEvidencePlan(null);
     setEvaluationDefinition(null);
+    setEvidenceExecution(null);
+    setPersistedReviewablePacket(null);
     setSelectedActionId("");
     setActiveStep(-1);
     setRequestError(null);
@@ -539,7 +675,7 @@ export function DecisionWorkflowApp() {
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
               }}
               onSubmit={(nextPerspectiveId) => void startWorkflow(question, nextPerspectiveId)}
-              onPerspectiveChange={(nextPerspectiveId) => {
+              onPerspectiveChange={() => {
                 setQuestion("");
                 setSisterFollowUpNotice(null);
               }}
@@ -575,7 +711,9 @@ export function DecisionWorkflowApp() {
               <h1>Review the analysis plan</h1>
               <p>Confirm the question, method, and evidence boundaries before the analyst runs.</p>
             </div>
-            <AnalysisBriefPanel brief={analysisBrief} onConfirm={confirmAndRun} />
+            {replanNotice ? <div className="sister-follow-up-notice" role="status"><strong>Plan updated</strong><p>{replanNotice}</p></div> : null}
+            {requestError ? <div className="packet-missing-gates" role="alert"><small>{requestError}</small></div> : null}
+            <AnalysisBriefPanel key={`${plan.planId}:${analysisBrief.originalQuestion}`} brief={analysisBrief} onConfirm={confirmAndRun} />
           </section>
         ) : null}
 
@@ -671,7 +809,22 @@ export function DecisionWorkflowApp() {
                 <strong>{analysisBrief?.rewrittenQuestion ?? plan.originalQuestion}</strong>
               </div>
 
-              {displayedGeographicFocus ? (
+              {replanNotice ? (
+                <div className="sister-follow-up-notice" role="status">
+                  <strong>{phase === "saved" ? "Saved packet restored" : "Plan updated"}</strong>
+                  <p>{replanNotice}</p>
+                </div>
+              ) : null}
+
+              {evidenceExecution ? (
+                <EvidenceBundlePanel result={evidenceExecution} action={selectedAction} answer={reviewablePacket?.packetAnswer} />
+              ) : (
+                <div className="packet-missing-gates" role="status">
+                  <small>The registered evidence bundle is unavailable. The validated plan remains visible, but no snapshot result is being represented as complete.</small>
+                </div>
+              )}
+
+              {displayedGeographicFocus && evidenceExecution?.query !== "clinic_performance_bundle" ? (
                 <div className="decision-result-map-shell">
                   <GeographicFocusMap
                     focus={displayedGeographicFocus}

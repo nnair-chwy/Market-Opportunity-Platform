@@ -138,14 +138,19 @@ export function GeographicFocusMap({
     [],
   );
   const focusCbsaCodesRef = useRef(focus.cbsaCodes);
-  focusCbsaCodesRef.current = focus.cbsaCodes;
   const interactiveEnabled = focus.state === "focused";
 
   useEffect(() => {
-    if (findings.length > 0) {
+    focusCbsaCodesRef.current = focus.cbsaCodes;
+  }, [focus.cbsaCodes]);
+
+  useEffect(() => {
+    if (findings.length === 0) return;
+    const timer = window.setTimeout(() => {
       setPercentileBand("all");
       setFilteredFindingId(null);
-    }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [findings.length]);
 
   useEffect(() => {
@@ -158,23 +163,25 @@ export function GeographicFocusMap({
     if (!interactiveEnabled) {
       mapRef.current?.remove();
       mapRef.current = null;
-      setLoadState("basemap_unavailable");
-      return;
+      const timer = window.setTimeout(() => setLoadState("basemap_unavailable"), 0);
+      return () => window.clearTimeout(timer);
     }
     if (config.status !== "configured") {
-      setLoadState("basemap_unavailable");
-      return;
+      const timer = window.setTimeout(() => setLoadState("basemap_unavailable"), 0);
+      return () => window.clearTimeout(timer);
     }
     if (!containerRef.current) {
-      setLoadState("basemap_unavailable");
-      return;
+      const timer = window.setTimeout(() => setLoadState("basemap_unavailable"), 0);
+      return () => window.clearTimeout(timer);
     }
 
     const styleUrl = config.styleUrl;
     let disposed = false;
-    setLoadState("loading");
 
     async function initialize() {
+      await Promise.resolve();
+      if (disposed) return;
+      setLoadState("loading");
       try {
         const { AttributionControl, Map, NavigationControl, Popup } = await import("maplibre-gl");
         if (disposed || !containerRef.current) return;

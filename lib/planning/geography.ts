@@ -133,7 +133,7 @@ export function normalizeRequestedPlaces(
   const extracted = extractRequestedPlaces(question);
   if (!requestedPlaces.length) return extracted;
 
-  return requestedPlaces.slice(0, 5).map((place) => {
+  return requestedPlaces.slice(0, 6).map((place) => {
     const match = extracted.find((candidate) => samePlaceText(place.name, candidate.name));
     if (!match) return { name: place.name.trim(), stateHint: normalizeStateHint(place.stateHint) };
     return {
@@ -231,7 +231,7 @@ export function extractRequestedPlaces(question: string): RequestedPlace[] {
       continue;
     }
     unique.push({ name: item.name, stateHint: item.stateHint });
-    if (unique.length >= 5) break;
+    if (unique.length >= 6) break;
   }
   return unique;
 }
@@ -243,6 +243,26 @@ export function resolveGeography(
   const resolved = places.filter((place) => place.status === "resolved");
   const ambiguous = places.filter((place) => place.status === "ambiguous");
   const unavailable = places.filter((place) => place.status === "unavailable");
+
+  if (resolved.length > 5) {
+    return geographyResolutionSchema.parse({
+      mode: "clarification",
+      places,
+      selectedCbsaCodes: [],
+      message: "A comparison supports two to five markets. Remove at least one market and resubmit.",
+    });
+  }
+
+  if (intent.clarificationRequired && intent.clarificationReason !== "none") {
+    return geographyResolutionSchema.parse({
+      mode: "clarification",
+      places,
+      selectedCbsaCodes: [],
+      message: intent.clarificationReason === "ambiguous_comparison_cohort"
+        ? "A comparison supports two to five explicitly named markets. Revise the comparison cohort and resubmit."
+        : "The question still needs clarification before a market or portfolio scope can be selected.",
+    });
+  }
 
   if (ambiguous.length || unavailable.length) {
     const labels = [...ambiguous, ...unavailable].map((place) => place.requestedName);
@@ -271,18 +291,6 @@ export function resolveGeography(
       places,
       selectedCbsaCodes: [resolved[0].cbsaCode!],
       message: `Focus the workspace on ${resolved[0].cbsaName} (CBSA ${resolved[0].cbsaCode}).`,
-    });
-  }
-
-  if (
-    intent.clarificationRequired
-    && intent.clarificationReason !== "none"
-  ) {
-    return geographyResolutionSchema.parse({
-      mode: "clarification",
-      places,
-      selectedCbsaCodes: [],
-      message: "The question still needs clarification before a market or portfolio scope can be selected.",
     });
   }
 

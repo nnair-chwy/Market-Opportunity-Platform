@@ -1,6 +1,7 @@
 import { evaluationPlanRequestSchema, evaluationPlanResponseSchema, planEvaluation } from "@/lib/planning";
 import { proposeEvaluationPlanWithAi } from "@/lib/planning/ai-planner";
 import { publicMarkets } from "@/lib/data/public-market-ui";
+import { planConfiguredDemoQuestion } from "@/lib/demo/scenarios";
 
 const headers = { "cache-control": "no-store" };
 
@@ -15,8 +16,9 @@ export async function POST(request: Request) {
     const market = publicMarkets.find((candidate) => candidate.cbsa_code === cbsaCode);
     return market ? [{ cbsaCode, cbsaName: market.cbsa_name }] : [];
   });
-  let plan = planEvaluation(parsed.data.question, parsed.data.perspectiveId, selectedGeographicContext);
-  if (process.env.OPENAI_API_KEY?.trim()) {
+  const configuredDemoPlan = selectedGeographicContext.length ? null : planConfiguredDemoQuestion(parsed.data.question);
+  let plan = configuredDemoPlan ?? planEvaluation(parsed.data.question, parsed.data.perspectiveId, selectedGeographicContext);
+  if (!configuredDemoPlan && plan.intent.selectedQueries.length === 0 && process.env.OPENAI_API_KEY?.trim()) {
     try { plan = await proposeEvaluationPlanWithAi(parsed.data.question, parsed.data.perspectiveId, selectedGeographicContext); }
     catch (error) { console.error("[evaluation-plan]", error instanceof Error ? error.name : "UnknownError"); }
   }

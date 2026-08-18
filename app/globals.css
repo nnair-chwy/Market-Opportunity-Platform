@@ -1,6 +1,41 @@
 @import "tailwindcss";
 @import "maplibre-gl/dist/maplibre-gl.css";
 
+.adaptive-platform-capability {
+  background: #102b5d;
+  border-radius: 14px;
+  color: #fff;
+  display: grid;
+  gap: 1px;
+  grid-template-columns: 1fr 1fr;
+  margin: 18px 0;
+  overflow: hidden;
+}
+
+.adaptive-platform-capability > div {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 18px 20px;
+}
+
+.adaptive-platform-capability strong {
+  color: #91d1ff;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.adaptive-platform-capability p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 7px 0 0;
+}
+
+@media (max-width: 720px) {
+  .adaptive-platform-capability {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Figma-inspired platform shell */
 .platform-shell {
   display: flex;
@@ -6351,7 +6386,9 @@ button {
 .adaptive-starter-questions { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; }
 .adaptive-starter-questions button { background: #fff; border: 1px solid #c9d6e7; border-radius: 999px; color: #49617f; cursor: pointer; font-size: .68rem; line-height: 1.25; padding: .38rem .65rem; text-align: left; }
 .adaptive-starter-questions button:hover { border-color: #78a0ed; color: #275dbf; }
-.adaptive-opening .adaptive-recent-packets { display: none; }
+.adaptive-opening .adaptive-recent-packets { position: absolute; top: 5.75rem; right: 1rem; z-index: 5; display: flex; max-width: min(62vw, 680px); justify-content: flex-end; }
+.adaptive-opening .adaptive-recent-packets > strong { align-self: center; padding: .35rem .2rem; color: #536b89; font: 800 .55rem monospace; letter-spacing: .08em; text-transform: uppercase; }
+.adaptive-opening .adaptive-recent-packets > button { border: 1px solid rgba(255,255,255,.92); background: rgba(255,255,255,.86); box-shadow: 0 10px 24px rgba(45,72,108,.11); backdrop-filter: blur(14px); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (max-width: 1050px) {
   .adaptive-map-header { align-items: stretch; flex-direction: column; }

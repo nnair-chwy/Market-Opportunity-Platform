@@ -124,6 +124,15 @@ function cvcItems(): EvidencePlanItem[] {
   ];
 }
 
+function clinicLocationGapItems(): EvidencePlanItem[] {
+  return [
+    item({ id: "clinic_location_demand_validation", label: "Demand validation", role: "validity_check", requiredFor: "Distinguish current aggregate customer and sales context from incremental clinic demand", availability: "partial", sourceIds: ["SNOWFLAKE-CSV-MARKET-CONTEXT", "SNOWFLAKE-CSV-REGIONAL-DEMAND"], reason: "Regional customer and sales aggregates are connected, but pet demand, appointment demand, penetration, and an incremental opportunity baseline are not.", allowedUse: "Descriptive aggregate context only; no causal or opening conclusion.", nextAction: "Define the demand outcome and request compatible pet-household, booking, appointment, penetration, and baseline measures." }),
+    item({ id: "clinic_location_capacity", label: "Clinic access and capacity", role: "validity_check", requiredFor: "Assess reachable and staffed service capacity", availability: "missing", sourceIds: [], reason: "Approved trade areas, travel-time coverage, staffed hours, appointment availability, utilization, and service mix are not connected.", allowedUse: "Unavailable; clinic counts and aggregate activity cannot substitute for capacity.", nextAction: "Request approved clinic identities, open dates, capacity, availability, utilization, and trade-area definitions." }),
+    item({ id: "clinic_location_workforce_competition", label: "Workforce and competitive access", role: "validity_check", requiredFor: "Explain staffing feasibility and local veterinary access", availability: "missing", sourceIds: [], reason: "Veterinary workforce, competitor locations, provider supply, service mix, capacity, and availability are not connected.", allowedUse: "Unavailable.", nextAction: "Assign workforce and competitive-intelligence owners and request compatible geography, period, identity, and capacity fields." }),
+    item({ id: "clinic_location_property_economics", label: "Property, trade-area feasibility, and economics", role: "validity_check", requiredFor: "Determine whether market context can advance toward site review", availability: "missing", sourceIds: [], reason: "Property feasibility, permitting, physical-site constraints, economics, cannibalization, and mature outcomes are not connected.", allowedUse: "Required before site screening or opening review.", nextAction: "Assign Real Estate, Finance, Operations, and CVC Analytics owners to define the required evidence and decision gates." }),
+  ];
+}
+
 function marketingItems(): EvidencePlanItem[] {
   return [
     item({ id: "marketing_baseline", label: "Pre-period customer and outcome baseline", role: "analysis_input", requiredFor: "Evaluate peer balance and outcome stability", availability: "missing", sourceIds: ["SRC-004"], reason: "No approved market-level customer/outcome package is connected.", allowedUse: "Unavailable; public Census context cannot substitute for customer outcomes.", nextAction: "Request compatible pre-period customer mix, outcomes, trends, and sample sizes." }),
@@ -143,6 +152,34 @@ function pricingItems(): EvidencePlanItem[] {
 }
 
 export function buildEvidencePlan(plan: EvaluationPlan): EvidencePlan {
+  if (plan.intent.selectedQueries.length) {
+    const normalizedItems = plan.intent.selectedQueries.map((query) => item({
+      id: `normalized_${query}`,
+      label: query.replaceAll("_", " "),
+      role: query === "growth_test_screening" ? "analysis_input" : "context_only",
+      requiredFor: plan.intent.conciseInterpretation,
+      availability: query === "google_ads_context_by_cbsa" || query === "growth_test_screening" ? "partial" : "available",
+      sourceIds: query === "regional_context_by_cbsa" ? ["SRC-016", "SNOWFLAKE-CSV-MARKET-CONTEXT", "SNOWFLAKE-CSV-REGIONAL-DEMAND"]
+        : query === "clinic_context_by_cbsa" ? ["SNOWFLAKE-CSV-CLINIC-PROFILE", "SNOWFLAKE-CSV-CLINIC-ACTIVITY"]
+          : query === "google_ads_context_by_cbsa" ? ["SRC-018"]
+            : query === "growth_test_screening" ? ["SRC-016", "SRC-018", "SNOWFLAKE-CSV-MARKET-CONTEXT", "SNOWFLAKE-CSV-REGIONAL-DEMAND"]
+              : ["SRC-014"],
+      reason: query === "google_ads_context_by_cbsa"
+        ? "Aggregate Google Ads measures are connected through visible Census-assisted demo geography inference."
+        : query === "growth_test_screening"
+          ? "All five configured metrics are connected for a complete-case subset; incomplete markets are excluded."
+          : "The normalized frozen snapshot exposes this registered aggregate query.",
+      allowedUse: query === "growth_test_screening" ? "Hypothesis-only local demo screening; no launch, spend, or causal conclusion." : "Local demo aggregate descriptive decision support only.",
+      nextAction: "Inspect returned source IDs, missingness, geography confidence, and warnings before drawing a decision conclusion.",
+    }));
+    return {
+      version: "evidence-plan-v0.1",
+      planId: plan.planId,
+      originalQuestion: plan.originalQuestion,
+      perspectiveId: plan.perspectiveId,
+      items: plan.intent.topic === "clinic_location" ? [...normalizedItems, ...clinicLocationGapItems()] : normalizedItems,
+    };
+  }
   return {
     version: "evidence-plan-v0.1",
     planId: plan.planId,

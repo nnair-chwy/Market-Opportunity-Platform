@@ -3,6 +3,7 @@ export {
   QualityStatusBadge,
 } from "./EvidenceBadges";
 export { EvidenceSummaryPanel } from "./EvidenceSummaryPanel";
+export { EvidenceBundlePanel } from "./EvidenceBundlePanel";
 export { EvaluationWarnings } from "./EvaluationWarnings";
 export { MetricDetailPanel } from "./MetricDetailPanel";
 export { MissingInformationChecklist } from "./MissingInformationChecklist";
