@@ -286,8 +286,7 @@ export function UnifiedEvaluatorMap({
   });
   const [ready, setReady] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [fallbackResetSelectionKey, setFallbackResetSelectionKey] =
-    useState<string | null>(null);
+  const [fallbackResetSelectionKey, setFallbackResetSelectionKey] = useState<string | null>(null);
 
   const selectedLocation =
     locations.find((location) => location.id === selectedLocationId) ?? null;
@@ -1266,10 +1265,11 @@ export function UnifiedEvaluatorMap({
 
         <button
           type="button"
-          className={`market-reset-map${useFallback ? "" : " with-navigation"}`}
+          className="market-reset-map"
+          aria-label="Reset map to national view"
           onClick={resetMap}
         >
-          Reset map
+          Reset
         </button>
 
         {useFallback ? (

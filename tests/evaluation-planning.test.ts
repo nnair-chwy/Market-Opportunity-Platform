@@ -294,3 +294,75 @@ test("Google Ads questions route to blocked Marketing evidence readiness", () =>
   assert.equal(compare.status, "blocked");
   assert.equal(compare.resultWorkspaceType, "evidence_readiness");
 });
+
+test("consumer-insights questions route to the registered DMA snapshot through intuitive CBSA alignment", () => {
+  const bdiCdi = planEvaluation("What are the BDI and CDI for Boston?", "cvc");
+  assert.equal(bdiCdi.intent.topic, "consumer_insights");
+  assert.equal(bdiCdi.capabilityId, "consumer_insights");
+  assert.deepEqual(bdiCdi.intent.selectedQueries, ["consumer_insights_by_cbsa"]);
+  assert.deepEqual(bdiCdi.geographyResolution.selectedCbsaCodes, ["14460"]);
+  assert.equal(bdiCdi.status, "executable");
+
+  const health = planEvaluation("Review Chewy brand health and drivers for Boston.", "cvc");
+  assert.equal(health.intent.topic, "consumer_insights");
+  assert.deepEqual(health.intent.selectedQueries, ["brand_relevance_drivers_by_cbsa"]);
+  assert.equal(health.capabilityId, "consumer_insights");
+  assert.match(health.actions[0].summary, /intuitive alignment/i);
+
+  const consumerAwareness = planEvaluation("What is consumer awareness for Dallas?", "cvc");
+  assert.equal(consumerAwareness.intent.topic, "consumer_insights");
+  assert.deepEqual(consumerAwareness.intent.selectedQueries, ["brand_funnel_by_cbsa"]);
+  assert.deepEqual(consumerAwareness.geographyResolution.selectedCbsaCodes, ["19100"]);
+
+  const standaloneAwareness = planEvaluation("What is awareness for Dallas?", "cvc");
+  assert.equal(standaloneAwareness.intent.topic, "consumer_insights");
+  assert.deepEqual(standaloneAwareness.intent.selectedQueries, ["brand_funnel_by_cbsa"]);
+
+  const relevanceDrivers = planEvaluation("What are the relevance drivers for Dallas?", "cvc");
+  assert.equal(relevanceDrivers.intent.topic, "consumer_insights");
+  assert.deepEqual(relevanceDrivers.intent.selectedQueries, ["brand_relevance_drivers_by_cbsa"]);
+
+  const missingConsumerGeography = planEvaluation("What are the BDI and CDI for an unknown market?", "cvc");
+  assert.equal(missingConsumerGeography.intent.topic, "consumer_insights");
+  assert.equal(missingConsumerGeography.intent.clarificationRequired, true);
+  assert.equal(missingConsumerGeography.intent.clarificationReason, "ambiguous_geography");
+});
+
+test("full routing audit cases preserve source, geography, and perspective boundaries", () => {
+  const housing = planEvaluation("How many housing units are in Atlanta?");
+  assert.equal(housing.intent.topic, "market_context");
+  assert.deepEqual(housing.intent.requestedMetrics, ["housing_unit_count"]);
+  assert.deepEqual(housing.geographyResolution.selectedCbsaCodes, ["12060"]);
+
+  const activeCustomers = planEvaluation("What are active customers in Seattle?");
+  assert.equal(activeCustomers.intent.topic, "regional_context");
+  assert.deepEqual(activeCustomers.intent.selectedQueries, ["regional_context_by_cbsa"]);
+
+  const activeCustomerGrowth = planEvaluation("How did active customers grow in Boston?");
+  assert.equal(activeCustomerGrowth.intent.topic, "regional_context");
+  assert.deepEqual(activeCustomerGrowth.intent.requestedMetrics, ["active_customer_yoy_growth", "active_customer_count"]);
+  assert.deepEqual(activeCustomerGrowth.intent.selectedQueries, ["regional_context_by_cbsa"]);
+
+  const longFormBdiCdi = planEvaluation("What are the brand development and category development indexes for Dallas?");
+  assert.equal(longFormBdiCdi.intent.topic, "consumer_insights");
+  assert.deepEqual(longFormBdiCdi.intent.selectedQueries, ["consumer_insights_by_cbsa"]);
+
+  const unsupportedGeography = planEvaluation("What is the population of Atlantis?");
+  assert.equal(unsupportedGeography.status, "blocked");
+  assert.equal(unsupportedGeography.geographyResolution.mode, "unavailable");
+  assert.equal(unsupportedGeography.geographyResolution.places[0]?.requestedName, "Atlantis");
+
+  const awarenessCampaign = planEvaluation("Which markets should receive a new awareness campaign?", "cvc");
+  assert.equal(awarenessCampaign.intent.topic, "local_growth");
+  assert.equal(awarenessCampaign.capabilityId, "local_growth_test");
+
+  const regionalSales = planEvaluation("What are regional net sales in Phoenix?");
+  assert.equal(regionalSales.intent.topic, "regional_context");
+  assert.deepEqual(regionalSales.intent.requestedMetrics, ["regional_net_sales"]);
+  assert.deepEqual(regionalSales.intent.selectedQueries, ["regional_context_by_cbsa"]);
+
+  const broadEvidence = planEvaluation("What market evidence and signals exist for Phoenix?");
+  assert.equal(broadEvidence.status, "blocked");
+  assert.equal(broadEvidence.intent.clarificationRequired, true);
+  assert.equal(broadEvidence.intent.clarificationReason, "ambiguous_requested_output");
+});

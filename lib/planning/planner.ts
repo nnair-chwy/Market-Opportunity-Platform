@@ -55,7 +55,15 @@ const NORMALIZED_QUERY_BY_SOURCE = {
   regional: "regional_context_by_cbsa",
   clinic: "clinic_context_by_cbsa",
   google_ads: "google_ads_context_by_cbsa",
+  consumer_insights: "consumer_insights_by_cbsa",
 } as const;
+
+const CONSUMER_INSIGHTS_QUERIES: PlanningIntent["selectedQueries"] = [
+  "consumer_insights_by_cbsa",
+  "brand_funnel_by_cbsa",
+  "brand_relevance_drivers_by_cbsa",
+  "brand_health_by_cbsa",
+];
 
 const CLINIC_LOCATION_DEFAULT_METRICS: PlanningIntent["requestedMetrics"] = [
   "total_population",
@@ -115,6 +123,11 @@ export function validatePlanningIntentConsistency(intent: PlanningIntent): strin
   }
   if (intent.topic === "source_coverage" && !querySet.has("supported_regions")) {
     issues.push("Source coverage requires the supported-regions query.");
+  }
+  if (intent.topic === "consumer_insights") {
+    if (!intent.sourceFamilies.includes("consumer_insights")) issues.push("Consumer-insights questions require the consumer_insights source family.");
+    if (!intent.selectedQueries.some((query) => CONSUMER_INSIGHTS_QUERIES.includes(query))) issues.push("Consumer-insights questions require a registered consumer-insights query.");
+    if (intent.rankingMode !== "none" || intent.sort !== null) issues.push("Consumer-insights review cannot carry a ranking mode or sort.");
   }
   if (intent.topic === "growth_test_screening") {
     if (intent.rankingMode !== "growth_test_screening_v1" || !querySet.has("growth_test_screening")) {
@@ -190,6 +203,9 @@ function decisionInterpretationForView(
 
 export function inferPlanningIntent(question: string): PlanningIntent {
   const value = question.toLowerCase();
+  const growthLanguage = has(value, /\b(ad|ads|adwords|campaign|advertis\w*|paid search|promotion|growth test|marketing|media|test market|control market|reach)\b/);
+  const consumerInsights = has(value, /\b(consumer insights?|consumer awareness|brand health|brand-health|bdi|cdi|brand funnel|brand relevance|brand drivers?|relevance drivers?|brand awareness|brand development(?: and category development)? index(?:es)?|category development index(?:es)?|familiarity|consideration|usage p12m|gen ?z|millennials?)\b/)
+    || (has(value, /\bawareness\b/) && !growthLanguage);
   const clinic = has(value, /\b(clinic|clinics|vet care|veterinary)\b/);
   const performance = clinic && has(value, /\b(performance|peer|underperform|operating)\b/);
   const clinicMetric = has(value, /\b(rx|prescription|prescriptions|clinic orders?|clinic sales?|clinic customers?|total orders?|total customers?)\b/);
@@ -197,7 +213,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   const coverage = has(value, /\b(coverage|available sources?|data availability|have both|has both)\b/)
     || has(value, /\bwhat evidence (?:is|are) available\b/)
     || has(value, /\bwhat (?:data|evidence) (?:is|are) available\b/);
-  const growth = has(value, /\b(ad|ads|adwords|campaign|advertis\w*|paid search|promotion|awareness|growth test|marketing|media|test market|control market|reach)\b/);
+  const growth = growthLanguage || has(value, /\bawareness\b/);
   const growthScreening = has(value, /\b(strongest|rank|ranking|prioriti[sz]e|screen|candidates?)\b/)
     && has(value, /\b(growth|regional opportunity|test market|growth test)\b/);
   const growthDecision = has(value, /\b(geo.?test|test markets?|acquisition efficiency|incrementality|causal lift)\b/);
@@ -215,7 +231,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
     if (has(value, expression) && !requestedMetrics.includes(metric)) requestedMetrics.push(metric);
   };
   if (requestedMeasure !== "none") requestedMetrics.push(requestedMeasure);
-  addMetric("active_customer_yoy_growth", /\b(active customer|customer).{0,12}(growth|yoy|year.over.year)|\bgrowth.{0,12}(active customer|customer)/);
+  addMetric("active_customer_yoy_growth", /\b(active customer|customer).{0,12}(grow\w*|yoy|year.over.year)|\bgrow\w*.{0,12}(active customer|customer)/);
   addMetric("active_customers_per_1000_households", /\bcustomers?.{0,18}(per|\/).{0,8}(1,?000|thousand).{0,10}households?|\bcustomer concentration/);
   addMetric("active_customer_count", /\bactive customers?\b/);
   addMetric("prior_year_active_customer_count", /\bprior.year customers?\b/);
@@ -224,7 +240,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   addMetric("total_customers", /\b(?:aggregate |total )?clinic customers?|\btotal customers?\b/);
   addMetric("total_orders", /\b(?:aggregate |total )?clinic orders?|\btotal orders?\b/);
   addMetric("rx_orders", /\b(rx|prescription|prescriptions) orders?\b|\bprescriptions?\b/);
-  addMetric("net_sales", /\bclinic (?:net )?sales\b|\bnet sales\b/);
+  if (!has(value, /\bregional (?:net )?sales\b/)) addMetric("net_sales", /\bclinic (?:net )?sales\b|\bnet sales\b/);
   addMetric("rx_net_sales", /\b(rx|prescription) (?:net )?sales\b/);
   if (clinic && has(value, /\bcustomers?\b/) && !requestedMetrics.includes("total_customers")) requestedMetrics.push("total_customers");
   if (clinic && has(value, /\bsales?\b/) && !requestedMetrics.includes("net_sales")) requestedMetrics.push("net_sales");
@@ -233,6 +249,12 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   addMetric("google_ads_impressions", /\bimpressions?\b/);
   addMetric("google_ads_clicks", /\bclicks?\b/);
   addMetric("google_ads_conversions", /\bconversions?\b/);
+  addMetric("consumer_bdi", /\bbdi\b|brand development(?: and category development)? index(?:es)?\b/);
+  addMetric("consumer_cdi", /\bcdi\b|category development index(?:es)?\b/);
+  addMetric("brand_funnel", /\bbrand funnel|awareness|familiarity|consideration|usage p12m\b/);
+  addMetric("brand_relevance", /\bbrand relevance|relevance score\b/);
+  addMetric("brand_drivers", /\bbrand drivers?|\bdrivers?\b|driver ranking|reasons? customers? choose\b/);
+  addMetric("generation_brand_health", /\bgeneration|gen ?z|millennials?\b/);
   if (coverage) requestedMetrics.push("source_coverage");
   if (growthScreening) requestedMetrics.push("growth_test_screening_score");
   const requestedAction: PlanningIntent["requestedAction"] = coverage ? "describe"
@@ -243,20 +265,24 @@ export function inferPlanningIntent(question: string): PlanningIntent {
           : "describe";
   const requestedPlaces = extractRequestedPlaces(question);
   const multiMarket = requestedPlaces.length >= 2 && requestedAction === "compare";
-  const mentionsRegional = has(value, /\b(regional|market|metro|cbsa|population|household|income|density|city)\b/);
+  const mentionsRegional = has(value, /\b(regional|market|metro|cbsa|population|household|housing|income|density|city)\b/);
   if (has(value, /\bregional\b/) && has(value, /\bcustomers?\b/) && !requestedMetrics.includes("active_customer_count")) requestedMetrics.push("active_customer_count");
   if (has(value, /\bregional\b/) && has(value, /\b(?:net )?sales\b/) && !requestedMetrics.includes("regional_net_sales")) requestedMetrics.push("regional_net_sales");
   if (multiMarket && performance && !requestedMetrics.length) requestedMetrics.push(...DESCRIPTIVE_CLINIC_COMPARISON_METRICS);
   const sourceFamilies: PlanningIntent["sourceFamilies"] = [];
   if (requestedMeasure !== "none") sourceFamilies.push("census");
   if ((has(value, /\bregional\b/) && !pricing) || has(value, /\bmarket\b(?=.{0,20}\b(evidence|context|signals?)\b)/) || requestedMetrics.some((metric) => ["active_customer_count", "prior_year_active_customer_count", "active_customer_yoy_growth", "active_customers_per_1000_households", "regional_net_sales"].includes(metric))) sourceFamilies.push("regional");
-  if (clinic || clinicMetric || requestedMetrics.some((metric) => ["clinic_count", "total_customers", "total_orders", "rx_orders", "net_sales", "rx_net_sales"].includes(metric))) sourceFamilies.push("clinic");
+  if (clinic || clinicMetric || requestedMetrics.some((metric) => ["clinic_count", "total_customers", "total_orders", "rx_orders"].includes(metric))) sourceFamilies.push("clinic");
   if (ads || requestedMetrics.some((metric) => metric.startsWith("google_ads_"))) sourceFamilies.push("google_ads");
+  if (consumerInsights) sourceFamilies.push("consumer_insights");
   if (has(value, /\bevidence\b/) && has(value, /\bmarket\b/) && (sourceFamilies.includes("clinic") || sourceFamilies.includes("google_ads"))) sourceFamilies.push("regional");
   if (coverage && sourceFamilies.length === 0) sourceFamilies.push("census", "regional", "clinic", "google_ads");
   const uniqueSourceFamilies = [...new Set(sourceFamilies)];
   const explicitMultiSource = has(value, /\b(evidence|signals?|context)\b/) && uniqueSourceFamilies.length >= 2;
-  const topic: PlanningIntent["topic"] = growthScreening ? "growth_test_screening"
+  const ambiguousEvidenceScope = has(value, /\b(market|regional)\b/) && has(value, /\b(evidence|signals?|context)\b/)
+    && uniqueSourceFamilies.length < 2 && requestedMetrics.length === 0 && requestedMeasure === "none";
+  const topic: PlanningIntent["topic"] = consumerInsights ? "consumer_insights"
+    : growthScreening ? "growth_test_screening"
     : coverage ? "source_coverage"
       : growthDecision ? "local_growth"
       : multiMarket ? "multi_market_comparison"
@@ -266,11 +292,18 @@ export function inferPlanningIntent(question: string): PlanningIntent {
               : ads && requestedPlaces.length > 0 ? "google_ads_context"
                 : clinicMetric || (clinic && requestedMetrics.length > 0) ? "clinic_context"
                   : pricing && (requestedAction === "screen" || requestedAction === "approve") ? "other"
-                  : mentionsRegional ? (uniqueSourceFamilies.includes("regional") ? "regional_context" : "market_context")
+                  : (mentionsRegional || uniqueSourceFamilies.includes("regional")) ? (uniqueSourceFamilies.includes("regional") ? "regional_context" : "market_context")
                     : growth ? "local_growth"
         : vague ? "other"
           : "other";
-  const selectedQueries: PlanningIntent["selectedQueries"] = topic === "source_coverage" ? ["supported_regions"]
+  const selectedQueries: PlanningIntent["selectedQueries"] = topic === "consumer_insights"
+    ? [
+        requestedMetrics.some((metric) => ["consumer_bdi", "consumer_cdi"].includes(metric)) || (requestedMetrics.length === 0 && !has(value, /\bbrand health\b/)) ? "consumer_insights_by_cbsa" : null,
+        requestedMetrics.includes("brand_funnel") ? "brand_funnel_by_cbsa" : null,
+        requestedMetrics.some((metric) => ["brand_relevance", "brand_drivers"].includes(metric)) ? "brand_relevance_drivers_by_cbsa" : null,
+        requestedMetrics.includes("generation_brand_health") || (requestedMetrics.length === 0 && has(value, /\bbrand health\b/)) ? "brand_health_by_cbsa" : null,
+      ].filter((query): query is PlanningIntent["selectedQueries"][number] => query !== null)
+    : topic === "source_coverage" ? ["supported_regions"]
     : topic === "growth_test_screening" ? ["growth_test_screening"]
       : ["regional_context", "clinic_context", "google_ads_context", "multi_source_evidence", "multi_market_comparison"].includes(topic)
         ? uniqueSourceFamilies.flatMap((family) => family === "clinic" ? ["clinic_context_by_cbsa" as const]
@@ -291,12 +324,18 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   const clarificationRequired = vague
     || unresolvedContext
     || requestedPlaces.length > 5
+    || (consumerInsights && requestedPlaces.length === 0)
+    || ambiguousEvidenceScope
     || (requestedAction === "compare" && requestedPlaces.length < 2 && !performance && !has(value, /\b(u\.s\.|us |national|across)\b/))
     || topic === "other";
   const clarificationReason: PlanningIntent["clarificationReason"] = requestedPlaces.length > 5
     ? "ambiguous_comparison_cohort"
     : unresolvedContext
       ? "ambiguous_geography"
+    : consumerInsights && requestedPlaces.length === 0
+      ? "ambiguous_geography"
+    : ambiguousEvidenceScope
+      ? "ambiguous_requested_output"
     : vague || topic === "other"
     ? "ambiguous_decision"
     : requestedAction === "compare" && requestedPlaces.length < 2
@@ -309,7 +348,9 @@ export function inferPlanningIntent(question: string): PlanningIntent {
     ? "Clarify the intended market or clinic before compiling evidence; no default geography or clinic is assumed."
     : topic === "other" || vague
     ? "Clarify the decision, geography, and required output before compiling a governed evaluation."
-    : topic === "clinic_performance"
+    : topic === "consumer_insights"
+      ? `Review ${requestedMetrics.map((metric) => metric.replaceAll("_", " ")).join(", ") || "consumer and brand-health measures"} for ${placeLabel} using the normalized DMA snapshot and its intuitive CBSA alignment.`
+      : topic === "clinic_performance"
       ? "Investigate operating-clinic performance against peers once approved aggregate evidence exists."
       : topic === "clinic_context"
         ? `Describe the requested aggregate clinic measures for ${placeLabel}; prescriptions are represented only by the supplied Rx-order fields.`
@@ -355,6 +396,13 @@ export function inferPlanningIntent(question: string): PlanningIntent {
 }
 
 function requirementFor(intent: PlanningIntent): CapabilityQuestion["requirements"][number] {
+  if (intent.topic === "consumer_insights") {
+    return {
+      capabilityId: "consumer_insights",
+      outputId: intent.requestedMetrics.some((metric) => ["brand_funnel", "brand_relevance", "brand_drivers", "generation_brand_health"].includes(metric)) ? "brand_health_review" : "consumer_insights_profile",
+      geographyGrain: "cbsa",
+    };
+  }
   if (intent.topic === "multi_market_comparison" && intent.sourceFamilies.includes("clinic")) {
     return { capabilityId: "clinic_site_evaluation", outputId: "candidate_site_comparison", geographyGrain: "cbsa" };
   }
@@ -397,6 +445,7 @@ function isNormalizedDemoTopic(topic: PlanningIntent["topic"]) {
     "multi_market_comparison",
     "growth_test_screening",
     "clinic_location",
+    "consumer_insights",
   ].includes(topic);
 }
 
@@ -453,6 +502,19 @@ function normalizedActionFor(intent: PlanningIntent): PlannedAction {
     tradeoffs: ["Matched-location labels are not provider-stable market keys", "Spend alone does not measure incremental demand or test validity"],
     nextStep: "Review the two Ads report scopes and confirm a stable or human-reviewed geography bridge before using the values for regional selection or measurement.",
     outputId: "growth_test_measurement",
+    requiresApproval: false,
+  };
+  if (intent.topic === "consumer_insights") return {
+    id: "review-consumer-insights",
+    title: `Review consumer and brand-health evidence for ${places}`,
+    summary: "Inspect the dated DMA survey profile and brand-health measures after deterministic intuitive alignment to the selected CBSA market.",
+    owner: "Consumer Insights and Market Intelligence",
+    timing: "Before using the evidence in a market or growth discussion",
+    confidence: "Medium",
+    evidence: registeredEvidence,
+    tradeoffs: ["The survey is dated 2024 evidence", "DMA-to-CBSA alignment is intuitive Derived context and requires owner review", "The measures are descriptive and not site-scoring inputs"],
+    nextStep: "Review the source slide, sample, missingness, and DMA-to-CBSA mapping, then confirm whether a governed current refresh or licensed crosswalk is needed.",
+    outputId: intent.requestedMetrics.some((metric) => ["brand_funnel", "brand_relevance", "brand_drivers", "generation_brand_health"].includes(metric)) ? "brand_health_review" : "consumer_insights_profile",
     requiresApproval: false,
   };
   if (intent.topic === "multi_market_comparison") return {
@@ -695,6 +757,7 @@ export function compileEvaluationPlan(
     && validatedIntent.requestedPlaces.length === 0
     && (perspectiveId !== undefined || /\b(marketing|campaign|media|ads?|advertis\w*|paid search|test market|control market|clinic|cvc|veterinar|vet)\b/i.test(question))
     && (resolvedPerspectiveId === "marketing" || resolvedPerspectiveId === "cvc")
+    && !(resolvedPerspectiveId === "cvc" && validatedIntent.topic === "local_growth")
     && validatedIntent.requestedAction !== "approve";
   const viewAwareInterpretation = decisionInterpretationForView(
     question,

@@ -6,7 +6,7 @@
   "dataset_vintage": 2024,
   "estimate_period": "2020–2024 ACS 5-year estimate",
   "observed_at": "2024-12-31",
-  "retrieved_at": "2026-07-29T20:17:54.315Z",
+  "retrieved_at": "2026-08-18T18:01:02.338Z",
   "source_url": "https://api.census.gov/data/2024/acs/acs5?get=NAME%2CGEO_ID%2CB01003_001E%2CB01003_001EA%2CB11001_001E%2CB11001_001EA%2CB19013_001E%2CB19013_001EA%2CB25001_001E%2CB25001_001EA&for=metropolitan+statistical+area%2Fmicropolitan+statistical+area%3A*",
   "variables": [
     "B01003_001E",

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Connect Data to Platform"
+  short_description: "Connect governed data into the platform"
+  default_prompt: "Use $connect-data-to-platform to connect a new governed data source into this platform."

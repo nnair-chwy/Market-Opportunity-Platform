@@ -41,6 +41,7 @@ export function deriveResultWorkspaceType(input: {
     "multi_source_evidence",
     "multi_market_comparison",
     "growth_test_screening",
+    "consumer_insights",
   ].includes(intent.topic)) {
     return "adaptive_market_workspace";
   }

@@ -36,7 +36,10 @@ test("executes registered consumer-insights queries with provenance and boundari
   assert.equal(profile.rows[0].bdi, 191);
   assert.equal(profile.rows[0].cdi, 87);
   assert.equal(profile.sourceId, "SRC-033");
-  assert.match(profile.evidenceBoundary, /No DMA-to-CBSA conversion/);
+  assert.match(profile.evidenceBoundary, /Intuitive DMA-to-CBSA alignment/);
+  const cbsaProfile = await queryConsumerInsights({ query: "consumer_insights_by_cbsa", snapshotVersion, cbsaCode: "14460" }, options);
+  assert.equal(cbsaProfile.rows[0].dma_name, "Boston");
+  assert.equal(cbsaProfile.rows[0].mapped_cbsa_code, "14460");
 
   const funnel = await queryConsumerInsights({ query: "brand_funnel_by_dma", snapshotVersion, dmaId: "DMA_BOSTON", brand: "Chewy" }, options);
   assert.equal(funnel.rows.length, 4);

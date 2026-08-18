@@ -221,6 +221,14 @@ export function extractRequestedPlaces(question: string): RequestedPlace[] {
       index: match.index,
     });
   }
+  const knownNames = new Set(found.map((item) => item.name.trim().toLowerCase()));
+  const unresolvedPattern = /\b(?:in|for|of|from|around|near|across)\s+(?:the\s+)?([A-Z][a-z]+(?:[ -][A-Z][a-z]+){0,2})(?:\s+(?:metro|market|area|region))?\b/g;
+  for (const match of question.matchAll(unresolvedPattern)) {
+    const name = match[1]?.trim();
+    if (!name || IGNORED_PLACE_TOKENS.has(name.toLowerCase()) || knownNames.has(name.toLowerCase())) continue;
+    found.push({ name, stateHint: null, index: match.index ?? 0 });
+    knownNames.add(name.toLowerCase());
+  }
   found.sort((left, right) => left.index - right.index || right.name.length - left.name.length);
   const unique: RequestedPlace[] = [];
   for (const item of found) {

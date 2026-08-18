@@ -29,6 +29,7 @@ test("the adaptive workspace keeps the map controls and deterministic comparison
   assert.match(market, /MAX_COMPARISON_REGIONS/);
   assert.match(market, /not an opportunity score or recommendation/i);
   assert.match(market, /selectMarket\(market\.cbsa_code\)/);
+  assert.match(market, /onReset=\{\(\) => \{[\s\S]*setSelectedCode\(\"\"\)[\s\S]*clearComparisonRegions/s);
 });
 
 test("Explore, Compare regions, Add view, and Map layers controls are wired on the opening page", () => {

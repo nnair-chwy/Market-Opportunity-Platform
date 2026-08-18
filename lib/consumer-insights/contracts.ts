@@ -4,12 +4,34 @@ export const CONSUMER_INSIGHTS_QUERY_VERSION = "consumer-insights-query-v1" as c
 export const CONSUMER_INSIGHTS_SNAPSHOT_VERSION = "chewy-brand-health-2024-dma-generation-v1" as const;
 export const consumerInsightsQuerySchema = z.discriminatedUnion("query", [
   z.object({ query: z.literal("consumer_insights_by_dma"), snapshotVersion: z.string().min(1), dmaId: z.string().optional(), dmaName: z.string().optional(), segment: z.string().optional() }),
+  z.object({ query: z.literal("consumer_insights_by_cbsa"), snapshotVersion: z.string().min(1), cbsaCode: z.string().length(5), segment: z.string().optional() }),
   z.object({ query: z.literal("brand_funnel_by_dma"), snapshotVersion: z.string().min(1), dmaId: z.string().min(1), segment: z.string().optional(), brand: z.string().optional() }),
+  z.object({ query: z.literal("brand_funnel_by_cbsa"), snapshotVersion: z.string().min(1), cbsaCode: z.string().length(5), segment: z.string().optional(), brand: z.string().optional() }),
   z.object({ query: z.literal("brand_relevance_drivers_by_dma"), snapshotVersion: z.string().min(1), dmaId: z.string().min(1), segment: z.string().optional(), brand: z.string().optional() }),
+  z.object({ query: z.literal("brand_relevance_drivers_by_cbsa"), snapshotVersion: z.string().min(1), cbsaCode: z.string().length(5), segment: z.string().optional(), brand: z.string().optional() }),
   z.object({ query: z.literal("brand_health_by_generation"), snapshotVersion: z.string().min(1), dmaId: z.string().min(1), segment: z.string().optional(), brand: z.string().optional() }),
+  z.object({ query: z.literal("brand_health_by_cbsa"), snapshotVersion: z.string().min(1), cbsaCode: z.string().length(5), segment: z.string().optional(), brand: z.string().optional() }),
   z.object({ query: z.literal("consumer_insights_source_quality"), snapshotVersion: z.string().min(1) }),
 ]);
 export type ConsumerInsightsQuery = z.infer<typeof consumerInsightsQuerySchema>;
+
+export const dmaCbsaCrosswalkSchema = z.object({
+  crosswalk_version: z.string().min(1),
+  method: z.string().min(1),
+  evidence_status: z.literal("Derived"),
+  review_state: z.string().min(1),
+  allowed_use: z.string().min(1),
+  scoring_eligibility: z.literal("none"),
+  mappings: z.array(z.object({
+    dma_name: z.string().min(1),
+    dma_code_in_source: z.string().min(1),
+    cbsa_code: z.string().regex(/^\d{5}$/),
+    cbsa_name: z.string().min(1),
+    confidence: z.enum(["high", "medium", "low"]),
+    review_state: z.string().min(1),
+  }).strict()).min(1),
+}).strict();
+export type DmaCbsaCrosswalk = z.infer<typeof dmaCbsaCrosswalkSchema>;
 
 export const consumerInsightsEvidenceStatusSchema = z.enum(["Confirmed", "Reported", "Derived", "Hypothesis", "Unknown"]);
 export const consumerInsightsManifestSchema = z.object({

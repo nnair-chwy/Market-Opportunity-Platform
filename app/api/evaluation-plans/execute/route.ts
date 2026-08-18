@@ -44,6 +44,7 @@ export async function POST(request: Request) {
           snapshotDir: localPath(process.env.CLINIC_MARKET_SNAPSHOT_DIR),
           databasePath: localPath(process.env.DUCKDB_PATH),
           normalizedSnapshotDir: localPath(process.env.NORMALIZED_MARKET_DATA_DIR),
+          consumerInsightsSnapshotDir: localPath(process.env.CONSUMER_INSIGHTS_SNAPSHOT_DIR),
         });
     const result = evidenceExecutionResponseSchema.parse({
       ...executed,

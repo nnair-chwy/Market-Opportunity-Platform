@@ -15,6 +15,7 @@ const marketPath = new URL(
   "../components/decision-workflow/AdaptiveMarketWorkspace.tsx",
   import.meta.url,
 );
+const mapPath = new URL("../components/UnifiedEvaluatorMap.tsx", import.meta.url);
 const cssPath = new URL("../app/globals.css", import.meta.url);
 
 test("Explore, regional comparison, and map-layer manager render with synchronized selection surfaces", async (t) => {
@@ -149,9 +150,10 @@ test("Explore, regional comparison, and map-layer manager render with synchroniz
 });
 
 test("View A source wiring preserves mode switching, sync, and fail-safe unsupported layers", async () => {
-  const [homepage, market, css] = await Promise.all([
+  const [homepage, market, map, css] = await Promise.all([
     readFile(homepagePath, "utf8"),
     readFile(marketPath, "utf8"),
+    readFile(mapPath, "utf8"),
     readFile(cssPath, "utf8"),
   ]);
 
@@ -184,6 +186,9 @@ test("View A source wiring preserves mode switching, sync, and fail-safe unsuppo
   assert.match(market, /selectMarket\(market\.code\)/);
   assert.match(market, /onChooseMarket=\{selectMarket\}/);
   assert.match(market, /onGeographicContextSelect/);
+  assert.match(map, />\s*Reset\s*</);
+  assert.match(map, /aria-label=\"Reset map to national view\"/);
+  assert.match(map, /new NavigationControl\(\{ showCompass: false \}\),\s*\n\s*\"top-right\"/);
   assert.match(market, /resolveLayerForPresentation/);
   assert.match(market, /layerVisibilityChangesScoringInputs/);
   assert.match(market, /assertNoHiddenLayerScore/);
@@ -204,6 +209,10 @@ test("View A source wiring preserves mode switching, sync, and fail-safe unsuppo
   assert.match(css, /\.unified-swipe-divider/);
   assert.match(css, /\.unified-map-region-comparison-grid/);
   assert.doesNotMatch(css, /\.unified-swipe-range/);
+  assert.match(css, /\.adaptive-opening \.unified-maplibre \.maplibregl-ctrl-top-right \{ top: 14rem; right: 1rem;/);
+  assert.match(css, /\.market-reset-map \{[\s\S]*width: max-content;[\s\S]*white-space: nowrap;/);
+  assert.match(css, /\.adaptive-opening \.market-reset-map \{ top: 10\.5rem;[\s\S]*bottom: auto;/);
+  assert.doesNotMatch(css, /\.adaptive-opening \.market-reset-map,\s*\n\.adaptive-opening \.map-note/);
   assert.doesNotMatch(
     css,
     /@media \(max-width: 1050px\)[\s\S]*\.adaptive-opening \.adaptive-view-controls \{ display: none; \}/,

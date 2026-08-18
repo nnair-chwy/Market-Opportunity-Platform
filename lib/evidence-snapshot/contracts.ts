@@ -140,6 +140,7 @@ export const executionCapabilitySchema = z.enum([
   "clinic_performance",
   "clinic_site_evaluation",
   "local_growth_test",
+  "consumer_insights",
 ]);
 
 export const evidenceResponseQuerySchema = z.enum([
@@ -155,6 +156,7 @@ export const evidenceResponseQuerySchema = z.enum([
   "multi_market_comparison_bundle",
   "source_coverage_bundle",
   "growth_test_screening_bundle",
+  "consumer_insights_bundle",
 ]);
 
 export const evidenceExecutionResponseSchema = z.object({
@@ -174,6 +176,10 @@ export const evidenceExecutionResponseSchema = z.object({
     "google_ads_context_by_cbsa",
     "normalization_coverage",
     "growth_test_screening",
+    "consumer_insights_by_cbsa",
+    "brand_funnel_by_cbsa",
+    "brand_relevance_drivers_by_cbsa",
+    "brand_health_by_cbsa",
   ])),
   capability: executionCapabilitySchema.nullable(),
   planId: z.string().min(1).nullable(),

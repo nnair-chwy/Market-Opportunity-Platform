@@ -21,6 +21,8 @@ import { publicMarkets } from "../data/public-market-ui.ts";
 import { evaluationPlanSchema, type EvaluationPlan } from "./contracts.ts";
 import { executeEvaluationPlan } from "./execution.ts";
 import { METRIC_CATALOG, metricsForSourceFamilies } from "./metric-catalog.ts";
+import { CONSUMER_INSIGHTS_SNAPSHOT_VERSION, type ConsumerInsightsQuery } from "../consumer-insights/contracts.ts";
+import { queryConsumerInsights } from "../consumer-insights/queries.ts";
 
 export const PLAN_EXECUTION_QUERY_VERSION = "plan-evidence-dispatch-v1" as const;
 export const PLAN_EXECUTION_CALCULATION_VERSION = "evidence-bundle-composition-v1" as const;
@@ -33,6 +35,7 @@ export const evaluationPlanExecutionRequestSchema = z.object({
 export type PlanExecutionOptions = EvidenceExecutionOptions & {
   requestedAt?: string;
   normalizedSnapshotDir?: string;
+  consumerInsightsSnapshotDir?: string;
 };
 
 function unique(values: string[]) {
@@ -44,6 +47,7 @@ function queryForPlan(plan: EvaluationPlan): EvidenceExecutionResponse["query"] 
   if (plan.intent.topic === "growth_test_screening") return "growth_test_screening_bundle";
   if (plan.intent.topic === "multi_market_comparison") return "multi_market_comparison_bundle";
   if (plan.intent.topic === "clinic_location" && plan.intent.selectedQueries.length) return "clinic_location_evidence_bundle";
+  if (plan.intent.topic === "consumer_insights") return "consumer_insights_bundle";
   if (plan.intent.selectedQueries.length) return "normalized_evidence_bundle";
   if (plan.capabilityId === "clinic_performance") return "clinic_performance_bundle";
   if (plan.capabilityId === "clinic_site_evaluation") return "clinic_site_evidence_bundle";
@@ -655,12 +659,94 @@ async function normalizedEvidenceBundle(plan: EvaluationPlan, requestId: string,
   });
 }
 
+async function consumerInsightsEvidenceBundle(plan: EvaluationPlan, requestId: string, options: PlanExecutionOptions): Promise<EvidenceExecutionResponse> {
+  const cbsaCodes = plan.geographyResolution.selectedCbsaCodes;
+  const selectedQueries = plan.intent.selectedQueries as ConsumerInsightsQuery["query"][];
+  const requests = cbsaCodes.flatMap((cbsaCode) => selectedQueries.map((query) => ({ cbsaCode, query })));
+  const responses = await Promise.all(requests.map(({ cbsaCode, query }) => queryConsumerInsights({
+    query,
+    snapshotVersion: CONSUMER_INSIGHTS_SNAPSHOT_VERSION,
+    cbsaCode,
+    ...(query === "brand_health_by_cbsa" ? { brand: "Chewy" } : {}),
+  } as ConsumerInsightsQuery, { snapshotDir: options.consumerInsightsSnapshotDir })));
+  const period = { kind: "date_range" as const, start: "2024-04-11", end: "2024-05-15", label: "2024-04-11 to 2024-05-15" };
+  const evidenceBundle: ExecutionEvidenceItem[] = [];
+  const rows: Array<Record<string, unknown>> = [];
+  let evidenceIndex = 0;
+  for (const response of responses) {
+    const cbsaCode = response.rows[0] && typeof response.rows[0].mapped_cbsa_code === "string" ? String(response.rows[0].mapped_cbsa_code) : null;
+    const cbsaName = response.rows[0] && typeof response.rows[0].mapped_cbsa_name === "string" ? String(response.rows[0].mapped_cbsa_name) : cbsaCode ? plan.geographyResolution.places.find((place) => place.cbsaCode === cbsaCode)?.cbsaName ?? cbsaCode : "Selected CBSA";
+    for (const row of response.rows as Array<Record<string, unknown>>) {
+      rows.push(row);
+      const profileMetrics = response.query === "consumer_insights_by_cbsa" ? ["bdi", "cdi"] : ["value"];
+      for (const field of profileMetrics) {
+        const value = row[field];
+        const rawValue = typeof value === "number" && Number.isFinite(value) ? value : null;
+        const metricId = response.query === "consumer_insights_by_cbsa" ? `consumer.${field}` : `consumer.${response.query.replaceAll("_by_cbsa", "")}`;
+        evidenceBundle.push({
+          evidenceId: `consumer-insights:${cbsaCode ?? "unknown"}:${metricId}:${evidenceIndex++}`,
+          metricId,
+          geographyId: cbsaCode ? `cbsa:${cbsaCode}` : null,
+          geographyLabel: cbsaName,
+          rawValue,
+          structuredValue: rawValue === null ? row : { value: rawValue, dmaName: row.dma_name, sourceSlide: row.source_slide, segment: row.segment, brand: row.brand, mappedDma: row.dma_name },
+          unit: rawValue === null ? "reported_value" : "index_or_percent",
+          sourceId: response.sourceId,
+          snapshotId: response.snapshotVersion,
+          evidenceStatus: "Reported",
+          qualityStatus: rawValue === null ? "warning" : "accepted",
+          observationStart: period.start,
+          observationEnd: period.end,
+          period,
+          reportScope: "Chewy Brand Health Tracker June 2024 DMA and Generation Add-on",
+          currency: null,
+          allowedUse: "local_demo_consumer_insights_descriptive_context_only",
+          sensitivity: "internal",
+          warning: [...response.qualityWarnings, "DMA-to-CBSA alignment is Derived intuitive local-demo context and requires owner review before production or external use."].join(" "),
+          origin: "frozen_csv_snapshot",
+        });
+      }
+    }
+  }
+  const qualityWarnings = [...new Set(responses.flatMap((response) => [
+    ...response.qualityWarnings,
+    "DMA-to-CBSA alignment is Derived intuitive local-demo context and requires owner review before production or external use.",
+  ]))];
+  return evidenceExecutionResponseSchema.parse({
+    ...responseBase(plan, requestId, "frozen_snapshot_demo"),
+    snapshotVersion: CONSUMER_INSIGHTS_SNAPSHOT_VERSION,
+    calculationVersion: "consumer-insights-normalization-v1",
+    geographyIds: cbsaCodes.map((code) => `cbsa:${code}`),
+    status: "partial",
+    componentQueries: selectedQueries,
+    rows,
+    evidenceBundle,
+    sourceIds: unique(evidenceBundle.map((item) => item.sourceId)),
+    qualityWarnings,
+    missingEvidence: evidenceBundle.length ? [] : ["No consumer-insights rows matched the selected CBSA and registered query."],
+    unknowns: ["The snapshot is a reported April-May 2024 survey wave, not a current refresh.", "BDI/CDI and brand-health measures are descriptive context only and are not eligible for clinic-site scoring or autonomous recommendations."],
+    allowedUse: "local_demo_consumer_insights_descriptive_context_only",
+    sensitivity: "internal",
+    guardrails: unique([...responseBase(plan, requestId, "frozen_snapshot_demo").guardrails, "Do not treat intuitive DMA-to-CBSA alignment as a licensed Nielsen crosswalk or use these observations for site scoring, market ranking, or causal claims."]),
+    errorCode: null,
+    errorMessage: null,
+  });
+}
+
 export async function executeEvaluationPlanEvidence(input: unknown, options: PlanExecutionOptions = {}): Promise<EvidenceExecutionResponse> {
   const { requestId, plan } = evaluationPlanExecutionRequestSchema.parse(input);
   if (plan.status === "blocked") return blocked(plan, requestId, "The validated evaluation plan is blocked and was not executed.");
   const nationalRegisteredQuery = plan.intent.topic === "source_coverage" || plan.intent.topic === "growth_test_screening";
   if (["clarification", "unavailable", "needs_selection"].includes(plan.geographyResolution.mode) && !nationalRegisteredQuery) return blocked(plan, requestId, "Resolve an exact supported geography before execution.");
   if (plan.intent.selectedQueries.length) {
+    if (plan.intent.topic === "consumer_insights") {
+      try { return await consumerInsightsEvidenceBundle(plan, requestId, options); }
+      catch (error) {
+        return evidenceExecutionResponseSchema.parse({
+          ...responseBase(plan, requestId, "frozen_snapshot_demo"), status: "failed", rows: [], evidenceBundle: [], sourceIds: [], qualityWarnings: [], missingEvidence: [], unknowns: [], allowedUse: "none", sensitivity: "internal", errorCode: "CONSUMER_INSIGHTS_QUERY_FAILED", errorMessage: error instanceof Error ? error.message : "The registered consumer-insights query failed.",
+        });
+      }
+    }
     try {
       return await normalizedEvidenceBundle(plan, requestId, options);
     } catch (error) {
