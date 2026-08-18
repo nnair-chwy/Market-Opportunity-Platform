@@ -7,12 +7,20 @@ export const perspectiveIdSchema = z.enum(["pricing", "marketing", "cvc"]);
 export type PerspectiveId = z.infer<typeof perspectiveIdSchema>;
 
 export const perspectiveViewIdSchema = z.enum([
+  "competitor_availability",
+  "observed_equalized_price",
+  "offer_observation_volume",
+  "assortment_breadth",
   "price_index",
   "competitive_price_gaps",
   "promotion_intensity",
   "price_elasticity_context",
   "margin_contribution_context",
   "price_opportunity_by_region",
+  "paid_search_response",
+  "paid_search_impressions",
+  "paid_search_ctr",
+  "paid_search_cpc",
   "customer_demand",
   "acquisition_efficiency",
   "campaign_reach",
@@ -29,12 +37,20 @@ export const perspectiveViewIdSchema = z.enum([
 export type PerspectiveViewId = z.infer<typeof perspectiveViewIdSchema>;
 
 export const perspectiveMeasureIdSchema = z.enum([
+  "pricing.competitor_availability",
+  "pricing.observed_equalized_price",
+  "pricing.offer_observation_volume",
+  "pricing.assortment_breadth",
   "pricing.price_index",
   "pricing.competitive_price_gaps",
   "pricing.promotion_intensity",
   "pricing.price_elasticity_context",
   "pricing.margin_contribution_context",
   "pricing.price_opportunity_by_region",
+  "marketing.paid_search_response",
+  "marketing.paid_search_impressions",
+  "marketing.paid_search_ctr",
+  "marketing.paid_search_cpc",
   "marketing.customer_demand",
   "marketing.acquisition_efficiency",
   "marketing.campaign_reach",
@@ -85,6 +101,20 @@ export const mapBindingSchema = z.discriminatedUnion("kind", [
   }).strict(),
   z.object({
     kind: z.literal("clinic_locations"),
+  }).strict(),
+  z.object({
+    kind: z.literal("workspace_snapshot"),
+    datasetId: z.enum([
+      "pricing_competitor_availability",
+      "pricing_observed_equalized_price",
+      "pricing_offer_observation_volume",
+      "pricing_assortment_breadth",
+      "marketing_paid_search_response",
+      "marketing_paid_search_impressions",
+      "marketing_paid_search_ctr",
+      "marketing_paid_search_cpc",
+    ]),
+    valueFormat: z.enum(["number", "percent", "currency"]),
   }).strict(),
   z.object({
     kind: z.literal("unavailable"),

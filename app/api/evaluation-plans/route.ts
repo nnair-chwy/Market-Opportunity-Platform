@@ -17,9 +17,21 @@ export async function POST(request: Request) {
     return market ? [{ cbsaCode, cbsaName: market.cbsa_name }] : [];
   });
   const configuredDemoPlan = selectedGeographicContext.length ? null : planConfiguredDemoQuestion(parsed.data.question);
-  let plan = configuredDemoPlan ?? planEvaluation(parsed.data.question, parsed.data.perspectiveId, selectedGeographicContext);
+  let plan = configuredDemoPlan ?? planEvaluation(
+    parsed.data.question,
+    parsed.data.perspectiveId,
+    selectedGeographicContext,
+    parsed.data.activeViewId,
+  );
   if (!configuredDemoPlan && plan.intent.selectedQueries.length === 0 && process.env.OPENAI_API_KEY?.trim()) {
-    try { plan = await proposeEvaluationPlanWithAi(parsed.data.question, parsed.data.perspectiveId, selectedGeographicContext); }
+    try {
+      plan = await proposeEvaluationPlanWithAi(
+        parsed.data.question,
+        parsed.data.perspectiveId,
+        selectedGeographicContext,
+        parsed.data.activeViewId,
+      );
+    }
     catch (error) { console.error("[evaluation-plan]", error instanceof Error ? error.name : "UnknownError"); }
   }
   return Response.json(evaluationPlanResponseSchema.parse({ status: "ok", plan }), { status: 200, headers });

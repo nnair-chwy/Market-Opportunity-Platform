@@ -1,4 +1,5 @@
 import { evaluationPlanSchema, type EvaluationPlan } from "../planning/contracts.ts";
+import { buildAnswerContract } from "../planning/answer-contract.ts";
 import { compileEvaluationPlan, inferPlanningIntent } from "../planning/planner.ts";
 
 export const DEMO_SNAPSHOT_VERSION = "clinic-market-demo-2026-08-17-v1" as const;
@@ -43,7 +44,7 @@ export function planConfiguredDemoQuestion(question: string): EvaluationPlan | n
   if (questionId !== "clinicPerformance") return null;
 
   const base = compileEvaluationPlan(question, inferPlanningIntent(question), "deterministic_fallback", "cvc");
-  return evaluationPlanSchema.parse({
+  const configuredPlan = evaluationPlanSchema.parse({
     ...base,
     planId: "plan-demo-clinic-performance-synthetic",
     intent: {
@@ -83,5 +84,9 @@ export function planConfiguredDemoQuestion(question: string): EvaluationPlan | n
       { id: "execution-status", kind: "execution", title: "Illustrative calculation available after confirmation", detail: "A deterministic rank may run only in synthetic demo mode after the reviewer confirms the selection." },
       { id: "evidence-boundary", kind: "evidence", title: "Required comparison fields unavailable", detail: "Aggregate clinic evidence may be shown, but the supplied files do not contain completed appointments by clinic at the configured 38-week maturity point." },
     ],
+  });
+  return evaluationPlanSchema.parse({
+    ...configuredPlan,
+    answerContract: buildAnswerContract(configuredPlan),
   });
 }

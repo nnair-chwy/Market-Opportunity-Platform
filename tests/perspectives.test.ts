@@ -21,27 +21,20 @@ import { planEvaluation } from "../lib/planning/index.ts";
 
 const EXPECTED_VIEWS: Record<PerspectiveId, string[]> = {
   pricing: [
-    "Price index",
-    "Competitive price gaps",
-    "Promotion intensity",
-    "Price elasticity context",
-    "Margin or contribution context",
-    "Price opportunity by region",
+    "Competitor availability",
+    "Observed offer price",
+    "Offer observations",
+    "Observed assortment",
   ],
   marketing: [
-    "Customer demand",
-    "Acquisition efficiency",
-    "Campaign reach",
-    "Conversion or booking rate",
-    "Local engagement",
-    "Marketing opportunity by region",
+    "Paid search response",
+    "Search impressions",
+    "Click-through rate",
+    "Average cost per click",
   ],
   cvc: [
     "Clinic footprint",
-    "Pet ownership",
     "Household demand",
-    "Access and pet demand",
-    "Clinic performance context",
     "Market expansion context",
   ],
 };
@@ -64,17 +57,23 @@ test("perspective catalog validates Pricing, Marketing, and CVC with typed views
 
 test("each perspective keeps an independent default active view", () => {
   const defaults = createDefaultActiveViews();
-  assert.equal(defaults.pricing, "price_index");
-  assert.equal(defaults.marketing, "customer_demand");
+  assert.equal(defaults.pricing, "competitor_availability");
+  assert.equal(defaults.marketing, "paid_search_response");
   assert.equal(defaults.cvc, "household_demand");
   assert.notEqual(defaults.pricing, defaults.marketing);
   assert.notEqual(defaults.marketing, defaults.cvc);
+  const pricingDefault = resolveMapPresentation(getDefaultView("pricing"));
+  const marketingDefault = resolveMapPresentation(getDefaultView("marketing"));
+  assert.equal(pricingDefault.mapBinding.kind, "workspace_snapshot");
+  assert.equal(marketingDefault.mapBinding.kind, "workspace_snapshot");
+  assert.equal(pricingDefault.scoringEligibility, "none");
+  assert.equal(marketingDefault.scoringEligibility, "none");
 });
 
 test("changing a view updates map title, measure, legend, and evidence boundary", () => {
   const household = resolveMapPresentation(getPerspectiveView("cvc", "household_demand"));
   const expansion = resolveMapPresentation(getPerspectiveView("cvc", "market_expansion_context"));
-  const price = resolveMapPresentation(getPerspectiveView("pricing", "price_index"));
+  const price = resolveMapPresentation(getPerspectiveView("pricing", "observed_equalized_price"));
 
   assert.equal(household.mapTitle, "Household demand context");
   assert.equal(household.measureId, "cvc.household_demand");
@@ -83,24 +82,25 @@ test("changing a view updates map title, measure, legend, and evidence boundary"
 
   assert.equal(expansion.mapTitle, "Market expansion context");
   assert.equal(expansion.measureId, "cvc.market_expansion_context");
-  assert.match(expansion.legend.title, /Population percentile/i);
+  assert.match(expansion.legend.title, /Population-density percentile/i);
+  assert.equal(expansion.mapBinding.kind, "census_percentile");
+  if (expansion.mapBinding.kind === "census_percentile") {
+    assert.equal(expansion.mapBinding.censusMetric, "population_density");
+  }
   assert.notEqual(expansion.evidenceBoundary, household.evidenceBoundary);
 
-  assert.equal(price.mapTitle, "Price index by region");
-  assert.equal(price.measureId, "pricing.price_index");
-  assert.equal(price.evidenceAvailability, "evidence_needed");
-  assert.equal(price.mapBinding.kind, "unavailable");
+  assert.equal(price.mapTitle, "Observed equalized offer price");
+  assert.equal(price.measureId, "pricing.observed_equalized_price");
+  assert.equal(price.evidenceAvailability, "available");
+  assert.equal(price.mapBinding.kind, "workspace_snapshot");
 });
 
 test("unsupported or unavailable views fail safely without inventing values", () => {
   const unknown = selectPerspectiveView("cvc", "price_index");
   assert.equal("status" in unknown && unknown.status, "unavailable");
 
-  const unavailable = resolveMapPresentation(getPerspectiveView("marketing", "campaign_reach"));
-  assert.equal(unavailable.evidenceAvailability, "evidence_needed");
-  assert.equal(unavailable.mapBinding.kind, "unavailable");
-  assert.equal(unavailable.scoringEligibility, "none");
-  assert.match(unavailable.emptyState.title, /unavailable/i);
+  const unavailable = selectPerspectiveView("pricing", "price_opportunity_by_region");
+  assert.equal("status" in unavailable && unavailable.status, "unavailable");
 });
 
 test("perspective-specific measures cannot enter another perspective", () => {

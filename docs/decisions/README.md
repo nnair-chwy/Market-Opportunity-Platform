@@ -51,3 +51,5 @@ Current records:
 - [ADR-032: Route question-faithful normalized evidence and isolate growth-test screening](ADR-032-question-faithful-normalized-evidence-routing.md)
 - [ADR-033: Build evidence-backed answers and durable review packets](ADR-033-evidence-backed-answers-and-durable-packets.md)
 - [ADR-034: Keep clinic-location interpretation aligned with the executable query contract](ADR-034-query-aware-clinic-location-interpretation.md)
+- [ADR-035: Define the final-answer contract before investigation](ADR-035-pre-investigation-answer-contract.md)
+- [ADR-036: Enforce answer-contract coverage before composition](ADR-036-contract-coverage-and-answer-composition.md)

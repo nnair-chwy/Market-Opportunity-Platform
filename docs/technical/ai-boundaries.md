@@ -18,6 +18,11 @@ AI may:
   differences among two to five same-cohort results selected by the analyst.
 - propose a schema-constrained question intent that deterministic code compiles
   against the versioned capability registry.
+- use the validated answer contract to organize permitted evidence into the
+  required answer sections and identify which domain requirements remain unmet.
+- propose advisory decision framing, reviewed requirement emphasis, and
+  unresolved questions through a strict schema; deterministic code retains the
+  canonical decision and compiles the final answer contract.
 
 ## Prohibited uses
 
@@ -41,6 +46,10 @@ AI must not:
 - create durable workflow state in the process-local prototype.
 - add a capability, choose an undocumented source, calculate map percentiles,
   change a map comparison set, or provide an approval receipt.
+- replace the answer contract, change its canonical decision, add domain
+  requirements or source IDs, mark `documented_not_approved` or missing
+  evidence as connected, weaken completion criteria, or exceed the strongest
+  permitted conclusion.
 
 ## Adaptive planning
 
@@ -101,6 +110,8 @@ The explanation service receives only:
 - source IDs and titles;
 - allowed comparison language; and
 - the requested output template.
+- the validated answer contract, including domain requirements, strongest
+  permitted conclusion, completion criteria, and prohibited conclusions.
 
 ## Output controls
 
@@ -112,3 +123,7 @@ The explanation service receives only:
 - Preserve the tool-contract, run-schema, source-snapshot, and approval-receipt
   versions for agent runs.
 - Evaluate against a deterministic template baseline.
+- Run deterministic contract validation and investigation coverage before
+  final-answer composition.
+- Preserve unsupported and blocked sections in the composed answer instead of
+  asking the model to fill them.

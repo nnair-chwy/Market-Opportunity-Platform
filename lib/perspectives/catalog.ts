@@ -31,6 +31,57 @@ function censusLegend(title: string) {
   };
 }
 
+function workspaceSnapshotView(input: {
+  perspectiveId: "pricing" | "marketing";
+  viewId: PerspectiveViewId;
+  label: string;
+  activeMeasure: PerspectiveMeasureId;
+  datasetId:
+    | "pricing_competitor_availability"
+    | "pricing_observed_equalized_price"
+    | "pricing_offer_observation_volume"
+    | "pricing_assortment_breadth"
+    | "marketing_paid_search_response"
+    | "marketing_paid_search_impressions"
+    | "marketing_paid_search_ctr"
+    | "marketing_paid_search_cpc";
+  valueFormat: "number" | "percent" | "currency";
+  sourceIds: string[];
+  mapTitle: string;
+  sourceLabel: string;
+  evidenceBoundary: string;
+  legendTitle: string;
+}): PerspectiveView {
+  return {
+    perspectiveId: input.perspectiveId,
+    viewId: input.viewId,
+    label: input.label,
+    activeMeasure: input.activeMeasure,
+    geographyGrain: "cbsa",
+    sourceIds: input.sourceIds,
+    evidenceStatus: "Derived",
+    evidenceAvailability: "available",
+    allowedUse: "internal_demo_evidence_only",
+    scoringEligibility: "none",
+    mapTitle: input.mapTitle,
+    sourceLabel: input.sourceLabel,
+    evidenceBoundary: input.evidenceBoundary,
+    legend: censusLegend(input.legendTitle),
+    emptyState: {
+      title: `${input.label} snapshot unavailable`,
+      message: "Build the approved local perspective-map snapshot before opening this view. Missing regions remain unscored.",
+    },
+    supportedQuestionTypes: ["describe", "compare", "investigate"],
+    supportsComparison: true,
+    supportsLayerMode: false,
+    mapBinding: {
+      kind: "workspace_snapshot",
+      datasetId: input.datasetId,
+      valueFormat: input.valueFormat,
+    },
+  };
+}
+
 function unavailableView(input: {
   perspectiveId: PerspectiveId;
   viewId: PerspectiveViewId;
@@ -72,6 +123,58 @@ function unavailableView(input: {
 }
 
 const pricingViews: PerspectiveView[] = [
+  workspaceSnapshotView({
+    perspectiveId: "pricing",
+    viewId: "competitor_availability",
+    label: "Competitor availability",
+    activeMeasure: "pricing.competitor_availability",
+    datasetId: "pricing_competitor_availability",
+    valueFormat: "percent",
+    sourceIds: ["SRC-025", "SRC-028", "SRC-030"],
+    mapTitle: "Observed competitor availability",
+    sourceLabel: "SRC-004 monitored competitor offers · 30-day snapshot",
+    evidenceBoundary: "Derived from monitored competitor offers assigned from ZIP/ZCTA centroids to CBSAs. Coverage is not comprehensive, does not measure demand, and cannot authorize a price change.",
+    legendTitle: "Availability percentile",
+  }),
+  workspaceSnapshotView({
+    perspectiveId: "pricing",
+    viewId: "observed_equalized_price",
+    label: "Observed offer price",
+    activeMeasure: "pricing.observed_equalized_price",
+    datasetId: "pricing_observed_equalized_price",
+    valueFormat: "currency",
+    sourceIds: ["SRC-025", "SRC-028"],
+    mapTitle: "Observed equalized offer price",
+    sourceLabel: "SRC-025/SRC-028 monitored competitor offers · 30-day snapshot",
+    evidenceBoundary: "Offer-row-weighted equalized price reflects the monitored product and category mix. It is not a matched-basket price index, price gap, elasticity estimate, or price recommendation.",
+    legendTitle: "Observed price percentile",
+  }),
+  workspaceSnapshotView({
+    perspectiveId: "pricing",
+    viewId: "offer_observation_volume",
+    label: "Offer observations",
+    activeMeasure: "pricing.offer_observation_volume",
+    datasetId: "pricing_offer_observation_volume",
+    valueFormat: "number",
+    sourceIds: ["SRC-025", "SRC-028"],
+    mapTitle: "Monitored competitor offer volume",
+    sourceLabel: "SRC-025/SRC-028 monitored offer rows · 30-day snapshot",
+    evidenceBoundary: "Offer-row volume describes monitoring depth and data coverage. It is not competitor market share, assortment quality, customer demand, price response, or an opportunity score.",
+    legendTitle: "Offer-volume percentile",
+  }),
+  workspaceSnapshotView({
+    perspectiveId: "pricing",
+    viewId: "assortment_breadth",
+    label: "Observed assortment",
+    activeMeasure: "pricing.assortment_breadth",
+    datasetId: "pricing_assortment_breadth",
+    valueFormat: "number",
+    sourceIds: ["SRC-025", "SRC-028"],
+    mapTitle: "Observed competitor assortment breadth",
+    sourceLabel: "SRC-025/SRC-028 distinct monitored SKU counts · 30-day snapshot",
+    evidenceBoundary: "Distinct-SKU counts are summed across monitored ZIP, competitor, and category rows and may repeat a SKU across geographies. They measure observed monitoring breadth, not complete local assortment or customer choice.",
+    legendTitle: "Assortment breadth percentile",
+  }),
   unavailableView({
     perspectiveId: "pricing",
     viewId: "price_index",
@@ -146,9 +249,61 @@ const pricingViews: PerspectiveView[] = [
     emptyMessage: "No approved price-opportunity formula or source is available for regional rendering.",
     supportsComparison: true,
   }),
-];
+].filter((view) => view.evidenceAvailability === "available");
 
 const marketingViews: PerspectiveView[] = [
+  workspaceSnapshotView({
+    perspectiveId: "marketing",
+    viewId: "paid_search_response",
+    label: "Paid search response",
+    activeMeasure: "marketing.paid_search_response",
+    datasetId: "marketing_paid_search_response",
+    valueFormat: "number",
+    sourceIds: ["SRC-018"],
+    mapTitle: "Paid search response by region",
+    sourceLabel: "SRC-018 retail matched-postal clicks · 30-day snapshot",
+    evidenceBoundary: "Ad-mediated clicks are campaign-conditioned and assigned from ZIP/ZCTA centroids to CBSAs. They are not total demand, unique reach, incrementality, or a budget recommendation.",
+    legendTitle: "Paid search response percentile",
+  }),
+  workspaceSnapshotView({
+    perspectiveId: "marketing",
+    viewId: "paid_search_impressions",
+    label: "Search impressions",
+    activeMeasure: "marketing.paid_search_impressions",
+    datasetId: "marketing_paid_search_impressions",
+    valueFormat: "number",
+    sourceIds: ["SRC-018"],
+    mapTitle: "Paid search impressions by region",
+    sourceLabel: "SRC-018 retail matched-postal impressions · 30-day snapshot",
+    evidenceBoundary: "Impressions are campaign-conditioned delivery, not unique reach, addressable demand, awareness lift, or a budget recommendation.",
+    legendTitle: "Impression percentile",
+  }),
+  workspaceSnapshotView({
+    perspectiveId: "marketing",
+    viewId: "paid_search_ctr",
+    label: "Click-through rate",
+    activeMeasure: "marketing.paid_search_ctr",
+    datasetId: "marketing_paid_search_ctr",
+    valueFormat: "percent",
+    sourceIds: ["SRC-018"],
+    mapTitle: "Paid search click-through rate by region",
+    sourceLabel: "SRC-018 retail matched-postal clicks ÷ impressions · 30-day snapshot",
+    evidenceBoundary: "Click-through rate reflects campaign mix, bids, creative, inventory, and platform geography semantics. It is not incrementality, conversion quality, or total customer demand.",
+    legendTitle: "Click-through-rate percentile",
+  }),
+  workspaceSnapshotView({
+    perspectiveId: "marketing",
+    viewId: "paid_search_cpc",
+    label: "Average cost per click",
+    activeMeasure: "marketing.paid_search_cpc",
+    datasetId: "marketing_paid_search_cpc",
+    valueFormat: "currency",
+    sourceIds: ["SRC-018"],
+    mapTitle: "Paid search cost per click by region",
+    sourceLabel: "SRC-018 retail matched-postal cost ÷ clicks · 30-day snapshot",
+    evidenceBoundary: "Average cost per click is a platform delivery measure conditioned on campaign setup and auction mix. It does not establish acquisition efficiency, profit, incrementality, or budget authority.",
+    legendTitle: "Cost-per-click percentile",
+  }),
   unavailableView({
     perspectiveId: "marketing",
     viewId: "customer_demand",
@@ -223,7 +378,7 @@ const marketingViews: PerspectiveView[] = [
     emptyMessage: "This view does not invent a marketing opportunity score from Census or CVC measures.",
     supportsComparison: true,
   }),
-];
+].filter((view) => view.evidenceAvailability === "available");
 
 const cvcViews: PerspectiveView[] = [
   {
@@ -330,9 +485,9 @@ const cvcViews: PerspectiveView[] = [
     allowedUse: "market_context_only",
     scoringEligibility: "none",
     mapTitle: "Market expansion context",
-    sourceLabel: "SRC-016 ACS population · market context only",
-    evidenceBoundary: "Population percentiles are public market context only. They do not authorize expansion or site selection, and are not an opportunity score or recommendation.",
-    legend: censusLegend("Population percentile"),
+    sourceLabel: "SRC-016 ACS population density · market context only",
+    evidenceBoundary: "Population-density percentiles describe how concentrated a market is. They do not measure pet demand, clinic access, site feasibility, or an expansion-opportunity score.",
+    legend: censusLegend("Population-density percentile"),
     emptyState: {
       title: "Population values unavailable",
       message: "Markets without an ACS population observation remain unscored and unranked.",
@@ -340,21 +495,21 @@ const cvcViews: PerspectiveView[] = [
     supportedQuestionTypes: ["describe", "compare", "investigate"],
     supportsComparison: true,
     supportsLayerMode: false,
-    mapBinding: { kind: "census_percentile", censusMetric: "total_population" },
+    mapBinding: { kind: "census_percentile", censusMetric: "population_density" },
   },
-];
+].filter((view) => view.evidenceAvailability === "available");
 
 const perspectiveDefinitions: PerspectiveDefinition[] = [
   {
     perspectiveId: "pricing",
     label: "Pricing",
-    defaultViewId: "price_index",
+    defaultViewId: "competitor_availability",
     views: pricingViews,
   },
   {
     perspectiveId: "marketing",
     label: "Marketing",
-    defaultViewId: "customer_demand",
+    defaultViewId: "paid_search_response",
     views: marketingViews,
   },
   {

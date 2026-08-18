@@ -45,20 +45,26 @@ internal shadow evaluation and source validation.
 | `CHEWYBI.ORDER_LINE_COST_MEASURES` | Confirmed in Phoenix MSO SQL | Curated orders and contribution margin by date/category/channel | **Marketing/enterprise outcome source, not required for competitor-price monitoring.** Validate access and definitions only when that use case is selected |
 | `CHEWYBI.ORDER_LINE_COST_MEASURES_PHARMACY` | Listed by the Pricing onboarding guide as a Vertica table; failed Snowflake lookup is inconclusive | Possible legacy Pharmacy cost source | **Not needed now.** PSE and merch exports already provide initial economics; ask for a governed replacement only if Pharmacy-specific reconciliation is required |
 | `MKT_SOLUTIONS_SANDBOX.BIDCOIN_METRICS_ATTRIBUTION` | Documented CCP/Bidcoin marketing source; not visible in the tested role | Connects media attribution to contribution profit | **Not needed for Pricing.** Request it only for paid-media/local-growth evaluation and document the 2024 coverage bias |
-| `PDM.PROMOTION` and `CDM.*_PROMOTION_USAGE` | Current Phoenix Promotions SQL uses singular `PDM.PROMOTION`; the prior plural lookup was not a valid permission test | Promotion definition, eligibility, redemption, and SKU/order usage | **Optional for the first pilot; needed for promotion-aware recommendations.** Test the correct objects before requesting permissions |
+| `PDM.PROMOTION`, `CDM.ORDER_PROMOTION_USAGE`, `CDM.ORDER_LINE_PROMOTION_USAGE`, and `CDM.CUSTOMER_PROMOTION_USAGE` | All four correct objects are visible to the tested role | Promotion definition, eligibility, redemption, and SKU/order usage | **Optional for the first pilot.** Profile and join only when the recommendation needs to distinguish base-price effects from promotion effects |
 | Destination geography for orders | No approved field/view found in `ECOM.ORDER_LINE` | Lets us test local customer demand and profit rather than only local competitor conditions | **Later.** Needed only before making regional demand/profit or differentiated-pricing claims; request an aggregate, never customer/address rows |
 | ZIP-to-DMA/CBSA/trade-area crosswalk | Documented Marketing sources include Nielsen DMA/ZIP mappings | Translates Pricing ZIPs to Google Ads DMA or other market definitions | **Later.** Not needed for a ZIP-level pilot; use the MSO-maintained mapping when cross-channel analysis begins |
-| `PRICING_ANALYTICS_MSS_SANDBOX.DAILY_COMPETITOR_COVERAGE_SNAPSHOT` | Used by Phoenix Pricing SQL | Curated current/history competitor coverage, price, availability, coupon, MAP, and buy-box evidence | **High-priority next validation.** Compare its grain and freshness with the raw Bungee history export |
-| `PRICING_ANALYTICS_MSS_SANDBOX.PRICING_LABS_RESULTS_SUMMARY` and `OFFER_PULSING_STATS` | Used by Phoenix Pricing SQL | Existing Pricing experiments, cohorts, success, match-rate, stickiness, and pulsing rounds | **High-priority next validation** for evaluation design and avoiding duplicate tests |
-| `PRICING_ANALYTICS_SANDBOX.PRODUCTS_UNIT_OF_MEASURE` | Used by Phoenix Pricing SQL | Package/UOM price equalization | Validate if the pilot compares differently sized competitor offers |
+| `PRICING_ANALYTICS_MSS_SANDBOX.DAILY_COMPETITOR_COVERAGE_SNAPSHOT` | Visible and profiled; latest date 2026-08-17; 16,587,279 BT rows and 177,518 SKUs in the last 30 days | Curated current/history competitor coverage, price, availability, coupon, MAP, and buy-box evidence | Use as the agent-facing daily competitor state; retain raw Bungee history for ZIP-level traceability and median reconstruction |
+| `PRICING_ANALYTICS_MSS_SANDBOX.PRICING_LABS_RESULTS_SUMMARY` | Visible and profiled; latest experiment start 2026-08-12; 1,317,316 rows and 88,117 SKUs in the last 730 days | Opportunity Raise cohorts, match rate, stickiness, exposure, and historical outcomes | Use as observed evaluation labels; do not interpret association as causal lift outside each experiment design |
+| `PRICING_ANALYTICS_MSS_SANDBOX.OFFER_PULSING_STATS` | Visible and profiled; latest start 2026-08-17; 44,991 rows and 21,124 SKUs in the last 730 days | Offer-pulsing rounds, success rate, category, and SKU participation | Use as an alternative-action outcome source and avoid overlapping active interventions |
+| `PRICING_ANALYTICS_SANDBOX.PRODUCTS_UNIT_OF_MEASURE` | Not visible in the tested role | Package/UOM price equalization | Optional. Existing Bungee fields already include equalized price, total size, UOM, and package quantity; request only when those fields fail validation |
 | `Chewy-Inc/phoenix-llm` Pricing and adjacent chatbot SQL | Inspected through signed-in GitHub on 2026-08-17 | Shows the curated sources and definitions agents already rely on | Incorporate the sources above; GitHub access is no longer a blocker |
 
 ## What must be resolved now versus later
 
 For the first regional competitor-monitoring pilot, do **not** start with a
-broad permission request. Ask Pricing Analytics/Technology to validate the
-curated competitor snapshot, experiment-result tables, representative-ZIP
-method, availability codes, cost semantics, and operational success criteria.
+broad permission request. The exact sources, availability codes, regional ZIP
+rotation, median-of-five logic, and historical experiment outcomes are now
+documented and observable. Treat a Pricing owner as an approval/escalation path,
+not a prerequisite for discovery or shadow evaluation.
+
+The remaining work is empirical: build the joined recommendation mart, measure
+coverage and freshness, backtest candidate rules against Pricing Labs/Offer
+Pulsing outcomes, and evaluate recommendations with explicit guardrails.
 
 Only if the selected recommendation requires local customer demand or profit,
 request a privacy-safe aggregate with these minimum fields:

@@ -2,6 +2,11 @@
 
 Only synthetic, de-identified, or explicitly approved data belongs here.
 
+Agents should start with [`AGENT_START_HERE.md`](AGENT_START_HERE.md). It is the
+short decision-to-source router. This README explains storage and governance;
+the source-specific manifests provide exact filenames, hashes, grains, and
+limitations.
+
 ## Intended layout
 
 ```text
@@ -101,6 +106,9 @@ proposing an ingestion/modeling plan:
   Snowflake sources, their grains and limitations, intended export names, and
   minimal extraction queries. Local sanitized exports belong under ignored
   `approved/snowflake/pricing/`.
+- `contracts/seo-keywords/` maps the fifteen Semrush downloads to descriptive
+  brand, competitor, and topic filenames. Local raw files live under ignored
+  `approved/seo/`.
 
 Neither contract grants production use or scoring eligibility. Each preserves
 source status, geography, grain, limitations, and unresolved approvals so an
@@ -123,6 +131,24 @@ Use the two `*_matched-dma-campaign-performance_us.csv` files as the primary
 manual performance fixtures. Conversion-action exports are semantics-only;
 configured-target exports describe intended scope; postal exports are local
 drill-down subject to coverage and volume gates.
+
+The initial Canada diagnostic is retained locally under the snapshot's
+`excluded/` directory as
+`chewy-canada_configured-location-performance_postal-campaign-adgroup_cad.csv`.
+It is named and hashed for auditability but must not enter the U.S. evaluator.
+
+## Local SEO keyword evidence snapshot
+
+The fifteen Semrush keyword downloads are copied to
+`data/approved/seo/2026-08-14/raw/` with descriptive filenames that identify
+the source, signal, cohort type, cohort, country, and export date. Read
+`contracts/seo-keywords/manifest.json` before using them.
+
+These exports provide U.S.-national keyword, intent, volume, difficulty, CPC,
+and SERP-feature evidence. They contain no state, DMA, CBSA, ZIP, rank-location,
+or time-series field. Nine files hit the subscription's 50,000-keyword export
+cap; the manifest distinguishes valid keyword rows from the three source footer
+rows in capped files.
 
 ## Local Snowflake evidence snapshot
 

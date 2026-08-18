@@ -41,10 +41,10 @@ test("staged evidence remains quarantined and does not become available", () => 
     stagedAt: "2026-08-13T19:00:00.000Z",
     state: "staged_for_review",
   });
-  assert.equal(staged.items.find((item) => item.id === "media_exposure")?.availability, "missing");
+  assert.equal(staged.items.find((item) => item.id === "media_exposure")?.availability, "partial");
   const definition = generateEvaluationDefinitionDraft(brief, investigation, staged);
   assert.deepEqual(definition.stagedEvidenceIds, ["staged-google-ads"]);
-  assert.ok(!definition.availableEvidenceIds.includes("media_exposure"));
+  assert.ok(definition.availableEvidenceIds.includes("media_exposure"));
   assert.ok(definition.steps.some((step) => /quarantined/i.test(step)));
 });
 
