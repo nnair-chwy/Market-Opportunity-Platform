@@ -11,6 +11,7 @@ import { executeEvaluationPlanEvidence, type PlanExecutionOptions } from "./exec
 import { marketInvestigationFromEvidence } from "./evidence-market-investigation.ts";
 import { composeFinalAnswer } from "./final-answer-composer.ts";
 import { checkInvestigationCoverage } from "./investigation-coverage.ts";
+import { assessGovernedSnowflakeEscalation } from "../snowflake-escalation/assess.ts";
 import {
   adaptPlanForUsedSources,
   buildSourceAdaptationReadiness,
@@ -338,5 +339,6 @@ export async function executeAgenticEvidenceLoop(
         evaluation: finalEvaluation,
       })
     : undefined;
-  return evidenceExecutionResponseSchema.parse({ ...merged, agenticLifecycle: lifecycle, sourceAdaptation });
+  const snowflakeEscalation = assessGovernedSnowflakeEscalation({ runId: requestId, plan: adaptedPlan, execution: merged });
+  return evidenceExecutionResponseSchema.parse({ ...merged, agenticLifecycle: lifecycle, sourceAdaptation, snowflakeEscalation });
 }

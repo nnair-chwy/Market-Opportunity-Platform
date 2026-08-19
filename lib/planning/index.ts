@@ -10,6 +10,7 @@ export * from "./investigation-coverage.ts";
 export * from "./evidence-market-investigation.ts";
 export * from "./evidence-compatibility.ts";
 export * from "./ad-spend-evidence-plan.ts";
+export * from "./receiving-team-catalog.ts";
 export * from "./result-language.ts";
 export * from "./result-presentation.ts";
 export * from "./final-answer-composer.ts";

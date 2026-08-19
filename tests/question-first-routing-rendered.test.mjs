@@ -59,10 +59,12 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(workflow, /phase === "discovery"/);
   assert.match(workflow, /AutonomousDiscoveryWorkspace/);
   assert.match(discoveryWorkspace, /\/api\/insight-discovery/);
-  assert.match(discoveryWorkspace, /Nine departmental investigations ran automatically/);
-  assert.match(discoveryWorkspace, /top five leads per department/i);
+  assert.match(discoveryWorkspace, /investigations ran automatically/);
+  assert.match(discoveryWorkspace, /five-item portfolio digest plus every additional qualified finding/i);
+  assert.match(discoveryWorkspace, /prepared read-only Snowflake request/);
+  assert.match(discoveryWorkspace, /Best routed to/);
   assert.match(discoveryWorkspace, /Investigate this finding/);
-  assert.match(discoveryWorkspace, /reviewed query registry · no external AI call/i);
+  assert.match(discoveryWorkspace, /reviewed query registry · deterministic evidence checks/i);
 });
 
 test("request state is transparent before a plan is treated as final", () => {

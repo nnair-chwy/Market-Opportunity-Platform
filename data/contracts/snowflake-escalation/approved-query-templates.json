@@ -1,0 +1,47 @@
+{
+  "version": "governed-snowflake-query-registry-v1",
+  "templates": [
+    {
+      "templateId": "marketing_regional_outcomes_v1",
+      "perspectiveId": "marketing",
+      "addressesRequirementIds": ["marketing_comparable_cohort", "marketing_geography", "marketing_business_outcome", "marketing_incrementality"],
+      "owningTeam": "Marketing Analytics",
+      "semanticViewConcept": "governed_marketing_regional_outcomes",
+      "publicationState": "publication_required",
+      "purpose": "Compare paid-media cohorts with privacy-safe first-party orders, new customers, and contribution at one governed geography and period grain.",
+      "requiredMetrics": ["spend", "clicks", "platform_conversions", "completed_orders", "new_customers", "contribution_profit"],
+      "allowedGeographyGrains": ["dma", "postal", "cbsa"],
+      "timeGrain": "week",
+      "lookbackDays": 180,
+      "minimumGroupSize": 50
+    },
+    {
+      "templateId": "pricing_regional_economics_v1",
+      "perspectiveId": "pricing",
+      "addressesRequirementIds": ["pricing_competitor_condition", "pricing_chewy_economics", "pricing_customer_outcome", "pricing_test_authority"],
+      "owningTeam": "Pricing Analytics",
+      "semanticViewConcept": "governed_pricing_regional_economics",
+      "publicationState": "publication_required",
+      "purpose": "Relate dated competitor conditions and Chewy economics to privacy-safe regional commercial outcomes and reviewed test controls.",
+      "requiredMetrics": ["competitor_equalized_price", "competitor_availability", "chewy_price", "product_cost", "orders", "net_sales", "returns", "contribution_margin"],
+      "allowedGeographyGrains": ["postal", "cbsa", "trade_area"],
+      "timeGrain": "week",
+      "lookbackDays": 365,
+      "minimumGroupSize": 50
+    },
+    {
+      "templateId": "cvc_capacity_performance_v1",
+      "perspectiveId": "cvc",
+      "addressesRequirementIds": ["cvc_demand_outcome", "cvc_access_capacity", "cvc_supply_feasibility"],
+      "owningTeam": "CVC Analytics and Operations",
+      "semanticViewConcept": "governed_cvc_capacity_performance",
+      "publicationState": "publication_required",
+      "purpose": "Evaluate clinic demand, appointment access, staffed capacity, maturity, and supply constraints at an approved clinic service geography.",
+      "requiredMetrics": ["completed_appointments", "available_slots", "staffed_hours", "active_customers", "clinic_orders", "clinic_maturity_months", "contribution_profit"],
+      "allowedGeographyGrains": ["clinic_service_area", "drive_time", "trade_area", "cbsa"],
+      "timeGrain": "week",
+      "lookbackDays": 365,
+      "minimumGroupSize": 30
+    }
+  ]
+}

@@ -2,6 +2,9 @@ import type { PerspectiveId, PerspectiveViewId } from "../perspectives/contracts
 import { publicMarkets } from "../data/public-market-ui.ts";
 import { planEvaluation } from "../planning/planner.ts";
 import { runMarketInvestigation, type InvestigationLead } from "../planning/market-investigation.ts";
+import { getReceivingTeam, routeAutonomousGeoFinding, type FindingTeamRoute } from "../planning/receiving-team-catalog.ts";
+import { assessGovernedSnowflakeEscalationFromLocalEvidence, type GovernedSnowflakeEscalationAssessment } from "../snowflake-escalation/index.ts";
+import { selectDiscoveryFindings, type DiscoveryFindingSelectionCounts } from "./finding-selection.ts";
 
 export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v1" as const;
 
@@ -28,6 +31,7 @@ export const CURRENT_DATA_HYPOTHESES: readonly DiscoveryHypothesis[] = [
 type LeadOccurrence = {
   hypothesis: DiscoveryHypothesis;
   lead: InvestigationLead;
+  topic: ReturnType<typeof planEvaluation>["intent"]["topic"];
   sourceIds: string[];
   snapshotVersion: string;
   evidenceStage: "signal" | "triangulated_finding";
@@ -48,6 +52,13 @@ export type AutonomousInsight = {
   signalCount: number;
   priority: "multi-signal lead" | "single-signal lead";
   question: string;
+  applicability: {
+    primaryTeamId: FindingTeamRoute["primaryTeam"]["teamId"];
+    primaryTeamLabel: string;
+    reason: string;
+    partnerTeams: Array<{ teamId: FindingTeamRoute["partnerTeams"][number]["teamId"]; label: string; reason: string }>;
+    approvalBoundary: string;
+  };
 };
 
 export type CurrentDataDiscoveryRun = {
@@ -63,6 +74,25 @@ export type CurrentDataDiscoveryRun = {
   measuresExamined: number;
   sourceIds: string[];
   findings: AutonomousInsight[];
+  primaryFindings: AutonomousInsight[];
+  additionalFindings: AutonomousInsight[];
+  findingSelection: {
+    version: string;
+    primaryFindingIds: string[];
+    additionalFindingIds: string[];
+    suppressed: Array<{ insightId: string; reasons: string[] }>;
+    counts: {
+      global: DiscoveryFindingSelectionCounts;
+      byDepartment: Record<PerspectiveId, DiscoveryFindingSelectionCounts>;
+    };
+  };
+  dataAccessSummary: {
+    status: "local_evidence_sufficient" | "additional_access_recommended" | "governance_review_required";
+    questionsNeedingWarehouseEvidence: number;
+    uniqueTemplateCount: number;
+    owningTeams: string[];
+  };
+  snowflakeEscalations: GovernedSnowflakeEscalationAssessment[];
   traces: Array<{
     hypothesisId: string;
     department: PerspectiveId;
@@ -108,6 +138,11 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
   const hypotheses = unique(group.map((item) => item.hypothesis));
   const name = marketName(first.lead);
   const signalCount = hypotheses.length;
+  const route = routeAutonomousGeoFinding({
+    perspectiveId: first.hypothesis.department,
+    viewId: first.hypothesis.viewId,
+    topic: first.topic,
+  });
   return {
     insightId: `insight:${key.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`,
     department: first.hypothesis.department,
@@ -127,14 +162,26 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
     signalCount,
     priority: signalCount > 1 ? "multi-signal lead" : "single-signal lead",
     question: hypotheses.map((item) => item.question).join(" "),
+    applicability: {
+      primaryTeamId: route.primaryTeam.teamId,
+      primaryTeamLabel: getReceivingTeam(route.primaryTeam.teamId).label,
+      reason: route.primaryTeam.reason,
+      partnerTeams: route.partnerTeams.map((partner) => ({
+        ...partner,
+        label: getReceivingTeam(partner.teamId).label,
+      })),
+      approvalBoundary: route.approvalBoundary,
+    },
   };
 }
 
 export function runCurrentDataInsightDiscovery(input: { now?: () => string; runId?: string } = {}): CurrentDataDiscoveryRun {
   const now = input.now ?? (() => new Date().toISOString());
   const startedAt = now();
+  const runId = input.runId ?? `discovery:${crypto.randomUUID()}`;
   const occurrences: LeadOccurrence[] = [];
   const traces: CurrentDataDiscoveryRun["traces"] = [];
+  const snowflakeEscalations: GovernedSnowflakeEscalationAssessment[] = [];
   const measures = new Set<string>();
   const sources = new Set<string>();
   let marketUniverse = 0;
@@ -148,9 +195,20 @@ export function runCurrentDataInsightDiscovery(input: { now?: () => string; runI
     investigation.leads.forEach((lead) => occurrences.push({
       hypothesis,
       lead,
+      topic: plan.intent.topic,
       sourceIds: investigation.sourceIds,
       snapshotVersion: investigation.dataSnapshotVersion,
       evidenceStage: investigation.evidenceStage,
+    }));
+    snowflakeEscalations.push(assessGovernedSnowflakeEscalationFromLocalEvidence({
+      runId: `${runId}:${hypothesis.id}`,
+      plan,
+      localEvidence: {
+        executionStatus: investigation.leads.length ? "complete" : "partial",
+        evidenceIds: investigation.leads.map((lead) => lead.id),
+        sourceIds: investigation.sourceIds,
+        metricLabels: investigation.measuresExamined,
+      },
     }));
     traces.push({
       hypothesisId: hypothesis.id,
@@ -168,14 +226,15 @@ export function runCurrentDataInsightDiscovery(input: { now?: () => string; runI
   }
 
   const allFindings = groupOccurrences(occurrences).map(([key, group]) => insightFromGroup(key, group));
-  const findings = (["marketing", "pricing", "cvc"] as const).flatMap((department) => allFindings
-    .filter((finding) => finding.department === department)
-    .sort((left, right) => right.signalCount - left.signalCount || right.sourceIds.length - left.sourceIds.length || left.marketName.localeCompare(right.marketName))
-    .slice(0, 5));
+  const selection = selectDiscoveryFindings(allFindings);
+  const findings = [...selection.primaryDigest, ...selection.additionalFindings];
+  const accessRequests = snowflakeEscalations.flatMap((assessment) => assessment.accessRequest ? [assessment.accessRequest] : []);
+  const uniqueTemplateIds = unique(accessRequests.flatMap((request) => request.templates.map((template) => template.templateId)));
+  const governanceReviewCount = snowflakeEscalations.filter((assessment) => assessment.status === "governance_review_required").length;
 
   return {
     version: CURRENT_DATA_DISCOVERY_VERSION,
-    runId: input.runId ?? `discovery:${crypto.randomUUID()}`,
+    runId,
     status: "completed",
     startedAt,
     completedAt: now(),
@@ -186,12 +245,28 @@ export function runCurrentDataInsightDiscovery(input: { now?: () => string; runI
     measuresExamined: measures.size,
     sourceIds: [...sources].sort(),
     findings,
+    primaryFindings: selection.primaryDigest,
+    additionalFindings: selection.additionalFindings,
+    findingSelection: {
+      version: selection.version,
+      primaryFindingIds: selection.primaryDigest.map((finding) => finding.insightId),
+      additionalFindingIds: selection.additionalFindings.map((finding) => finding.insightId),
+      suppressed: selection.suppressedFindings.map(({ finding, reasons }) => ({ insightId: finding.insightId, reasons })),
+      counts: selection.counts,
+    },
+    dataAccessSummary: {
+      status: accessRequests.length ? "additional_access_recommended" : governanceReviewCount ? "governance_review_required" : "local_evidence_sufficient",
+      questionsNeedingWarehouseEvidence: accessRequests.length,
+      uniqueTemplateCount: uniqueTemplateIds.length,
+      owningTeams: unique(accessRequests.flatMap((request) => request.owningTeams)),
+    },
+    snowflakeEscalations,
     traces,
     limitations: [
       "The autonomous run uses the reviewed local hypothesis registry; it does not yet ask an external model to invent arbitrary SQL.",
       "Findings are descriptive investigation leads from currently approved snapshots, not causal conclusions or authority for price, spend, clinic, lease, or other material action.",
       "Cross-department findings remain separate when geography, period, definitions, or approved crosswalks are incompatible.",
-      "A scheduled production run still needs durable persistence, refresh-event orchestration, owner notifications, and feedback on whether prior findings produced value.",
+      "A scheduled production run still needs durable persistence, refresh-event orchestration, receiving-team notifications, and feedback on whether prior findings produced value.",
     ],
   };
 }

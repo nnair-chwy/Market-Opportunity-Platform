@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { governedSnowflakeEscalationAssessmentSchema } from "../snowflake-escalation/contracts.ts";
 
 export const SNAPSHOT_QUERY_VERSION = "evidence-snapshot-query-v1" as const;
 export const SNAPSHOT_CALCULATION_VERSION = "evidence-snapshot-readiness-v1" as const;
@@ -265,6 +266,7 @@ export const evidenceExecutionResponseSchema = z.object({
   errorMessage: z.string().min(1).nullable(),
   agenticLifecycle: agenticEvidenceLifecycleSchema.optional(),
   sourceAdaptation: sourceAdaptationReadinessSchema.optional(),
+  snowflakeEscalation: governedSnowflakeEscalationAssessmentSchema.optional(),
 }).strict().superRefine((value, ctx) => {
   if (value.status === "failed" && (!value.errorCode || !value.errorMessage)) ctx.addIssue({ code: "custom", message: "Failed responses require an error code and message.", path: ["errorCode"] });
   if (value.status !== "failed" && (value.errorCode || value.errorMessage)) ctx.addIssue({ code: "custom", message: "Only failed responses may contain execution errors.", path: ["errorCode"] });

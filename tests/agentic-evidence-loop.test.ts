@@ -118,6 +118,8 @@ test("agentic loop investigates ordinary registered sources in perspective order
   assert.notEqual(result.agenticLifecycle?.finalAnswerStatus, "pass");
   assert.ok(result.agenticLifecycle?.passes.every((pass) => pass.addedEvidenceCount === 1));
   assert.ok(result.agenticLifecycle?.passes.every((pass) => pass.unmetCriterionIds.length > 0));
+  assert.equal(result.snowflakeEscalation?.status, "snowflake_escalation_required");
+  assert.equal(result.snowflakeEscalation?.accessRequest?.executionPolicy.arbitrarySqlAllowed, false);
 
   const investigation = marketInvestigationFromEvidence(plan, result);
   assert.ok(investigation);
