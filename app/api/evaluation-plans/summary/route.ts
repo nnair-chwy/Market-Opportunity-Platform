@@ -11,6 +11,7 @@ const headers = { "cache-control": "no-store" };
 const requestSchema = z.object({
   plan: evaluationPlanSchema,
   actionId: z.string().trim().min(1).optional(),
+  action: plannedActionSchema.optional(),
   evidenceExecution: evidenceExecutionResponseSchema.nullable().optional(),
 }).strict();
 
@@ -34,9 +35,9 @@ export async function POST(request: Request) {
   }
 
   const plan = parsed.data.plan;
-  const action = parsed.data.actionId
+  const action = parsed.data.action ?? (parsed.data.actionId
     ? plan.actions.find((item) => item.id === parsed.data.actionId)
-    : proposedActionFromPlan(plan);
+    : proposedActionFromPlan(plan));
   if (!action) {
     return Response.json(
       { status: "error", message: "The requested action is not present in the plan." },

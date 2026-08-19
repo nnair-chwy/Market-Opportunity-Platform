@@ -130,7 +130,7 @@ export function goldenMarketInvestigationFromEvidence(
     dataSnapshotVersion: response.snapshotVersion,
     readiness: {
       label: "Partial answer",
-      summary: `${leads.length} source-linked investigation lead${leads.length === 1 ? "" : "s"} survived the registered ${family} cohort screen. Material action remains blocked until the listed business outcomes and validity checks are connected.`,
+      summary: `${leads.length} source-linked investigation lead${leads.length === 1 ? "" : "s"} survived the registered ${family} cohort screen. This is the best available answer now; a material action is not yet supported until the listed business outcomes and validity checks are connected.`,
       missing: response.missingEvidence,
     },
     toolsRun: ["Apply the registered eligibility cohort", "Select candidates using the frozen deterministic rule", "Challenge alternative explanations", "Define the next evidence gate"],

@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "snapshotId": "golden-question-evidence-2026-08-18-v1",
-  "generatedAt": "2026-08-18T20:57:36.861Z",
+  "generatedAt": "2026-08-19T20:22:01.739Z",
   "allowedUse": "internal_shadow_evaluation_only",
   "scoringEligibility": "none",
   "actionAuthority": "investigation_leads_only_no_material_action",
@@ -27,7 +27,7 @@
     }
   },
   "selectionRules": {
-    "marketing": "Metropolitan CBSA; >=10,000 clicks; >=500 configured conversions; >=10 mapped postal geographies; conversion rate at/above eligible-cohort p75; CPC at/below eligible-cohort median; take two highest configured-conversion counts.",
+    "marketing": "Metropolitan CBSA; >=10,000 clicks; >=500 configured conversions; >=10 mapped postal geographies; conversion rate at/above eligible-cohort p75; CPC at/below eligible-cohort median; take five highest configured-conversion counts for a national signal set.",
     "pricing": "Metropolitan CBSA; monitored offer volume at/above the metropolitan median; select the lowest documented availability rate. This is a coverage/anomaly screen, not a price-opportunity score.",
     "cvc": "Source-provided, non-synthetic trade areas in market-label cohorts with at least three complete records; pet-households-per-clinic above the cohort median and reported Chewy online customers at/above the cohort median; select the largest ratio contrast."
   },
@@ -100,6 +100,81 @@
           "cohortMedianCpcUsd": 0.88,
           "cohortMedianConfiguredConversionRatePercent": 13.16,
           "conversionRateDifferenceVsMedianPercentagePoints": 1.69
+        }
+      },
+      {
+        "geography": {
+          "type": "cbsa",
+          "id": "10580",
+          "name": "Albany-Schenectady-Troy, NY"
+        },
+        "cohort": "Metropolitan CBSAs with >=10,000 clicks, >=500 configured conversions, and >=10 mapped postal geographies (198 eligible)",
+        "observationWindow": "2026-07-14 through 2026-08-12",
+        "metrics": {
+          "clicks": 55494,
+          "impressions": 3486185,
+          "ctrPercent": 1.59,
+          "cpcUsd": 0.88,
+          "configuredConversions": 7938.37,
+          "configuredConversionRatePercent": 14.3,
+          "costUsd": 48618.04,
+          "mappedPostalGeographies": 89
+        },
+        "comparison": {
+          "cohortMedianCtrPercent": 1.55,
+          "cohortMedianCpcUsd": 0.88,
+          "cohortMedianConfiguredConversionRatePercent": 13.16,
+          "conversionRateDifferenceVsMedianPercentagePoints": 1.14
+        }
+      },
+      {
+        "geography": {
+          "type": "cbsa",
+          "id": "10900",
+          "name": "Allentown-Bethlehem-Easton, PA-NJ"
+        },
+        "cohort": "Metropolitan CBSAs with >=10,000 clicks, >=500 configured conversions, and >=10 mapped postal geographies (198 eligible)",
+        "observationWindow": "2026-07-14 through 2026-08-12",
+        "metrics": {
+          "clicks": 51242,
+          "impressions": 3134753,
+          "ctrPercent": 1.63,
+          "cpcUsd": 0.85,
+          "configuredConversions": 7436.59,
+          "configuredConversionRatePercent": 14.51,
+          "costUsd": 43381.39,
+          "mappedPostalGeographies": 61
+        },
+        "comparison": {
+          "cohortMedianCtrPercent": 1.55,
+          "cohortMedianCpcUsd": 0.88,
+          "cohortMedianConfiguredConversionRatePercent": 13.16,
+          "conversionRateDifferenceVsMedianPercentagePoints": 1.35
+        }
+      },
+      {
+        "geography": {
+          "type": "cbsa",
+          "id": "47930",
+          "name": "Waterbury-Shelton, CT"
+        },
+        "cohort": "Metropolitan CBSAs with >=10,000 clicks, >=500 configured conversions, and >=10 mapped postal geographies (198 eligible)",
+        "observationWindow": "2026-07-14 through 2026-08-12",
+        "metrics": {
+          "clicks": 23755,
+          "impressions": 1500282,
+          "ctrPercent": 1.58,
+          "cpcUsd": 0.86,
+          "configuredConversions": 3496.88,
+          "configuredConversionRatePercent": 14.72,
+          "costUsd": 20432.62,
+          "mappedPostalGeographies": 25
+        },
+        "comparison": {
+          "cohortMedianCtrPercent": 1.55,
+          "cohortMedianCpcUsd": 0.88,
+          "cohortMedianConfiguredConversionRatePercent": 13.16,
+          "conversionRateDifferenceVsMedianPercentagePoints": 1.56
         }
       }
     ],

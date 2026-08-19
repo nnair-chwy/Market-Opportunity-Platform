@@ -376,7 +376,7 @@ export function DecisionWorkflowApp() {
         const response = await fetch("/api/evaluation-plans/summary", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ plan, actionId: packetAction.id, evidenceExecution }),
+          body: JSON.stringify({ plan, actionId: packetAction.id, action: packetAction, evidenceExecution }),
         });
         const payload: unknown = await response.json();
         const parsed = packetFindingsSummarySchema.safeParse(
@@ -1079,6 +1079,21 @@ export function DecisionWorkflowApp() {
                       <span>Recommendation</span>
                       <strong>{insightActionPlan?.recommendation ?? packetAction.title}</strong>
                       <small>{insightActionPlan ? `${actionReadinessLabel(insightActionPlan.actionReadiness)} · ${insightActionPlan.confidence} confidence` : packetAction.nextStep}</small>
+                    </div>
+                  ) : null}
+                  <div className="answer-production-status" aria-label="How this answer was produced">
+                    <span><b>Question framing</b>{proposalMethodLabel(plan.proposalMethod)}</span>
+                    <span><b>Evidence analysis</b>{evidenceExecution?.agenticLifecycle ? `${evidenceExecution.agenticLifecycle.passes.length} checked pass${evidenceExecution.agenticLifecycle.passes.length === 1 ? "" : "es"}` : "Deterministic approved snapshot"}</span>
+                    <span><b>National signals</b>{plan.geographyResolution.mode === "national" ? `${investigation?.leads.length ?? 0} returned` : `${investigation?.leads.length ?? 0} relevant finding${investigation?.leads.length === 1 ? "" : "s"}`}</span>
+                    <span><b>Final narrative</b>{packetSummaryState === "loading" ? "AI synthesis in progress" : packetSummary?.origin === "ai" ? "AI-written from checked evidence" : "Deterministic evidence-grounded fallback"}</span>
+                  </div>
+                  {packetSummaryState === "loading" ? (
+                    <p className="answer-ai-synthesis" role="status">The evidence answer is ready. AI is now writing the plain-language synthesis from the checked packet.</p>
+                  ) : packetSummary ? (
+                    <div className="answer-ai-synthesis" data-origin={packetSummary.origin}>
+                      <strong>{packetSummary.origin === "ai" ? "AI synthesis" : "Evidence-grounded synthesis"}</strong>
+                      <p>{packetSummary.summary}</p>
+                      <small>{packetSummary.origin === "ai" ? `${packetSummary.modelVersion ?? "configured model"} · grounded to the validated packet` : `AI ${packetSummary.state.replaceAll("_", " ")} · deterministic fallback shown`}</small>
                     </div>
                   ) : null}
                 </section>

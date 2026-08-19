@@ -147,7 +147,7 @@ const marketingCandidates = marketingEligible
     row.cpc <= marketingMedianCpc
   )
   .sort((a, b) => b.conversions - a.conversions || a.cbsaCode.localeCompare(b.cbsaCode))
-  .slice(0, 2)
+  .slice(0, 5)
   .map((row) => ({
     geography: { type: "cbsa", id: row.cbsaCode, name: row.cbsaName },
     cohort: `Metropolitan CBSAs with >=10,000 clicks, >=500 configured conversions, and >=10 mapped postal geographies (${marketingEligible.length} eligible)`,
@@ -295,7 +295,7 @@ const output = {
     },
   },
   selectionRules: {
-    marketing: "Metropolitan CBSA; >=10,000 clicks; >=500 configured conversions; >=10 mapped postal geographies; conversion rate at/above eligible-cohort p75; CPC at/below eligible-cohort median; take two highest configured-conversion counts.",
+    marketing: "Metropolitan CBSA; >=10,000 clicks; >=500 configured conversions; >=10 mapped postal geographies; conversion rate at/above eligible-cohort p75; CPC at/below eligible-cohort median; take five highest configured-conversion counts for a national signal set.",
     pricing: "Metropolitan CBSA; monitored offer volume at/above the metropolitan median; select the lowest documented availability rate. This is a coverage/anomaly screen, not a price-opportunity score.",
     cvc: "Source-provided, non-synthetic trade areas in market-label cohorts with at least three complete records; pet-households-per-clinic above the cohort median and reported Chewy online customers at/above the cohort median; select the largest ratio contrast.",
   },

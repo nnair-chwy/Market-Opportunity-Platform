@@ -22,9 +22,9 @@ async function investigation(family: keyof typeof questions) {
   return { evidence, result };
 }
 
-test("Marketing shows the same Philadelphia and San Antonio leads and cohort as the evidence bundle", async () => {
+test("Marketing shows the same five national leads and cohort as the evidence bundle", async () => {
   const { evidence, result } = await investigation("marketing");
-  assert.deepEqual(result.leads.map((lead) => lead.marketIds[0]), ["37980", "41700"]);
+  assert.deepEqual(result.leads.map((lead) => lead.marketIds[0]), ["37980", "41700", "10580", "10900", "47930"]);
   assert.match(result.leads[0].title, /Philadelphia/);
   assert.match(result.leads[1].title, /San Antonio/);
   assert.equal(result.screeningScope.eligibleCohort, (evidence.rows[0] as Record<string, unknown>).cohort);

@@ -11,7 +11,7 @@ test("golden-question snapshot stays aggregate and investigation-only", () => {
   assert.equal(snapshot.allowedUse, "internal_shadow_evaluation_only");
   assert.equal(snapshot.scoringEligibility, "none");
   assert.equal(snapshot.actionAuthority, "investigation_leads_only_no_material_action");
-  assert.equal(snapshot.candidates.marketing.length, 2);
+  assert.equal(snapshot.candidates.marketing.length, 5);
   assert.equal(snapshot.candidates.pricing.length, 1);
   assert.equal(snapshot.candidates.cvc.length, 1);
 
