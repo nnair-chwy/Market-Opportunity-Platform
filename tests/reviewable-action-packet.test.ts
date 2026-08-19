@@ -11,7 +11,12 @@ import {
   proposedActionFromPlan,
   reviewableActionPacketSchema,
 } from "../lib/planning/index.ts";
-import { answerInvestigationFollowUp, runConfirmedMarketInvestigation, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
+import {
+  answerInvestigationFollowUp,
+  reviseMarketInvestigation,
+  runConfirmedMarketInvestigation,
+  runMarketInvestigation,
+} from "../lib/planning/market-investigation.ts";
 import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
 import { buildEvidencePlan, generateEvaluationDefinitionDraft } from "../lib/planning/evidence-plan.ts";
 import { explainFindingsAndProposal } from "../lib/planning/packet-ai-summary.ts";
@@ -186,6 +191,28 @@ test("reviewable packet carries the exact analyst screening and lead follow-up",
   assert.match(document, /Analyst screening/);
   assert.match(document, /Question-specific leads/);
   assert.match(document, /Lead-scoped follow-ups/);
+});
+
+test("reviewable packet accepts and exports a refreshed analyst recommendation", () => {
+  const plan = planEvaluation("Where should we spend more on ads?", "marketing");
+  const investigation = runMarketInvestigation(plan);
+  const revised = reviseMarketInvestigation(investigation, "Consider YouTube", 2);
+  const packet = assembleReviewableActionPacket(
+    plan,
+    proposedActionFromPlan(plan),
+    "2026-08-19T20:46:00.000Z",
+    revised,
+  );
+  const document = formatReviewableActionPacketDocument(packet);
+  const decisionBrief = formatDecisionBriefDocument(packet);
+
+  assert.equal(packet.analysisAppendix?.analystRevision?.draftNumber, 2);
+  assert.match(packet.analysisAppendix?.analystRevision?.evidenceRequest ?? "", /YouTube regional spend/i);
+  assert.match(packet.analysisAppendix?.analystRevision?.recommendationUpdate ?? "", /channel-specific/i);
+  assert.match(document, /Revision summary:.*YouTube was added/is);
+  assert.match(document, /Updated recommendation:.*channel-specific/is);
+  assert.match(document, /New evidence request:.*YouTube regional spend/is);
+  assert.match(decisionBrief, /What changed:.*YouTube was added/is);
 });
 
 test("reviewable packet exports the human-confirmed question and considerations", () => {
