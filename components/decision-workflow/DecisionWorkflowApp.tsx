@@ -11,6 +11,7 @@ import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFoc
 import { InsightActionPlanPanel } from "@/components/decision-workflow/InsightActionPlanPanel";
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
 import { RecommendationRevisionBar } from "@/components/decision-workflow/RecommendationRevisionBar";
+import { ResultOutputBuilder } from "@/components/decision-workflow/ResultOutputBuilder";
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { ValidationWorkplanPanel } from "@/components/decision-workflow/ValidationWorkplanPanel";
 import { EvidenceBundlePanel } from "@/components/evidence/EvidenceBundlePanel";
@@ -1330,19 +1331,19 @@ export function DecisionWorkflowApp() {
                           className="primary-action"
                           type="button"
                           onClick={() => {
-                            if (reviewablePacket) downloadDecisionBrief(reviewablePacket);
+                            if (reviewablePacket) void downloadDecisionBrief(reviewablePacket);
                           }}
                         >
-                          Download decision brief
+                          Download Word decision brief
                         </button>
                         <button
                           className="secondary-action"
                           type="button"
                           onClick={() => {
-                            if (reviewablePacket) downloadReviewableActionPacket(reviewablePacket);
+                            if (reviewablePacket) void downloadReviewableActionPacket(reviewablePacket);
                           }}
                         >
-                          Download audit appendix
+                          Download Word audit appendix
                         </button>
                         <button className="secondary-action" onClick={savePacket}>
                           {phase === "saved" ? "Saved" : "Save action packet"} <span aria-hidden="true">✓</span>
@@ -1359,11 +1360,11 @@ export function DecisionWorkflowApp() {
                     <p>The result preserves the answer, sources, limitations, and investigation trail without turning it into an action recommendation.</p>
                   </div>
                   <div className="packet-card-actions">
-                    <button className="primary-action" type="button" onClick={() => downloadDecisionBrief(reviewablePacket)}>
-                      Download result brief
+                    <button className="primary-action" type="button" onClick={() => void downloadDecisionBrief(reviewablePacket)}>
+                      Download Word result brief
                     </button>
-                    <button className="secondary-action" type="button" onClick={() => downloadReviewableActionPacket(reviewablePacket)}>
-                      Download audit appendix
+                    <button className="secondary-action" type="button" onClick={() => void downloadReviewableActionPacket(reviewablePacket)}>
+                      Download Word audit appendix
                     </button>
                     <button className="secondary-action" onClick={savePacket}>
                       {phase === "saved" ? "Saved" : "Save result"} <span aria-hidden="true">✓</span>
@@ -1371,6 +1372,8 @@ export function DecisionWorkflowApp() {
                   </div>
                 </section>
               ) : null}
+
+              {reviewablePacket ? <ResultOutputBuilder packet={reviewablePacket} /> : null}
 
               <SisterGeographiesSection
                 suggestions={sisterGeographies}

@@ -10,6 +10,7 @@ const questionMap = fs.readFileSync(new URL("../components/decision-workflow/Que
 const analysisBriefPanel = fs.readFileSync(new URL("../components/decision-workflow/AnalysisBriefPanel.tsx", import.meta.url), "utf8");
 const investigationPanel = fs.readFileSync(new URL("../components/decision-workflow/MarketInvestigationPanel.tsx", import.meta.url), "utf8");
 const revisionBar = fs.readFileSync(new URL("../components/decision-workflow/RecommendationRevisionBar.tsx", import.meta.url), "utf8");
+const outputBuilder = fs.readFileSync(new URL("../components/decision-workflow/ResultOutputBuilder.tsx", import.meta.url), "utf8");
 const globalStyles = fs.readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
 const questionWorkspace = fs.readFileSync(new URL("../components/decision-workflow/AdaptiveEvaluationWorkspace.tsx", import.meta.url), "utf8");
 const questionRegistry = fs.readFileSync(new URL("../lib/questions/registry.ts", import.meta.url), "utf8");
@@ -139,8 +140,8 @@ test("review page routes result workspace types without interactive comparison",
   assert.match(workflow, /resolveGeographicFocus/);
   assert.match(workflow, /decision-review-primary/);
   assert.match(workflow, /Action packet/);
-  assert.match(workflow, /Download decision brief/);
-  assert.match(workflow, /Download audit appendix/);
+  assert.match(workflow, /Download Word decision brief/);
+  assert.match(workflow, /Download Word audit appendix/);
   assert.match(workflow, /Findings and proposed action/);
   assert.match(workflow, /packet-action-details/);
   assert.match(workflow, /Action details/);
@@ -172,6 +173,16 @@ test("review page routes result workspace types without interactive comparison",
   assert.match(sisterLib, /SISTER_GEOGRAPHY_RULE_ID/);
   assert.match(sister, /Ask about this geography/);
   assert.match(sister, /if \(!suggestions\.length\) return null;/);
+});
+
+test("result exports confirm a visible CSV or Word structure before download", () => {
+  assert.match(workflow, /ResultOutputBuilder packet=\{reviewablePacket\}/);
+  assert.match(outputBuilder, /Word report/);
+  assert.match(outputBuilder, /CSV by market/);
+  assert.match(outputBuilder, /Sample · first/);
+  assert.match(outputBuilder, /Confirm output structure/);
+  assert.match(outputBuilder, /Blank—unsupported/);
+  assert.match(outputBuilder, /downloadDecisionBrief/);
 });
 
 test("selected analyst leads expose fixture values and drive the map context measure", () => {

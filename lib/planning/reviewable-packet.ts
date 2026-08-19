@@ -1258,20 +1258,19 @@ export function formatDecisionBriefDocument(packet: ReviewableActionPacket): str
 export function reviewableActionPacketFilename(packet: ReviewableActionPacket): string {
   const stamp = packet.generatedAt.slice(0, 10);
   const slug = packet.action.id.replace(/[^a-z0-9-]+/gi, "-").toLowerCase();
-  return `draft-action-packet-${slug}-${stamp}.md`;
+  return `draft-action-packet-${slug}-${stamp}.docx`;
 }
 
 export function decisionBriefFilename(packet: ReviewableActionPacket): string {
   const stamp = packet.generatedAt.slice(0, 10);
   const slug = packet.action.id.replace(/[^a-z0-9-]+/gi, "-").toLowerCase();
-  return `draft-decision-brief-${slug}-${stamp}.md`;
+  return `draft-decision-brief-${slug}-${stamp}.docx`;
 }
 
-function downloadMarkdown(content: string, filename: string) {
+function downloadBlob(blob: Blob, filename: string) {
   if (typeof document === "undefined") {
     throw new Error("Document download requires a browser document.");
   }
-  const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -1283,12 +1282,22 @@ function downloadMarkdown(content: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function downloadDecisionBrief(packet: ReviewableActionPacket) {
-  downloadMarkdown(formatDecisionBriefDocument(packet), decisionBriefFilename(packet));
+async function downloadWordPacket(packet: ReviewableActionPacket, kind: "decision_brief" | "audit_appendix", filename: string) {
+  const response = await fetch("/api/exports/docx", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ packet, kind }),
+  });
+  if (!response.ok) throw new Error("The Word report could not be generated.");
+  downloadBlob(await response.blob(), filename);
 }
 
-export function downloadReviewableActionPacket(packet: ReviewableActionPacket) {
-  downloadMarkdown(formatReviewableActionPacketDocument(packet), reviewableActionPacketFilename(packet));
+export async function downloadDecisionBrief(packet: ReviewableActionPacket) {
+  await downloadWordPacket(packet, "decision_brief", decisionBriefFilename(packet));
+}
+
+export async function downloadReviewableActionPacket(packet: ReviewableActionPacket) {
+  await downloadWordPacket(packet, "audit_appendix", reviewableActionPacketFilename(packet));
 }
 
 export function deterministicFindingsAndProposalSummary(
