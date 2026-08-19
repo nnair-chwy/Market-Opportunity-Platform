@@ -29,6 +29,7 @@ function finding(overrides: Partial<AutonomousInsight> & Pick<AutonomousInsight,
       partnerTeams: [{ teamId: "measurement_analytics", label: "Measurement / Analytics", reason: "Validate evidence quality." }],
       approvalBoundary: "The finding may inform review but cannot authorize a material action.",
     },
+    decisionValue: overrides.decisionValue ?? { score: 50, reason: "Default review value for this fixture.", flags: [] },
   };
 }
 
@@ -58,6 +59,14 @@ test("the digest is not padded when fewer than five findings qualify", () => {
   assert.equal(selection.primaryDigest.length, 2);
   assert.equal(selection.additionalFindings.length, 0);
   assert.equal(selection.counts.global.investigated, 2);
+});
+
+test("decision relevance outranks repeated correlated screens", () => {
+  const selection = selectDiscoveryFindings([
+    finding({ insightId: "raw-scale", department: "marketing", marketName: "Raw scale", signalCount: 4, hypothesisIds: ["m1", "m2", "m3", "m4"], decisionValue: { score: 25, reason: "Scale only.", flags: ["scale_only"] } }),
+    finding({ insightId: "outcome-conflict", department: "marketing", marketName: "Outcome conflict", decisionValue: { score: 90, reason: "Contradictory funnel evidence.", flags: ["cross_measure_contradiction"] } }),
+  ]);
+  assert.equal(selection.primaryDigest[0]?.insightId, "outcome-conflict");
 });
 
 test("the overall digest represents each investigated department before filling remaining slots", () => {
@@ -129,4 +138,18 @@ test("ties resolve deterministically independent of input order", () => {
   const second = selectDiscoveryFindings([beta, alpha]);
   assert.deepEqual(first.primaryDigest.map((item) => item.insightId), ["beta", "alpha"]);
   assert.deepEqual(second.primaryDigest.map((item) => item.insightId), ["beta", "alpha"]);
+});
+
+test("rerun exclusions move prior digest findings to additional results and promote the next strongest", () => {
+  const findings = Array.from({ length: 7 }, (_, index) => finding({
+    insightId: `rerun-${index + 1}`,
+    department: index % 3 === 0 ? "marketing" : index % 3 === 1 ? "pricing" : "cvc",
+    marketName: `Rerun Market ${index + 1}`,
+    signalCount: 7 - index,
+    hypothesisIds: Array.from({ length: 7 - index }, (__, hypothesisIndex) => `rh-${index}-${hypothesisIndex}`),
+  }));
+  const first = selectDiscoveryFindings(findings);
+  const rerun = selectDiscoveryFindings(findings, { excludedPrimaryFindingIds: first.primaryDigest.map((item) => item.insightId) });
+  assert.deepEqual(rerun.primaryDigest.map((item) => item.insightId), ["rerun-7", "rerun-6"]);
+  assert.ok(first.primaryDigest.every((item) => rerun.additionalFindings.some((candidate) => candidate.insightId === item.insightId)));
 });

@@ -20,7 +20,7 @@ import type { PerspectiveViewId } from "../perspectives/contracts.ts";
 import { getDefaultView, selectPerspectiveView } from "../perspectives/index.ts";
 
 const MARKETING_INCREASE_SPEND_INTENT = /\b(?:increase|raise|grow|expand|add|allocate|shift|move)\w*\b[^?.]{0,64}\b(?:ad(?:vertising)?|media|paid[ -]?search)?\s*(?:spend|budget)\b|\b(?:spend|budget)\b[^?.]{0,64}\b(?:more(?!\s+than\b)|increase|raise|grow|expand|add|allocate|shift|move)\w*\b|\bspend\s+more(?!\s+than\b)\b[^?.]{0,32}\b(?:ads?|advertising|media|paid[ -]?search)\b/i;
-const MARKETING_COST_INTENT = /\b(cost per click|cpc|ad cost|ad costs|paying|overpay\w*|paid too much|too much on ads?|spend(?:ing)? more than (?:we )?should|spend efficiency|budget efficiency|waste\w*|reduce\w* spend|decrease\w* spend|cut\w* spend)\b/;
+const MARKETING_COST_INTENT = /\b(cost per click|click cost|click costs|cpc|ad cost|ad costs|paying|overpay\w*|paid too much|too much on ads?|spend(?:ing)? more than (?:we )?should|spend efficiency|budget efficiency|waste\w*|reduce\w* spend|decrease\w* spend|cut\w* spend)\b/;
 const PRICING_INVESTIGATION_INTENT = /\b(competitor|availability|offers?|pricing)\w*\b.*\b(condition|economics?|investigat|signals?|validat|warrant)\w*\b|\b(investigat|validat|warrant)\w*\b.*\b(competitor|availability|offers?|pricing)\w*\b/;
 
 function inferredViewId(question: string, perspectiveId: EvaluationPlan["perspectiveId"]): PerspectiveViewId | undefined {

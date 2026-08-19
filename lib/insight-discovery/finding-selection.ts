@@ -100,7 +100,8 @@ function departmentIndex(department: PerspectiveId) {
 function compareFindings(left: AutonomousInsight, right: AutonomousInsight) {
   const leftQuality = evaluateDiscoveryFindingQuality(left);
   const rightQuality = evaluateDiscoveryFindingQuality(right);
-  return right.signalCount - left.signalCount
+  return (right.decisionValue?.score ?? 0) - (left.decisionValue?.score ?? 0)
+    || right.signalCount - left.signalCount
     || rightQuality.distinctSourceCount - leftQuality.distinctSourceCount
     || rightQuality.distinctMarketCount - leftQuality.distinctMarketCount
     || rightQuality.distinctHypothesisCount - leftQuality.distinctHypothesisCount
@@ -156,7 +157,10 @@ function buildCounts(
   return { global, byDepartment };
 }
 
-export function selectDiscoveryFindings(findings: AutonomousInsight[]): DiscoveryFindingSelection {
+export function selectDiscoveryFindings(
+  findings: AutonomousInsight[],
+  options: { excludedPrimaryFindingIds?: readonly string[] } = {},
+): DiscoveryFindingSelection {
   const intrinsicallyQualified: AutonomousInsight[] = [];
   const suppressedFindings: DiscoveryFindingSelection["suppressedFindings"] = [];
   for (const finding of findings) {
@@ -179,17 +183,19 @@ export function selectDiscoveryFindings(findings: AutonomousInsight[]): Discover
 
   const primaryDigest: AutonomousInsight[] = [];
   const selectedIds = new Set<string>();
+  const excludedPrimaryFindingIds = new Set(options.excludedPrimaryFindingIds ?? []);
+  const primaryCandidates = qualified.filter((finding) => !excludedPrimaryFindingIds.has(finding.insightId));
   // Preserve an overall portfolio view: take the strongest qualified finding
   // from each investigated department before filling the remaining digest
   // slots by global evidence strength.
   for (const department of DEPARTMENT_ORDER) {
-    const strongest = qualified.find((finding) => finding.department === department);
+    const strongest = primaryCandidates.find((finding) => finding.department === department);
     if (strongest && primaryDigest.length < PRIMARY_DISCOVERY_DIGEST_LIMIT) {
       primaryDigest.push(strongest);
       selectedIds.add(strongest.insightId);
     }
   }
-  for (const finding of qualified) {
+  for (const finding of primaryCandidates) {
     if (primaryDigest.length >= PRIMARY_DISCOVERY_DIGEST_LIMIT) break;
     if (!selectedIds.has(finding.insightId)) {
       primaryDigest.push(finding);

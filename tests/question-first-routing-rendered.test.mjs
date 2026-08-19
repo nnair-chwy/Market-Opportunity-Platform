@@ -62,8 +62,11 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(discoveryWorkspace, /investigations ran automatically/);
   assert.match(discoveryWorkspace, /five-item portfolio digest plus every additional qualified finding/i);
   assert.match(discoveryWorkspace, /prepared read-only Snowflake request/);
-  assert.match(discoveryWorkspace, /Best routed to/);
+  assert.match(discoveryWorkspace, /Owner for the next step/);
   assert.match(discoveryWorkspace, /Investigate this finding/);
+  assert.match(discoveryWorkspace, /Run again/);
+  assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
+  assert.match(discoveryWorkspace, /no data refresh is claimed/i);
   assert.match(discoveryWorkspace, /reviewed query registry · deterministic evidence checks/i);
 });
 

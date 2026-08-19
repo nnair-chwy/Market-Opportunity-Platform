@@ -1,10 +1,70 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AutonomousInsight, CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
 import type { PerspectiveId } from "@/lib/perspectives";
 
 const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing: "Pricing", cvc: "CVC" };
+
+const ACTIONABILITY_LABELS = {
+  decision_ready: "Ready for accountable review",
+  test_ready: "Ready to design a controlled test",
+  investigation_ready: "Worth investigating",
+  descriptive_only: "Context only",
+} as const;
+
+function InsightCard({ finding, rankLabel, onInvestigate }: {
+  finding: AutonomousInsight;
+  rankLabel: string;
+  onInvestigate: (question: string) => void;
+}) {
+  const interpretation = finding.analystInterpretation;
+  return (
+    <article className="autonomous-insight-card" data-department={finding.department}>
+      <header>
+        <span>{LABELS[finding.department]}</span>
+        <small>{rankLabel} · {finding.priority}</small>
+      </header>
+      {interpretation ? (
+        <>
+          <div className="discovery-actionability" data-level={interpretation.actionabilityLevel}>
+            {ACTIONABILITY_LABELS[interpretation.actionabilityLevel]}
+          </div>
+          <h2>{finding.headline}</h2>
+          <p>{finding.whyInteresting}</p>
+          <div className="discovery-analyst-action">
+            <span>Analyst recommendation</span>
+            <strong>{interpretation.recommendedNextDecisionOrAction}</strong>
+          </div>
+          <p>{interpretation.whyThisMattersToBusinessOutcome}</p>
+        </>
+      ) : (
+        <><h2>{finding.headline}</h2><p>{finding.whyInteresting}</p></>
+      )}
+      <div className="discovery-applicability">
+        <span>Owner for the next step</span>
+        <strong>{finding.applicability.primaryTeamLabel}</strong>
+        <small>{finding.applicability.reason}</small>
+      </div>
+      <details>
+        <summary>Why this surfaced, evidence, and remaining gaps</summary>
+        <dl>
+          <div><dt>Analyst read</dt><dd>{interpretation?.analystConclusion ?? finding.whyInteresting}</dd></div>
+          <div><dt>Decision question</dt><dd>{interpretation?.decisionQuestion ?? finding.question}</dd></div>
+          <div><dt>Observed signal</dt><dd>{finding.headline}. {finding.whyInteresting}</dd></div>
+          <div><dt>Evidence detail</dt><dd>{finding.evidenceDetail}</dd></div>
+          <div><dt>Why it ranked here</dt><dd>{finding.decisionValue.reason}</dd></div>
+          <div><dt>Screens combined</dt><dd>{finding.signalCount} screen{finding.signalCount === 1 ? "" : "s"}: {finding.hypothesisIds.join(", ")}</dd></div>
+          <div><dt>Sources</dt><dd>{finding.sourceIds.join(", ")}</dd></div>
+          <div><dt>Exact evidence still needed</dt><dd>{interpretation?.exactMissingEvidence.join(" ") ?? finding.nextValidation}</dd></div>
+          <div><dt>Validation partner</dt><dd>{interpretation?.validationPartner.label ?? finding.applicability.partnerTeams.map((team) => team.label).join(", ")}</dd></div>
+          <div><dt>Decision boundary</dt><dd>{interpretation?.approvalBoundary ?? finding.applicability.approvalBoundary}</dd></div>
+        </dl>
+      </details>
+      <button className="secondary-action" type="button" onClick={() => onInvestigate(finding.question)}>Investigate this finding →</button>
+    </article>
+  );
+}
 
 export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
   onBack: () => void;
@@ -12,21 +72,50 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
 }) {
   const [run, setRun] = useState<CurrentDataDiscoveryRun | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRerunning, setIsRerunning] = useState(false);
+  const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
   const [department, setDepartment] = useState<"all" | PerspectiveId>("all");
+
+  const requestRun = useCallback(async (previousRun?: CurrentDataDiscoveryRun) => {
+    const response = await fetch("/api/insight-discovery", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(previousRun ? {
+        previousRunId: previousRun.runId,
+        previousPrimaryFindingIds: previousRun.primaryFindings.map((finding) => finding.insightId),
+        explorationCursor: previousRun.explorationCursor,
+      } : {}),
+    });
+    const payload = await response.json() as CurrentDataDiscoveryRun | { message?: string };
+    if (!response.ok || !("findings" in payload)) throw new Error("message" in payload ? payload.message : "The insight scan did not complete.");
+    return payload;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    void fetch("/api/insight-discovery", { method: "POST" })
-      .then(async (response) => {
-        const payload = await response.json() as CurrentDataDiscoveryRun | { message?: string };
-        if (!response.ok || !("findings" in payload)) throw new Error("message" in payload ? payload.message : "The insight scan did not complete.");
-        if (!cancelled) setRun(payload);
-      })
+    void requestRun()
+      .then((payload) => { if (!cancelled) setRun(payload); })
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof Error ? reason.message : "The insight scan did not complete.");
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [requestRun]);
+
+  async function runAgain() {
+    if (!run || isRerunning) return;
+    setIsRerunning(true);
+    setError(null);
+    try {
+      const nextRun = await requestRun(run);
+      setRun(nextRun);
+      setDepartment("all");
+      requestAnimationFrame(() => resultsHeadingRef.current?.focus());
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The insight scan did not complete.");
+    } finally {
+      setIsRerunning(false);
+    }
+  }
 
   const primaryFindings = useMemo(() => run?.primaryFindings.filter((finding) => department === "all" || finding.department === department) ?? [], [department, run]);
   const additionalFindings = useMemo(() => run?.additionalFindings.filter((finding) => department === "all" || finding.department === department) ?? [], [department, run]);
@@ -35,7 +124,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
     return [...new Map(templates.map((template) => [template.templateId, template])).values()];
   }, [run]);
 
-  if (error) return (
+  if (error && !run) return (
     <section className="autonomous-discovery-page" aria-labelledby="autonomous-discovery-title">
       <button className="text-action" type="button" onClick={onBack}>← Back to questions</button>
       <div className="discovery-error" role="alert"><h1 id="autonomous-discovery-title">The current-data scan could not complete</h1><p>{error}</p><button className="primary-action" type="button" onClick={() => window.location.reload()}>Retry</button></div>
@@ -58,10 +147,15 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
   );
 
   return (
-    <section className="autonomous-discovery-page" aria-labelledby="autonomous-discovery-title">
+    <section className="autonomous-discovery-page" aria-labelledby="autonomous-discovery-title" aria-busy={isRerunning}>
       <div className="discovery-page-nav">
         <button className="text-action" type="button" onClick={onBack}>← Back to questions</button>
-        <span>Run complete · {new Date(run.completedAt).toLocaleString()}</span>
+        <div className="discovery-run-controls">
+          <span>Run {run.runSequence} complete · {new Date(run.completedAt).toLocaleString()}</span>
+          <button className="discovery-run-again" type="button" onClick={() => void runAgain()} disabled={isRerunning}>
+            {isRerunning ? "Running every screen…" : "Run again"}
+          </button>
+        </div>
       </div>
       <header className="discovery-hero">
         <div>
@@ -72,11 +166,30 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
         <span className="discovery-method">Reviewed query registry · deterministic evidence checks</span>
       </header>
 
+      <div className="discovery-run-sequence" data-run-mode={run.runAudit.mode} role="status" aria-live="polite">
+        <span>Run {run.runSequence}</span>
+        <div>
+          <strong>{run.runAudit.mode === "same_snapshot_reprioritization"
+            ? "Same snapshots · next qualified findings"
+            : run.runAudit.mode === "refreshed_data"
+              ? "Source snapshots changed · refreshed ranking"
+              : run.runAudit.mode === "snapshot_comparison_unavailable"
+                ? "Next qualified findings · snapshot comparison unavailable"
+                : "Initial approved-snapshot scan"}</strong>
+          <small>{run.runAudit.mode === "same_snapshot_reprioritization"
+            ? `All ${run.runAudit.reranHypothesisCount} investigations ran again. ${run.runAudit.excludedPreviousPrimaryFindingIds.length} prior digest finding(s) were held out so the next strongest qualified signals could surface; no data refresh is claimed.`
+            : run.runAudit.mode === "refreshed_data"
+              ? `All ${run.runAudit.reranHypothesisCount} investigations ran again against a different source-snapshot fingerprint.`
+              : `All ${run.runAudit.reranHypothesisCount} reviewed investigations ran against the approved evidence available to this run.`}</small>
+        </div>
+      </div>
+      {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
+
       <dl className="discovery-run-metrics">
         <div><dt>Analyses run</dt><dd>{run.analysesRun}</dd></div>
         <div><dt>Markets scanned</dt><dd>{run.marketUniverse}</dd></div>
         <div><dt>Measures examined</dt><dd>{run.measuresExamined}</dd></div>
-        <div><dt>Qualified findings</dt><dd>{run.findings.length}</dd></div>
+        <div><dt>Reviewable leads</dt><dd>{run.findings.length}</dd></div>
       </dl>
 
       <section className="discovery-data-expansion" aria-labelledby="discovery-data-expansion-title">
@@ -119,58 +232,24 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
         ))}
       </div>
 
-      <div className="discovery-results-heading">
+      <div className="discovery-results-heading" ref={resultsHeadingRef} tabIndex={-1}>
         <div><div className="section-label">Primary digest</div><h2>Top findings to review first</h2></div>
         <span>{primaryFindings.length} shown{department === "all" ? " across the portfolio" : ` for ${LABELS[department]}`}</span>
       </div>
 
       <div className="autonomous-insight-grid">
         {primaryFindings.map((finding: AutonomousInsight, index) => (
-          <article key={finding.insightId} className="autonomous-insight-card" data-department={finding.department}>
-            <header><span>{LABELS[finding.department]}</span><small>#{index + 1} · {finding.priority}</small></header>
-            <h2>{finding.headline}</h2>
-            <p>{finding.whyInteresting}</p>
-            <div className="discovery-applicability"><span>Best routed to</span><strong>{finding.applicability.primaryTeamLabel}</strong><small>{finding.applicability.reason}</small></div>
-            <details>
-              <summary>Evidence, method, and next validation</summary>
-              <dl>
-                <div><dt>Evidence detail</dt><dd>{finding.evidenceDetail}</dd></div>
-                <div><dt>Signals combined</dt><dd>{finding.signalCount} screen{finding.signalCount === 1 ? "" : "s"}: {finding.hypothesisIds.join(", ")}</dd></div>
-                <div><dt>Sources</dt><dd>{finding.sourceIds.join(", ")}</dd></div>
-                <div><dt>Validate next</dt><dd>{finding.nextValidation}</dd></div>
-                <div><dt>Cross-team partners</dt><dd>{finding.applicability.partnerTeams.map((team) => team.label).join(", ")}</dd></div>
-                <div><dt>Decision boundary</dt><dd>{finding.applicability.approvalBoundary}</dd></div>
-              </dl>
-            </details>
-            <button className="secondary-action" type="button" onClick={() => onInvestigate(finding.question)}>Investigate this finding →</button>
-          </article>
+          <InsightCard key={finding.insightId} finding={finding} rankLabel={`#${index + 1}`} onInvestigate={onInvestigate} />
         ))}
       </div>
 
       {additionalFindings.length > 0 ? (
         <details className="discovery-additional-findings">
-          <summary>Show {additionalFindings.length} additional qualified finding{additionalFindings.length === 1 ? "" : "s"}</summary>
-          <p>These passed the same evidence, explanation, and next-validation checks but ranked below the primary digest.</p>
+          <summary>Show {additionalFindings.length} additional reviewable lead{additionalFindings.length === 1 ? "" : "s"}</summary>
+          <p>These have traceable evidence and a next validation step, but rank below the primary digest on present decision value.</p>
           <div className="autonomous-insight-grid">
             {additionalFindings.map((finding: AutonomousInsight, index) => (
-              <article key={finding.insightId} className="autonomous-insight-card" data-department={finding.department}>
-                <header><span>{LABELS[finding.department]}</span><small>Additional #{index + 1} · {finding.priority}</small></header>
-                <h2>{finding.headline}</h2>
-                <p>{finding.whyInteresting}</p>
-                <div className="discovery-applicability"><span>Best routed to</span><strong>{finding.applicability.primaryTeamLabel}</strong><small>{finding.applicability.reason}</small></div>
-                <details>
-                  <summary>Evidence, method, and next validation</summary>
-                  <dl>
-                    <div><dt>Evidence detail</dt><dd>{finding.evidenceDetail}</dd></div>
-                    <div><dt>Signals combined</dt><dd>{finding.signalCount} screen{finding.signalCount === 1 ? "" : "s"}: {finding.hypothesisIds.join(", ")}</dd></div>
-                    <div><dt>Sources</dt><dd>{finding.sourceIds.join(", ")}</dd></div>
-                    <div><dt>Validate next</dt><dd>{finding.nextValidation}</dd></div>
-                    <div><dt>Cross-team partners</dt><dd>{finding.applicability.partnerTeams.map((team) => team.label).join(", ")}</dd></div>
-                    <div><dt>Decision boundary</dt><dd>{finding.applicability.approvalBoundary}</dd></div>
-                  </dl>
-                </details>
-                <button className="secondary-action" type="button" onClick={() => onInvestigate(finding.question)}>Investigate this finding →</button>
-              </article>
+              <InsightCard key={finding.insightId} finding={finding} rankLabel={`Additional #${index + 1}`} onInvestigate={onInvestigate} />
             ))}
           </div>
         </details>
@@ -178,6 +257,12 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
 
       <details className="discovery-run-audit">
         <summary>How the autonomous run worked · {run.traces.length} executed analyses</summary>
+        <dl className="discovery-run-audit-meta">
+          <div><dt>Run</dt><dd>{run.runId}</dd></div>
+          <div><dt>Previous run</dt><dd>{run.runAudit.previousRunId ?? "None — initial scan"}</dd></div>
+          <div><dt>Snapshot comparison</dt><dd>{run.runAudit.mode.replaceAll("_", " ")}</dd></div>
+          <div><dt>Snapshot fingerprint</dt><dd>{run.runAudit.snapshotFingerprint.slice(0, 16)}…</dd></div>
+        </dl>
         <ol>{run.traces.map((trace) => <li key={trace.hypothesisId}><strong>{trace.objective}</strong><span>{trace.question}</span><small>{trace.leadsFound} leads · {trace.comparisonsExamined.toLocaleString()} comparisons · {trace.sourceIds.join(", ")}</small></li>)}</ol>
         <h3>Current boundaries</h3>
         <ul>{run.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>

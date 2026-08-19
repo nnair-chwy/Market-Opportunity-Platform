@@ -1,12 +1,15 @@
+import { createHash } from "node:crypto";
 import type { PerspectiveId, PerspectiveViewId } from "../perspectives/contracts.ts";
 import { publicMarkets } from "../data/public-market-ui.ts";
 import { planEvaluation } from "../planning/planner.ts";
 import { runMarketInvestigation, type InvestigationLead } from "../planning/market-investigation.ts";
 import { getReceivingTeam, routeAutonomousGeoFinding, type FindingTeamRoute } from "../planning/receiving-team-catalog.ts";
 import { assessGovernedSnowflakeEscalationFromLocalEvidence, type GovernedSnowflakeEscalationAssessment } from "../snowflake-escalation/index.ts";
+import { interpretAutonomousFinding, type AutonomousAnalystInterpretation } from "./analyst-interpretation.ts";
 import { selectDiscoveryFindings, type DiscoveryFindingSelectionCounts } from "./finding-selection.ts";
+import { encodeInsightDiscoveryCursor } from "./rerun-contract.ts";
 
-export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v1" as const;
+export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v2" as const;
 
 export type DiscoveryHypothesis = {
   id: string;
@@ -23,7 +26,7 @@ export const CURRENT_DATA_HYPOTHESES: readonly DiscoveryHypothesis[] = [
   { id: "marketing-cpc", department: "marketing", viewId: "paid_search_cpc", question: "Which regions have unusually high or low paid search click cost?", objective: "Find cost-pressure patterns worth testing against outcomes." },
   { id: "pricing-availability", department: "pricing", viewId: "competitor_availability", question: "Where does monitored competitor availability differ most across regions?", objective: "Find competitor-coverage anomalies and potential local assortment gaps." },
   { id: "pricing-offer-price", department: "pricing", viewId: "observed_equalized_price", question: "Where do observed equalized competitor offer prices differ most?", objective: "Find regional price-observation contrasts requiring matched-SKU validation." },
-  { id: "pricing-volume", department: "pricing", viewId: "offer_observation_volume", question: "Where is competitor offer monitoring unusually dense or sparse?", objective: "Separate possible market signals from data-coverage artifacts." },
+  { id: "pricing-volume", department: "pricing", viewId: "offer_observation_volume", question: "Which regions have unusually high or low competitor offer observation counts?", objective: "Separate possible market signals from data-coverage artifacts." },
   { id: "pricing-assortment", department: "pricing", viewId: "assortment_breadth", question: "Where does observed competitor assortment breadth differ most?", objective: "Find local assortment hypotheses while retaining monitoring limitations." },
   { id: "cvc-footprint", department: "cvc", viewId: "market_expansion_context", question: "Which markets have the most interesting clinic footprint and household-demand contrasts?", objective: "Find clinic access and footprint patterns worth capacity validation." },
 ] as const;
@@ -59,11 +62,18 @@ export type AutonomousInsight = {
     partnerTeams: Array<{ teamId: FindingTeamRoute["partnerTeams"][number]["teamId"]; label: string; reason: string }>;
     approvalBoundary: string;
   };
+  decisionValue: {
+    score: number;
+    reason: string;
+    flags: Array<"cross_measure_contradiction" | "coverage_risk" | "scale_only" | "capacity_validation" | "peer_diligence">;
+  };
+  analystInterpretation?: AutonomousAnalystInterpretation;
 };
 
 export type CurrentDataDiscoveryRun = {
   version: typeof CURRENT_DATA_DISCOVERY_VERSION;
   runId: string;
+  runSequence: number;
   status: "completed";
   startedAt: string;
   completedAt: string;
@@ -93,6 +103,17 @@ export type CurrentDataDiscoveryRun = {
     owningTeams: string[];
   };
   snowflakeEscalations: GovernedSnowflakeEscalationAssessment[];
+  explorationCursor: string;
+  runAudit: {
+    previousRunId: string | null;
+    mode: "initial_run" | "same_snapshot_reprioritization" | "refreshed_data" | "snapshot_comparison_unavailable";
+    snapshotFingerprint: string;
+    previousSnapshotFingerprint: string | null;
+    reranHypothesisCount: number;
+    excludedPreviousPrimaryFindingIds: string[];
+    newPrimaryFindingIds: string[];
+    repeatedPrimaryFindingIds: string[];
+  };
   traces: Array<{
     hypothesisId: string;
     department: PerspectiveId;
@@ -114,7 +135,7 @@ function unique<T>(values: T[]) {
 }
 
 function marketName(lead: InvestigationLead) {
-  const cbsaCode = lead.marketIds[0];
+  const cbsaCode = lead.id.startsWith("cvc-peer-contrast-") ? lead.marketIds[1] : lead.marketIds[0];
   return publicMarkets.find((market) => market.cbsa_code === cbsaCode)?.cbsa_name
     ?? lead.title.split(":")[0]?.replace(/\s+(?:shows|has|may be)\s+.*$/i, "").trim()
     ?? lead.title;
@@ -130,6 +151,71 @@ function groupOccurrences(occurrences: LeadOccurrence[]) {
   return [...groups.entries()];
 }
 
+const HYPOTHESIS_DECISION_WEIGHT: Record<string, number> = {
+  "marketing-cpc": 58,
+  "marketing-ctr": 52,
+  "marketing-response": 24,
+  "marketing-impressions": 18,
+  "pricing-volume": 58,
+  "pricing-availability": 48,
+  "pricing-offer-price": 38,
+  "pricing-assortment": 34,
+  "cvc-footprint": 45,
+};
+
+function decisionValueForGroup(group: LeadOccurrence[]): AutonomousInsight["decisionValue"] {
+  const flags: AutonomousInsight["decisionValue"]["flags"] = [];
+  let score = Math.max(...group.map((item) => HYPOTHESIS_DECISION_WEIGHT[item.hypothesis.id] ?? 10));
+  const marketingContradiction = group.some(({ hypothesis, lead }) => {
+    if (!["marketing-cpc", "marketing-ctr"].includes(hypothesis.id) || !lead.measureValue) return false;
+    const primaryHigh = lead.measureValue.percentile >= 90;
+    const primaryLow = lead.measureValue.percentile <= 10;
+    const favorableOutcome = lead.supportingMeasures?.some((measure) =>
+      (/conversion_rate/.test(measure.id) && measure.percentile >= 90)
+      || (/cost_per_conversion/.test(measure.id) && measure.percentile <= 10));
+    const adverseOutcome = lead.supportingMeasures?.some((measure) =>
+      (/conversion_rate/.test(measure.id) && measure.percentile <= 10)
+      || (/cost_per_conversion/.test(measure.id) && measure.percentile >= 90));
+    return hypothesis.id === "marketing-cpc"
+      ? (primaryHigh && favorableOutcome) || (primaryLow && adverseOutcome)
+      : (primaryLow && favorableOutcome) || (primaryHigh && adverseOutcome);
+  });
+  if (marketingContradiction) {
+    flags.push("cross_measure_contradiction");
+    score += 35;
+  }
+  const coverageRisk = group.some(({ hypothesis, lead }) =>
+    (hypothesis.id === "pricing-volume" && (lead.measureValue?.percentile ?? 50) <= 10)
+    || (hypothesis.id === "pricing-assortment" && (lead.supportingMeasures?.some((measure) => measure.id === "pricing_offer_observation_volume" && measure.percentile <= 10) ?? false)));
+  if (coverageRisk) {
+    flags.push("coverage_risk");
+    score += 18;
+  }
+  const hypotheses = new Set(group.map((item) => item.hypothesis.id));
+  if ([...hypotheses].every((id) => ["marketing-response", "marketing-impressions"].includes(id))) {
+    flags.push("scale_only");
+    score -= 15;
+  }
+  if (group.some((item) => item.lead.id === "cvc-footprint-intensity-proxy")) {
+    flags.push("capacity_validation");
+    score += 20;
+  } else if (group.some((item) => item.lead.id.startsWith("cvc-peer-contrast-"))) {
+    flags.push("peer_diligence");
+  }
+  const reason = flags.includes("cross_measure_contradiction")
+    ? "A decision-relevant efficiency measure conflicts with the attributed outcome pattern, making explanation more valuable than raw volume ranking."
+    : flags.includes("coverage_risk")
+      ? "Monitoring coverage may be driving the apparent commercial pattern and must be audited before interpretation."
+      : flags.includes("capacity_validation")
+        ? "This directly frames a clinic capacity and appointment-demand validation task."
+        : flags.includes("peer_diligence")
+          ? "This is a peer-market diligence lead, not a clinic or site recommendation."
+          : flags.includes("scale_only")
+            ? "The pattern is primarily market scale or delivery volume and has lower decision value without efficiency outcomes."
+            : "The signal maps to a recurring team investigation but still requires compatible business outcomes and guardrails.";
+  return { score: Math.max(0, Math.min(100, score)), reason, flags };
+}
+
 function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsight {
   const first = group[0]!;
   const signals = unique(group.map((item) => item.lead.businessMeaning));
@@ -138,21 +224,22 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
   const hypotheses = unique(group.map((item) => item.hypothesis));
   const name = marketName(first.lead);
   const signalCount = hypotheses.length;
+  const cvcCapacitySignal = first.hypothesis.department === "cvc" && first.lead.id === "cvc-footprint-intensity-proxy";
   const route = routeAutonomousGeoFinding({
     perspectiveId: first.hypothesis.department,
-    viewId: first.hypothesis.viewId,
-    topic: first.topic,
+    viewId: cvcCapacitySignal ? "clinic_performance_context" : first.hypothesis.viewId,
+    topic: cvcCapacitySignal ? "clinic_performance" : first.topic,
   });
-  return {
+  const finding: AutonomousInsight = {
     insightId: `insight:${key.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`,
     department: first.hypothesis.department,
     marketIds: unique(group.flatMap((item) => item.lead.marketIds)),
     marketName: name,
     headline: signalCount > 1
-      ? `${name} appears in ${signalCount} independent ${first.hypothesis.department.toUpperCase()} regional screens`
+      ? `${name} appears in ${signalCount} registered ${first.hypothesis.department.toUpperCase()} regional screens`
       : first.lead.title,
     whyInteresting: signalCount > 1
-      ? `${signals.slice(0, 2).join(" ")} The repeated appearance makes this a higher-priority investigation lead, not a causal conclusion.`
+      ? `${signals.slice(0, 2).join(" ")} Repeated appearance across correlated measures makes this a higher-priority diagnostic lead, not independent corroboration or a causal conclusion.`
       : signals[0] ?? "This market produced a question-compatible regional contrast.",
     evidenceDetail: observations.slice(0, 3).join(" "),
     nextValidation: validations.slice(0, 2).join(" "),
@@ -172,13 +259,44 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
       })),
       approvalBoundary: route.approvalBoundary,
     },
+    decisionValue: decisionValueForGroup(group),
   };
+  finding.analystInterpretation = interpretAutonomousFinding({
+    finding,
+    teamRoute: route,
+    evidenceReadiness: {
+      firstPartyOutcome: "missing",
+      actionGuardrails: "missing",
+      geographyCompatibility: "missing",
+      cohortComparability: "missing",
+      accountableApproval: "missing",
+      missingEvidence: validations,
+      contraryEvidence: unique(group.map((item) => item.lead.challenge)),
+    },
+    sourceLineage: finding.sourceIds.map((sourceId) => ({
+      sourceId,
+      snapshotVersion: finding.snapshotVersions[0] ?? "unknown-snapshot",
+      role: "signal",
+      description: "Reviewed aggregate regional signal or market context used in the autonomous screen.",
+    })),
+  });
+  return finding;
 }
 
-export function runCurrentDataInsightDiscovery(input: { now?: () => string; runId?: string } = {}): CurrentDataDiscoveryRun {
+export function runCurrentDataInsightDiscovery(input: {
+  now?: () => string;
+  runId?: string;
+  previousRunId?: string;
+  previousPrimaryFindingIds?: string[];
+  previousSnapshotFingerprint?: string;
+  previousRunSequence?: number;
+  previouslyExcludedPrimaryFindingIds?: string[];
+} = {}): CurrentDataDiscoveryRun {
   const now = input.now ?? (() => new Date().toISOString());
   const startedAt = now();
-  const runId = input.runId ?? `discovery:${crypto.randomUUID()}`;
+  const generatedRunId = input.runId ?? `discovery:${crypto.randomUUID()}`;
+  const runSequence = input.previousRunId ? (input.previousRunSequence ?? 1) + 1 : 1;
+  const runId = generatedRunId === input.previousRunId ? `${generatedRunId}:rerun-${runSequence}` : generatedRunId;
   const occurrences: LeadOccurrence[] = [];
   const traces: CurrentDataDiscoveryRun["traces"] = [];
   const snowflakeEscalations: GovernedSnowflakeEscalationAssessment[] = [];
@@ -226,15 +344,33 @@ export function runCurrentDataInsightDiscovery(input: { now?: () => string; runI
   }
 
   const allFindings = groupOccurrences(occurrences).map(([key, group]) => insightFromGroup(key, group));
-  const selection = selectDiscoveryFindings(allFindings);
+  const excludedPreviousPrimaryFindingIds = unique([
+    ...(input.previouslyExcludedPrimaryFindingIds ?? []),
+    ...(input.previousPrimaryFindingIds ?? []),
+  ]);
+  const selection = selectDiscoveryFindings(allFindings, { excludedPrimaryFindingIds: excludedPreviousPrimaryFindingIds });
   const findings = [...selection.primaryDigest, ...selection.additionalFindings];
   const accessRequests = snowflakeEscalations.flatMap((assessment) => assessment.accessRequest ? [assessment.accessRequest] : []);
   const uniqueTemplateIds = unique(accessRequests.flatMap((request) => request.templates.map((template) => template.templateId)));
   const governanceReviewCount = snowflakeEscalations.filter((assessment) => assessment.status === "governance_review_required").length;
+  const snapshotFingerprint = createHash("sha256")
+    .update(JSON.stringify(unique(traces.map((trace) => `${trace.snapshotVersion}:${trace.sourceIds.slice().sort().join(",")}`)).sort()))
+    .digest("hex");
+  const mode = !input.previousRunId
+    ? "initial_run" as const
+    : !input.previousSnapshotFingerprint
+      ? "snapshot_comparison_unavailable" as const
+      : input.previousSnapshotFingerprint === snapshotFingerprint
+        ? "same_snapshot_reprioritization" as const
+        : "refreshed_data" as const;
+  const previousPrimaryIds = new Set(input.previousPrimaryFindingIds ?? []);
+  const primaryFindingIds = selection.primaryDigest.map((finding) => finding.insightId);
+  const cumulativeExcludedPrimaryFindingIds = unique([...excludedPreviousPrimaryFindingIds, ...primaryFindingIds]);
 
   return {
     version: CURRENT_DATA_DISCOVERY_VERSION,
     runId,
+    runSequence,
     status: "completed",
     startedAt,
     completedAt: now(),
@@ -261,12 +397,31 @@ export function runCurrentDataInsightDiscovery(input: { now?: () => string; runI
       owningTeams: unique(accessRequests.flatMap((request) => request.owningTeams)),
     },
     snowflakeEscalations,
+    explorationCursor: encodeInsightDiscoveryCursor({
+      version: "insight-discovery-cursor-v1",
+      runId,
+      runSequence,
+      snapshotFingerprint,
+      excludedPrimaryFindingIds: cumulativeExcludedPrimaryFindingIds,
+    }),
+    runAudit: {
+      previousRunId: input.previousRunId ?? null,
+      mode,
+      snapshotFingerprint,
+      previousSnapshotFingerprint: input.previousSnapshotFingerprint ?? null,
+      reranHypothesisCount: CURRENT_DATA_HYPOTHESES.length,
+      excludedPreviousPrimaryFindingIds,
+      newPrimaryFindingIds: primaryFindingIds.filter((findingId) => !previousPrimaryIds.has(findingId)),
+      repeatedPrimaryFindingIds: primaryFindingIds.filter((findingId) => previousPrimaryIds.has(findingId)),
+    },
     traces,
     limitations: [
       "The autonomous run uses the reviewed local hypothesis registry; it does not yet ask an external model to invent arbitrary SQL.",
       "Findings are descriptive investigation leads from currently approved snapshots, not causal conclusions or authority for price, spend, clinic, lease, or other material action.",
       "Cross-department findings remain separate when geography, period, definitions, or approved crosswalks are incompatible.",
-      "A scheduled production run still needs durable persistence, refresh-event orchestration, receiving-team notifications, and feedback on whether prior findings produced value.",
+      mode === "same_snapshot_reprioritization"
+        ? "This rerun used the same approved snapshot set and reprioritized the next qualified findings; it did not refresh source data."
+        : "A scheduled production run still needs durable persistence, refresh-event orchestration, receiving-team notifications, and feedback on whether prior findings produced value.",
     ],
   };
 }
