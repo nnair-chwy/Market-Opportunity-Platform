@@ -19,6 +19,7 @@ test("descriptive, comparative, and exploratory questions end as results", () =>
 test("questions asking for a material lever end with an action package", () => {
   const cases = [
     ["Where should we increase paid search spend?", "marketing"],
+    ["Where should we spend more on ads?", "marketing"],
     ["Where should we open a clinic?", "cvc"],
     ["Should we approve a new clinic site in Atlanta?", "cvc"],
   ] as const;

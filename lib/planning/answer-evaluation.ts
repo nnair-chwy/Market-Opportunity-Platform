@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { EvaluationPlan, PlannedAction } from "./contracts.ts";
 import type { InvestigationCoverageReport } from "./investigation-coverage.ts";
 import type { MarketInvestigation } from "./market-investigation.ts";
+import { evaluateActionDirection } from "./action-direction.ts";
 
 export const ANSWER_EVALUATION_VERSION = "answer-evaluation-v1" as const;
 
@@ -58,6 +59,11 @@ export function evaluateAnswerCompletion(
     let criterionEvidenceIds = evidenceIds;
 
     if (criterion.criterionId === "answers_confirmed_question") {
+      const directionCheck = evaluateActionDirection(plan, [
+        action.title,
+        action.summary,
+        action.nextStep,
+      ].join(" "));
       if (investigation?.planId === plan.planId && investigation.originalQuestion === plan.originalQuestion && investigation.leads.length) {
         status = investigation.reconciliation?.canCombine === false ? "partial" : "pass";
         explanation = investigation.reconciliation?.canCombine === false
@@ -68,6 +74,15 @@ export function evaluateAnswerCompletion(
         explanation = "The investigation is bound to the confirmed question but retained no supported lead; the answer must state that directly.";
       } else {
         explanation = "No investigation bound to the confirmed question is attached.";
+      }
+      if (directionCheck.status === "opposed" || directionCheck.status === "conflicting") {
+        status = "fail";
+        explanation = directionCheck.explanation;
+      } else if (directionCheck.status === "missing" && status === "pass") {
+        status = "partial";
+        explanation = directionCheck.explanation;
+      } else if (directionCheck.status === "matched") {
+        explanation = `${explanation} ${directionCheck.explanation}`;
       }
     } else if (criterion.criterionId === "respects_decision_boundary") {
       criterionEvidenceIds = [];

@@ -265,6 +265,31 @@ test("Marketing cost questions preserve the decision and selected CPC view in th
   assert.notEqual(compiledAiProposal.resultWorkspaceType, "clarification");
 });
 
+test("Marketing expansion questions preserve spend direction and do not become overpayment reviews", () => {
+  for (const question of ["Where should we increase paid search spend?", "where should we spend more on ads"]) {
+    const plan = planEvaluation(question, "marketing", [], "paid_search_cpc");
+    assert.equal(plan.geographyResolution.mode, "national");
+    assert.equal(plan.intent.topic, "local_growth");
+    assert.equal(plan.intent.clarificationRequired, false);
+    assert.equal(plan.evidenceSelection.viewId, "paid_search_response");
+    assert.match(plan.intent.conciseInterpretation, /incremental-spend test/i);
+    assert.match(plan.intent.conciseInterpretation, /orders.*new customers.*contribution/i);
+    assert.doesNotMatch(plan.intent.conciseInterpretation, /overpayment|cost per click is high/i);
+  }
+
+  const aiIntent = {
+    ...inferPlanningIntent("where should we spend more on ads"),
+    selectedQueries: ["google_ads_context_by_cbsa" as const],
+    clarificationRequired: true as const,
+    clarificationReason: "ambiguous_decision" as const,
+  };
+  const compiled = compileEvaluationPlan("where should we spend more on ads", aiIntent, "ai_proposed", undefined, [], undefined, "paid_search_cpc");
+  assert.equal(compiled.intent.clarificationRequired, false);
+  assert.equal(compiled.geographyResolution.mode, "national");
+  assert.equal(compiled.answerContract.answerMode, "investigation");
+  assert.notEqual(compiled.resultWorkspaceType, "clarification");
+});
+
 test("Google Ads questions route to partial Marketing evidence readiness", () => {
   const national = planEvaluation(
     "Which U.S. DMAs show promising Google Ads demand and acquisition efficiency?",

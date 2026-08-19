@@ -178,3 +178,19 @@ test("runtime capability state can override frozen catalog support", () => {
   assert.equal(result.recommendedQuestions[0].supportLevel, "partial_answer");
   assert.equal(result.recommendedQuestions[0].supportSummary, "A controlled-test design is now available.");
 });
+
+test("question meaning outranks a stale active perspective in typeahead", () => {
+  const result = rankQuestionSuggestions({
+    query: "where should we spend more on ads",
+    activePerspectiveId: "cvc",
+    activeViewId: "household_demand",
+    limitTotal: 3,
+  });
+  const visible = [
+    ...result.previousInvestigations,
+    ...result.recommendedQuestions,
+    ...result.relatedQuestions,
+  ].sort((left, right) => right.score - left.score);
+  assert.equal(visible[0]?.id, "marketing-material-spend-change");
+  assert.equal(visible[0]?.perspectiveId, "marketing");
+});

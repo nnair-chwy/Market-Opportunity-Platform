@@ -7,6 +7,7 @@ import {
   planEvaluation,
   proposedActionFromPlan,
   reconcileEvidenceCompatibility,
+  evaluateActionDirection,
 } from "../lib/planning/index.ts";
 import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
 import { runConfirmedMarketInvestigation, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
@@ -111,6 +112,19 @@ test("marketing finding produces a bounded paid-search lever plan with outcome a
   assert.equal(packet.actionPlan?.lever, "paid_search_spend_test");
   assert.equal(packet.actionPlan?.actionReadiness, "outcome_missing");
   assert.ok(packet.actionPlan?.baseline?.evidenceIds.includes(investigation.leads[0].id));
+});
+
+test("spend-more question produces an increase-aligned package while retaining cost evidence as support", () => {
+  const { plan, brief, investigation } = confirmedAnalysis("Where should we spend more on ads?", "marketing");
+  const selectedLead = investigation.leads[0];
+  const actionPlan = buildInsightActionPlan(plan, investigation, selectedLead, brief, brief.confirmedAt);
+
+  assert.ok(actionPlan);
+  assert.match(actionPlan.recommendation, /bounded paid-search spend-increase test/i);
+  assert.match(actionPlan.recommendation, /pre-registered reversible treatment/i);
+  assert.doesNotMatch(actionPlan.recommendation, /reduce|overpaying/i);
+  assert.match(actionPlan.whyNow, new RegExp(selectedLead.observation.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.equal(evaluateActionDirection(plan, actionPlan.recommendation).status, "matched");
 });
 
 test("pricing finding produces a matched-SKU test plan without inventing a price", () => {

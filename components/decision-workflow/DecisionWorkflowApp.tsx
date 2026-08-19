@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
 import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
+import { AnswerEvidenceTrail } from "@/components/decision-workflow/AnswerEvidenceTrail";
 import { AnswerCoveragePanel } from "@/components/decision-workflow/AnswerCoveragePanel";
-import { ConnectedDataGapsPanel } from "@/components/decision-workflow/ConnectedDataGapsPanel";
 import { DecisionGraphAnimation, type DecisionGraphStep } from "@/components/decision-workflow/DecisionGraphAnimation";
 import { AgenticRunSummary, lifecycleGraphSteps } from "@/components/decision-workflow/AgenticRunSummary";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
@@ -39,6 +39,7 @@ import {
   type MarketInvestigation,
 } from "@/lib/planning/market-investigation";
 import { marketInvestigationFromEvidence } from "@/lib/planning/evidence-market-investigation";
+import { effectivePlanForSourceAdaptation } from "@/lib/planning/source-adaptation-plan";
 import {
   assembleReviewableActionPacket,
   actionReadinessLabel,
@@ -215,6 +216,10 @@ export function DecisionWorkflowApp() {
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
   const showsActionPackage = plan ? presentsActionPackage(plan) : false;
+  const effectivePlan = useMemo(
+    () => (plan ? effectivePlanForSourceAdaptation(plan, evidenceExecution?.sourceAdaptation) : null),
+    [evidenceExecution?.sourceAdaptation, plan],
+  );
 
   const selectedAction = useMemo(
     () => actionOptions.find((action) => action.id === selectedActionId) ?? (plan ? proposedActionFromPlan(plan) : undefined),
@@ -258,38 +263,38 @@ export function DecisionWorkflowApp() {
   );
 
   const insightActionPlan = useMemo(
-    () => (plan && investigation && selectedLead && analysisBrief
-      && analysisBrief.planId === plan.planId
-      && analysisBrief.originalQuestion === plan.originalQuestion
+    () => (effectivePlan && investigation && selectedLead && analysisBrief
+      && analysisBrief.planId === effectivePlan.planId
+      && analysisBrief.originalQuestion === effectivePlan.originalQuestion
       ? buildInsightActionPlan(
-        plan,
+        effectivePlan,
         investigation,
         selectedLead,
         analysisBrief,
         analysisBrief.confirmedAt ?? new Date().toISOString(),
       )
       : null),
-    [analysisBrief, investigation, plan, selectedLead],
+    [analysisBrief, effectivePlan, investigation, selectedLead],
   );
 
   const validationWorkplan = useMemo(
-    () => (plan && !insightActionPlan ? buildValidationWorkplan(plan) : null),
-    [insightActionPlan, plan],
+    () => (effectivePlan && !insightActionPlan ? buildValidationWorkplan(effectivePlan) : null),
+    [effectivePlan, insightActionPlan],
   );
 
   const reviewablePacket = useMemo(
     () => (persistedReviewablePacket && plan && persistedReviewablePacket.planId === plan.planId
       ? persistedReviewablePacket
-      : plan && packetAction
+      : effectivePlan && packetAction
       ? assembleReviewableActionPacket(
-        plan,
+        effectivePlan,
         packetAction,
         new Date().toISOString(),
         investigation ?? undefined,
         investigationFollowUps,
-        analysisBrief?.planId === plan.planId && analysisBrief.originalQuestion === plan.originalQuestion ? analysisBrief : undefined,
-        evidencePlan?.planId === plan.planId && evidencePlan.originalQuestion === plan.originalQuestion ? evidencePlan : undefined,
-        evaluationDefinition?.planId === plan.planId ? evaluationDefinition : undefined,
+        analysisBrief?.planId === effectivePlan.planId && analysisBrief.originalQuestion === effectivePlan.originalQuestion ? analysisBrief : undefined,
+        evidencePlan?.planId === effectivePlan.planId && evidencePlan.originalQuestion === effectivePlan.originalQuestion ? evidencePlan : undefined,
+        evaluationDefinition?.planId === effectivePlan.planId ? evaluationDefinition : undefined,
         { selectedLeadId, contextMetric: selectedContextMetric },
         insightActionPlan ?? undefined,
         null,
@@ -297,7 +302,7 @@ export function DecisionWorkflowApp() {
         evidenceExecution,
       )
       : null),
-    [analysisBrief, evidenceExecution, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, packetAction, persistedReviewablePacket, plan, selectedContextMetric, selectedLeadId, validationWorkplan],
+    [analysisBrief, effectivePlan, evidenceExecution, evidencePlan, evaluationDefinition, insightActionPlan, investigation, investigationFollowUps, packetAction, persistedReviewablePacket, plan, selectedContextMetric, selectedLeadId, validationWorkplan],
   );
 
   const evidenceGraphSteps = useMemo<DecisionGraphStep[]>(() => {
@@ -555,7 +560,8 @@ export function DecisionWorkflowApp() {
       if (parsed.success) {
         executedEvidence = parsed.data;
         setEvidenceExecution(parsed.data);
-        const executedInvestigation = marketInvestigationFromEvidence(plan, parsed.data) ?? nextInvestigation;
+        const executedPlan = effectivePlanForSourceAdaptation(plan, parsed.data.sourceAdaptation);
+        const executedInvestigation = marketInvestigationFromEvidence(executedPlan, parsed.data) ?? nextInvestigation;
         if (executedInvestigation) {
           const executedLeadId = executedInvestigation.leads[0]?.id ?? null;
           const executedDraftId = `draft-1-${Date.now().toString(36)}`;
@@ -1128,7 +1134,7 @@ export function DecisionWorkflowApp() {
                 </section>
               ) : null}
 
-              {sourceReadiness ? <ConnectedDataGapsPanel readiness={sourceReadiness} /> : null}
+              {evidenceExecution ? <AnswerEvidenceTrail plan={effectivePlan ?? plan} result={evidenceExecution} readiness={sourceReadiness} /> : null}
 
               <details className="decision-analysis-details">
                 <summary>How this answer was built</summary>

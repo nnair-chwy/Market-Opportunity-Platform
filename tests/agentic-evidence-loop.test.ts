@@ -235,3 +235,36 @@ test("dynamic pass execution cannot introduce an undeclared source", async () =>
     /returned an undeclared source/,
   );
 });
+
+test("an incompatible reviewed source is recorded but does not alter the answer", async () => {
+  const plan = planEvaluation("Show regional evidence for Atlanta.", "marketing");
+  const executePass = async ({ requestId, plan: passPlan }: { requestId: string; plan: EvaluationPlan }) => responseFor(passPlan, requestId);
+  const baseline = await executeAgenticEvidenceLoop({ requestId: "baseline-compatible-answer", plan }, {
+    maxIterations: 1,
+    now: () => "2026-08-18T12:00:00.000Z",
+    executePass,
+  });
+  const adapted = await executeAgenticEvidenceLoop({ requestId: "incompatible-source-answer", plan }, {
+    maxIterations: 1,
+    now: () => "2026-08-18T12:00:00.000Z",
+    executePass,
+    sourceConsiderations: [{
+      candidateId: "pricing-only-source",
+      label: "Reviewed pricing-only source",
+      sourceIds: ["PRICING-ONLY"],
+      status: "incompatible",
+      reason: "Not used: registered for pricing rather than marketing.",
+      addressesRequirementIds: [],
+    }],
+    dynamicRegistryVersion: "vetted-dynamic-source-registry-v1",
+    dynamicRegistryFingerprint: "a".repeat(64),
+  });
+
+  assert.deepEqual(adapted.evidenceBundle, baseline.evidenceBundle);
+  assert.deepEqual(adapted.sourceIds, baseline.sourceIds);
+  assert.equal(adapted.agenticLifecycle?.finalAnswerStatus, baseline.agenticLifecycle?.finalAnswerStatus);
+  assert.equal(adapted.sourceAdaptation?.sources[0].decision, "incompatible");
+  assert.match(adapted.sourceAdaptation?.sources[0].reason ?? "", /pricing rather than marketing/i);
+  assert.ok(!JSON.stringify(adapted.evidenceBundle).includes("PRICING-ONLY"));
+  assert.ok((adapted.sourceAdaptation?.nextRequiredDataset.fields.length ?? 0) > 0);
+});

@@ -3,6 +3,7 @@ import test from "node:test";
 import { executeEvaluationPlanEvidence } from "../lib/planning/execute-plan.ts";
 import type { EvidenceExecutionResponse } from "../lib/evidence-snapshot/contracts.ts";
 import { goldenMarketInvestigationFromEvidence } from "../lib/planning/golden-market-investigation.ts";
+import { recommendedInvestigationRevision } from "../lib/planning/market-investigation.ts";
 import { planEvaluation } from "../lib/planning/planner.ts";
 import { assembleReviewableActionPacket, proposedActionFromPlan } from "../lib/planning/reviewable-packet.ts";
 
@@ -29,6 +30,15 @@ test("Marketing shows the same Philadelphia and San Antonio leads and cohort as 
   assert.equal(result.screeningScope.eligibleCohort, (evidence.rows[0] as Record<string, unknown>).cohort);
   assert.match(result.leads[0].challenge, /not first-party commercial outcomes|not first-party/i);
   assert.match(result.limitations.join(" "), /cannot authorize.*spend/i);
+});
+
+test("a spend-increase result recommends the matching commercial validation follow-up", async () => {
+  const plan = planEvaluation("where should we spend more on ads", "marketing");
+  const evidence = await executeEvaluationPlanEvidence({ requestId: "alignment-marketing-increase", plan });
+  const result = goldenMarketInvestigationFromEvidence(plan, evidence);
+  assert.ok(result);
+  assert.match(recommendedInvestigationRevision(result), /orders.*new customers.*contribution.*incrementality.*spend-increase/i);
+  assert.doesNotMatch(recommendedInvestigationRevision(result), /clinic economics/i);
 });
 
 test("Pricing keeps Kankakee visible as a one-ZIP monitoring lead, not a price action", async () => {

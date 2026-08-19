@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -16,10 +18,11 @@ test("execution API validates requests and reports local snapshot availability h
     server: { hmr: false, middlewareMode: true },
   });
   t.after(() => vite.close());
-  const [{ POST }, scenarios, planner] = await Promise.all([
+  const [{ POST }, scenarios, planner, contracts] = await Promise.all([
     vite.ssrLoadModule("/app/api/evaluation-plans/execute/route.ts"),
     vite.ssrLoadModule("/lib/demo/scenarios.ts"),
     vite.ssrLoadModule("/lib/planning/planner.ts"),
+    vite.ssrLoadModule("/lib/evidence-snapshot/contracts.ts"),
   ]);
 
   const malformed = await POST(new Request("http://localhost/api/evaluation-plans/execute", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ requestId: "bad", plan: { planId: "bad" } }) }));
@@ -34,6 +37,12 @@ test("execution API validates requests and reports local snapshot availability h
     assert.equal(body.requestId, `route-${id}`);
     assert.equal(body.planId, plan.planId);
     assert.equal(body.originalQuestion, question);
+    assert.equal(body.sourceAdaptation.version, "source-adaptation-readiness-v1");
+    assert.equal(body.sourceAdaptation.originalGoal, question);
+    assert.match(body.sourceAdaptation.registryFingerprint, /^[a-f0-9]{64}$/);
+    assert.ok(["adapted_with_new_evidence", "reviewed_sources_considered", "no_compatible_reviewed_source"].includes(body.sourceAdaptation.status));
+    assert.ok(Array.isArray(body.sourceAdaptation.sources));
+    assert.ok(Array.isArray(body.sourceAdaptation.nextRequiredDataset.fields));
     assert.ok(["complete", "partial", "blocked", "failed"].includes(body.status));
     if (id === "clinicPerformance") {
       assert.equal(body.executionMode, "synthetic_demo");
@@ -77,5 +86,44 @@ test("execution API validates requests and reports local snapshot availability h
   } else {
     assert.equal(normalizedBody.status, "failed");
     assert.equal(JSON.stringify(normalizedBody).includes(process.cwd()), false);
+  }
+
+  const originalCwd = process.cwd();
+  const runtimeDirectory = await mkdtemp(join(tmpdir(), "evaluation-route-runtime-"));
+  try {
+    process.chdir(runtimeDirectory);
+    const plan = planner.planEvaluation("Where should we increase paid search spend?", "marketing");
+    const response = await POST(new Request("http://localhost/api/evaluation-plans/execute", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ requestId: "route-bundled-registry", plan }) }));
+    const body = await response.json();
+    assert.notEqual(response.status, 500);
+    assert.equal(body.requestId, "route-bundled-registry");
+    assert.equal(body.planId, plan.planId);
+    assert.equal(body.sourceAdaptation.version, "source-adaptation-readiness-v1");
+  } finally {
+    process.chdir(originalCwd);
+    await rm(runtimeDirectory, { recursive: true, force: true });
+  }
+
+  const originalServiceUrl = process.env.LOCAL_EVIDENCE_SERVICE_URL;
+  const originalFetch = globalThis.fetch;
+  try {
+    process.env.LOCAL_EVIDENCE_SERVICE_URL = "http://127.0.0.1:1";
+    globalThis.fetch = async () => { throw new Error("Simulated local evidence runtime failure"); };
+    const plan = planner.planEvaluation("Where should we increase paid search spend?", "marketing");
+    const response = await POST(new Request("http://localhost/api/evaluation-plans/execute", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ requestId: "route-runtime-failure", plan }) }));
+    const body = await response.json();
+    assert.equal(response.status, 422);
+    assert.equal(body.status, "failed");
+    assert.equal(body.errorCode, "EVIDENCE_EXECUTION_RUNTIME_FAILED");
+    assert.equal(body.requestId, "route-runtime-failure");
+    assert.equal(body.planId, plan.planId);
+    assert.deepEqual(body.rows, []);
+    assert.deepEqual(body.evidenceBundle, []);
+    assert.equal(JSON.stringify(body).includes("Simulated local evidence runtime failure"), false);
+    assert.equal(contracts.evidenceExecutionResponseSchema.safeParse(body).success, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalServiceUrl === undefined) delete process.env.LOCAL_EVIDENCE_SERVICE_URL;
+    else process.env.LOCAL_EVIDENCE_SERVICE_URL = originalServiceUrl;
   }
 });

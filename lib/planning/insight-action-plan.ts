@@ -3,6 +3,7 @@ import type { EvaluationPlan } from "./contracts.ts";
 import type { InvestigationLead, MarketInvestigation } from "./market-investigation.ts";
 import { evaluateAnswerCompletion, type AnswerEvaluationReport } from "./answer-evaluation.ts";
 import { checkInvestigationCoverage } from "./investigation-coverage.ts";
+import { requestedActionDirection } from "./action-direction.ts";
 
 export type InsightActionWorkstream = {
   id: string;
@@ -68,6 +69,7 @@ function marketNameFromLead(lead: InvestigationLead) {
   return lead.title
     .replace(/ has the highest.*$/i, "")
     .replace(/ has (?:higher|mixed|source-linked).*$/i, "")
+    .replace(/ shows .*$/i, "")
     .replace(/'s higher.*$/i, "")
     .replace(/ form a useful footprint contrast.*$/i, "")
     .replace(/ is validation priority \d+.*$/i, "")
@@ -120,6 +122,8 @@ function buildCommercialActionPlan(
   const marketName = marketNameFromLead(lead);
   const assessment = actionAssessment(plan, investigation);
   const isMarketing = plan.perspectiveId === "marketing";
+  const requestedDirection = requestedActionDirection(plan);
+  const increaseMarketingSpend = isMarketing && requestedDirection === "increase";
   const owner = isMarketing ? "Marketing Science + Paid Search" : "Pricing Analytics + Pricing Science";
   const lever: InsightActionPlan["lever"] = isMarketing ? "paid_search_spend_test" : "pricing_test";
   const kpi = isMarketing
@@ -178,7 +182,9 @@ function buildCommercialActionPlan(
       owner,
       dueDate: addBusinessDays(start, 7),
       action: isMarketing
-        ? `Pre-register a reversible spend-test design for ${marketName}, including test/control cohorts, paid and organic/direct outcomes, power, budget bounds, contamination checks, and rollback rules; do not change spend yet.`
+        ? increaseMarketingSpend
+          ? `Pre-register a reversible paid-search spend-increase test for ${marketName}. Define a bounded treatment increase against a stable control, with paid and organic/direct outcomes, power, budget bounds, contamination checks, and rollback rules; do not change live spend yet.`
+          : `Pre-register a reversible spend-test design for ${marketName}, including test/control cohorts, paid and organic/direct outcomes, power, budget bounds, contamination checks, and rollback rules; do not change spend yet.`
         : `Pre-register a reversible matched-SKU price-test design for ${marketName}, including treatment/control, economics, customer outcomes, power, inventory and promotion controls, and rollback rules; do not change price yet.`,
       deliverable: "An owner-reviewed test protocol with source-linked baseline, KPI, threshold, guardrails, sensitivity cases, stop condition, and approval gate.",
       completionCriteria: validationThreshold,
@@ -213,11 +219,13 @@ function buildCommercialActionPlan(
     recommendation: isMarketing
       ? youtubeFactor
         ? `Keep the ${marketName} recommendation channel-specific: prepare the paid-search validation and add a separate YouTube comparison before any cross-channel budget reallocation.`
-        : `Prepare a bounded paid-search spend test for ${marketName}; do not change live spend until the evidence and approval gates pass.`
+        : increaseMarketingSpend
+          ? `Prepare a bounded paid-search spend-increase test for ${marketName}; increase only within a pre-registered reversible treatment after the evidence and approval gates pass, and do not change live spend yet.`
+          : `Prepare a bounded paid-search spend test for ${marketName}; do not change live spend until the evidence and approval gates pass.`
       : `Prepare a bounded matched-SKU pricing test for ${marketName}; do not change live price until the evidence and approval gates pass.`,
     whyNow: `${lead.businessMeaning} Evidence detail: ${lead.observation} ${investigation.analystRevision?.effectOnRecommendation ?? ""} This supports a reversible validation path, not a causal or material-action conclusion. ${lead.challenge}`,
     whatThisInforms: [
-      `Whether ${marketName} merits a controlled ${isMarketing ? "paid-search spend" : "pricing"} test`,
+      `Whether ${marketName} merits a controlled ${increaseMarketingSpend ? "paid-search spend-increase" : isMarketing ? "paid-search spend" : "pricing"} test`,
       "Which outcome, compatibility, measurement, and approval gaps must be resolved first",
       "Whether the observed signal survives a comparable cohort, sensitivity checks, and contrary explanations",
     ],

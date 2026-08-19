@@ -11,6 +11,11 @@ import { executeEvaluationPlanEvidence, type PlanExecutionOptions } from "./exec
 import { marketInvestigationFromEvidence } from "./evidence-market-investigation.ts";
 import { composeFinalAnswer } from "./final-answer-composer.ts";
 import { checkInvestigationCoverage } from "./investigation-coverage.ts";
+import {
+  adaptPlanForUsedSources,
+  buildSourceAdaptationReadiness,
+  type DynamicSourceConsideration,
+} from "./source-adaptation.ts";
 
 export const AGENTIC_EVIDENCE_LOOP_VERSION = "agentic-evidence-loop-v1" as const;
 export const DEFAULT_AGENTIC_MAX_ITERATIONS = 3;
@@ -44,6 +49,9 @@ export type AgenticEvidenceLoopOptions = PlanExecutionOptions & {
     input: { requestId: string; plan: EvaluationPlan },
     options: PlanExecutionOptions,
   ) => Promise<EvidenceExecutionResponse>;
+  sourceConsiderations?: readonly DynamicSourceConsideration[];
+  dynamicRegistryVersion?: string;
+  dynamicRegistryFingerprint?: string;
 };
 
 const QUERY_FAMILY: Record<RegisteredQuery, PlanningIntent["sourceFamilies"][number] | "coverage"> = {
@@ -230,6 +238,7 @@ export async function executeAgenticEvidenceLoop(
   const passReceipts: AgenticEvidenceLifecycle["passes"] = [];
   const exhaustedQueries: string[] = [];
   const seenEvidence = new Set<string>();
+  const usedCandidateEvidence = new Map<string, string[]>();
   let finalAnswerStatus: AgenticEvidenceLifecycle["finalAnswerStatus"] = "fail";
   let stopStatus: AgenticEvidenceLifecycle["status"] = "best_available_answer";
   let stopReason = "Every compatible registered source was investigated; the best available answer retains unresolved criteria.";
@@ -252,14 +261,17 @@ export async function executeAgenticEvidenceLoop(
     responses.push(response);
     if (researchPass.kind === "dynamic") exhaustedQueries.push(`dynamic:${researchPass.candidate.id}`);
     else exhaustedQueries.push(...selectedQueries);
-    const merged = mergePassResponses(plan, requestId, responses);
-    const investigation = marketInvestigationFromEvidence(plan, merged) ?? undefined;
-    const coverage = checkInvestigationCoverage(plan, investigation);
-    const composed = composeFinalAnswer(plan, investigation, plan.actions[0], coverage);
-    const evaluation = evaluateAnswerCompletion(plan, investigation, coverage);
-    finalAnswerStatus = evaluation.overallStatus;
     const newEvidence = response.evidenceBundle.filter((item) => !seenEvidence.has(item.evidenceId));
     newEvidence.forEach((item) => seenEvidence.add(item.evidenceId));
+    if (researchPass.kind === "dynamic" && newEvidence.length) usedCandidateEvidence.set(researchPass.candidate.id, newEvidence.map((item) => item.evidenceId));
+    const usedConsiderations = (options.sourceConsiderations ?? []).filter((item) => usedCandidateEvidence.has(item.candidateId));
+    const adaptedPlan = adaptPlanForUsedSources(plan, usedConsiderations);
+    const merged = mergePassResponses(adaptedPlan, requestId, responses);
+    const investigation = marketInvestigationFromEvidence(adaptedPlan, merged) ?? undefined;
+    const coverage = checkInvestigationCoverage(adaptedPlan, investigation);
+    const composed = composeFinalAnswer(adaptedPlan, investigation, adaptedPlan.actions[0], coverage);
+    const evaluation = evaluateAnswerCompletion(adaptedPlan, investigation, coverage);
+    finalAnswerStatus = evaluation.overallStatus;
     passReceipts.push({
       passId: `${requestId}:pass-${index + 1}`,
       iteration: index + 1,
@@ -295,7 +307,13 @@ export async function executeAgenticEvidenceLoop(
     }
   }
 
-  const merged = mergePassResponses(plan, requestId, responses);
+  const usedConsiderations = (options.sourceConsiderations ?? []).filter((item) => usedCandidateEvidence.has(item.candidateId));
+  const adaptedPlan = adaptPlanForUsedSources(plan, usedConsiderations);
+  const merged = mergePassResponses(adaptedPlan, requestId, responses);
+  const finalInvestigation = marketInvestigationFromEvidence(adaptedPlan, merged) ?? undefined;
+  const finalCoverage = checkInvestigationCoverage(adaptedPlan, finalInvestigation);
+  const finalEvaluation = evaluateAnswerCompletion(adaptedPlan, finalInvestigation, finalCoverage);
+  finalAnswerStatus = finalEvaluation.overallStatus;
   const lifecycle: AgenticEvidenceLifecycle = {
     version: AGENTIC_EVIDENCE_LOOP_VERSION,
     runId: requestId,
@@ -310,5 +328,15 @@ export async function executeAgenticEvidenceLoop(
     finalAnswerStatus,
     passes: passReceipts,
   };
-  return evidenceExecutionResponseSchema.parse({ ...merged, agenticLifecycle: lifecycle });
+  const sourceAdaptation = options.dynamicRegistryVersion && options.dynamicRegistryFingerprint
+    ? buildSourceAdaptationReadiness({
+        plan,
+        registryVersion: options.dynamicRegistryVersion,
+        registryFingerprint: options.dynamicRegistryFingerprint,
+        considerations: [...(options.sourceConsiderations ?? [])],
+        usedCandidateEvidence,
+        evaluation: finalEvaluation,
+      })
+    : undefined;
+  return evidenceExecutionResponseSchema.parse({ ...merged, agenticLifecycle: lifecycle, sourceAdaptation });
 }

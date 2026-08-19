@@ -79,6 +79,15 @@ test("routes the paid-search spend starter to the bounded Marketing evidence ins
   assert.match(response.guardrails.join(" "), /cannot authorize.*spend/i);
 });
 
+test("routes a plain-language ads expansion question to the bounded Marketing candidates", async () => {
+  const plan = planEvaluation("where should we spend more on ads", "marketing", [], "paid_search_cpc");
+  assert.equal(plan.evidenceSelection.viewId, "paid_search_response");
+  assert.equal(goldenQuestionFamilyForPlan(plan), "marketing");
+  const response = await executeEvaluationPlanEvidence({ requestId: "golden-marketing-plain-language", plan });
+  assert.equal(response.status, "partial");
+  assert.deepEqual(response.geographyIds, ["cbsa:37980", "cbsa:41700"]);
+});
+
 test("keeps the Pricing lead a one-ZIP monitoring investigation rather than a price recommendation", async () => {
   const plan = executableGoldenPlan("pricing");
   const response = await executeEvaluationPlanEvidence({ requestId: "golden-pricing", plan });

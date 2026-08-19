@@ -19,12 +19,14 @@ import type { DecisionFramingProposal } from "./decision-framing.ts";
 import type { PerspectiveViewId } from "../perspectives/contracts.ts";
 import { getDefaultView, selectPerspectiveView } from "../perspectives/index.ts";
 
-const MARKETING_COST_INTENT = /\b(cost per click|cpc|ad cost|ad costs|ad spend|media spend|spend|spending|paying|overpay\w*|paid too much|too much on ads?|spend efficiency|budget efficiency)\b/;
+const MARKETING_INCREASE_SPEND_INTENT = /\b(?:increase|raise|grow|expand|add|allocate|shift|move)\w*\b[^?.]{0,64}\b(?:ad(?:vertising)?|media|paid[ -]?search)?\s*(?:spend|budget)\b|\b(?:spend|budget)\b[^?.]{0,64}\b(?:more(?!\s+than\b)|increase|raise|grow|expand|add|allocate|shift|move)\w*\b|\bspend\s+more(?!\s+than\b)\b[^?.]{0,32}\b(?:ads?|advertising|media|paid[ -]?search)\b/i;
+const MARKETING_COST_INTENT = /\b(cost per click|cpc|ad cost|ad costs|paying|overpay\w*|paid too much|too much on ads?|spend(?:ing)? more than (?:we )?should|spend efficiency|budget efficiency|waste\w*|reduce\w* spend|decrease\w* spend|cut\w* spend)\b/;
 const PRICING_INVESTIGATION_INTENT = /\b(competitor|availability|offers?|pricing)\w*\b.*\b(condition|economics?|investigat|signals?|validat|warrant)\w*\b|\b(investigat|validat|warrant)\w*\b.*\b(competitor|availability|offers?|pricing)\w*\b/;
 
 function inferredViewId(question: string, perspectiveId: EvaluationPlan["perspectiveId"]): PerspectiveViewId | undefined {
   const value = question.toLowerCase();
   if (perspectiveId === "marketing") {
+    if (MARKETING_INCREASE_SPEND_INTENT.test(value)) return "paid_search_response";
     if (MARKETING_COST_INTENT.test(value)) return "paid_search_cpc";
     if (/\b(click-through|click through|ctr)\b/.test(value)) return "paid_search_ctr";
     if (/\b(impressions?|delivery|reach)\b/.test(value)) return "paid_search_impressions";
@@ -170,6 +172,9 @@ function decisionInterpretationForView(
   const value = question.toLowerCase();
 
   if (perspectiveId === "marketing") {
+    if (has(value, MARKETING_INCREASE_SPEND_INTENT)) {
+      return "Find regions where paid-search response, efficient delivery, and scale support a bounded incremental-spend test. Validate orders, new customers, contribution, campaign comparability, and incrementality before a lasting budget change.";
+    }
     if (activeViewId === "paid_search_cpc" || has(value, MARKETING_COST_INTENT)) {
       return "Identify regions where paid-search cost per click is high and attributed conversion efficiency is weak versus structurally comparable markets, then test campaign mix and commercial outcomes before calling it overpayment.";
     }
@@ -213,7 +218,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   const clinic = has(value, /\b(clinic|clinics|vet care|veterinary)\b/);
   const performance = clinic && has(value, /\b(performance|peer|underperform|operating)\b/);
   const clinicMetric = has(value, /\b(rx|prescription|prescriptions|clinic orders?|clinic sales?|clinic customers?|total orders?|total customers?)\b/);
-  const ads = has(value, /\b(google ads?|ad spend|advertising|impressions?|clicks?|conversions?)\b/);
+  const ads = has(value, /\b(google ads?|ads?|ad spend|advertising|impressions?|clicks?|conversions?)\b/);
   const coverage = has(value, /\b(coverage|available sources?|data availability|have both|has both)\b/)
     || has(value, /\bwhat evidence (?:is|are) available\b/)
     || has(value, /\bwhat (?:data|evidence) (?:is|are) available\b/)
@@ -251,6 +256,7 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   if (clinic && has(value, /\bsales?\b/) && !requestedMetrics.includes("net_sales")) requestedMetrics.push("net_sales");
   if (clinic && has(value, /\bprescriptions?\b/) && has(value, /\bsales?\b/) && !requestedMetrics.includes("rx_net_sales")) requestedMetrics.push("rx_net_sales");
   addMetric("google_ads_spend", /\b(google ads?|ad|advertising) spend\b/);
+  if (ads && /\b(spend|budget)\b/.test(value) && !requestedMetrics.includes("google_ads_spend")) requestedMetrics.push("google_ads_spend");
   addMetric("google_ads_impressions", /\bimpressions?\b/);
   addMetric("google_ads_clicks", /\bclicks?\b/);
   addMetric("google_ads_conversions", /\bconversions?\b/);
@@ -745,6 +751,10 @@ export function compileEvaluationPlan(
     && /\b(paid[ -]?search|google ads?|campaign|marketing)\b/i.test(question)
     && /\b(comparable|geograph|markets?|regional)\w*\b/i.test(question)
     && /\b(response|outcomes?|validat|investigat|signals?)\w*\b/i.test(question);
+  const boundedMarketingLever = (perspectiveId === "marketing" || queryNormalizedIntent.topic === "local_growth")
+    && queryNormalizedIntent.requestedAction !== "approve"
+    && /\b(?:ads?|advertising|paid[ -]?search|campaign|media)\b/i.test(question)
+    && /\b(?:spend|budget|increase|decrease|shift|reallocat|more)\w*\b/i.test(question);
   const normalizedIntent = planningIntentSchema.parse(
     boundedPricingInvestigation
       ? {
@@ -756,6 +766,15 @@ export function compileEvaluationPlan(
           clarificationReason: "none",
           conciseInterpretation: "Investigate observed regional competitor conditions, coverage, and current commercial context, then identify the outcome and guardrail evidence required before any pricing action.",
         }
+      : boundedMarketingLever
+        ? {
+            ...queryNormalizedIntent,
+            topic: "local_growth",
+            geographyGrain: "cbsa",
+            requestedAction: queryNormalizedIntent.requestedAction === "describe" ? "investigate" : queryNormalizedIntent.requestedAction,
+            clarificationRequired: false,
+            clarificationReason: "none",
+          }
       : perspectiveId && activeViewId && queryNormalizedIntent.topic === "other"
       ? {
           ...queryNormalizedIntent,

@@ -1,0 +1,62 @@
+.panel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #d7e1ed;
+  border-radius: 14px;
+  background: #f8fafd;
+  color: #203657;
+}
+
+.heading { align-items: end; display: flex; gap: 18px; justify-content: space-between; }
+.heading > div { display: grid; gap: 4px; }
+.heading span { color: #3465b2; font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.heading h2 { font-size: 18px; letter-spacing: -.015em; margin: 0; }
+.heading small { color: #718096; font-size: 10px; }
+
+.trail { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(150px, .75fr) minmax(140px, .65fr); list-style: none; margin: 15px 0 18px; padding: 0; }
+.trail li { border-top: 2px solid #c4d4e8; display: grid; gap: 4px; min-width: 0; padding: 11px 24px 0 0; position: relative; }
+.trail li::before { background: #fff; border: 3px solid #2f68bd; border-radius: 50%; content: ""; height: 8px; left: 0; position: absolute; top: -7px; width: 8px; }
+.trail li:last-child { border-color: #d8a414; }
+.trail li:last-child::before { border-color: #d8a414; }
+.trail span { color: #738096; font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.trail strong { font-size: 11px; line-height: 1.42; overflow-wrap: anywhere; }
+.trail small { color: #718096; font-size: 9px; line-height: 1.4; }
+
+.contentGrid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1.35fr) minmax(270px, .65fr); }
+.contentGrid > section { min-width: 0; }
+.contentGrid h3, .addDataBody h3 { font-size: 12px; margin: 0 0 9px; }
+.sources { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.sources li { background: #fff; border: 1px solid #dce4ef; border-left: 3px solid #2f68bd; border-radius: 9px; display: grid; gap: 5px; padding: 11px 12px; }
+.sources li > div { align-items: center; display: flex; gap: 10px; justify-content: space-between; }
+.sources strong { font-size: 11px; }
+.sources span { background: #e3f3ec; border-radius: 999px; color: #247155; flex: 0 0 auto; font-size: 8px; font-weight: 850; padding: 4px 6px; text-transform: uppercase; }
+.sources span[data-limited="true"] { background: #fff1c9; color: #7a5b08; }
+.sources p, .considered p, .addDataBody p { color: #55667e; font-size: 10px; line-height: 1.45; margin: 0; }
+.sources small { color: #7c899c; font-size: 9px; }
+.empty { background: #fff; border: 1px dashed #cbd7e6; border-radius: 9px; padding: 12px; }
+
+.considered { background: #fff; border: 1px solid #e2d9bd; border-radius: 9px; padding: 12px; }
+.considered ul, .addDataBody ul, .addDataBody ol { color: #58677d; font-size: 10px; line-height: 1.45; margin: 0; padding-left: 17px; }
+.considered li + li, .addDataBody li + li { margin-top: 5px; }
+.considered details { margin-top: 9px; }
+.considered summary, .addDataBody summary { color: #42618a; cursor: pointer; font-size: 9px; font-weight: 800; }
+
+.addData { background: #102b5d; border-radius: 10px; color: #fff; margin-top: 12px; }
+.addData > summary { cursor: pointer; display: grid; gap: 4px; padding: 13px 15px; }
+.addData > summary span { font-size: 12px; font-weight: 800; }
+.addData > summary small { color: #bcd0ec; font-size: 9px; }
+.addDataBody { background: #fff; border: 1px solid #cdd9e8; border-top: 0; color: #203657; display: grid; gap: 18px; grid-template-columns: 1fr 1fr; padding: 15px; }
+.addDataBody > div { min-width: 0; }
+.addDataBody > div > strong { display: block; font-size: 10px; margin: 11px 0 6px; }
+.addDataBody > div > small { color: #7b8798; display: block; font-size: 9px; line-height: 1.4; margin-top: 10px; }
+.addDataBody details { border-top: 1px solid #e1e7ef; margin-top: 10px; padding-top: 9px; }
+.addDataBody details ul { margin-top: 8px; }
+
+@media (max-width: 760px) {
+  .heading { align-items: start; flex-direction: column; gap: 5px; }
+  .trail { grid-template-columns: 1fr; margin-left: 5px; }
+  .trail li { border-left: 2px solid #c4d4e8; border-top: 0; padding: 0 0 14px 16px; }
+  .trail li::before { left: -7px; top: 1px; }
+  .trail li:last-child { border-left-color: #d8a414; }
+  .contentGrid, .addDataBody { grid-template-columns: 1fr; }
+}

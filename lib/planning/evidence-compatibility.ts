@@ -231,15 +231,15 @@ export function reconcileEvidenceCompatibility(
     for (let rightIndex = leftIndex + 1; rightIndex < evidence.length; rightIndex += 1) {
       const left = evidence[leftIndex];
       const right = evidence[rightIndex];
-      if (left.metricId !== right.metricId) continue;
       const sameGeography = (left.geographyId ?? left.geographyLabel) === (right.geographyId ?? right.geographyLabel);
       if (!sameGeography) continue;
       const pairEvidenceIds = [left.evidenceId, right.evidenceId];
       const pairSourceIds = unique([left.sourceId, right.sourceId]);
       const periodsOverlap = overlap(left, right);
-      if (periodsOverlap === false) {
-        addIssue({ type: "time_period_nonoverlap", severity: "warning", message: `${left.metricId} observations for ${left.geographyLabel} do not overlap in time and must not be described as concurrent.`, evidenceIds: pairEvidenceIds, sourceIds: pairSourceIds });
+      if (periodsOverlap === false && (operation === "join" || left.metricId === right.metricId)) {
+        addIssue({ type: "time_period_nonoverlap", severity: "warning", message: `${left.metricId} and ${right.metricId} observations for ${left.geographyLabel} do not overlap in time and must not be described as concurrent.`, evidenceIds: pairEvidenceIds, sourceIds: pairSourceIds });
       }
+      if (left.metricId !== right.metricId) continue;
       const leftDefinition = metadataString(left, ["metricDefinitionId", "definitionId"]);
       const rightDefinition = metadataString(right, ["metricDefinitionId", "definitionId"]);
       if (!leftDefinition || !rightDefinition) {

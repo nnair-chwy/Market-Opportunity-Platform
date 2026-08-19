@@ -192,6 +192,38 @@ export const agenticEvidenceLifecycleSchema = z.object({
 export type AgenticEvidenceLifecycle = z.infer<typeof agenticEvidenceLifecycleSchema>;
 export type AgenticEvidencePassReceipt = z.infer<typeof agenticEvidencePassReceiptSchema>;
 
+export const sourceAdaptationReadinessSchema = z.object({
+  version: z.literal("source-adaptation-readiness-v1"),
+  originalGoal: z.string().trim().min(3).max(600),
+  registryVersion: z.string().trim().min(1),
+  registryFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+  status: z.enum(["adapted_with_new_evidence", "reviewed_sources_considered", "no_compatible_reviewed_source"]),
+  sources: z.array(z.object({
+    candidateId: z.string().trim().min(1),
+    label: z.string().trim().min(1),
+    sourceIds: z.array(z.string().trim().min(1)).min(1),
+    decision: z.enum(["used", "available_not_run", "incompatible"]),
+    reason: z.string().trim().min(1),
+    addressesRequirementIds: z.array(z.string().trim().min(1)),
+    evidenceIds: z.array(z.string().trim().min(1)),
+  }).strict()),
+  goalCheck: z.object({
+    status: z.enum(["pass", "partial", "fail"]),
+    explanation: z.string().trim().min(1),
+    unmetCriterionIds: z.array(z.string().trim().min(1)),
+  }).strict(),
+  nextRequiredDataset: z.object({
+    reason: z.string().trim().min(1),
+    fields: z.array(z.object({
+      field: z.string().trim().min(1),
+      label: z.string().trim().min(1),
+      requirementId: z.string().trim().min(1),
+      description: z.string().trim().min(1),
+    }).strict()),
+  }).strict(),
+}).strict();
+export type SourceAdaptationReadiness = z.infer<typeof sourceAdaptationReadinessSchema>;
+
 export const evidenceExecutionResponseSchema = z.object({
   requestId: z.string().min(1),
   status: z.enum(["complete", "partial", "blocked", "failed"]),
@@ -232,6 +264,7 @@ export const evidenceExecutionResponseSchema = z.object({
   errorCode: z.string().min(1).nullable(),
   errorMessage: z.string().min(1).nullable(),
   agenticLifecycle: agenticEvidenceLifecycleSchema.optional(),
+  sourceAdaptation: sourceAdaptationReadinessSchema.optional(),
 }).strict().superRefine((value, ctx) => {
   if (value.status === "failed" && (!value.errorCode || !value.errorMessage)) ctx.addIssue({ code: "custom", message: "Failed responses require an error code and message.", path: ["errorCode"] });
   if (value.status !== "failed" && (value.errorCode || value.errorMessage)) ctx.addIssue({ code: "custom", message: "Only failed responses may contain execution errors.", path: ["errorCode"] });

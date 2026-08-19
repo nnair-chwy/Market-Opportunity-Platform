@@ -55,7 +55,7 @@ const METRIC_UNITS: Record<string, string> = {
 export function goldenQuestionFamilyForPlan(plan: EvaluationPlan): GoldenQuestionFamily | null {
   if (plan.geographyResolution.selectedCbsaCodes.length) return null;
   const question = plan.originalQuestion.toLowerCase();
-  const marketingSource = /\b(paid[ -]?search|google ads?|campaign|marketing)\b/.test(question);
+  const marketingSource = /\b(paid[ -]?search|google ads?|ads?|advertising|campaign|marketing)\b/.test(question);
   const marketingEvidenceQuestion = /\b(comparable|geograph|markets?|regional)\w*\b/.test(question)
     && /\b(response|outcomes?|validat|investigat|signals?)\w*\b/.test(question);
   const marketingLeverQuestion = /\b(where|increase|decrease|shift|reallocat|spend|budget)\w*\b/.test(question);

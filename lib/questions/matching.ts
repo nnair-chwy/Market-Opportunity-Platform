@@ -159,6 +159,14 @@ function registeredGeographies(question: RegisteredQuestion): QuestionGeographic
   }));
 }
 
+function perspectiveImpliedByQuery(query: string): PerspectiveId | undefined {
+  const value = normalizeQuestionText(query);
+  if (/\b(?:ads?|advertis\w*|campaign|media|paid search|spend|budget|cpc|clicks?|impressions?)\b/.test(value)) return "marketing";
+  if (/\b(?:price|pricing|competitor|assortment|promotion|elasticity)\b/.test(value)) return "pricing";
+  if (/\b(?:clinic|cvc|veterinary|vet|appointment|footprint)\b/.test(value)) return "cvc";
+  return undefined;
+}
+
 function rankParts(input: {
   query: string;
   question: string;
@@ -173,8 +181,15 @@ function rankParts(input: {
   now: Date;
 }) {
   const text = questionTextSimilarity(input.query, input.question) * 100;
-  const perspective = input.activePerspectiveId && input.perspectiveId === input.activePerspectiveId ? 18 : 0;
-  const view = input.activeViewId && input.viewId === input.activeViewId ? 14 : 0;
+  const impliedPerspective = perspectiveImpliedByQuery(input.query);
+  const perspective = impliedPerspective
+    ? input.perspectiveId === impliedPerspective ? 32 : 0
+    : input.activePerspectiveId && input.perspectiveId === input.activePerspectiveId ? 18 : 0;
+  const view = input.activeViewId
+    && input.viewId === input.activeViewId
+    && (!impliedPerspective || input.perspectiveId === impliedPerspective)
+    ? 14
+    : 0;
   const geography = geographyScore(input.geographies, input.selectedGeographicContexts);
   const support = supportScore(input.supportLevel);
   const recency = recencyScore(input.savedAt, input.now);

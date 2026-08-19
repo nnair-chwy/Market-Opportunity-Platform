@@ -1099,8 +1099,10 @@ function revisionInterpretation(investigation: MarketInvestigation, prompt: stri
 }
 
 export function recommendedInvestigationRevision(investigation: MarketInvestigation) {
-  if (investigation.perspectiveId === "marketing" && investigation.mediaScope) {
-    return "Consider whether paid-search cost pressure is offset by regional sales, new customers, and contribution.";
+  if (investigation.perspectiveId === "marketing") {
+    return /\b(?:increase|spend\s+more|expand|raise)\b/i.test(investigation.originalQuestion)
+      ? "Consider whether regional orders, new customers, contribution, and incrementality support the same bounded spend-increase test."
+      : "Consider whether paid-search cost pressure is offset by regional sales, new customers, and contribution.";
   }
   if (investigation.perspectiveId === "pricing") {
     return "Consider whether the observed price difference persists by category and customer segment.";

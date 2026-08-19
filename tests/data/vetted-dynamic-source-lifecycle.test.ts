@@ -7,9 +7,10 @@ import test from "node:test";
 import { discoveredSourceProfileSchema } from "../../lib/data-discovery/contracts.ts";
 import { validateDiscoveredOutcomeSource } from "../../lib/data-discovery/full-file-validator.ts";
 import { createValidatedDiscoveredSourceContract } from "../../lib/discovered-evidence-query/contract-builder.ts";
+import { evidenceExecutionResponseSchema } from "../../lib/evidence-snapshot/contracts.ts";
 import { executeAgenticEvidenceLoop } from "../../lib/planning/agentic-evidence-loop.ts";
 import { planEvaluation } from "../../lib/planning/planner.ts";
-import { createVettedDynamicSourceRuntime } from "../../lib/planning/vetted-dynamic-source-registry.ts";
+import { createVettedDynamicSourceRuntime, loadVettedDynamicSourceRuntime } from "../../lib/planning/vetted-dynamic-source-registry.ts";
 
 test("approved CSV flows through validation, review, aggregate query, lifecycle receipt, and goal check", async () => {
   const workspaceRoot = await mkdtemp(path.join(tmpdir(), "dynamic-lifecycle-"));
@@ -74,7 +75,7 @@ test("approved CSV flows through validation, review, aggregate query, lifecycle 
     minimumGroupSize: 2,
   });
   const plan = planEvaluation("Where should we increase paid search spend?", "marketing");
-  const runtime = createVettedDynamicSourceRuntime({
+  const reviewedRegistry = {
     version: "vetted-dynamic-source-registry-v1",
     approvedRoots: ["data/approved/incoming"],
     entries: [{
@@ -110,13 +111,17 @@ test("approved CSV flows through validation, review, aggregate query, lifecycle 
         metrics: [{ field: "ORDER_COUNT", aggregation: "sum", metricId: "first_party.regional_orders", currency: null }],
       },
     }],
-  }, { workspaceRoot }, plan);
+  } as const;
+  const runtime = createVettedDynamicSourceRuntime(reviewedRegistry, { workspaceRoot }, plan);
 
   const result = await executeAgenticEvidenceLoop({ requestId: "full-chain-run", plan }, {
     maxIterations: 1,
     now: () => "2026-08-18T12:00:00.000Z",
     candidateResearchPasses: runtime.candidateResearchPasses,
     executeCandidatePass: runtime.executeCandidatePass,
+    sourceConsiderations: runtime.sourceConsiderations,
+    dynamicRegistryVersion: runtime.registryVersion,
+    dynamicRegistryFingerprint: runtime.registryFingerprint,
     executePass: async () => { throw new Error("The higher-ranked vetted source should execute first."); },
   });
 
@@ -144,4 +149,71 @@ test("approved CSV flows through validation, review, aggregate query, lifecycle 
   assert.equal(result.agenticLifecycle?.passes[0].sourceIds[0], "NEW-REGIONAL-ORDERS");
   assert.ok(["pass", "partial", "fail"].includes(result.agenticLifecycle?.passes[0].answerStatus ?? ""));
   assert.equal(result.agenticLifecycle?.passes[0].addedEvidenceCount, 2);
+  assert.equal(result.sourceAdaptation?.status, "adapted_with_new_evidence");
+  assert.equal(result.sourceAdaptation?.originalGoal, plan.originalQuestion);
+  assert.equal(result.sourceAdaptation?.sources[0].decision, "used");
+  assert.deepEqual(result.sourceAdaptation?.sources[0].addressesRequirementIds, ["marketing_business_outcome"]);
+  assert.equal(result.sourceAdaptation?.sources[0].evidenceIds.length, 2);
+  assert.ok(result.sourceAdaptation?.nextRequiredDataset.fields.every((item) => item.requirementId !== "marketing_business_outcome"));
+
+  const registryRelativePath = "data/contracts/test-current-vetted-registry.json";
+  await mkdir(path.join(workspaceRoot, "data/contracts"), { recursive: true });
+  await writeFile(path.join(workspaceRoot, registryRelativePath), JSON.stringify({ version: "vetted-dynamic-source-registry-v1", approvedRoots: ["data/approved/incoming"], entries: [] }));
+  const beforeReview = await loadVettedDynamicSourceRuntime(plan, { workspaceRoot, registryRelativePath });
+  assert.equal(beforeReview.candidateResearchPasses.length, 0);
+  const unavailableRegisteredPass = async ({ requestId, plan: passPlan }: { requestId: string; plan: typeof plan }) => evidenceExecutionResponseSchema.parse({
+    requestId,
+    status: "blocked",
+    snapshotVersion: "registered-source-unavailable-v1",
+    queryVersion: "registered-source-unavailable-v1",
+    calculationVersion: null,
+    query: "normalized_evidence_bundle",
+    componentQueries: [],
+    capability: passPlan.capabilityId,
+    planId: passPlan.planId,
+    originalQuestion: passPlan.originalQuestion,
+    geographyIds: [],
+    missingApprovals: [],
+    guardrails: ["No unreviewed source may execute."],
+    rows: [],
+    evidenceBundle: [],
+    sourceIds: [],
+    qualityWarnings: [],
+    missingEvidence: ["No compatible reviewed source was registered."],
+    unknowns: [],
+    allowedUse: "internal_shadow_evaluation",
+    sensitivity: "internal",
+    executionMode: "frozen_snapshot_demo",
+    errorCode: null,
+    errorMessage: null,
+  });
+  const firstExecution = await executeAgenticEvidenceLoop({ requestId: "before-registry-review", plan }, {
+    maxIterations: 1,
+    now: () => "2026-08-18T12:00:00.000Z",
+    executePass: unavailableRegisteredPass,
+    candidateResearchPasses: beforeReview.candidateResearchPasses,
+    executeCandidatePass: beforeReview.executeCandidatePass,
+    sourceConsiderations: beforeReview.sourceConsiderations,
+    dynamicRegistryVersion: beforeReview.registryVersion,
+    dynamicRegistryFingerprint: beforeReview.registryFingerprint,
+  });
+  assert.equal(firstExecution.sourceAdaptation?.status, "no_compatible_reviewed_source");
+  await writeFile(path.join(workspaceRoot, registryRelativePath), JSON.stringify(reviewedRegistry));
+  const afterReview = await loadVettedDynamicSourceRuntime(plan, { workspaceRoot, registryRelativePath });
+  assert.equal(afterReview.candidateResearchPasses.length, 1);
+  assert.notEqual(afterReview.registryFingerprint, beforeReview.registryFingerprint);
+  const secondExecution = await executeAgenticEvidenceLoop({ requestId: "after-registry-review", plan }, {
+    maxIterations: 1,
+    now: () => "2026-08-18T12:00:00.000Z",
+    executePass: unavailableRegisteredPass,
+    candidateResearchPasses: afterReview.candidateResearchPasses,
+    executeCandidatePass: afterReview.executeCandidatePass,
+    sourceConsiderations: afterReview.sourceConsiderations,
+    dynamicRegistryVersion: afterReview.registryVersion,
+    dynamicRegistryFingerprint: afterReview.registryFingerprint,
+  });
+  assert.equal(secondExecution.sourceAdaptation?.status, "adapted_with_new_evidence");
+  assert.deepEqual(secondExecution.sourceIds, ["NEW-REGIONAL-ORDERS"]);
+  assert.equal(secondExecution.sourceAdaptation?.originalGoal, plan.originalQuestion);
+  assert.match(secondExecution.sourceAdaptation?.goalCheck.explanation ?? "", /original question was re-checked/i);
 });

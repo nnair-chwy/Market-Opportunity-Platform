@@ -11,6 +11,7 @@ import { executeDiscoveredAggregateQuery } from "../discovered-evidence-query/ex
 import { evidenceExecutionResponseSchema, type EvidenceExecutionResponse } from "../evidence-snapshot/contracts.ts";
 import { vettedDynamicResearchPassSchema, type VettedDynamicResearchPass } from "./agentic-evidence-loop.ts";
 import type { EvaluationPlan } from "./contracts.ts";
+import { dynamicSourceConsiderationSchema, registryFingerprint, type DynamicSourceConsideration } from "./source-adaptation.ts";
 
 export const VETTED_DYNAMIC_SOURCE_REGISTRY_VERSION = "vetted-dynamic-source-registry-v1" as const;
 const REGISTRY_RELATIVE_PATH = "data/contracts/vetted-dynamic-source-registry.json";
@@ -66,16 +67,31 @@ type RegistryEntry = z.infer<typeof registryEntrySchema>;
 
 export type VettedDynamicSourceRuntime = {
   candidateResearchPasses: VettedDynamicResearchPass[];
+  sourceConsiderations: DynamicSourceConsideration[];
+  registryVersion: string;
+  registryFingerprint: string;
   executeCandidatePass: (
     candidate: VettedDynamicResearchPass,
     input: { requestId: string; plan: EvaluationPlan },
   ) => Promise<EvidenceExecutionResponse>;
 };
 
-function eligible(entry: RegistryEntry, plan: EvaluationPlan) {
-  return entry.perspectiveIds.includes(plan.perspectiveId)
-    && entry.topics.includes(plan.intent.topic)
-    && entry.geographyGrains.includes(plan.geographyGrain);
+function considerationFor(entry: RegistryEntry, plan: EvaluationPlan): DynamicSourceConsideration {
+  const requirementIds = new Set(plan.answerContract.domainRequirements.map((item) => item.requirementId));
+  const addressed = entry.addressesCriterionIds.filter((item) => requirementIds.has(item));
+  const reasons: string[] = [];
+  if (!entry.perspectiveIds.includes(plan.perspectiveId)) reasons.push(`registered for ${entry.perspectiveIds.join(", ")} rather than ${plan.perspectiveId}`);
+  if (!entry.topics.includes(plan.intent.topic)) reasons.push(`registered for topic ${entry.topics.join(", ")} rather than ${plan.intent.topic}`);
+  if (!entry.geographyGrains.includes(plan.geographyGrain)) reasons.push(`registered for ${entry.geographyGrains.join(", ")} geography rather than ${plan.geographyGrain}`);
+  if (!addressed.length) reasons.push("does not address a required domain question in the original answer contract");
+  return dynamicSourceConsiderationSchema.parse({
+    candidateId: entry.id,
+    label: entry.label,
+    sourceIds: [entry.contract.sourceId],
+    status: reasons.length ? "incompatible" : "compatible",
+    reason: reasons.length ? `Not used: ${reasons.join("; ")}.` : `Reviewed aggregate source addresses ${addressed.join(", ")}.`,
+    addressesRequirementIds: addressed,
+  });
 }
 
 function candidateFor(entry: RegistryEntry): VettedDynamicResearchPass {
@@ -192,10 +208,15 @@ export function createVettedDynamicSourceRuntime(
   plan: EvaluationPlan,
 ): VettedDynamicSourceRuntime {
   const registry = vettedDynamicSourceRegistrySchema.parse(registryInput);
-  const entries = registry.entries.filter((entry) => eligible(entry, plan));
+  const sourceConsiderations = registry.entries.map((entry) => considerationFor(entry, plan));
+  const compatibleIds = new Set(sourceConsiderations.filter((item) => item.status === "compatible").map((item) => item.candidateId));
+  const entries = registry.entries.filter((entry) => compatibleIds.has(entry.id));
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
   return {
     candidateResearchPasses: entries.map(candidateFor),
+    sourceConsiderations,
+    registryVersion: registry.version,
+    registryFingerprint: registryFingerprint(registry),
     executeCandidatePass: async (candidate, input) => {
       const entry = byId.get(candidate.id);
       if (!entry || candidate.sourceIds.length !== 1 || candidate.sourceIds[0] !== entry.contract.sourceId) throw new Error("Dynamic research pass is not present in the server-owned vetted registry.");
@@ -210,8 +231,10 @@ export function createVettedDynamicSourceRuntime(
 }
 
 /** Loads only the fixed checked-in registry; request data cannot choose a path or query. */
-export async function loadVettedDynamicSourceRuntime(plan: EvaluationPlan): Promise<VettedDynamicSourceRuntime> {
-  const workspaceRoot = process.cwd();
-  const registry = JSON.parse(await readFile(path.join(workspaceRoot, REGISTRY_RELATIVE_PATH), "utf8")) as unknown;
+export async function loadVettedDynamicSourceRuntime(plan: EvaluationPlan, options: { workspaceRoot?: string; registryRelativePath?: string } = {}): Promise<VettedDynamicSourceRuntime> {
+  const workspaceRoot = options.workspaceRoot ?? process.cwd();
+  const registryRelativePath = options.registryRelativePath ?? REGISTRY_RELATIVE_PATH;
+  if (path.isAbsolute(registryRelativePath) || registryRelativePath.split(/[\\/]/).includes("..")) throw new Error("The vetted registry path must remain workspace-relative.");
+  const registry = JSON.parse(await readFile(path.join(workspaceRoot, registryRelativePath), "utf8")) as unknown;
   return createVettedDynamicSourceRuntime(registry, { workspaceRoot }, plan);
 }

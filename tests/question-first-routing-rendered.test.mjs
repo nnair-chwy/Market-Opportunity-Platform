@@ -119,6 +119,13 @@ test("result signals retain the user's exact question beside the investigation",
   assert.match(investigationPanel, /investigation\.originalQuestion/);
 });
 
+test("used reviewed sources update the effective client plan before investigation and packet composition", () => {
+  assert.match(workflow, /effectivePlanForSourceAdaptation/);
+  assert.match(workflow, /marketInvestigationFromEvidence\(executedPlan, parsed\.data\)/);
+  assert.match(workflow, /assembleReviewableActionPacket\(\s*effectivePlan,/);
+  assert.match(workflow, /AnswerEvidenceTrail plan=\{effectivePlan \?\? plan\}/);
+});
+
 test("review page routes result workspace types without interactive comparison", () => {
   assert.match(workflow, /adaptive_market_workspace/);
   assert.match(workflow, /clinic_evaluation_surface/);
