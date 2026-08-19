@@ -31,6 +31,7 @@ type AdaptiveEvaluationWorkspaceProps = {
   savedPackets: SavedPacketPreview[];
   onQuestionChange: (value: string) => void;
   onSubmit: (perspectiveId?: PerspectiveId, activeViewId?: PerspectiveViewId) => void;
+  onDiscoverInsights: () => void;
   onPerspectiveChange: (perspectiveId: PerspectiveId) => void;
   onOpenSaved: () => void;
   onOpenSavedPacket: (id: string) => void;
@@ -45,6 +46,7 @@ export function AdaptiveEvaluationWorkspace({
   savedPackets,
   onQuestionChange,
   onSubmit,
+  onDiscoverInsights,
   onPerspectiveChange,
   onOpenSaved,
   onOpenSavedPacket,
@@ -390,6 +392,11 @@ export function AdaptiveEvaluationWorkspace({
             <small className="adaptive-composer-note">
               The map changes to fit the question, not a fixed score.
             </small>
+            <button className="adaptive-discovery-entry" type="button" onClick={onDiscoverInsights}>
+              <span aria-hidden="true">✦</span>
+              <span><strong>Don&apos;t have a question?</strong><small>Autonomously discover the most interesting Marketing, Pricing, and CVC signals in the current data.</small></span>
+              <b aria-hidden="true">Run insight discovery →</b>
+            </button>
           </form>
         </div>
       </div>

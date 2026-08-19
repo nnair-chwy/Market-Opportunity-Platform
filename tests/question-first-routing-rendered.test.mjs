@@ -16,6 +16,7 @@ const questionWorkspace = fs.readFileSync(new URL("../components/decision-workfl
 const questionRegistry = fs.readFileSync(new URL("../lib/questions/registry.ts", import.meta.url), "utf8");
 const sister = fs.readFileSync(new URL("../components/decision-workflow/SisterGeographiesSection.tsx", import.meta.url), "utf8");
 const sisterLib = fs.readFileSync(new URL("../lib/planning/sister-geographies.ts", import.meta.url), "utf8");
+const discoveryWorkspace = fs.readFileSync(new URL("../components/insight-discovery/AutonomousDiscoveryWorkspace.tsx", import.meta.url), "utf8");
 
 test("question results do not hard-code Seattle or fixed findings", () => {
   assert.doesNotMatch(market, /useState\("42660"\)/);
@@ -50,6 +51,18 @@ test("opening experience exposes the approved perspective-specific evidence ques
   assert.match(workflow, /\/api\/evaluation-plans\/execute/);
   assert.match(workflow, /EvidenceBundlePanel/);
   assert.ok(questionWorkspace.indexOf('className="adaptive-question-composer"') < questionWorkspace.indexOf('<AdaptiveMarketWorkspace'));
+});
+
+test("opening experience offers a question-free autonomous insight path", () => {
+  assert.match(questionWorkspace, /Don&apos;t have a question\?/);
+  assert.match(questionWorkspace, /Run insight discovery/);
+  assert.match(workflow, /phase === "discovery"/);
+  assert.match(workflow, /AutonomousDiscoveryWorkspace/);
+  assert.match(discoveryWorkspace, /\/api\/insight-discovery/);
+  assert.match(discoveryWorkspace, /Nine departmental investigations ran automatically/);
+  assert.match(discoveryWorkspace, /top five leads per department/i);
+  assert.match(discoveryWorkspace, /Investigate this finding/);
+  assert.match(discoveryWorkspace, /reviewed query registry · no external AI call/i);
 });
 
 test("request state is transparent before a plan is treated as final", () => {

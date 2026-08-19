@@ -15,6 +15,7 @@ import { ResultOutputBuilder } from "@/components/decision-workflow/ResultOutput
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { ValidationWorkplanPanel } from "@/components/decision-workflow/ValidationWorkplanPanel";
 import { EvidenceBundlePanel } from "@/components/evidence/EvidenceBundlePanel";
+import { AutonomousDiscoveryWorkspace } from "@/components/insight-discovery/AutonomousDiscoveryWorkspace";
 import { evidenceExecutionResponseSchema, type EvidenceExecutionResponse } from "@/lib/evidence-snapshot/contracts";
 import type { CompactSourceReadiness } from "@/lib/data-discovery/readiness-service";
 import { publicMarkets } from "@/lib/data/public-market-ui";
@@ -76,7 +77,7 @@ import {
   type ClinicSiteWorkflowResult,
 } from "@/lib/phoenix-retrieval/contracts";
 
-type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error";
+type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error" | "discovery";
 
 type SavedPacket = {
   schemaVersion?: "saved-action-packet-v2";
@@ -823,6 +824,7 @@ export function DecisionWorkflowApp() {
   const isAnimationPage = activeView === "workflow" && (phase === "interpreting" || phase === "running");
   const isResultPage = activeView === "workflow" && showPacket;
   const isErrorPage = activeView === "workflow" && phase === "error";
+  const isDiscoveryPage = activeView === "workflow" && phase === "discovery";
 
   useEffect(() => {
     if (!isResultPage) return;
@@ -850,6 +852,8 @@ export function DecisionWorkflowApp() {
         ? "animation"
         : isResultPage
           ? "result"
+          : isDiscoveryPage
+            ? "discovery"
           : isErrorPage
             ? "error"
             : "workspace";
@@ -859,6 +863,8 @@ export function DecisionWorkflowApp() {
       ? "confirmation-page-layout"
     : isAnimationPage
       ? "animation-page-layout"
+      : isDiscoveryPage
+        ? "discovery-page-layout"
       : "workspace-layout packet-workspace-layout result-page-layout";
 
   return (
@@ -867,7 +873,22 @@ export function DecisionWorkflowApp() {
       data-page-phase={pagePhase}
     >
       <div className={`decision-layout ${workspaceLayoutClass}`} id="start">
-        <aside className="decision-rail" aria-label="Workflow progress">
+        <aside className="decision-rail" aria-label={isDiscoveryPage ? "Autonomous discovery progress" : "Workflow progress"}>
+          {isDiscoveryPage ? (
+            <>
+              <div className="rail-kicker">Autonomous workflow</div>
+              <h2>From data to insight</h2>
+              <p>Scan approved evidence without waiting for a stakeholder question.</p>
+              <ol className="rail-steps">
+                <li className="complete"><span>1</span><div><strong>Generate</strong><small>Run reviewed hypotheses</small></div></li>
+                <li className="complete"><span>2</span><div><strong>Investigate</strong><small>Screen every compatible market</small></div></li>
+                <li className="complete"><span>3</span><div><strong>Challenge</strong><small>Retain limits and alternatives</small></div></li>
+                <li className="current"><span>4</span><div><strong>Discover</strong><small>Review the strongest leads</small></div></li>
+              </ol>
+              <div className="rail-note"><strong>Current method</strong><p>Nine reviewed queries run locally. Findings do not authorize material action.</p></div>
+            </>
+          ) : (
+            <>
           <div className="rail-kicker">Decision workflow</div>
           <h2>From question to action</h2>
           <p>Move from a business question to a reviewable next step.</p>
@@ -878,6 +899,8 @@ export function DecisionWorkflowApp() {
             <li className={showPacket ? "current" : ""}><span>4</span><div><strong>Review</strong><small>Read and export results</small></div></li>
           </ol>
           <div className="rail-note"><strong>Decision boundary</strong><p>The workspace prepares evidence and next actions. An accountable owner makes the business decision.</p></div>
+            </>
+          )}
         </aside>
 
         {activeView === "saved" ? (
@@ -910,6 +933,7 @@ export function DecisionWorkflowApp() {
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
               }}
               onSubmit={(nextPerspectiveId, activeViewId) => void startWorkflow(question, nextPerspectiveId, activeViewId)}
+              onDiscoverInsights={() => setPhase("discovery")}
               onPerspectiveChange={() => {
                 setQuestion("");
                 setSisterFollowUpNotice(null);
@@ -936,6 +960,15 @@ export function DecisionWorkflowApp() {
                 setGeographicContextNotice(null);
               }}
               geographicContextNotice={geographicContextNotice}
+            />
+          </section>
+        ) : null}
+
+        {isDiscoveryPage ? (
+          <section className="decision-content">
+            <AutonomousDiscoveryWorkspace
+              onBack={() => setPhase("question")}
+              onInvestigate={(nextQuestion) => { setQuestion(nextQuestion); setPhase("question"); }}
             />
           </section>
         ) : null}
