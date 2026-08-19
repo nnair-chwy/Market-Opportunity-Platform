@@ -2,6 +2,7 @@ import { evaluationPlanRequestSchema, evaluationPlanResponseSchema, planEvaluati
 import { proposeEvaluationPlanWithAi } from "@/lib/planning/ai-planner";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import { planConfiguredDemoQuestion } from "@/lib/demo/scenarios";
+import { attachOutcomeReadinessGaps, loadFirstPartyOutcomeReadiness } from "@/lib/data-discovery/readiness-service";
 
 const headers = { "cache-control": "no-store" };
 
@@ -33,6 +34,11 @@ export async function POST(request: Request) {
       );
     }
     catch (error) { console.error("[evaluation-plan]", error instanceof Error ? error.name : "UnknownError"); }
+  }
+  try {
+    plan = attachOutcomeReadinessGaps(plan, await loadFirstPartyOutcomeReadiness());
+  } catch (error) {
+    console.error("[source-readiness]", error instanceof Error ? error.name : "UnknownError");
   }
   return Response.json(evaluationPlanResponseSchema.parse({ status: "ok", plan }), { status: 200, headers });
 }

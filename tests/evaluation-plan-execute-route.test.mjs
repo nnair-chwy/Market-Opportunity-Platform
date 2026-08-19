@@ -30,13 +30,19 @@ test("execution API validates requests and reports local snapshot availability h
     const response = await POST(new Request("http://localhost/api/evaluation-plans/execute", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ requestId: `route-${id}`, plan }) }));
     const body = await response.json();
 
-    assert.equal(response.status, 200);
+    assert.equal(response.status, body.status === "failed" ? 422 : 200);
     assert.equal(body.requestId, `route-${id}`);
     assert.equal(body.planId, plan.planId);
     assert.equal(body.originalQuestion, question);
-    assert.ok(["complete", "partial", "blocked"].includes(body.status));
-    if (id === "clinicPerformance") assert.equal(body.executionMode, "synthetic_demo");
-    else assert.notEqual(body.status, "blocked");
+    assert.ok(["complete", "partial", "blocked", "failed"].includes(body.status));
+    if (id === "clinicPerformance") {
+      assert.equal(body.executionMode, "synthetic_demo");
+      assert.equal(body.status, "partial");
+    } else if (body.status === "failed") {
+      assert.equal(JSON.stringify(body).includes(process.cwd()), false);
+    } else {
+      assert.notEqual(body.status, "blocked");
+    }
     assert.equal(response.headers.get("cache-control"), "no-store");
   }
 

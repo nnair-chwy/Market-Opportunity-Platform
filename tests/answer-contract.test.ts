@@ -51,8 +51,8 @@ test("Clinic contract requires demand, capacity, feasibility, and accountable re
 
 test("Marketing contract preserves geography semantics and requires incrementality evidence", () => {
   const contract = planEvaluation("Which DMAs should receive more paid-search spend?", "marketing").answerContract;
-  assert.equal(contract.answerMode, "research_needed");
-  assert.equal(contract.fallbackOutcome, "research_needed");
+  assert.equal(contract.answerMode, "investigation");
+  assert.equal(contract.fallbackOutcome, "draft_for_review");
   assert.ok(contract.domainRequirements.some((item) => item.requirementId === "marketing_geography" && item.sourceIds.includes("SRC-019")));
   assert.ok(contract.domainRequirements.some((item) => item.requirementId === "marketing_incrementality" && item.sourceIds.includes("SRC-022")));
   assert.ok(contract.domainRequirements.every((item) => item.readiness !== "connected"));

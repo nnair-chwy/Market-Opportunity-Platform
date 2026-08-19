@@ -62,11 +62,12 @@ Source access alone does not make a metric approved for scoring or recommendatio
 
 ## GitHub layout
 
-- Integration branch under review: `agent/consolidate-analyst-loop`
+- Current local integration branch: `main` in `Market-Opportunity-Platform-main`
+- Current local integration commit: `50ba0bd49d7c30ee661f0bfe47c0ad160757454f`; verify the reviewed remote commit before publishing
 - Sheila’s default branch prefix: `agent/experience-*`
 - Nik’s default branch prefix: `agent/evidence-*`
 - Research-only branches must say so in their PR and must not contain production credentials or raw exports.
-- The local checkout in `Market-Opportunity-Platform-readiness` currently points first to a local mirror. Publishing to GitHub must also verify `nnair-chwy/Market-Opportunity-Platform` received the same commit SHA.
+- Publishing to GitHub must verify `nnair-chwy/Market-Opportunity-Platform` received the reviewed commit SHA.
 
 ## Sheila workboard
 
@@ -96,25 +97,40 @@ Source access alone does not make a metric approved for scoring or recommendatio
 
 ## Current integration status
 
-### Implemented in the consolidation branch
+### Implemented in the local integration branch
 
 - Perspective-aware CVC, Marketing, and Pricing opening views.
 - A pre-analysis question and evidence checkpoint.
 - Published-clinic and public-Census CVC investigation leads without synthetic market ranking.
+- Registered regional, aggregate clinic, Google Ads, and normalized-evidence query paths when the approved local snapshot is present.
+- Descriptive Google Ads map signals for paid-search response, impressions, click-through rate, and cost per click.
+- Descriptive Pricing map signals for monitored competitor availability, observed equalized offer price, offer volume, and assortment breadth.
+- SEO/SEMrush source contracts and a decision-to-source data router; national SEO remains non-geographic context.
+- A versioned pre-investigation answer contract, deterministic coverage check, seven-section answer composition, and safe fallback outcomes.
 - Results map with synchronized finding colors, pair highlighting, click details, and finding filters.
 - Lead-scoped follow-up context, saved packets, and downloadable reports.
 - Restart and question-specific workflow state.
 
 ### Still separate or incomplete
 
-- Google Ads research is in the `Market-Opportunity-Platform-google-ads` worktree and is not integrated into the application.
-- No governed Google Ads CSV is connected to the Marketing result path.
-- SEO/SEMrush request CSV and intent brief are not present in the consolidation branch.
-- Pricing evidence remains unconnected; the current Pricing view is context/readiness only.
+- Google Ads and Pricing map signals are descriptive internal-demo evidence. They do not yet establish comparable first-party outcomes, incrementality, contribution, or decision authority.
+- The production DMA/ZIP/CBSA geography relationship, campaign taxonomy, conversion/attribution contract, and minimum volume/coverage gates remain unapproved.
+- Pricing still lacks a governed geographic customer/commercial outcome, complete intervention history, approved cost/contribution definition, and an executable production capability contract.
+- CVC still lacks approved pet-demand, access/capacity, veterinary-supply, workforce, property, economics, outcome, and maturity evidence.
+- SEO is national context only and cannot fill a regional evidence gap.
 - The current investigation runner is deterministic over checked-in public/published data. It is not yet an autonomous live-research agent scanning a semantic catalog.
 - Confirmed weights are preserved as the intended decision formula, but unavailable must-pass inputs still prevent a final clinic-opportunity score.
-- The evidence planner and correction/upload loop exist in code but need reintegration into the visible pre-run flow.
 - Current question/run state is not fully durable across an uncommitted browser refresh; saved packets are durable in local browser storage.
+- The integrated branch has not yet passed a fresh full automated and browser smoke-test run in the current environment because missing dependencies could not be downloaded.
+- Golden questions still need analyst-reviewed expected findings and hand-checked reference results before Thursday’s demonstration can be called credible.
+
+## Thursday operating focus — August 20, 2026
+
+- Sheila owns making the three golden questions run end to end, rendering finding quality and limitations clearly, and producing an action-ready report.
+- Nik owns closing the smallest high-value evidence gaps, producing reproducible reference results, and attaching calculation and quality receipts.
+- Sheila + Nik jointly approve metric meaning, comparison cohorts, strongest permitted conclusions, and the action/owner/KPI/stop-condition attached to each finding.
+- The release target is credible investigation and bounded action, not autonomous price, spend, clinic, lease, or market-entry decisions.
+- The detailed delivery sequence and acceptance gates are in `docs/strategy/thursday-geo-signals-delivery-plan.md`.
 
 ## Integration checklist
 

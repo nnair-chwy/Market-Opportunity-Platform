@@ -85,6 +85,21 @@ function sameMembers(left: string[], right: string[]) {
   return left.length === right.length && [...left].sort().every((value, index) => value === [...right].sort()[index]);
 }
 
+function mentionsResolvedMarket(plan: EvaluationPlan, rewrittenQuestion: string) {
+  const place = plan.geographyResolution.places.find((item) => item.status === "resolved");
+  if (!place) return true;
+  const normalizedQuestion = rewrittenQuestion.toLowerCase().replace(/[^a-z0-9]+/g, " ");
+  const aliases = [
+    place.requestedName,
+    place.cbsaName?.split(",")[0],
+    ...(place.cbsaName?.split(",")[0]?.split(/[-–]/) ?? []),
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim())
+    .filter((value) => value.length >= 3);
+  return aliases.some((alias) => normalizedQuestion.includes(alias));
+}
+
 export function validateAnalysisBriefConsistency(plan: EvaluationPlan, brief: AnalysisBrief): string[] {
   const issues: string[] = [];
   if (brief.planId !== plan.planId || brief.originalQuestion !== plan.originalQuestion) issues.push("The analysis brief does not belong to the validated plan.");
@@ -102,8 +117,7 @@ export function validateAnalysisBriefConsistency(plan: EvaluationPlan, brief: An
   if (plan.intent.rankingMode === "none" && brief.queryContract.scoringVersion !== null) issues.push("A non-ranking plan cannot carry a scoring version.");
   if (plan.intent.rankingMode === "none" && /\b(rank|ranking|top\s+\d|which\s+\d+|3[–-]5)\b/i.test(brief.rewrittenQuestion)) issues.push("The interpreted question introduces ranking language without a registered ranking mode.");
   if (plan.geographyResolution.mode === "single") {
-    const resolvedName = plan.geographyResolution.places.find((place) => place.status === "resolved")?.cbsaName;
-    if (resolvedName && !brief.rewrittenQuestion.toLowerCase().includes(resolvedName.split(",")[0]!.toLowerCase())) issues.push("The interpreted question omits the resolved named market.");
+    if (!mentionsResolvedMarket(plan, brief.rewrittenQuestion)) issues.push("The interpreted question omits the resolved named market.");
   }
   return issues;
 }
@@ -190,7 +204,9 @@ function normalizedQuestionBrief(plan: EvaluationPlan, investigation: MarketInve
             ? `Assemble ${sourceLabels.join(", ")} for ${placeLabel}, preserving each source's own period, provenance, and limitations.`
             : plan.intent.topic === "source_coverage"
               ? `Report which normalized source families are present or absent for ${placeLabel}; data presence is not data quality or market attractiveness.`
-              : "Rank complete-evidence regional growth-test candidates with the fixed registered hypothesis score, show every contribution and exclusion, and stop before test or spend approval.";
+              : screening
+                ? "Rank complete-evidence regional growth-test candidates with the fixed registered hypothesis score, show every contribution and exclusion, and stop before test or spend approval."
+                : plan.intent.conciseInterpretation;
 
   const timeframe = plan.intent.topic === "clinic_context" || plan.intent.topic === "multi_market_comparison"
     ? "Clinic activity timeframe: Pre-PH in the supplied aggregate snapshot"

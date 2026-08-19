@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "snapshotDate": "2026-08-18",
+  "sourceApplication": "Zeus Pricing Tool",
+  "sensitivity": "internal",
+  "allowedUse": "internal_source_discovery_and_shadow_evaluation_only",
+  "scoringEligibility": "none",
+  "approvalStatus": "user_authorized_export_pending_data_owner_reuse_approval",
+  "localSnapshotDirectory": "data/approved/zeus-ui/2026-08-18/sanitized/",
+  "sanitization": {
+    "removedColumns": ["Category Owner"],
+    "reason": "Employee-identifying values are prohibited from project data snapshots."
+  },
+  "exports": [
+    {
+      "file": "zeus-ui_product-pricing-state_by-us-sku-current-day_2026-08-18.csv",
+      "datasetId": "zeus_product_pricing_state_daily_v1",
+      "grain": "current_snapshot_x_product_sku",
+      "rows": 250000,
+      "columns": 35,
+      "sha256": "0710b40de3ce35bff2ecacb7f8d11f58bb341f1cf07e794fdcb706b8bcdb90b1",
+      "completeness": "partial_export_cap_reached",
+      "sourceUiEntries": 313351
+    },
+    {
+      "file": "zeus-ui_pricing-exceptions_by-us-sku-current-state_2026-08-18.csv",
+      "datasetId": "zeus_pricing_exception_current_state_v1",
+      "grain": "current_exception_x_product_sku",
+      "rows": 5,
+      "columns": 28,
+      "sha256": "88963b9bc477193e71d0b80319c26864dd92044d86508b9347b17f54d3b0b8b7",
+      "completeness": "current_regular_exception_view"
+    }
+  ]
+}

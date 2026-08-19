@@ -1,5 +1,5 @@
 {
-  "validatedAt": "2026-08-17",
+  "validatedAt": "2026-08-18",
   "environment": "Snowflake web worksheet",
   "role": "DBT_DEMO_DEVELOPER",
   "warehouse": "OTH_WH",
@@ -14,6 +14,34 @@
     "activeUsProductSpineRows": 365398,
     "chewyPriceHistory90dSkuRows": 216380,
     "pharmacyMerchPerformance90dSkuRows": 546987
+  },
+  "regionalOutcomeJoinDiscovery": {
+    "candidateJoin": "EDLDB.ECOM.ORDER_LINE.CUSTOMER_ADDRESS_ID = EDLDB.CHEWY_CERTIFIED.DIM_CUSTODS_ADDRESS.SOURCE_KEY_ID",
+    "aggregateCheckDate": "2026-08-18",
+    "outcomeDate": "2026-08-16",
+    "orderLines": 952017,
+    "postalCoveredLines": 952017,
+    "approximateDistinctPostalCodes": 1,
+    "stateCodeResult": "null_in_separate_bounded_check",
+    "status": "blocked_role_masks_destination_geography",
+    "allowedNextStep": "Publish a governed week_x_geography_x_category aggregate with privacy suppression; do not export address or customer identifiers."
+  },
+  "pricingControlSources": {
+    "dreamWeaverOverrideHistory": {
+      "access": "visible",
+      "rows": 1623421,
+      "approximateDistinctOverrideIds": 11137,
+      "latestStateRows": 12,
+      "prohibitedField": "CREATED_BY",
+      "status": "schema_and_aggregate_profile_only_payload_semantics_unresolved"
+    },
+    "competitorMatchBungee": {
+      "access": "visible",
+      "rows": 24095886,
+      "approximateDistinctMatchIds": 487753,
+      "latestMatchTime": "2026-02-03T12:28:00",
+      "status": "active_state_and_timestamps_available_no_reliability_label"
+    }
   },
   "phoenixPricingSources": {
     "dailyCompetitorCoverageSnapshot": {

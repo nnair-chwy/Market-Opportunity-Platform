@@ -7,6 +7,8 @@
 .status { display: inline-block; padding: 5px 8px; background: #dff3eb; color: #1f7557; border-radius: 999px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 .mode { text-align: right; }.mode strong,.mode small { display: block; }.mode strong { color: #2c62b6; font-size: 11px; text-transform: uppercase; }.mode small { margin-top: 4px; color: #778398; font-size: 9px; overflow-wrap: anywhere; }
 .section { margin-top: 16px; }.section > h3, .reviewGrid h3 { margin: 0 0 11px; font-size: 13px; }
+.section > summary { color: #385477; cursor: pointer; font-size: 11px; font-weight: 800; }
+.section[open] > summary { margin-bottom: 14px; }
 .evidenceGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .evidenceGrid article, .reviewGrid section { min-width: 0; padding: 14px; background: #fff; border: 1px solid #dce3ed; border-radius: 10px; }
 .evidenceGrid article > div { display: flex; justify-content: space-between; gap: 8px; }.evidenceGrid article > div > strong { font-size: 11px; text-transform: capitalize; }.evidenceGrid article > div > span { flex: 0 0 auto; color: #1e7656; font-size: 9px; font-weight: 800; }

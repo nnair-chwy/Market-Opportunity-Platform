@@ -90,6 +90,23 @@ automatically recommend a price change.
 Local validation and model-preparation files are descriptively named under
 `data/approved/snowflake/pricing/2026-08-17/raw/` and remain ignored by Git.
 
+## 2026-08-18 geo-actionability follow-up
+
+- `queries/10_regional-outcome-join-discovery.sql` documents the structurally
+  plausible order/address join. A 2026-08-16 aggregate covered 952,017 order
+  lines, but the current role returned one masked postal value and null state,
+  so no geographic outcome was exported.
+- `queries/11_pricing-controls-and-match-discovery.sql` records safe metadata
+  and aggregate checks for Dream Weaver overrides and competitor match state.
+  Override payload values and `CREATED_BY` remain outside the workspace.
+- Dream Weaver history is useful for intervention screening only after effective
+  time, deletion, filters, and payload semantics are owner-approved.
+- `COMPETITOR_MATCH_BUNGEE` exposes active state and timestamps but no observed
+  reliability label. Do not equate `IS_ACTIVE` with match quality.
+- The Zeus source package at `../zeus-ui/` supplies 2026-08-18 national current
+  SKU and exception context. It does not localize Chewy demand, economics,
+  inventory, margin, or outcomes to competitor-observation geographies.
+
 Regional Chewy outcomes must validate against
 `regionalPricingOutcomeSnapshotSchema` before use. The contract requires week ×
 CBSA × top-level category aggregates, at least 50 distinct orders per retained

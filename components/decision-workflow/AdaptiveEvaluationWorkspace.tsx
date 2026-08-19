@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AdaptiveMarketWorkspace } from "@/components/decision-workflow/AdaptiveMarketWorkspace";
+import { RecommendedQuestionTypeahead } from "@/components/decision-workflow/RecommendedQuestionTypeahead";
 import {
   coerceSupportedMapMode,
   createDefaultActiveViews,
@@ -17,26 +18,12 @@ import {
 } from "@/lib/perspectives";
 import type { WorkflowCategory } from "@/lib/workflow/market-workflow";
 import type { SelectedGeographicContext } from "@/lib/planning/geographic-context";
+import { listStarterQuestions, type PreviousInvestigationQuestion } from "@/lib/questions";
 
-type SavedPacketPreview = {
+type SavedPacketPreview = PreviousInvestigationQuestion & {
   id: string;
   title: string;
   savedAt: string;
-};
-
-const starterQuestions: Record<PerspectiveId, readonly [string, string]> = {
-  cvc: [
-    "What clinic footprint patterns are worth investigating?",
-    "Which comparable metros have different CVC footprints, and what should we validate next?",
-  ],
-  marketing: [
-    "Where is paid search response concentrated, and which regions need validation?",
-    "Which comparable metros have different paid search response percentiles?",
-  ],
-  pricing: [
-    "Where does monitored competitor availability differ by region?",
-    "Which comparable metros have different competitor-availability percentiles?",
-  ],
 };
 
 type AdaptiveEvaluationWorkspaceProps = {
@@ -46,6 +33,7 @@ type AdaptiveEvaluationWorkspaceProps = {
   onSubmit: (perspectiveId?: PerspectiveId, activeViewId?: PerspectiveViewId) => void;
   onPerspectiveChange: (perspectiveId: PerspectiveId) => void;
   onOpenSaved: () => void;
+  onOpenSavedPacket: (id: string) => void;
   selectedGeographicContexts: readonly SelectedGeographicContext[];
   onGeographicContextSelect: (context: SelectedGeographicContext) => void;
   onGeographicContextRemove: (cbsaCode: string) => void;
@@ -59,6 +47,7 @@ export function AdaptiveEvaluationWorkspace({
   onSubmit,
   onPerspectiveChange,
   onOpenSaved,
+  onOpenSavedPacket,
   selectedGeographicContexts = [],
   onGeographicContextSelect,
   onGeographicContextRemove,
@@ -98,21 +87,6 @@ export function AdaptiveEvaluationWorkspace({
   const comparisonView = comparisonViewId
     ? compatibleComparisonViews.find((view) => view.viewId === comparisonViewId) ?? null
     : null;
-
-  useEffect(() => {
-    setActiveViews((current) => {
-      const defaults = createDefaultActiveViews();
-      const next = { ...current };
-      let changed = false;
-      for (const perspective of listPerspectives()) {
-        if (!perspective.views.some((view) => view.viewId === current[perspective.perspectiveId])) {
-          next[perspective.perspectiveId] = defaults[perspective.perspectiveId];
-          changed = true;
-        }
-      }
-      return changed ? next : current;
-    });
-  }, []);
 
   useEffect(() => {
     if (!perspectiveOpen) return;
@@ -362,19 +336,6 @@ export function AdaptiveEvaluationWorkspace({
         </div>
       </section>
 
-      <AdaptiveMarketWorkspace
-        opening
-        activeView={activeView}
-        comparisonView={comparisonView}
-        mapMode={activeMapMode}
-        showLayerManager={layerManagerOpen}
-        category={category}
-        onCategoryChange={setCategory}
-        includeMicropolitan={includeMicropolitan}
-        onIncludeMicropolitanChange={setIncludeMicropolitan}
-        onGeographicContextSelect={onGeographicContextSelect}
-      />
-
       <div className="adaptive-question-composer">
         <div className="adaptive-composer-input">
           <form onSubmit={submit}>
@@ -401,11 +362,14 @@ export function AdaptiveEvaluationWorkspace({
               </div>
             ) : null}
             <div className="adaptive-composer-row">
-              <textarea
-                id="adaptive-evaluation-goal"
+              <RecommendedQuestionTypeahead
                 value={question}
-                onChange={(event) => onQuestionChange(event.target.value)}
-                placeholder="Ask a market, customer, clinic, or geographic question..."
+                perspectiveId={perspectiveId}
+                activeViewId={activeView.viewId}
+                selectedGeographicContexts={selectedGeographicContexts}
+                previousInvestigations={savedPackets}
+                onChange={onQuestionChange}
+                onOpenPrevious={onOpenSavedPacket}
               />
               <button className="primary-action" type="submit" disabled={!question.trim()}>
                 Run decision graph <span aria-hidden="true">→</span>
@@ -417,9 +381,9 @@ export function AdaptiveEvaluationWorkspace({
               </small>
             ) : null}
             <div className="adaptive-starter-questions" aria-label="Demo questions">
-              {starterQuestions[perspectiveId].map((starter) => (
-                <button key={starter} type="button" onClick={() => onQuestionChange(starter)}>
-                  {starter}
+              {listStarterQuestions(perspectiveId).map((starter) => (
+                <button key={starter.id} type="button" onClick={() => onQuestionChange(starter.question)}>
+                  {starter.question}
                 </button>
               ))}
             </div>
@@ -430,15 +394,31 @@ export function AdaptiveEvaluationWorkspace({
         </div>
       </div>
 
+      <AdaptiveMarketWorkspace
+        opening
+        activeView={activeView}
+        comparisonView={comparisonView}
+        mapMode={activeMapMode}
+        showLayerManager={layerManagerOpen}
+        category={category}
+        onCategoryChange={setCategory}
+        includeMicropolitan={includeMicropolitan}
+        onIncludeMicropolitanChange={setIncludeMicropolitan}
+        onGeographicContextSelect={onGeographicContextSelect}
+      />
+
       {savedPackets.length > 0 ? (
         <div className="adaptive-recent-packets">
-          <strong>Recent action packets</strong>
-          {savedPackets.slice(0, 3).map((packet) => (
-            <button type="button" key={packet.id} onClick={onOpenSaved}>
-              <span>{packet.title}</span>
-              <small>{packet.savedAt}</small>
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={onOpenSaved}
+            aria-label={`Open ${savedPackets.length} saved action ${savedPackets.length === 1 ? "packet" : "packets"}`}
+            title={`Latest: ${savedPackets[0]?.title ?? "Saved action packet"}`}
+          >
+            <span aria-hidden="true">↗</span>
+            <strong>Saved</strong>
+            <small>{savedPackets.length}</small>
+          </button>
         </div>
       ) : null}
     </section>

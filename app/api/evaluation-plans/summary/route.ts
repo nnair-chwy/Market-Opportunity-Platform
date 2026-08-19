@@ -1,9 +1,8 @@
-import { evaluationPlanSchema, plannedActionSchema } from "@/lib/planning";
+import { evaluationPlanSchema, plannedActionSchema, proposedActionFromPlan } from "@/lib/planning";
 import { evidenceExecutionResponseSchema } from "@/lib/evidence-snapshot/contracts";
 import { explainFindingsAndProposal } from "@/lib/planning/packet-ai-summary";
 import {
   packetFindingsSummarySchema,
-  reviewableActionPacketSchema,
 } from "@/lib/planning/reviewable-packet";
 import { z } from "zod";
 

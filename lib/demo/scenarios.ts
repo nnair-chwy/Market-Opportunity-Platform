@@ -1,13 +1,14 @@
 import { evaluationPlanSchema, type EvaluationPlan } from "../planning/contracts.ts";
 import { buildAnswerContract } from "../planning/answer-contract.ts";
 import { compileEvaluationPlan, inferPlanningIntent } from "../planning/planner.ts";
+import { QUESTION_TEXT } from "../questions/registry.ts";
 
 export const DEMO_SNAPSHOT_VERSION = "clinic-market-demo-2026-08-17-v1" as const;
 
 export const DEMO_QUESTIONS = {
-  marketContext: "Show regional, clinic, and Google Ads evidence for Atlanta.",
-  clinicPerformance: "How is this clinic performing relative to an approved peer group, and how reliable is that comparison?",
-  growthTest: "Rank regional growth-test candidates.",
+  marketContext: QUESTION_TEXT.demoMarketContext,
+  clinicPerformance: QUESTION_TEXT.demoClinicPerformance,
+  growthTest: QUESTION_TEXT.demoGrowthTest,
 } as const;
 
 export const PHOENIX_DEMO_MARKET = {

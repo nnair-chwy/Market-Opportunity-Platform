@@ -5,6 +5,7 @@ import type { AnalysisBrief } from "./analysis-brief.ts";
 import { getApprovedWorkspaceSnapshotDataset } from "../perspectives/approved-workspace-snapshot.ts";
 import type { WorkspaceSnapshotDataset, WorkspaceSnapshotDatasetId } from "../perspectives/workspace-snapshot.ts";
 import { stateDogOwnership, stateDogOwnershipSource } from "../data/state-dog-ownership.ts";
+import type { EvidenceReconciliationReport } from "./evidence-compatibility.ts";
 
 export type InvestigationLead = {
   id: string;
@@ -39,7 +40,7 @@ export type MarketInvestigation = {
   planId: string;
   originalQuestion: string;
   perspectiveId: "cvc" | "marketing" | "pricing";
-  geography: "CBSA";
+  geography: "CBSA" | "supplied_trade_area";
   period: string;
   dataSnapshotLabel: string;
   dataSnapshotVersion: string;
@@ -90,6 +91,8 @@ export type MarketInvestigation = {
   scoringEligibility: "none";
   formula?: Array<{ id: string; label: string; weightPercent: number }>;
   evidenceStage: "signal" | "triangulated_finding";
+  /** Present when multiple registered evidence observations were compatibility-checked. */
+  reconciliation?: EvidenceReconciliationReport;
   nextPass: {
     status: "waiting_for_evidence" | "ready_to_run";
     question: string;
@@ -680,16 +683,17 @@ function marketingEfficiencyInvestigation(plan: EvaluationPlan, rows: MarketRow[
       : item.peerConversionRatePercentile >= 61
         ? "stronger attributed conversion response"
         : "typical attributed conversion response";
+    const recommendation = efficiencyPressure
+      ? `Prioritize ${item.market.name} for a paid-search efficiency review. Before changing spend, determine whether targeting and auction mix explain the elevated acquisition cost and whether first-party outcomes justify the current investment.`
+      : offsetsClickCost
+        ? `Keep ${item.market.name}'s paid-search investment unchanged while validating whether its stronger attributed conversion efficiency and first-party outcomes justify the higher click cost.`
+        : `Hold any spend change in ${item.market.name} until campaign mix and first-party outcomes explain the conflicting paid-search signals.`;
     return {
       id: `marketing-efficiency-${item.market.id}`,
       marketIds: [item.market.id],
       title,
       observation: `Compared with its ${item.peerCount} closest measured metros by population, households, income, and density, average CPC was ${formatSnapshotValue(datasets.cpc, item.cpc)} (P${item.peerCpcPercentile}), cost per attributed conversion was ${formatSnapshotValue(datasets.costPerConversion, item.costPerConversion)} (P${item.peerCostPerConversionPercentile}), and attributed conversion rate was ${formatSnapshotValue(datasets.conversionRate, item.conversionRate)} (P${item.peerConversionRatePercentile})—${conversionRateReading}.`,
-      businessMeaning: efficiencyPressure
-        ? "The market is expensive at both the click and attributed-conversion stages. Review targeting and auction mix before changing spend."
-        : offsetsClickCost
-          ? "Stronger attributed conversion efficiency may justify the higher click cost. Check commercial outcomes before changing spend."
-          : "The paid-search metrics disagree, so investigate the campaign mix before changing spend.",
+      businessMeaning: recommendation,
       method: "Each market is compared with its 20 closest measured metros by population, households, median income, and density, then ordered transparently by peer-relative CPC, cost per attributed conversion, and attributed conversion rate; no blended score",
       sampleSize: candidates.length,
       strength: `${percentileMeaning(item.peerCpcPercentile)} peer-relative CPC · ${percentileMeaning(item.peerCostPerConversionPercentile)} peer-relative cost/attributed conversion`,
@@ -738,7 +742,7 @@ function marketingEfficiencyInvestigation(plan: EvaluationPlan, rows: MarketRow[
     },
     mediaScope: {
       included: "Google Ads paid search · retail account · matched-postal aggregates · 30-day snapshot",
-      excluded: ["Paid social", "Display / programmatic", "Affiliate", "Email / CRM", "Retail media", "Offline media"],
+      excluded: ["YouTube / video", "Paid social", "Display / programmatic", "Affiliate", "Email / CRM", "Retail media", "Offline media"],
       bundlingRule: "No cross-channel bundling. Campaigns inside the connected Google Ads retail snapshot are aggregated; other media channels are not represented.",
     },
     screeningScope: {
@@ -807,7 +811,7 @@ function workspaceSnapshotInvestigation(plan: EvaluationPlan, rows: MarketRow[])
     income: rows.map((row) => row.income).sort((left, right) => left - right),
     density: rows.map((row) => row.density).sort((left, right) => left - right),
   };
-  const leads = selected.map((item, index): InvestigationLead => {
+  const leads = selected.map((item): InvestigationLead => {
     const market = marketById.get(item.cbsaCode)!;
     const percentile = percentileFor(item.rawValue, distribution);
     const high = percentile >= 50;
@@ -1045,11 +1049,17 @@ export function answerInvestigationFollowUp(lead: InvestigationLead, question: s
 
 function revisionInterpretation(investigation: MarketInvestigation, prompt: string) {
   const normalized = prompt.toLowerCase();
-  if (investigation.perspectiveId === "marketing" && /channel|meta|social|display|affiliate|email|crm|retail media|offline/.test(normalized)) {
+  if (investigation.perspectiveId === "marketing" && /channel|youtube|video|meta|social|display|affiliate|email|crm|retail media|offline/.test(normalized)) {
+    const channel = /youtube|video/.test(normalized) ? "YouTube" : "other advertising channels";
+    const evidenceGap = channel === "YouTube"
+      ? "No compatible YouTube evidence is connected yet"
+      : `No compatible evidence for ${channel} is connected yet`;
     return {
-      summary: "Channel scope was added to the review.",
-      effectOnRecommendation: "The recommendation remains a Google Ads paid-search signal. It cannot be generalized to total advertising efficiency until comparable channel-level spend and outcomes are joined.",
-      recommendedFollowUp: "Compare paid search with paid social, display, affiliate, email/CRM, and retail media using the same regional outcome and attribution definitions.",
+      summary: `${channel} was added as a separate investigation factor.`,
+      effectOnRecommendation: `The recommendation remains a Google Ads paid-search signal. ${evidenceGap}, so it cannot be generalized or used to reallocate cross-channel budget until comparable spend, exposure, and outcomes are joined.`,
+      recommendedFollowUp: `Compare paid search with ${channel} using the same geography, period, audience-overlap, attribution, and first-party outcome definitions.`,
+      evidenceRequest: `${channel} regional spend, reach or completed-view exposure, attributed outcomes, and audience overlap at a compatible geography and period`,
+      recommendationUpdate: `Added factor — ${channel}: keep any budget move channel-specific until comparable ${channel} evidence is connected; the paid-search finding itself is unchanged.`,
     };
   }
   if (/trend|over time|week|month|season|period/.test(normalized)) {
@@ -1057,6 +1067,8 @@ function revisionInterpretation(investigation: MarketInvestigation, prompt: stri
       summary: "Persistence over time was added as a required check.",
       effectOnRecommendation: "The current 30-day pattern remains a prioritization signal, not a sustained trend, until the same measures are compared across compatible periods.",
       recommendedFollowUp: "Compare at least three compatible periods and separate seasonality, campaign changes, and durable regional differences.",
+      evidenceRequest: "At least three compatible periods with campaign-change and seasonality annotations",
+      recommendationUpdate: "Added factor — time: keep the recommendation provisional until the pattern persists across compatible periods.",
     };
   }
   if (/sale|order|customer|revenue|contribution|margin|profit|conversion/.test(normalized)) {
@@ -1064,6 +1076,8 @@ function revisionInterpretation(investigation: MarketInvestigation, prompt: stri
       summary: "Commercial outcomes were elevated in the recommendation.",
       effectOnRecommendation: "Do not reduce spend from platform cost alone; test whether governed orders, new customers, sales, contribution, and incrementality justify the apparent cost pressure.",
       recommendedFollowUp: "Join privacy-safe regional orders, new customers, net sales, and contribution using compatible attribution and time windows.",
+      evidenceRequest: "Privacy-safe regional orders, new customers, net sales, contribution, and compatible attribution windows",
+      recommendationUpdate: "Added factor — commercial outcomes: do not change spend until first-party business value confirms or overturns the platform-efficiency signal.",
     };
   }
   if (/pet|household|population|density|income|demand/.test(normalized)) {
@@ -1071,12 +1085,16 @@ function revisionInterpretation(investigation: MarketInvestigation, prompt: stri
       summary: "Market-demand context was added to the review.",
       effectOnRecommendation: "Use same-grain demand context to choose fair peers and interpret scale, but do not blend public demographics into an opaque advertising score.",
       recommendedFollowUp: "Test the signal within comparable market-size and demand cohorts, then validate with governed regional customer outcomes.",
+      evidenceRequest: "A same-grain governed demand measure and compatible regional customer outcomes",
+      recommendationUpdate: "Added factor — demand: use it to validate peer choice, not as a substitute for regional business outcomes.",
     };
   }
   return {
     summary: "The analyst's consideration was added as a validation requirement.",
     effectOnRecommendation: "The observed signal is unchanged until compatible evidence tests the added consideration; the recommendation now makes that dependency explicit.",
     recommendedFollowUp: `Test this analyst direction with compatible evidence: ${prompt}`,
+    evidenceRequest: `Compatible evidence for the analyst-requested factor: ${prompt}`,
+    recommendationUpdate: `Added factor — ${prompt}: keep the current recommendation provisional until compatible evidence tests this consideration.`,
   };
 }
 
@@ -1108,19 +1126,33 @@ export function reviseMarketInvestigation(
     },
     leads: investigation.leads.map((lead) => ({
       ...lead,
+      businessMeaning: `${lead.businessMeaning} ${interpretation.recommendationUpdate}`,
       nextEvidence: `${lead.nextEvidence} ${revisionCheck}.`,
     })),
+    readiness: {
+      ...investigation.readiness,
+      missing: [...new Set([...investigation.readiness.missing, interpretation.evidenceRequest])],
+    },
+    mediaScope: investigation.mediaScope && /youtube|video/i.test(normalizedPrompt)
+      ? { ...investigation.mediaScope, excluded: [...new Set(["YouTube / video", ...investigation.mediaScope.excluded])] }
+      : investigation.mediaScope,
+    nextPass: {
+      ...investigation.nextPass,
+      status: "waiting_for_evidence",
+      question: interpretation.recommendedFollowUp,
+      evidenceNeeded: [...new Set([...investigation.nextPass.evidenceNeeded, interpretation.evidenceRequest])],
+    },
     limitations: [...new Set([...investigation.limitations, interpretation.effectOnRecommendation])],
     investigationPath: [
       ...investigation.investigationPath.filter((step) => !step.id.startsWith("analyst_revision_")),
       {
         id: `analyst_revision_${draftNumber}`,
-        label: "Apply analyst review",
-        purpose: `Reconsider the result using this human direction: ${normalizedPrompt}`,
+        label: "Investigate the added factor",
+        purpose: `Test the result using this human direction: ${normalizedPrompt}`,
         contributionToAnswer: interpretation.effectOnRecommendation,
-        status: "completed",
+        status: "waiting_for_evidence",
         sourceIds: [],
-        result: `${interpretation.summary} No unsupported metric or conclusion was invented.`,
+        result: `${interpretation.summary} A new evidence request was generated; no unsupported metric or conclusion was invented.`,
       },
     ],
   };

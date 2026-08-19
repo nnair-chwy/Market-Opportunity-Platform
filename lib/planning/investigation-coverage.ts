@@ -65,8 +65,7 @@ function sectionCoverage(
         status = "unsupported";
         explanation = "The investigation found no question-compatible business finding.";
       } else if (investigation.evidenceStage === "signal") {
-        status = "unsupported";
-        explanation = "The investigation produced screening signals only. A finding requires compatible outcome evidence and an explanation or challenge check.";
+        explanation = "The investigation produced source-linked screening signals. They are supported as investigation leads, not as decision-grade or causal findings.";
       }
     } else if (section.sectionId === "contrary_evidence") {
       const contraryCount = (investigation?.rejectedPatterns.length ?? 0)
@@ -133,11 +132,11 @@ function domainCoverage(contract: AnswerContract, investigation: MarketInvestiga
       status = "not_applicable";
       explanation = "The validated contract explicitly marks this requirement as not applicable.";
     } else if (requirement.readiness === "missing") {
-      status = "blocked";
-      explanation = `${requirement.ifUnmet} Required evidence is missing.`;
+      status = investigation ? "unsupported" : "blocked";
+      explanation = `${requirement.ifUnmet} Required evidence is missing, so this requirement cannot strengthen the best-available answer.`;
     } else if (requirement.readiness === "documented_not_approved") {
-      status = "blocked";
-      explanation = `${requirement.ifUnmet} The referenced evidence is documented but not approved to satisfy this requirement.`;
+      status = investigation ? "unsupported" : "blocked";
+      explanation = `${requirement.ifUnmet} The referenced evidence is documented but not approved to satisfy this requirement; it is not used in the answer.`;
     } else if (!investigation) {
       status = "blocked";
       explanation = "The evidence requirement is connected, but no confirmed investigation result is attached.";
@@ -186,11 +185,13 @@ export function checkInvestigationCoverage(
     : unmet.length
       ? coveredRequiredCount ? "partial" : "blocked"
       : "complete";
-  const permittedConclusion = overallStatus === "complete"
-    ? plan.answerContract.strongestPermittedConclusion
-    : plan.answerContract.fallbackOutcome === "clarification"
+  const permittedConclusion = plan.answerContract.fallbackOutcome === "clarification"
       ? "Ask for the missing decision, geography, cohort, timeframe, or requested output before investigating."
-      : "Return only the supported context or investigation leads and explicitly identify every unsupported requirement.";
+      : overallStatus === "blocked"
+        ? "No evidence-backed conclusion is available until a valid investigation result is attached."
+        : overallStatus === "complete"
+          ? plan.answerContract.strongestPermittedConclusion
+          : `${plan.answerContract.strongestPermittedConclusion} Unmet requirements limit the answer to its supported descriptive or investigation scope and must remain explicit.`;
 
   return investigationCoverageReportSchema.parse({
     version: INVESTIGATION_COVERAGE_VERSION,

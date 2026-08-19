@@ -895,3 +895,32 @@ without survey values remain unfilled. The source is the AVMA Pet Ownership &
 Demographics Sourcebook 2017–2018 edition, Table 16; its estimates are dated and
 cannot substitute for a current regional pet-household or Chewy customer
 denominator.
+
+## First-party regional outcome discovery
+
+`first-party-regional-outcome-v1` defines adapter-readiness requirements for
+regional orders, new customers, contribution or profit, clinic capacity,
+appointments, and mature-clinic performance. Discovery evaluates these six
+outcomes separately; one source does not need to contain all six.
+
+Every candidate requires a recognized aggregate metric and unit, a bounded
+observation period, a compatible non-national geography, internal-or-lower
+sensitivity, no direct order/customer/address/patient identifiers, and a
+reviewable aggregate row grain. Mature-clinic performance additionally
+requires stable clinic identity plus an explicit opening date, months-open
+measure, maturity status, or mature flag. Capacity requires clinic identity and
+a staffed or schedulable capacity measure.
+
+`first-party-outcome-readiness-v1` records `ready_for_adapter`,
+`missing_fields`, `incompatible`, `blocked_sensitive`, and `excluded`
+separately. A ready profile is only a candidate for a typed adapter. Discovery
+cannot register arbitrary SQL or make the file executable; full-file grain,
+small-cell, metric-definition, geography, quality, owner, and allowed-use
+review must first add a typed adapter and allowlisted query.
+
+The current approved-root inventory satisfies none of the six contracts.
+National SKU economics and new-customer merchandising sales have no compatible
+customer geography; Google Ads observations are not first-party business
+outcomes; and no inventoried aggregate supplies clinic capacity, appointments,
+or a maturity rule. These remain explicit evidence gaps rather than inferred
+outcomes.

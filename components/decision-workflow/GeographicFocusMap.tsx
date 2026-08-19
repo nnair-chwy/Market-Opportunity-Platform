@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ExpressionSpecification, FilterSpecification, GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent } from "maplibre-gl";
 import {
   MAINLAND_MARKET_BOUNDS,
@@ -148,23 +148,34 @@ export function GeographicFocusMap({
   const [percentileBand, setPercentileBand] = useState<PercentileBand>("all");
   const [filteredFindingId, setFilteredFindingId] = useState<string | null>(selectedLeadId);
   const [selectedRegionCode, setSelectedRegionCode] = useState<string | null>(null);
-  const [regionExplanation, setRegionExplanation] = useState<AskAiResponse | null>(null);
-  const [regionExplanationState, setRegionExplanationState] = useState<"idle" | "loading" | "error">("idle");
-  const [regionExplanationError, setRegionExplanationError] = useState<string | null>(null);
-  const [workspaceDataset, setWorkspaceDataset] = useState<WorkspaceSnapshotDataset | null>(null);
+  const [regionExplanationResult, setRegionExplanationResult] = useState<{
+    key: string;
+    response: AskAiResponse | null;
+    state: "idle" | "loading" | "error";
+    error: string | null;
+  } | null>(null);
+  const [workspaceDatasetResult, setWorkspaceDatasetResult] = useState<{
+    id: WorkspaceSnapshotDatasetId;
+    dataset: WorkspaceSnapshotDataset | null;
+  } | null>(null);
   const previousSelectedLeadIdRef = useRef(selectedLeadId);
   useEffect(() => {
-    if (!workspaceDatasetId) {
-      setWorkspaceDataset(null);
-      return;
-    }
+    if (!workspaceDatasetId) return;
     const controller = new AbortController();
+    const requestedDatasetId = workspaceDatasetId;
     fetch(`/api/perspective-map-data/${workspaceDatasetId}`, { signal: controller.signal, cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Snapshot unavailable")))
-      .then((payload) => setWorkspaceDataset(workspaceSnapshotDatasetSchema.parse(payload)))
-      .catch((error) => { if (!(error instanceof DOMException && error.name === "AbortError")) setWorkspaceDataset(null); });
+      .then((payload) => setWorkspaceDatasetResult({ id: requestedDatasetId, dataset: workspaceSnapshotDatasetSchema.parse(payload) }))
+      .catch((error) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setWorkspaceDatasetResult({ id: requestedDatasetId, dataset: null });
+        }
+      });
     return () => controller.abort();
   }, [workspaceDatasetId]);
+  const workspaceDataset = workspaceDatasetId && workspaceDatasetResult?.id === workspaceDatasetId
+    ? workspaceDatasetResult.dataset
+    : null;
   const workspaceValueByCode = useMemo(
     () => new Map((workspaceDataset?.values ?? []).map((item) => [item.cbsaCode, item.rawValue])),
     [workspaceDataset],
@@ -177,11 +188,11 @@ export function GeographicFocusMap({
   const activeMeasureLabel = workspaceDataset?.valueLabel ?? METRIC_LABELS[contextMetric];
   const activeSourceIds = workspaceDataset?.sourceIds ?? ["SRC-016"];
   const evidenceTerm = evidenceStage === "signal" ? "Signal" : "Finding";
-  const formatActiveValue = (value: number) => workspaceDataset?.valueFormat === "currency"
+  const formatActiveValue = useCallback((value: number) => workspaceDataset?.valueFormat === "currency"
     ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value)
     : workspaceDataset?.valueFormat === "percent"
       ? `${value.toFixed(1)}%`
-      : workspaceDataset ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value) : formatMetricValue(contextMetric, value);
+      : workspaceDataset ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value) : formatMetricValue(contextMetric, value), [contextMetric, workspaceDataset]);
   const findingsGeoJson = useMemo(() => {
     const findingByCode = new Map<string, { id: string; index: number; title: string; color: string; memberCount: number; memberLabel: string }>();
     findings.forEach((finding, index) => {
@@ -271,6 +282,7 @@ export function GeographicFocusMap({
 
     const styleUrl = config.styleUrl;
     let disposed = false;
+    let styleReady = false;
 
     async function initialize() {
       await Promise.resolve();
@@ -296,6 +308,7 @@ export function GeographicFocusMap({
 
         map.once("load", () => {
           if (disposed) return;
+          styleReady = true;
           const initialFocus = focusCbsaCodesRef.current;
           map.addSource(CBSA_SOURCE_ID, {
             type: "geojson",
@@ -406,7 +419,7 @@ export function GeographicFocusMap({
             const lead = findings[findingIndex];
             if (lead) {
               const interpretation = document.createElement("p");
-              interpretation.textContent = lead.observation;
+              interpretation.textContent = lead.businessMeaning;
               popup.append(interpretation);
             }
           } else {
@@ -423,7 +436,7 @@ export function GeographicFocusMap({
           new Popup({ closeButton: true, offset: 8 }).setLngLat(event.lngLat).setDOMContent(popup).addTo(map);
         });
         map.on("error", () => {
-          if (!disposed) setLoadState("basemap_unavailable");
+          if (!styleReady && !disposed) setLoadState("basemap_unavailable");
         });
       } catch {
         if (!disposed) setLoadState("basemap_unavailable");
@@ -436,7 +449,7 @@ export function GeographicFocusMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [activeMeasureLabel, config, contextMetric, evidenceTerm, findingsGeoJson, interactiveEnabled, metricValues, workspaceDataset]);
+  }, [activeMeasureLabel, config, contextMetric, evidenceTerm, findings, findingsGeoJson, formatActiveValue, interactiveEnabled, metricValues, workspaceDataset]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -537,12 +550,13 @@ export function GeographicFocusMap({
     : null;
   const selectedRegionScore = selectedRegionCode ? regionScores[selectedRegionCode] ?? null : null;
   const selectedRegionRange = selectedRegionPercentile === null ? null : measureRange(selectedRegionPercentile);
-
-  useEffect(() => {
-    setRegionExplanation(null);
-    setRegionExplanationState("idle");
-    setRegionExplanationError(null);
-  }, [contextMetric, questionContext, selectedRegionCode]);
+  const regionExplanationKey = `${contextMetric}\u0000${questionContext}\u0000${selectedRegionCode ?? ""}`;
+  const activeRegionExplanationResult = regionExplanationResult?.key === regionExplanationKey
+    ? regionExplanationResult
+    : null;
+  const regionExplanation = activeRegionExplanationResult?.response ?? null;
+  const regionExplanationState = activeRegionExplanationResult?.state ?? "idle";
+  const regionExplanationError = activeRegionExplanationResult?.error ?? null;
 
   async function explainSelectedRegion() {
     if (!selectedRegionFeature || selectedRegionPercentile === null || typeof selectedRegionValue !== "number" || regionExplanationState === "loading") return;
@@ -578,8 +592,8 @@ export function GeographicFocusMap({
       }] : []),
     ];
 
-    setRegionExplanationState("loading");
-    setRegionExplanationError(null);
+    const requestKey = regionExplanationKey;
+    setRegionExplanationResult({ key: requestKey, response: null, state: "loading", error: null });
     try {
       const response = await fetch("/api/ai/insights", {
         method: "POST",
@@ -606,11 +620,14 @@ export function GeographicFocusMap({
           : "The region explanation could not be generated.";
         throw new Error(message);
       }
-      setRegionExplanation(payload as AskAiResponse);
-      setRegionExplanationState("idle");
+      setRegionExplanationResult({ key: requestKey, response: payload as AskAiResponse, state: "idle", error: null });
     } catch (error) {
-      setRegionExplanationState("error");
-      setRegionExplanationError(error instanceof Error ? error.message : "The region explanation could not be generated.");
+      setRegionExplanationResult({
+        key: requestKey,
+        response: null,
+        state: "error",
+        error: error instanceof Error ? error.message : "The region explanation could not be generated.",
+      });
     }
   }
 
@@ -656,9 +673,9 @@ export function GeographicFocusMap({
         <section className="geographic-focus-answer" aria-label={`Selected ${evidenceTerm.toLowerCase()} shown on the map`} data-answer-visual="selected-finding">
           <div>
             <span>{evidenceTerm} {selectedFindingNumber} shown</span>
-            <strong>{selectedFinding.observation}</strong>
+            <strong>{selectedFinding.businessMeaning}</strong>
           </div>
-          <p><b>Why it matters</b>{selectedFinding.businessMeaning}</p>
+          <p><b>Evidence detail</b>{selectedFinding.observation}</p>
           <small>Markets are labeled A/B in the same order used by the {evidenceTerm.toLowerCase()}. Select another {evidenceTerm.toLowerCase()} below to redraw the answer.</small>
         </section>
       ) : null}

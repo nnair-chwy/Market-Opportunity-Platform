@@ -173,9 +173,15 @@ export function AdaptiveMarketWorkspace({
   const [unsupportedLayerMessage, setUnsupportedLayerMessage] = useState<string | null>(null);
   const [swipePercent, setSwipePercent] = useState(50);
   const [mapHelpOpen, setMapHelpOpen] = useState(false);
-  const [workspaceSnapshot, setWorkspaceSnapshot] = useState<WorkspaceSnapshotDataset | null>(null);
-  const [workspaceSnapshotState, setWorkspaceSnapshotState] = useState<"idle" | "loading" | "ready" | "unavailable">("idle");
-  const [comparisonWorkspaceSnapshot, setComparisonWorkspaceSnapshot] = useState<WorkspaceSnapshotDataset | null>(null);
+  const [workspaceSnapshotRequest, setWorkspaceSnapshotRequest] = useState<{
+    datasetId: string;
+    state: "ready" | "unavailable";
+    snapshot: WorkspaceSnapshotDataset | null;
+  } | null>(null);
+  const [comparisonSnapshotRequest, setComparisonSnapshotRequest] = useState<{
+    datasetId: string;
+    snapshot: WorkspaceSnapshotDataset | null;
+  } | null>(null);
 
   const presentation = useMemo(() => {
     const view = activeView ?? getDefaultView("cvc");
@@ -189,14 +195,8 @@ export function AdaptiveMarketWorkspace({
 
   useEffect(() => {
     const binding = presentation.mapBinding;
-    if (binding.kind !== "workspace_snapshot") {
-      setWorkspaceSnapshot(null);
-      setWorkspaceSnapshotState("idle");
-      return;
-    }
+    if (binding.kind !== "workspace_snapshot") return;
     const controller = new AbortController();
-    setWorkspaceSnapshot(null);
-    setWorkspaceSnapshotState("loading");
     fetch(`/api/perspective-map-data/${binding.datasetId}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -206,24 +206,19 @@ export function AdaptiveMarketWorkspace({
         return response.json() as Promise<WorkspaceSnapshotDataset>;
       })
       .then((snapshot) => {
-        setWorkspaceSnapshot(snapshot);
-        setWorkspaceSnapshotState("ready");
+        setWorkspaceSnapshotRequest({ datasetId: binding.datasetId, state: "ready", snapshot });
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
-        setWorkspaceSnapshotState("unavailable");
+        setWorkspaceSnapshotRequest({ datasetId: binding.datasetId, state: "unavailable", snapshot: null });
       });
     return () => controller.abort();
   }, [presentation.mapBinding]);
 
   useEffect(() => {
     const binding = comparisonPresentation?.mapBinding;
-    if (binding?.kind !== "workspace_snapshot") {
-      setComparisonWorkspaceSnapshot(null);
-      return;
-    }
+    if (binding?.kind !== "workspace_snapshot") return;
     const controller = new AbortController();
-    setComparisonWorkspaceSnapshot(null);
     fetch(`/api/perspective-map-data/${binding.datasetId}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -232,13 +227,31 @@ export function AdaptiveMarketWorkspace({
         if (!response.ok) throw new Error("comparison snapshot unavailable");
         return response.json() as Promise<WorkspaceSnapshotDataset>;
       })
-      .then(setComparisonWorkspaceSnapshot)
+      .then((snapshot) => setComparisonSnapshotRequest({ datasetId: binding.datasetId, snapshot }))
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
-        setComparisonWorkspaceSnapshot(null);
+        setComparisonSnapshotRequest({ datasetId: binding.datasetId, snapshot: null });
       });
     return () => controller.abort();
   }, [comparisonPresentation?.mapBinding]);
+
+  const activeWorkspaceDatasetId = presentation.mapBinding.kind === "workspace_snapshot"
+    ? presentation.mapBinding.datasetId
+    : null;
+  const workspaceSnapshot = activeWorkspaceDatasetId && workspaceSnapshotRequest?.datasetId === activeWorkspaceDatasetId
+    ? workspaceSnapshotRequest.snapshot
+    : null;
+  const workspaceSnapshotState: "idle" | "loading" | "ready" | "unavailable" = !activeWorkspaceDatasetId
+    ? "idle"
+    : workspaceSnapshotRequest?.datasetId !== activeWorkspaceDatasetId
+      ? "loading"
+      : workspaceSnapshotRequest.state;
+  const comparisonWorkspaceDatasetId = comparisonPresentation?.mapBinding.kind === "workspace_snapshot"
+    ? comparisonPresentation.mapBinding.datasetId
+    : null;
+  const comparisonWorkspaceSnapshot = comparisonWorkspaceDatasetId && comparisonSnapshotRequest?.datasetId === comparisonWorkspaceDatasetId
+    ? comparisonSnapshotRequest.snapshot
+    : null;
 
   const censusMetric =
     presentation.mapBinding.kind === "census_percentile"
@@ -380,6 +393,7 @@ export function AdaptiveMarketWorkspace({
     presentation.mapBinding,
     presentation.measureId,
     presentation.perspectiveId,
+    presentation.sourceIds,
     showActiveChoropleth,
     workspaceSnapshot,
   ]);

@@ -4,6 +4,11 @@ Read this file before opening CSVs, proposing an ingestion, or designing an
 evaluation. It tells you which source package to use. Do not scan every raw file
 by default.
 
+To see which approved local files are physically present in this worktree, read
+`contracts/local-approved-source-inventory.json`. It records exact paths,
+bytes, SHA-256 hashes, allowed-use packages, and the applicable source contract.
+Local presence does not expand a source's approved use.
+
 ## Sixty-second workflow
 
 1. State the decision or recommendation being evaluated.
@@ -26,7 +31,9 @@ real need.
 | --- | --- | --- | --- | --- |
 | Regional competitor price or availability | `contracts/pricing-snowflake/available-data-matrix.md`, then `export-manifest.json` | `competitor-price-geo_latest-by-zip-competitor-sku-30d_2026-08-17.csv` | `PRODUCT_PART_NUMBER`, `ZIP_CODE`, competitor, offer date | Local Chewy demand, causality, or permission to change price |
 | Pricing priority and economic guardrails | Pricing `export-manifest.json` | `pse-pricing-economics_by-us-sku-current-day_2026-08-17.csv`, product spine, Chewy price history, merch performance | `PRODUCT_PART_NUMBER`; preserve dates | Destination-specific profit; PSE cost is not automatically contribution cost |
+| Current Zeus price state and exception queue | `contracts/zeus-ui/export-manifest.json` | sanitized 2026-08-18 Zeus product and regular-exception snapshots | exact `SKU` to validated `PRODUCT_PART_NUMBER`; snapshot date | Local demand, complete catalog coverage, history, or authority to change price |
 | Prior Pricing actions and observed outcomes | Pricing `source-catalog.json` and Phoenix profile query | Snowflake `PRICING_LABS_RESULTS_SUMMARY` and `OFFER_PULSING_STATS` | SKU, cohort/round, start/end date | Causal lift outside the documented experiment design |
+| Pricing override and match-control history | Pricing query `11_pricing-controls-and-match-discovery.sql` | Snowflake Dream Weaver override history and `COMPETITOR_MATCH_BUNGEE` | override ID or match ID; effective timestamps require owner validation | Employee identity, override payload meaning, match reliability, or causal outcome |
 | Google Ads market response | `contracts/google-ads/export-catalog.json` | `*_matched-dma-campaign-performance_us.csv` | account cohort, campaign, DMA, report window | Organic demand, incrementality, or complete local coverage |
 | Google Ads conversion meaning | Google Ads export catalog | `*_matched-dma-campaign-conversion-action_us.csv` | DMA, campaign, conversion action | Add segmented conversions to total conversions or compare unlike actions blindly |
 | Google Ads configured scope | Google Ads export catalog | `*_configured-targets_by-campaign-adgroup_us.csv` | target, campaign, ad group | Physical user location or realized performance |
@@ -35,6 +42,7 @@ real need.
 | Brand/competitor search context | SEO manifest | `semrush-keyword-demand_brand-*` and `semrush-keyword-demand_competitor-*` | normalized keyword and cohort | Complete coverage for capped exports; additive volume across overlapping cohorts |
 | Public market context | Versioned Census manifest in the selected package | CBSA universe, ACS context, or geometry package | exact five-digit CBSA code and version | Trade areas, drive times, demand, ranking, or scoring eligibility |
 | Clinic/site demo | Esri sample manifest and field catalog | minimized checked-in demo fixture | stable supplied site and trade-area IDs | Production truth, current performance, or approved site decision |
+| GIS enrichment discovery | Source registry `SRC-037`; GIS owner review | Esri demographics, Placer.ai visitation, ChainXY location history | no approved project join yet | That catalog visibility authorizes export, licensed reuse, or CVC scoring |
 
 ## Pricing join order
 
@@ -50,7 +58,9 @@ answered:
 5. Use curated competitor state and Pricing Labs/Offer Pulsing history for
    match configuration, active-intervention checks, and historical outcome
    labels.
-6. Add promotions only when base-price versus promotion treatment changes the
+6. Check Zeus current exception state and Dream Weaver override history before
+   treating a condition as untreated; preserve missing effective timestamps.
+7. Add promotions only when base-price versus promotion treatment changes the
    recommendation.
 
 Recommended output classes are: `monitor_only`, `investigate_data_quality`,

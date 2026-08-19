@@ -125,10 +125,10 @@ test("clinic approval requests preserve the human approval gate", () => {
   assert.ok(plan.steps.some((step) => /permitted evaluation|accountable review|evidence gates/i.test(step.label)));
 });
 
-test("campaign requests stop at unavailable governed evidence", () => {
+test("campaign requests permit bounded exploration while decision evidence remains unavailable", () => {
   const plan = planEvaluation("Which markets should receive a new awareness campaign?");
   assert.equal(plan.capabilityId, "local_growth_test");
-  assert.equal(plan.status, "blocked");
+  assert.equal(plan.status, "partially_executable");
   assert.equal(plan.resultWorkspaceType, "evidence_readiness");
   assert.ok(plan.missingEvidence.length > 0);
   assert.ok(plan.steps.every((step) => !/Run deterministic operators/i.test(step.label)));
@@ -261,11 +261,11 @@ test("Marketing cost questions preserve the decision and selected CPC view in th
   const compiledAiProposal = compileEvaluationPlan(question, aiStyleIntent, "ai_proposed", "marketing");
   assert.equal(compiledAiProposal.geographyResolution.mode, "national");
   assert.equal(compiledAiProposal.intent.clarificationRequired, false);
-  assert.equal(compiledAiProposal.answerContract.answerMode, "research_needed");
+  assert.equal(compiledAiProposal.answerContract.answerMode, "investigation");
   assert.notEqual(compiledAiProposal.resultWorkspaceType, "clarification");
 });
 
-test("Google Ads questions route to blocked Marketing evidence readiness", () => {
+test("Google Ads questions route to partial Marketing evidence readiness", () => {
   const national = planEvaluation(
     "Which U.S. DMAs show promising Google Ads demand and acquisition efficiency?",
     "marketing",
@@ -273,7 +273,7 @@ test("Google Ads questions route to blocked Marketing evidence readiness", () =>
   assert.equal(national.intent.topic, "local_growth");
   assert.equal(national.intent.requestedMeasure, "none");
   assert.equal(national.capabilityId, "local_growth_test");
-  assert.equal(national.status, "blocked");
+  assert.equal(national.status, "partially_executable");
   assert.equal(national.resultWorkspaceType, "evidence_readiness");
   assert.match(national.missingEvidence.join(" "), /weekly DMA campaign aggregate/i);
   assert.match(national.missingEvidence.join(" "), /first-party regional outcome/i);
@@ -291,7 +291,7 @@ test("Google Ads questions route to blocked Marketing evidence readiness", () =>
   assert.equal(compare.intent.topic, "local_growth");
   assert.equal(compare.geographyResolution.mode, "compare");
   assert.equal(compare.capabilityId, "local_growth_test");
-  assert.equal(compare.status, "blocked");
+  assert.equal(compare.status, "partially_executable");
   assert.equal(compare.resultWorkspaceType, "evidence_readiness");
 });
 

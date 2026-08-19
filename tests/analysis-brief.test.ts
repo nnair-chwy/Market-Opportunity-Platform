@@ -45,10 +45,33 @@ test("analysis brief consistency rejects geography, query, and unsupported ranki
   assert.ok(issues.some((issue) => /ranking language/i.test(issue)));
 });
 
+test("a common metro alias preserves the resolved market in a rewritten question", () => {
+  const plan = planEvaluation("Describe the population of the Dallas metro.", "marketing");
+  const brief = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  const rewritten = { ...brief, rewrittenQuestion: "Describe total population for the Dallas metro area." };
+  assert.deepEqual(validateAnalysisBriefConsistency(plan, rewritten), []);
+});
+
 test("Marketing analysis brief separates influence weights from validity roles", () => {
   const plan = planEvaluation("Which comparable markets could support a valid marketing test?", "marketing");
   const brief = buildAnalysisBrief(plan, runMarketInvestigation(plan));
   assert.equal(analysisBriefWeightTotal(brief), 100);
   assert.ok(brief.considerations.every((item) => item.weightPercent !== null));
   assert.ok(brief.considerations.some((item) => item.id === "media_isolation" && item.role === "validity_gate"));
+});
+
+test("a regional ad-cost question is not rewritten as a growth-test ranking", () => {
+  const plan = planEvaluation("What area are we paying too much on ads?", "marketing", [], "paid_search_cpc");
+  const brief = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  assert.match(brief.rewrittenQuestion, /cost|cpc|paid search|ads/i);
+  assert.doesNotMatch(brief.rewrittenQuestion, /rank complete-evidence regional growth-test candidates/i);
+});
+
+test("an explicit price-increase question keeps its decision intent ahead of the active evidence view", () => {
+  const plan = planEvaluation("Where can we raise the price?", "pricing", [], "competitor_availability");
+  const brief = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  assert.match(plan.intent.conciseInterpretation, /regions.*raising prices/i);
+  assert.match(brief.rewrittenQuestion, /regions.*raising prices/i);
+  assert.match(brief.rewrittenQuestion, /customer demand.*unit economics.*competitive price position/i);
+  assert.doesNotMatch(brief.rewrittenQuestion, /where monitored competitor availability differs/i);
 });

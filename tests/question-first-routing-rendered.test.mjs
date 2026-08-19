@@ -6,10 +6,13 @@ const workflow = fs.readFileSync(new URL("../components/decision-workflow/Decisi
 assert.match(workflow, /plan\.intent\.topic !== "clinic_location"/);
 const market = fs.readFileSync(new URL("../components/decision-workflow/AdaptiveMarketWorkspace.tsx", import.meta.url), "utf8");
 const focusMap = fs.readFileSync(new URL("../components/decision-workflow/GeographicFocusMap.tsx", import.meta.url), "utf8");
+const questionMap = fs.readFileSync(new URL("../components/decision-workflow/QuestionMap.tsx", import.meta.url), "utf8");
+const analysisBriefPanel = fs.readFileSync(new URL("../components/decision-workflow/AnalysisBriefPanel.tsx", import.meta.url), "utf8");
 const investigationPanel = fs.readFileSync(new URL("../components/decision-workflow/MarketInvestigationPanel.tsx", import.meta.url), "utf8");
 const revisionBar = fs.readFileSync(new URL("../components/decision-workflow/RecommendationRevisionBar.tsx", import.meta.url), "utf8");
 const globalStyles = fs.readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
 const questionWorkspace = fs.readFileSync(new URL("../components/decision-workflow/AdaptiveEvaluationWorkspace.tsx", import.meta.url), "utf8");
+const questionRegistry = fs.readFileSync(new URL("../lib/questions/registry.ts", import.meta.url), "utf8");
 const sister = fs.readFileSync(new URL("../components/decision-workflow/SisterGeographiesSection.tsx", import.meta.url), "utf8");
 const sisterLib = fs.readFileSync(new URL("../lib/planning/sister-geographies.ts", import.meta.url), "utf8");
 
@@ -26,8 +29,8 @@ test("question results do not hard-code Seattle or fixed findings", () => {
 test("the default CVC perspective does not override question inference", () => {
   assert.match(questionWorkspace, /perspectiveExplicitlySelected/);
   assert.match(questionWorkspace, /perspectiveExplicitlySelected \? activeView\.viewId : undefined/);
-  assert.match(workflow, /\.\.\.\(nextPerspectiveId \? \{ perspectiveId: nextPerspectiveId \} : \{\}\)/);
-  assert.match(workflow, /\.\.\.\(activeViewId \? \{ activeViewId \} : \{\}\)/);
+  assert.match(workflow, /perspectiveId: nextPerspectiveId/);
+  assert.match(workflow, /activeViewId,/);
 });
 
 test("opening experience exposes the approved perspective-specific evidence questions", () => {
@@ -39,11 +42,13 @@ test("opening experience exposes the approved perspective-specific evidence ques
     "Where does monitored competitor availability differ by region?",
     "Which comparable metros have different competitor-availability percentiles?",
   ];
-  for (const question of approved) assert.match(questionWorkspace, new RegExp(question.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  for (const question of approved) assert.match(questionRegistry, new RegExp(question.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(questionWorkspace, /listStarterQuestions/);
   assert.match(questionWorkspace, /What works now/);
   assert.match(questionWorkspace, /Product vision/);
   assert.match(workflow, /\/api\/evaluation-plans\/execute/);
   assert.match(workflow, /EvidenceBundlePanel/);
+  assert.ok(questionWorkspace.indexOf('className="adaptive-question-composer"') < questionWorkspace.indexOf('<AdaptiveMarketWorkspace'));
 });
 
 test("request state is transparent before a plan is treated as final", () => {
@@ -57,13 +62,37 @@ test("request state is transparent before a plan is treated as final", () => {
   assert.match(workflow, /Human checkpoint · before analysis/);
   assert.match(workflow, /AnalysisBriefPanel/);
   assert.match(workflow, /answerContract=\{plan\.answerContract\}/);
+  assert.match(workflow, /onUpdatePlan=\{updateAnalysisPlan\}/);
   assert.match(workflow, /onConfirm=\{confirmAndRun\}/);
+  assert.match(workflow, /canRun onUpdatePlan/);
   assert.match(workflow, /setPhase\("confirming"\)/);
-  assert.match(workflow, /change\.questionChanged/);
+  assert.match(workflow, /buildAnalysisPlanRequest/);
+  assert.match(workflow, /perspectiveId: plan\.perspectiveId/);
+  assert.match(workflow, /activeViewId: plan\.evidenceSelection\.viewId/);
+  assert.match(workflow, /selectedCbsaCodes: selectedGeographicContexts/);
   assert.match(workflow, /Regenerating the intent, metrics, geography, capability, and registered queries/);
   assert.match(workflow, /Review the changed interpretation and confirm again before any query runs/);
   assert.match(workflow, /validateAnalysisBriefConsistency/);
   assert.match(workflow, /Execution was stopped before any query ran/);
+});
+
+test("analysis-plan review follows question, method, boundary, then action", () => {
+  const questionIndex = analysisBriefPanel.indexOf('className="analysis-brief-question"');
+  const methodIndex = analysisBriefPanel.indexOf('className="analysis-brief-considerations"');
+  const boundaryIndex = analysisBriefPanel.indexOf('className="answer-contract-preview"');
+  const actionIndex = analysisBriefPanel.indexOf('className="analysis-brief-footer"');
+  assert.ok(questionIndex >= 0 && questionIndex < methodIndex);
+  assert.ok(methodIndex < boundaryIndex);
+  assert.ok(boundaryIndex < actionIndex);
+  assert.match(analysisBriefPanel, /See required answer sections, completion tests, and limits/);
+});
+
+test("nonfatal map errors do not replace an already loaded basemap", () => {
+  for (const source of [questionMap, focusMap]) {
+    assert.match(source, /let styleReady = false/);
+    assert.match(source, /styleReady = true/);
+    assert.match(source, /if \(!styleReady && !disposed\)/);
+  }
 });
 
 test("confirmed analysis keeps evidence lineage and decision boundaries visible", () => {
@@ -166,6 +195,39 @@ test("final results lead with portfolio patterns and keep analysis mechanics col
   assert.match(investigationPanel, /How the analysis worked/);
 });
 
+test("results lead with the answer and map before structured evidence", () => {
+  const answerIndex = workflow.indexOf('data-result-priority="answer-to-goal"');
+  const evidenceIndex = workflow.indexOf('<EvidenceBundlePanel');
+  const mapIndex = workflow.indexOf('<GeographicFocusMap');
+  assert.ok(answerIndex >= 0 && answerIndex < mapIndex);
+  assert.ok(mapIndex < evidenceIndex);
+  assert.match(workflow, /<span>Recommendation<\/span>/);
+  assert.match(workflow, /decision-map-answer-layout/);
+  assert.match(globalStyles, /\.decision-map-answer-layout \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(workflow, /Selected finding and action readiness/);
+  assert.match(workflow, /owned-action-plan/);
+  assert.match(workflow, /How this answer was built/);
+  assert.match(workflow, /answer-contract-details/);
+});
+
+test("the opening map keeps saved work in a compact control below map help", () => {
+  assert.match(questionWorkspace, /aria-label={`Open \$\{savedPackets\.length\} saved action/);
+  assert.match(questionWorkspace, /<strong>Saved<\/strong>/);
+  assert.doesNotMatch(questionWorkspace, /<strong>Recent action packets<\/strong>/);
+  assert.match(globalStyles, /\.adaptive-opening \.adaptive-recent-packets \{[^}]*top: 8\.55rem;[^}]*left: 1rem/);
+});
+
+test("review action packet uses the full result width", () => {
+  assert.match(
+    globalStyles,
+    /\.result-page-layout \.decision-review-primary\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/s,
+  );
+  assert.doesNotMatch(
+    globalStyles,
+    /\.result-page-layout \.decision-review-primary\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)\s+minmax\(0, 1fr\);/s,
+  );
+});
+
 test("recommendations expose channel scope and preserve numbered analyst revisions", () => {
   assert.match(investigationPanel, /Advertising channel scope/);
   assert.match(investigationPanel, /No cross-channel bundling|mediaScope\.bundlingRule/);
@@ -175,6 +237,15 @@ test("recommendations expose channel scope and preserve numbered analyst revisio
   assert.match(workflow, /Draft \{draft\.number\}/);
   assert.match(workflow, /reviseMarketInvestigation/);
   assert.match(workflow, /openRecommendationDraft/);
+});
+
+test("saved packets preserve lead-specific metadata and restore stored registered-evidence investigations", () => {
+  assert.match(workflow, /title: packetAction\.title/);
+  assert.match(workflow, /actionId: packetAction\.id/);
+  assert.match(workflow, /planActionId: selectedAction\.id/);
+  assert.match(workflow, /restoreSavedInvestigation\(restoredPlan, packet\.investigation, fallbackInvestigation\)/);
+  assert.match(workflow, /const restoredDrafts = restoredInvestigation/);
+  assert.doesNotMatch(workflow, /setInvestigation\(usesRegisteredEvidence \? null : restoredInvestigation\)/);
 });
 
 test("analyst review stays docked to the viewport without covering result content", () => {

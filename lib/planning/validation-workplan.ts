@@ -30,6 +30,10 @@ export const validationWorkstreamSchema = z.object({
   evidenceIds: z.array(z.string().trim().min(1)).min(1),
   deliverable: z.string().trim().min(1),
   completionCriteria: z.string().trim().min(1),
+  /** Optional so previously saved 1.0.0 workplans remain valid. */
+  kpi: z.string().trim().min(1).optional(),
+  validationThreshold: z.string().trim().min(1).optional(),
+  stopCondition: z.string().trim().min(1).optional(),
   status: z.enum(["ready_to_start", "blocked_on_evidence", "requires_approval"]),
 }).strict();
 
@@ -133,6 +137,9 @@ function clinicWorkplan(plan: EvaluationPlan): ValidationWorkplan {
       evidenceIds: ["pet_demand"],
       deliverable: "A source-linked demand brief with sample, geography, period, benchmark, and contrary evidence.",
       completionCriteria: "The owner documents whether demand evidence is sufficient for market validation and records unresolved gaps.",
+      kpi: "Share of required demand measures delivered at the approved geography, period, population, and benchmark.",
+      validationThreshold: "All owner-required demand measures are source-linked and comparable, and the accountable owner records whether the approved expansion benchmark is met.",
+      stopCondition: "Stop this workstream if the geography, population, period, benchmark, or source cannot be made comparable without imputation.",
       status: "blocked_on_evidence" as const,
     },
     {
@@ -144,6 +151,9 @@ function clinicWorkplan(plan: EvaluationPlan): ValidationWorkplan {
       evidenceIds: ["clinic_capacity", "veterinary_supply"],
       deliverable: "A current supply-and-capacity brief with definitions, source dates, conflicts, and feasibility limitations.",
       completionCriteria: "No material identity, geography, capacity, or competitive-access conflict remains hidden.",
+      kpi: "Coverage of current clinic supply, appointment capacity, veterinarian availability, competitor access, and cannibalization checks.",
+      validationThreshold: "Every required supply-and-capacity check has a current source, approved grain, documented definition, and owner disposition.",
+      stopCondition: "Stop advancement if clinic identity or geography cannot be reconciled, or if an operating owner confirms a material capacity, workforce, access, or cannibalization constraint.",
       status: "blocked_on_evidence" as const,
     },
     {
@@ -155,6 +165,9 @@ function clinicWorkplan(plan: EvaluationPlan): ValidationWorkplan {
       evidenceIds: ["property_feasibility"],
       deliverable: "A feasibility brief with candidate trade areas, assumptions, excluded areas, and approval gates.",
       completionCriteria: "The owner records whether the market is ready for a later site-screening review, without treating this workplan as approval.",
+      kpi: "Count of candidate trade areas that clear all owner-approved property, access, cost, and feasibility gates.",
+      validationThreshold: "At least one candidate trade area clears every approved feasibility gate with assumptions and exclusions documented.",
+      stopCondition: "Stop property research if no candidate trade area clears an approved gate or required property/economic evidence cannot be obtained.",
       status: "requires_approval" as const,
     },
     {
@@ -166,6 +179,9 @@ function clinicWorkplan(plan: EvaluationPlan): ValidationWorkplan {
       evidenceIds: ["pet_demand", "clinic_capacity", "veterinary_supply", "property_feasibility", "public_market_context"],
       deliverable: "A source-linked validation brief with evidence status, limitations, decision owner, and follow-up requests.",
       completionCriteria: "An accountable human records the validation disposition and the next research owner; no site, lease, opening, or spend decision is made here.",
+      kpi: "Completion of the source-linked validation packet and accountable human research disposition.",
+      validationThreshold: "All required workstreams have an evidence status and the accountable owner records Advance, Hold, or Stop for the next research stage only.",
+      stopCondition: "Stop and record Hold or Stop when any required workstream is unresolved, contradictory, unapproved, or meets its stop condition.",
       status: "blocked_on_evidence" as const,
     },
   ];
@@ -203,6 +219,32 @@ function genericWorkplan(plan: EvaluationPlan): ValidationWorkplan {
       ? "clinic performance"
       : "market validation";
   const owner = plan.capabilityId === "local_growth_test" ? "Marketing Science" : "Market Intelligence";
+  const measurement = plan.perspectiveId === "marketing"
+    ? {
+      outcomeKpi: "Coverage of source-linked regional business outcomes and valid comparison design for each candidate market.",
+      outcomeThreshold: "Each candidate market has an approved outcome, matched geography and period, documented comparator, and owner-approved measurement rule.",
+      outcomeStop: "Stop before any spend recommendation if outcomes, geography, periods, or comparator design are missing, incompatible, or unapproved.",
+      feasibilityKpi: "Completion of test design, budget, privacy, operational, success, rollback, and measurement guardrails.",
+      feasibilityThreshold: "Every required guardrail has an accountable owner and an approved pass/fail rule before a controlled test is proposed.",
+      feasibilityStop: "Stop test planning if any required guardrail lacks an owner or approved rule, or if contamination or operational feasibility cannot be bounded.",
+    }
+    : plan.perspectiveId === "pricing"
+      ? {
+        outcomeKpi: "Coverage of representative geographic price observations, reliable SKU matches, and compatible first-party business outcomes.",
+        outcomeThreshold: "The owner-approved ZIP and SKU coverage gates, match-reliability gate, comparable period, and business-outcome requirement are all met.",
+        outcomeStop: "Stop before any price recommendation if evidence depends on a single unrepresentative ZIP, unreliable matches, incompatible periods, or missing business outcomes.",
+        feasibilityKpi: "Completion of margin, promotion, inventory, legal, customer-impact, measurement, and rollback guardrails.",
+        feasibilityThreshold: "Every required pricing guardrail has an accountable owner and approved pass/fail rule before a controlled test is proposed.",
+        feasibilityStop: "Stop test planning if margin, legal, inventory, customer, measurement, or rollback constraints cannot be bounded and approved.",
+      }
+      : {
+        outcomeKpi: "Coverage of source-linked approved outcomes at the requested geography, cohort, and period.",
+        outcomeThreshold: "Every required outcome is approved, comparable, and linked to the confirmed question and cohort.",
+        outcomeStop: "Stop interpretation when a required outcome is absent, stale, incompatible, or unapproved.",
+        feasibilityKpi: "Completion of operational, measurement, privacy, approval, and implementation checks.",
+        feasibilityThreshold: "Every required feasibility check has an owner and an explicit pass/fail disposition.",
+        feasibilityStop: "Stop when a required constraint or approval cannot be satisfied.",
+      };
   const evidence = [
     evidenceItem({ id: "question_definition", label: "Decision question and cohort definition", sourceId: null, expectedGrain: plan.geographyGrain, observationDate: null, owner, allowedUse: "Workflow definition only", whyNeeded: "Ensure the work measures the stated question and uses a stable comparison cohort." }, plan),
     evidenceItem({ id: "approved_business_outcomes", label: "Approved business outcomes", sourceId: null, expectedGrain: plan.geographyGrain, observationDate: null, owner, allowedUse: "Requires owner approval before interpretation", whyNeeded: "Connect the context to an outcome that the accountable owner actually uses." }, plan),
@@ -218,9 +260,9 @@ function genericWorkplan(plan: EvaluationPlan): ValidationWorkplan {
     whatThisInforms: ["Whether the question is answerable with approved evidence", "Which gaps require owners or approvals", "What later analysis or test would be justified"],
     evidence,
     workstreams: [
-      { id: "define-validation", sequence: 1, title: "Confirm the decision and cohort", owner, action: "Confirm the decision, geography, timeframe, cohort, metric definitions, and intended output with the accountable owner.", evidenceIds: ["question_definition"], deliverable: "A confirmed evaluation brief.", completionCriteria: "The owner accepts the question and comparison definition.", status: "ready_to_start" },
-      { id: "connect-outcomes", sequence: 2, title: "Connect approved business outcomes", owner, action: "Request the approved outcome data and record its grain, period, freshness, and allowed use.", evidenceIds: ["approved_business_outcomes"], deliverable: "A source-linked outcome evidence table or an explicit missing-data record.", completionCriteria: "The outcome is approved and comparable, or the gap is recorded as blocking.", status: "blocked_on_evidence" },
-      { id: "review-feasibility", sequence: 3, title: "Review execution feasibility", owner, action: "Document operational, measurement, privacy, approval, and implementation constraints before proposing a test or intervention.", evidenceIds: ["execution_constraints"], deliverable: "A feasibility and approval checklist.", completionCriteria: "The owner records which next research step is feasible and what remains blocked.", status: "requires_approval" },
+      { id: "define-validation", sequence: 1, title: "Confirm the decision and cohort", owner, action: "Confirm the decision, geography, timeframe, cohort, metric definitions, and intended output with the accountable owner.", evidenceIds: ["question_definition"], deliverable: "A confirmed evaluation brief.", completionCriteria: "The owner accepts the question and comparison definition.", kpi: "Share of required question, geography, timeframe, cohort, metric, and output definitions confirmed by the accountable owner.", validationThreshold: "All six definition elements are recorded and accepted before outcome interpretation begins.", stopCondition: "Stop if the accountable owner cannot confirm the decision, comparison cohort, geography, timeframe, or intended output.", status: "ready_to_start" },
+      { id: "connect-outcomes", sequence: 2, title: "Connect approved business outcomes", owner, action: "Request the approved outcome data and record its grain, period, freshness, and allowed use.", evidenceIds: ["approved_business_outcomes"], deliverable: "A source-linked outcome evidence table or an explicit missing-data record.", completionCriteria: "The outcome is approved and comparable, or the gap is recorded as blocking.", kpi: measurement.outcomeKpi, validationThreshold: measurement.outcomeThreshold, stopCondition: measurement.outcomeStop, status: "blocked_on_evidence" },
+      { id: "review-feasibility", sequence: 3, title: "Review execution feasibility", owner, action: "Document operational, measurement, privacy, approval, and implementation constraints before proposing a test or intervention.", evidenceIds: ["execution_constraints"], deliverable: "A feasibility and approval checklist.", completionCriteria: "The owner records which next research step is feasible and what remains blocked.", kpi: measurement.feasibilityKpi, validationThreshold: measurement.feasibilityThreshold, stopCondition: measurement.feasibilityStop, status: "requires_approval" },
     ],
     decisionRules: [
       { disposition: "advance", rule: "Only proceed to the next research or test stage when evidence and approvals meet the owner-defined requirements." },

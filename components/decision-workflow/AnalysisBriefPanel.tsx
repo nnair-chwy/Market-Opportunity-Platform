@@ -7,11 +7,14 @@ import {
   type AnalysisConsideration,
 } from "@/lib/planning/analysis-brief";
 import type { AnswerContract } from "@/lib/planning/answer-contract";
+import { resolveAnalysisPlanReviewAction } from "@/lib/planning/analysis-plan-review";
 
 type AnalysisBriefPanelProps = {
   brief: AnalysisBrief;
   answerContract: AnswerContract;
-  onConfirm: (brief: AnalysisBrief, change: { questionChanged: boolean }) => void;
+  canRun?: boolean;
+  onUpdatePlan: (rewrittenQuestion: string) => void;
+  onConfirm: (brief: AnalysisBrief) => void;
 };
 
 function roleLabel(role: AnalysisConsideration["role"]) {
@@ -26,7 +29,7 @@ function evidenceLabel(status: AnalysisConsideration["evidenceStatus"]) {
   return "Needed";
 }
 
-export function AnalysisBriefPanel({ brief, answerContract, onConfirm }: AnalysisBriefPanelProps) {
+export function AnalysisBriefPanel({ brief, answerContract, canRun = true, onUpdatePlan, onConfirm }: AnalysisBriefPanelProps) {
   const [editing, setEditing] = useState(brief.status !== "confirmed");
   const [draft, setDraft] = useState(brief);
   const weightTotal = useMemo(() => analysisBriefWeightTotal(draft), [draft]);
@@ -34,6 +37,14 @@ export function AnalysisBriefPanel({ brief, answerContract, onConfirm }: Analysi
   const hasWeights = weightedItems.length > 0;
   const fixedCalculationWeights = draft.currentScreen.weightMode === "fixed_calculation";
   const weightsValid = !hasWeights || (Math.abs(weightTotal - 100) < 0.001 && weightedItems.every((item) => (item.weightPercent ?? 0) > 0));
+  const rewrittenQuestion = draft.rewrittenQuestion.trim();
+  const questionChanged = rewrittenQuestion !== brief.rewrittenQuestion.trim();
+  const primaryAction = resolveAnalysisPlanReviewAction({
+    questionChanged,
+    hasQuestion: rewrittenQuestion.length > 0,
+    weightsValid,
+    canRun,
+  });
 
   function updateConsideration(id: string, patch: Partial<AnalysisConsideration>) {
     setDraft((current) => ({
@@ -45,14 +56,18 @@ export function AnalysisBriefPanel({ brief, answerContract, onConfirm }: Analysi
   }
 
   function confirm() {
-    if (!draft.rewrittenQuestion.trim() || !weightsValid) return;
+    if (primaryAction.disabled) return;
+    if (primaryAction.mode === "update_plan") {
+      onUpdatePlan(rewrittenQuestion);
+      return;
+    }
     const confirmed: AnalysisBrief = {
       ...draft,
-      rewrittenQuestion: draft.rewrittenQuestion.trim(),
+      rewrittenQuestion,
       status: "confirmed",
       confirmedAt: new Date().toISOString(),
     };
-    onConfirm(confirmed, { questionChanged: confirmed.rewrittenQuestion !== brief.rewrittenQuestion.trim() });
+    onConfirm(confirmed);
     setEditing(false);
   }
 
@@ -77,7 +92,7 @@ export function AnalysisBriefPanel({ brief, answerContract, onConfirm }: Analysi
             <p>{brief.originalQuestion}</p>
           </div>
           <label>
-            <strong>Question the analyst used</strong>
+            <strong>Editable investigation question</strong>
             {editing ? (
               <textarea
                 value={draft.rewrittenQuestion}
@@ -85,6 +100,7 @@ export function AnalysisBriefPanel({ brief, answerContract, onConfirm }: Analysi
                 rows={3}
               />
             ) : <p className="analysis-brief-rewrite">{brief.rewrittenQuestion}</p>}
+            <small>Change this question to regenerate the analysis plan before anything runs.</small>
           </label>
           <dl aria-label="Analysis scope">
             <div><dt>Perspective</dt><dd>{brief.perspectiveId.toUpperCase()}</dd></div>
@@ -109,52 +125,6 @@ export function AnalysisBriefPanel({ brief, answerContract, onConfirm }: Analysi
               />
             ) : <ul>{brief.assumptions.map((item) => <li key={item}>{item}</li>)}</ul>}
           </div>
-        </section>
-
-        <section className="answer-contract-preview" aria-labelledby="answer-contract-title" data-answer-mode={answerContract.answerMode}>
-          <header>
-            <div>
-              <span>Final-answer contract · {answerContract.version}</span>
-              <h3 id="answer-contract-title">What a useful answer must contain</h3>
-            </div>
-            <b>{answerContract.answerMode.replaceAll("_", " ")}</b>
-          </header>
-          <div className="answer-contract-boundary">
-            <strong>Strongest permitted conclusion</strong>
-            <p>{answerContract.strongestPermittedConclusion}</p>
-            <small>
-              Decision owner: {answerContract.audience.decisionOwner}
-              {" · "}Unit: {answerContract.decisionFrame.unitOfAnalysis}
-              {" · "}Framing: {answerContract.framingProposal.origin.replaceAll("_", " ")}
-            </small>
-          </div>
-          <div className="answer-contract-columns">
-            <div>
-              <strong>Required answer sections</strong>
-              <ol>{answerContract.requiredSections.map((section) => <li key={section.sectionId}>{section.label}</li>)}</ol>
-            </div>
-            <div>
-              <strong>{brief.perspectiveId.toUpperCase()} questions the answer must resolve</strong>
-              <ul>{answerContract.domainRequirements.map((requirement) => (
-                <li
-                  key={requirement.requirementId}
-                  data-readiness={requirement.readiness}
-                  data-emphasized={answerContract.framingProposal.emphasizedRequirementIds.includes(requirement.requirementId)}
-                >
-                  <span>{requirement.label}</span>
-                  <small>{requirement.readiness.replaceAll("_", " ")}</small>
-                </li>
-              ))}</ul>
-            </div>
-          </div>
-          <details>
-            <summary>Completion tests and prohibited conclusions</summary>
-            <div className="answer-contract-details">
-              <div><strong>Done when</strong><ul>{answerContract.completionCriteria.map((criterion) => <li key={criterion.criterionId}>{criterion.label}</li>)}</ul></div>
-              <div><strong>Must not conclude</strong><ul>{answerContract.prohibitedConclusions.map((item) => <li key={item}>{item}</li>)}</ul></div>
-              <div><strong>Questions still to resolve</strong><ul>{answerContract.framingProposal.unresolvedQuestions.map((item) => <li key={item}>{item}</li>)}</ul></div>
-            </div>
-          </details>
         </section>
 
         <section className="analysis-brief-considerations" aria-label="Analysis considerations">
@@ -219,14 +189,66 @@ export function AnalysisBriefPanel({ brief, answerContract, onConfirm }: Analysi
               : "These considerations guide peer selection and validity checks. Combining them into one weighted score would be misleading for this question."}
           </p>
         </section>
+
+        <section className="answer-contract-preview" aria-labelledby="answer-contract-title" data-answer-mode={answerContract.answerMode}>
+          <header>
+            <div>
+              <span>Answer boundary · {answerContract.version}</span>
+              <h3 id="answer-contract-title">What this analysis is allowed to conclude</h3>
+            </div>
+            <b>{answerContract.answerMode.replaceAll("_", " ")}</b>
+          </header>
+          <div className="answer-contract-boundary">
+            <strong>Strongest permitted conclusion</strong>
+            <p>{answerContract.strongestPermittedConclusion}</p>
+            <small>
+              Decision owner: {answerContract.audience.decisionOwner}
+              {" · "}Unit: {answerContract.decisionFrame.unitOfAnalysis}
+              {" · "}Framing: {answerContract.framingProposal.origin.replaceAll("_", " ")}
+            </small>
+          </div>
+          <details>
+            <summary>See required answer sections, completion tests, and limits</summary>
+            <div className="answer-contract-columns">
+              <div>
+                <strong>Required answer sections</strong>
+                <ol>{answerContract.requiredSections.map((section) => <li key={section.sectionId}>{section.label}</li>)}</ol>
+              </div>
+              <div>
+                <strong>{brief.perspectiveId.toUpperCase()} questions the answer must resolve</strong>
+                <ul>{answerContract.domainRequirements.map((requirement) => (
+                  <li
+                    key={requirement.requirementId}
+                    data-readiness={requirement.readiness}
+                    data-emphasized={answerContract.framingProposal.emphasizedRequirementIds.includes(requirement.requirementId)}
+                  >
+                    <span>{requirement.label}</span>
+                    <small>{requirement.readiness.replaceAll("_", " ")}</small>
+                  </li>
+                ))}</ul>
+              </div>
+            </div>
+            <div className="answer-contract-details">
+              <div><strong>Done when</strong><ul>{answerContract.completionCriteria.map((criterion) => <li key={criterion.criterionId}>{criterion.label}</li>)}</ul></div>
+              <div><strong>Must not conclude</strong><ul>{answerContract.prohibitedConclusions.map((item) => <li key={item}>{item}</li>)}</ul></div>
+              <div><strong>Questions still to resolve</strong><ul>{answerContract.framingProposal.unresolvedQuestions.map((item) => <li key={item}>{item}</li>)}</ul></div>
+            </div>
+          </details>
+        </section>
       </div>
 
       {editing ? (
         <footer className="analysis-brief-footer">
-          <span>{weightsValid ? "Ready to run with these boundaries" : `Every weighted category must be above 0% and total 100%; currently ${weightTotal}%`}</span>
+          <span>{questionChanged
+            ? "Update the plan to review the revised intent, evidence, and geography before running"
+            : !canRun
+              ? "Edit the investigation question to update this blocked plan, or return to the original question"
+              : weightsValid
+                ? "Ready to run with these boundaries"
+                : `Every weighted category must be above 0% and total 100%; currently ${weightTotal}%`}</span>
           <div>
             {brief.status === "confirmed" ? <button className="secondary-action" type="button" onClick={() => { setDraft(brief); setEditing(false); }}>Cancel</button> : null}
-            <button className="primary-action" type="button" disabled={!weightsValid || !draft.rewrittenQuestion.trim()} onClick={confirm}>Confirm and run analysis <span aria-hidden="true">→</span></button>
+            <button className="primary-action" type="button" data-action-mode={primaryAction.mode} disabled={primaryAction.disabled} onClick={confirm}>{primaryAction.label} <span aria-hidden="true">→</span></button>
           </div>
         </footer>
       ) : null}

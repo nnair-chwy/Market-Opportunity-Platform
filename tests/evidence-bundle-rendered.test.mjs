@@ -70,16 +70,21 @@ async function component(t) {
   return (await vite.ssrLoadModule("/components/evidence/EvidenceBundlePanel.tsx")).EvidenceBundlePanel;
 }
 
-test("shared evidence view renders the required ordered market result and provenance", async (t) => {
+test("shared evidence view leads with decision language and retains provenance under evidence details", async (t) => {
   const EvidenceBundlePanel = await component(t);
   const html = renderToStaticMarkup(createElement(EvidenceBundlePanel, { result: result(), action: { nextStep: "Review missing evidence." } }));
-  const headings = ["Original question", "Answer available with limits", "Evidence-backed answer", "Calculation or comparison", "Evidence used", "Reliability", "Unknowns", "Limitations", "Required approvals", "Proposed next action"];
+  const headings = ["Original question", "Evidence available with limits", "Evidence behind the answer", "Finding", "Where", "Why it matters", "Confidence and readiness", "What to validate next", "Evidence and method details", "Calculation or comparison", "Evidence used", "Missing evidence and unknowns", "Guardrails", "Required approvals"];
   let prior = -1;
   for (const heading of headings) {
     const index = html.indexOf(heading);
     assert.ok(index > prior, `${heading} should render after the prior section`);
     prior = index;
   }
+  const detailsIndex = html.indexOf("Evidence and method details");
+  assert.ok(detailsIndex > html.indexOf("What to validate next"));
+  assert.ok(html.indexOf("SOURCE-RENDER-1") > detailsIndex);
+  assert.ok(html.indexOf("snapshot-render-1") > detailsIndex);
+  assert.ok(html.indexOf("frozen snapshot demo") > detailsIndex);
   assert.match(html, /SOURCE-RENDER-1/);
   assert.match(html, /snapshot-render-1/);
   assert.match(html, /Reported/);
@@ -87,6 +92,35 @@ test("shared evidence view renders the required ordered market result and proven
   assert.match(html, /2026-07-31/);
   assert.match(html, /descriptive context only/);
   assert.match(html, /frozen snapshot demo/);
+});
+
+test("reviewed discovered-source contract provenance remains inspectable in the evidence UI", async (t) => {
+  const EvidenceBundlePanel = await component(t);
+  const base = result();
+  const html = renderToStaticMarkup(createElement(EvidenceBundlePanel, { result: result({
+    evidenceBundle: [{
+      ...base.evidenceBundle[0],
+      structuredValue: {
+        reviewedSourceContract: {
+          contractId: "regional-orders-contract-v1",
+          reviewedBy: "Data steward",
+          reviewedAt: "2026-08-18T12:00:00.000Z",
+          validatedRowCount: 400,
+          sourceRowsRead: 400,
+          sourceRowsMatched: 320,
+          suppressedGroupCount: 2,
+          sourceRowsTruncated: false,
+        },
+      },
+    }],
+  }) }));
+  assert.match(html, /Reviewed source contract/);
+  assert.match(html, /regional-orders-contract-v1/);
+  assert.match(html, /Data steward/);
+  assert.match(html, /Validated rows/);
+  assert.match(html, /400/);
+  assert.match(html, /Small groups suppressed/);
+  assert.match(html, /Source scan capped/);
 });
 
 test("shared evidence view distinguishes clinic synthetic fallback and growth guardrails", async (t) => {
@@ -123,7 +157,7 @@ test("shared evidence view distinguishes clinic synthetic fallback and growth gu
 test("shared evidence view renders a controlled blocked state", async (t) => {
   const EvidenceBundlePanel = await component(t);
   const html = renderToStaticMarkup(createElement(EvidenceBundlePanel, { result: result({ status: "blocked", rows: [], evidenceBundle: [], sourceIds: [], componentQueries: [], missingEvidence: ["An exact geography is required."], unknowns: [] }) }));
-  assert.match(html, /Blocked by evidence gate/);
+  assert.match(html, /More evidence needed/);
   assert.match(html, /An exact geography is required/);
   assert.doesNotMatch(html, /NaN|undefined/);
 });

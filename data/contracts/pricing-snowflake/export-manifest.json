@@ -3,6 +3,16 @@
   "rawDirectory": "data/approved/snowflake/pricing/2026-08-17/raw",
   "rawDirectoryTrackedInGit": false,
   "allowedUse": "internal_shadow_evaluation_and_source_validation_only",
+  "discoveryQueries": [
+    {
+      "file": "queries/10_regional-outcome-join-discovery.sql",
+      "status": "candidate_join_visible_but_geography_masked_not_exportable"
+    },
+    {
+      "file": "queries/11_pricing-controls-and-match-discovery.sql",
+      "status": "schema_and_aggregate_profile_complete_no_raw_export"
+    }
+  ],
   "exports": [
     {
       "file": "competitor-price-geo_latest-by-zip-competitor-sku-30d_2026-08-17.csv",

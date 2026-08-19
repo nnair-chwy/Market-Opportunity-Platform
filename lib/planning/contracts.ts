@@ -157,6 +157,10 @@ export const plannedActionSchema = z.object({
   nextStep: z.string().trim().min(1),
   outputId: z.string().trim().min(1),
   requiresApproval: z.boolean(),
+  /** Optional in v1 packets for backward compatibility; populated for bounded validation actions. */
+  kpi: z.string().trim().min(1).optional(),
+  validationThreshold: z.string().trim().min(1).optional(),
+  stopCondition: z.string().trim().min(1).optional(),
 }).strict();
 
 export const planFindingSchema = z.object({

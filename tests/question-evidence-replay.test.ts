@@ -97,11 +97,11 @@ actualSnapshotTest("replays the clinic-performance question as an explicitly syn
   assert.ok(result.guardrails.some((item) => /Do not use this illustrative rank/i.test(item)));
 });
 
-test("an explicitly named Phoenix growth question resolves Phoenix but remains gated", () => {
+test("an explicitly named Phoenix growth question resolves Phoenix and permits bounded exploration while remaining gated", () => {
   const plan = planEvaluation("Should we test a growth campaign in Phoenix?");
   assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, [PHOENIX_DEMO_MARKET.cbsaCode]);
   assert.equal(plan.capabilityId, "local_growth_test");
-  assert.equal(plan.status, "blocked");
+  assert.equal(plan.status, "partially_executable");
   assert.ok(plan.missingEvidence.length > 0);
 });
 

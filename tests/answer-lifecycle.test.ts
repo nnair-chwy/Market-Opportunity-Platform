@@ -69,14 +69,14 @@ test("AI decision framing remains advisory and cannot introduce domain requireme
   assert.equal(framing.emphasizedRequirementIds.includes("invented_requirement"), false);
 });
 
-test("coverage checker distinguishes completed answer sections from blocked domain promises", () => {
+test("coverage checker treats signal-level findings as supported while preserving unmet domain limits", () => {
   const plan = planEvaluation("Which comparable markets differ most in CVC footprint?", "cvc");
   const investigation = runMarketInvestigation(plan);
   const coverage = checkInvestigationCoverage(plan, investigation);
   assert.equal(coverage.overallStatus, "partial");
-  assert.ok(coverage.sectionCoverage.some((item) => item.itemId === "evidence_findings" && item.status === "unsupported"));
+  assert.ok(coverage.sectionCoverage.some((item) => item.itemId === "evidence_findings" && item.status === "covered"));
   assert.ok(coverage.sectionCoverage.some((item) => item.itemId === "contrary_evidence" && item.status === "covered"));
-  assert.ok(coverage.domainCoverage.some((item) => item.itemId === "cvc_access_capacity" && item.status === "blocked"));
+  assert.ok(coverage.domainCoverage.some((item) => item.itemId === "cvc_access_capacity" && item.status === "unsupported"));
   assert.ok(coverage.unmetRequiredItemIds.includes("cvc_demand_outcome"));
 });
 
@@ -87,17 +87,84 @@ test("coverage remains blocked before a confirmed investigation is attached", ()
   assert.ok(coverage.sectionCoverage.some((item) => item.itemId === "direct_answer" && item.status === "blocked"));
 });
 
-test("final composer fills all required sections and marks unsupported promises explicitly", () => {
+test("final composer returns the best available draft and marks unsupported promises explicitly", () => {
   const plan = planEvaluation("Which DMAs should receive more paid-search spend?", "marketing");
   const investigation = runMarketInvestigation(plan);
   const coverage = checkInvestigationCoverage(plan, investigation);
   const answer = composeFinalAnswer(plan, investigation, plan.actions[0], coverage);
   assert.equal(answer.sections.length, 7);
-  assert.equal(answer.status, "research_needed");
+  assert.equal(answer.status, "draft_for_review");
   assert.ok(answer.unsupportedRequirementIds.includes("marketing_incrementality"));
-  assert.match(answer.sections.find((item) => item.sectionId === "direct_answer")?.content ?? "", /does not support|does not/i);
+  assert.match(answer.sections.find((item) => item.sectionId === "direct_answer")?.content ?? "", /Best available answer|Supported scope/i);
+  assert.match(answer.sections.find((item) => item.sectionId === "evidence_findings")?.content ?? "", /Next evidence needed/i);
   assert.match(answer.sections.find((item) => item.sectionId === "missing_evidence")?.content ?? "", /documented but not approved|Missing|gap/i);
   assert.match(answer.disclaimer, /human review/i);
+});
+
+test("material action requests remain hard blocked", () => {
+  const plan = planEvaluation("Approve a new CVC clinic site in Phoenix.", "cvc");
+  assert.equal(plan.status, "blocked");
+  const coverage = checkInvestigationCoverage(plan, undefined);
+  assert.equal(coverage.overallStatus, "blocked");
+});
+
+test("missing decision-grade growth evidence still permits bounded exploratory analysis", () => {
+  const plan = planEvaluation("Should we test a growth campaign in Phoenix?", "marketing");
+  assert.equal(plan.status, "partially_executable");
+  assert.ok(plan.missingEvidence.length > 0);
+  assert.equal(plan.actions[0]?.requiresApproval, false);
+});
+
+test("the national Marketing golden question is partially executable from available aggregate evidence", () => {
+  const plan = planEvaluation(
+    "Which comparable geographies show paid-search response worth validating with first-party outcomes?",
+    "marketing",
+  );
+  assert.equal(plan.status, "partially_executable");
+  assert.equal(plan.geographyResolution.mode, "national");
+  assert.ok(plan.evidenceSelection.datasetId?.startsWith("marketing_"));
+  assert.equal(plan.actions.some((action) => action.requiresApproval), false);
+});
+
+test("the national Marketing golden question routes without an explicit perspective", () => {
+  const plan = planEvaluation(
+    "Which comparable geographies show paid-search response worth validating with first-party outcomes?",
+  );
+  assert.equal(plan.perspectiveId, "marketing");
+  assert.equal(plan.status, "partially_executable");
+  assert.equal(plan.geographyResolution.mode, "national");
+  assert.equal(plan.answerContract.answerMode, "investigation");
+});
+
+test("recognized Pricing investigation wording reaches snapshot analysis without authorizing price action", () => {
+  const plan = planEvaluation(
+    "Where do observed competitor conditions and Chewy economics warrant investigation?",
+    "pricing",
+  );
+  assert.equal(plan.status, "partially_executable");
+  assert.equal(plan.perspectiveId, "pricing");
+  assert.ok(plan.evidenceSelection.datasetId?.startsWith("pricing_"));
+  assert.match(plan.missingEvidence.join(" "), /regional Chewy commercial outcome/i);
+  assert.equal(plan.actions[0]?.requiresApproval, false);
+  assert.doesNotMatch(plan.actions[0]?.title ?? "", /change price|approve/i);
+});
+
+test("Pricing change requests remain clarification or approval-gated instead of using the investigation route", () => {
+  const plan = planEvaluation("Where should Chewy change regional prices?", "pricing");
+  assert.equal(plan.status, "blocked");
+  assert.equal(plan.answerContract.answerMode, "clarification");
+});
+
+test("material-action questions run as bounded investigations when an internal evidence view is available", () => {
+  assert.equal(
+    planEvaluation("Where should Chewy change regional prices?", "pricing", [], "competitor_availability").status,
+    "partially_executable",
+  );
+  const marketing = planEvaluation("Where should we increase paid search spend?", "marketing", [], "paid_search_response");
+  assert.equal(marketing.status, "partially_executable");
+  assert.equal(marketing.actions[0]?.requiresApproval, false);
+  assert.match(marketing.evidenceBoundary, /investigation goal only/i);
+  assert.match(marketing.answerContract.prohibitedConclusions.join(" "), /spend change/i);
 });
 
 test("versioned answer fixtures compare generated contracts and conclusions without claiming historical approval", () => {

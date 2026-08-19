@@ -159,6 +159,39 @@ export const evidenceResponseQuerySchema = z.enum([
   "consumer_insights_bundle",
 ]);
 
+export const agenticEvidencePassReceiptSchema = z.object({
+  passId: z.string().trim().min(1),
+  iteration: z.number().int().positive(),
+  selectedQueries: z.array(z.string().trim().min(1)).min(1),
+  executionStatus: z.enum(["complete", "partial", "blocked", "failed"]),
+  answerStatus: z.enum(["pass", "partial", "fail"]),
+  composedAnswerStatus: z.enum(["draft_for_review", "research_needed", "clarification", "context_only"]),
+  addedEvidenceCount: z.number().int().nonnegative(),
+  sourceIds: z.array(z.string().trim().min(1)),
+  evidenceIds: z.array(z.string().trim().min(1)),
+  unmetCriterionIds: z.array(z.string().trim().min(1)),
+  startedAt: z.string().datetime(),
+  completedAt: z.string().datetime(),
+}).strict();
+
+export const agenticEvidenceLifecycleSchema = z.object({
+  version: z.literal("agentic-evidence-loop-v1"),
+  runId: z.string().trim().min(1),
+  planId: z.string().trim().min(1),
+  contractId: z.string().trim().min(1),
+  goal: z.string().trim().min(3).max(600),
+  status: z.enum(["goal_satisfied", "best_available_answer", "no_useful_source", "max_iterations", "execution_failed"]),
+  stopReason: z.string().trim().min(1),
+  maxIterations: z.number().int().positive().max(5),
+  candidateQueries: z.array(z.string().trim().min(1)),
+  exhaustedQueries: z.array(z.string().trim().min(1)),
+  finalAnswerStatus: z.enum(["pass", "partial", "fail"]),
+  passes: z.array(agenticEvidencePassReceiptSchema).min(1).max(5),
+}).strict();
+
+export type AgenticEvidenceLifecycle = z.infer<typeof agenticEvidenceLifecycleSchema>;
+export type AgenticEvidencePassReceipt = z.infer<typeof agenticEvidencePassReceiptSchema>;
+
 export const evidenceExecutionResponseSchema = z.object({
   requestId: z.string().min(1),
   status: z.enum(["complete", "partial", "blocked", "failed"]),
@@ -198,6 +231,7 @@ export const evidenceExecutionResponseSchema = z.object({
   executionMode: z.enum(["frozen_snapshot_demo", "synthetic_demo"]),
   errorCode: z.string().min(1).nullable(),
   errorMessage: z.string().min(1).nullable(),
+  agenticLifecycle: agenticEvidenceLifecycleSchema.optional(),
 }).strict().superRefine((value, ctx) => {
   if (value.status === "failed" && (!value.errorCode || !value.errorMessage)) ctx.addIssue({ code: "custom", message: "Failed responses require an error code and message.", path: ["errorCode"] });
   if (value.status !== "failed" && (value.errorCode || value.errorMessage)) ctx.addIssue({ code: "custom", message: "Only failed responses may contain execution errors.", path: ["errorCode"] });

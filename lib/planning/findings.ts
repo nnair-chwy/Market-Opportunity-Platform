@@ -19,6 +19,14 @@ type FindingInput = {
   resultWorkspaceType: ResultWorkspaceType;
 };
 
+const MAX_FINDING_DETAIL_LENGTH = 400;
+
+function boundedFindingDetail(detail: string) {
+  if (detail.length <= MAX_FINDING_DETAIL_LENGTH) return detail;
+  const suffix = "… See the evidence and approval gates for the complete list.";
+  return `${detail.slice(0, MAX_FINDING_DETAIL_LENGTH - suffix.length).trimEnd()}${suffix}`;
+}
+
 export function deriveResultWorkspaceType(input: {
   intent: PlanningIntent;
   capabilityId: EvaluationPlan["capabilityId"];
@@ -112,10 +120,10 @@ export function derivePlanFindings(input: FindingInput): PlanFinding[] {
       id: "missing-gates",
       kind: "evidence",
       title: "Missing evidence and approvals",
-      detail: [
+      detail: boundedFindingDetail([
         missingEvidence.length ? `Evidence: ${missingEvidence.join("; ")}` : null,
         missingApprovals.length ? `Approvals: ${missingApprovals.join("; ")}` : null,
-      ].filter(Boolean).join(" "),
+      ].filter(Boolean).join(" ")),
     });
   } else if (capabilityId === "census_market_context" && resultWorkspaceType === "adaptive_market_workspace") {
     findings.push({
@@ -144,7 +152,9 @@ export function packetSummaryFromPlan(plan: EvaluationPlan): string {
     return "The question needs clarification before a governed evaluation can continue.";
   }
   if (plan.resultWorkspaceType === "evidence_readiness") {
-    return "The interpreted question matches a capability that is blocked by missing evidence or approvals.";
+    return plan.status === "partially_executable"
+      ? "A bounded best-available investigation is ready; missing evidence and approvals limit the conclusion and remain explicit."
+      : "The interpreted question matches a capability that is blocked by missing evidence or approvals.";
   }
   if (plan.resultWorkspaceType === "clinic_evaluation_surface") {
     return "A bounded clinic evidence review is available; no opportunity score is produced until the required governed inputs are connected.";

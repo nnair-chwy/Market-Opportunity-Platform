@@ -63,6 +63,7 @@ export function QuestionMap() {
     const configuredStyleUrl = config.styleUrl;
 
     let disposed = false;
+    let styleReady = false;
 
     async function initialize() {
       try {
@@ -85,6 +86,7 @@ export function QuestionMap() {
 
         map.once("load", () => {
           if (disposed) return;
+          styleReady = true;
           for (const clinic of currentClinics) {
             const marker = new Marker({
               element: createContextMarker(
@@ -114,7 +116,7 @@ export function QuestionMap() {
           setLoadState("ready");
         });
         map.on("error", () => {
-          if (!disposed) setLoadState("fallback");
+          if (!styleReady && !disposed) setLoadState("fallback");
         });
         map.on("click", (event) => {
           if (disposed) return;

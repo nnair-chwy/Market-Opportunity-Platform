@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
 import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
 import { AnswerCoveragePanel } from "@/components/decision-workflow/AnswerCoveragePanel";
+import { ConnectedDataGapsPanel } from "@/components/decision-workflow/ConnectedDataGapsPanel";
 import { DecisionGraphAnimation, type DecisionGraphStep } from "@/components/decision-workflow/DecisionGraphAnimation";
+import { AgenticRunSummary, lifecycleGraphSteps } from "@/components/decision-workflow/AgenticRunSummary";
 import { GeographicFocusMap } from "@/components/decision-workflow/GeographicFocusMap";
 import { InsightActionPlanPanel } from "@/components/decision-workflow/InsightActionPlanPanel";
 import { MarketInvestigationPanel } from "@/components/decision-workflow/MarketInvestigationPanel";
@@ -13,10 +15,13 @@ import { SisterGeographiesSection } from "@/components/decision-workflow/SisterG
 import { ValidationWorkplanPanel } from "@/components/decision-workflow/ValidationWorkplanPanel";
 import { EvidenceBundlePanel } from "@/components/evidence/EvidenceBundlePanel";
 import { evidenceExecutionResponseSchema, type EvidenceExecutionResponse } from "@/lib/evidence-snapshot/contracts";
+import type { CompactSourceReadiness } from "@/lib/data-discovery/readiness-service";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
 import type { PerspectiveId, PerspectiveViewId } from "@/lib/perspectives";
 import { buildAnalysisBrief, validateAnalysisBriefConsistency, type AnalysisBrief } from "@/lib/planning/analysis-brief";
+import { buildAnalysisPlanRequest } from "@/lib/planning/analysis-plan-review";
+import { restoreSavedInvestigation } from "@/lib/planning/saved-packet-state";
 import {
   buildEvidencePlan,
   generateEvaluationDefinitionDraft,
@@ -33,8 +38,10 @@ import {
   type InvestigationLead,
   type MarketInvestigation,
 } from "@/lib/planning/market-investigation";
+import { marketInvestigationFromEvidence } from "@/lib/planning/evidence-market-investigation";
 import {
   assembleReviewableActionPacket,
+  actionReadinessLabel,
   actionForInvestigationLead,
   buildInsightActionPlan,
   buildValidationWorkplan,
@@ -50,6 +57,7 @@ import {
   packetSummaryFromPlan,
   planEvaluation,
   proposedActionFromPlan,
+  presentsActionPackage,
   reviewableActionPacketSchema,
   resolveGeographicFocus,
   suggestSisterGeographiesFromPlan,
@@ -74,6 +82,7 @@ type SavedPacket = {
   question: string;
   title: string;
   actionId: string;
+  planActionId?: string;
   savedAt: string;
   summary?: string;
   investigation?: MarketInvestigation;
@@ -202,8 +211,10 @@ export function DecisionWorkflowApp() {
   const [geographicContextNotice, setGeographicContextNotice] = useState<string | null>(null);
   const [recommendationDrafts, setRecommendationDrafts] = useState<RecommendationDraft[]>([]);
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const [sourceReadiness, setSourceReadiness] = useState<CompactSourceReadiness | null>(null);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
+  const showsActionPackage = plan ? presentsActionPackage(plan) : false;
 
   const selectedAction = useMemo(
     () => actionOptions.find((action) => action.id === selectedActionId) ?? (plan ? proposedActionFromPlan(plan) : undefined),
@@ -227,6 +238,7 @@ export function DecisionWorkflowApp() {
 
   const displayedGeographicFocus = useMemo<GeographicFocus | null>(() => {
     if (!selectedLead) return geographicFocus;
+    if (investigation?.geography === "supplied_trade_area") return geographicFocus;
     const names = selectedLead.marketIds.map((code) => publicMarkets.find((market) => market.cbsa_code === code)?.cbsa_name ?? code);
     return {
       state: "focused",
@@ -236,7 +248,7 @@ export function DecisionWorkflowApp() {
       evidenceStatus: "Derived",
       message: `Map focus follows the selected analyst lead: ${selectedLead.title}.`,
     };
-  }, [geographicFocus, selectedLead]);
+  }, [geographicFocus, investigation?.geography, selectedLead]);
 
   const sisterGeographies = useMemo(
     () => (plan && plan.intent.topic !== "clinic_location" && geographicFocus?.state === "focused"
@@ -247,6 +259,8 @@ export function DecisionWorkflowApp() {
 
   const insightActionPlan = useMemo(
     () => (plan && investigation && selectedLead && analysisBrief
+      && analysisBrief.planId === plan.planId
+      && analysisBrief.originalQuestion === plan.originalQuestion
       ? buildInsightActionPlan(
         plan,
         investigation,
@@ -273,9 +287,9 @@ export function DecisionWorkflowApp() {
         new Date().toISOString(),
         investigation ?? undefined,
         investigationFollowUps,
-        analysisBrief ?? undefined,
-        evidencePlan ?? undefined,
-        evaluationDefinition ?? undefined,
+        analysisBrief?.planId === plan.planId && analysisBrief.originalQuestion === plan.originalQuestion ? analysisBrief : undefined,
+        evidencePlan?.planId === plan.planId && evidencePlan.originalQuestion === plan.originalQuestion ? evidencePlan : undefined,
+        evaluationDefinition?.planId === plan.planId ? evaluationDefinition : undefined,
         { selectedLeadId, contextMetric: selectedContextMetric },
         insightActionPlan ?? undefined,
         null,
@@ -287,6 +301,14 @@ export function DecisionWorkflowApp() {
   );
 
   const evidenceGraphSteps = useMemo<DecisionGraphStep[]>(() => {
+    if (evidenceExecution?.agenticLifecycle) return lifecycleGraphSteps(evidenceExecution.agenticLifecycle);
+    if (phase === "running") return [{
+      id: "active-evidence-request",
+      label: "Investigating registered evidence",
+      detail: "The evidence service is selecting and checking compatible registered sources. Individual passes appear only after the service returns receipts.",
+      result: "Waiting for verified execution receipts.",
+      evidenceState: "pending",
+    }];
     if (!investigation || !reviewablePacket) return graphSteps;
     const challengeCount = investigation.rejectedPatterns.length
       + investigation.leads.filter((lead) => lead.challenge.trim()).length;
@@ -317,7 +339,7 @@ export function DecisionWorkflowApp() {
         evidenceState: "complete" as const,
       },
     ];
-  }, [graphSteps, investigation, reviewablePacket]);
+  }, [evidenceExecution, graphSteps, investigation, phase, reviewablePacket]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -332,21 +354,6 @@ export function DecisionWorkflowApp() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    if (phase !== "running" || !evidenceGraphSteps.length) return;
-    const timer = window.setInterval(() => {
-      setActiveStep((current) => {
-        if (current >= evidenceGraphSteps.length - 1) {
-          window.clearInterval(timer);
-          window.setTimeout(() => setPhase("packet"), 450);
-          return current;
-        }
-        return current + 1;
-      });
-    }, 850);
-    return () => window.clearInterval(timer);
-  }, [evidenceGraphSteps.length, phase]);
 
   useEffect(() => {
     if ((phase !== "packet" && phase !== "saved") || !plan || !packetAction) {
@@ -423,12 +430,12 @@ export function DecisionWorkflowApp() {
       const response = await fetch("/api/evaluation-plans", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(buildAnalysisPlanRequest({
           question: normalizedQuestion,
           selectedCbsaCodes: selectedGeographicContexts.map((context) => context.cbsaCode),
-          ...(nextPerspectiveId ? { perspectiveId: nextPerspectiveId } : {}),
-          ...(activeViewId ? { activeViewId } : {}),
-        }),
+          perspectiveId: nextPerspectiveId,
+          activeViewId,
+        })),
       });
       const payload: unknown = await response.json();
       const parsed = evaluationPlanResponseSchema.safeParse(payload);
@@ -456,43 +463,49 @@ export function DecisionWorkflowApp() {
     }
   }
 
-  async function confirmAndRun(nextBrief: AnalysisBrief, change: { questionChanged: boolean }) {
+  async function updateAnalysisPlan(rewrittenQuestion: string) {
     if (!plan) return;
-    if (change.questionChanged) {
-      setRequestError(null);
-      setReplanNotice("The edited question changed the analysis contract. Regenerating the intent, metrics, geography, capability, and registered queries before execution.");
-      try {
-        const response = await fetch("/api/evaluation-plans", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ question: nextBrief.rewrittenQuestion.trim() }),
-        });
-        const payload: unknown = await response.json();
-        const parsed = evaluationPlanResponseSchema.safeParse(payload);
-        if (!response.ok || !parsed.success) {
-          const error = evaluationPlanErrorSchema.safeParse(payload);
-          setRequestError(error.success ? error.data.message : "The edited question could not be replanned.");
-          return;
-        }
-        const replanned = parsed.data.plan;
-        const nextInvestigation = runMarketInvestigation(replanned);
-        setQuestion(replanned.originalQuestion);
-        setPlan(replanned);
-        setAnalysisBrief(buildAnalysisBrief(replanned, nextInvestigation));
-        setEvidencePlan(buildEvidencePlan(replanned));
-        setEvaluationDefinition(null);
-        setEvidenceExecution(null);
-        setPersistedReviewablePacket(null);
-        setInvestigation(null);
-        setSelectedLeadId(null);
-        setSelectedActionId(proposedActionFromPlan(replanned).id);
-        setReplanNotice("Plan regenerated from the edited question. Review the changed interpretation and confirm again before any query runs.");
-        setPhase("confirming");
-      } catch {
-        setRequestError("The edited question could not be replanned because the planning service is unavailable.");
+    setRequestError(null);
+    setReplanNotice("The edited question changed the analysis contract. Regenerating the intent, metrics, geography, capability, and registered queries before execution.");
+    try {
+      const response = await fetch("/api/evaluation-plans", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(buildAnalysisPlanRequest({
+          question: rewrittenQuestion,
+          perspectiveId: plan.perspectiveId,
+          activeViewId: plan.evidenceSelection.viewId,
+          selectedCbsaCodes: selectedGeographicContexts.map((context) => context.cbsaCode),
+        })),
+      });
+      const payload: unknown = await response.json();
+      const parsed = evaluationPlanResponseSchema.safeParse(payload);
+      if (!response.ok || !parsed.success) {
+        const error = evaluationPlanErrorSchema.safeParse(payload);
+        setRequestError(error.success ? error.data.message : "The edited question could not be replanned.");
+        return;
       }
-      return;
+      const replanned = parsed.data.plan;
+      const nextInvestigation = runMarketInvestigation(replanned);
+      setQuestion(replanned.originalQuestion);
+      setPlan(replanned);
+      setAnalysisBrief(buildAnalysisBrief(replanned, nextInvestigation));
+      setEvidencePlan(buildEvidencePlan(replanned));
+      setEvaluationDefinition(null);
+      setEvidenceExecution(null);
+      setPersistedReviewablePacket(null);
+      setInvestigation(null);
+      setSelectedLeadId(null);
+      setSelectedActionId(proposedActionFromPlan(replanned).id);
+      setReplanNotice("Plan regenerated from the edited question. Review the changed interpretation and confirm again before any query runs.");
+      setPhase("confirming");
+    } catch {
+      setRequestError("The edited question could not be replanned because the planning service is unavailable.");
     }
+  }
+
+  async function confirmAndRun(nextBrief: AnalysisBrief) {
+    if (!plan) return;
     const briefConsistencyIssues = validateAnalysisBriefConsistency(plan, nextBrief);
     if (briefConsistencyIssues.length) {
       setRequestError(`The analysis contract no longer matches the validated plan. ${briefConsistencyIssues.join(" ")}`);
@@ -501,14 +514,13 @@ export function DecisionWorkflowApp() {
     }
     setReplanNotice(null);
     const nextInvestigation = runConfirmedMarketInvestigation(plan, nextBrief);
-    const configuredEvidenceDemo = plan.planId.startsWith("plan-demo-");
     const normalizedEvidencePlan = plan.intent.selectedQueries.length > 0;
     const nextEvidencePlan = evidencePlan ?? buildEvidencePlan(plan);
     setAnalysisBrief(nextBrief);
-    setInvestigation(configuredEvidenceDemo || normalizedEvidencePlan ? null : nextInvestigation);
+    setInvestigation(nextInvestigation);
     setEvidencePlan(nextEvidencePlan);
     setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, nextInvestigation, nextEvidencePlan));
-    const reviewInvestigation = configuredEvidenceDemo || normalizedEvidencePlan ? null : nextInvestigation;
+    const reviewInvestigation = nextInvestigation;
     const initialLeadId = reviewInvestigation ? defaultLeadForQuestion(plan, reviewInvestigation)?.id ?? null : null;
     setSelectedLeadId(initialLeadId);
     if (reviewInvestigation) {
@@ -543,11 +555,31 @@ export function DecisionWorkflowApp() {
       if (parsed.success) {
         executedEvidence = parsed.data;
         setEvidenceExecution(parsed.data);
+        const executedInvestigation = marketInvestigationFromEvidence(plan, parsed.data) ?? nextInvestigation;
+        if (executedInvestigation) {
+          const executedLeadId = executedInvestigation.leads[0]?.id ?? null;
+          const executedDraftId = `draft-1-${Date.now().toString(36)}`;
+          setInvestigation(executedInvestigation);
+          setSelectedLeadId(executedLeadId);
+          setRecommendationDrafts([{
+            id: executedDraftId,
+            number: 1,
+            investigation: executedInvestigation,
+            selectedLeadId: executedLeadId,
+            selectedContextMetric,
+            followUps: [],
+          }]);
+          setActiveDraftId(executedDraftId);
+        }
+        setActiveStep(parsed.data.agenticLifecycle?.passes.length ?? 0);
       }
     } catch {
       // The review page retains the validated plan when local evidence execution is unavailable.
     }
-    if (plan.capabilityId !== "clinic_site_evaluation" || normalizedEvidencePlan || !executedEvidence || executedEvidence.status === "blocked" || executedEvidence.status === "failed") return;
+    if (plan.capabilityId !== "clinic_site_evaluation" || normalizedEvidencePlan || !executedEvidence || executedEvidence.status === "blocked" || executedEvidence.status === "failed") {
+      setPhase("packet");
+      return;
+    }
     try {
       const response = await fetch("/api/clinic-site-evaluation", {
         method: "POST",
@@ -563,6 +595,7 @@ export function DecisionWorkflowApp() {
     } catch {
       // The existing deterministic packet remains usable if retrieval is unavailable.
     }
+    setPhase("packet");
   }
 
   function restart() {
@@ -592,13 +625,14 @@ export function DecisionWorkflowApp() {
   }
 
   function savePacket() {
-    if (!plan || !selectedAction || !reviewablePacket) return;
+    if (!plan || !selectedAction || !packetAction || !reviewablePacket) return;
     const packet: SavedPacket = {
       schemaVersion: "saved-action-packet-v2",
       id: `packet-${Date.now().toString(36)}`,
       question: plan.originalQuestion,
-      title: selectedAction.title,
-      actionId: selectedAction.id,
+      title: packetAction.title,
+      actionId: packetAction.id,
+      planActionId: selectedAction.id,
       savedAt: nowLabel(),
       summary: packetSummaryFromPlan(plan),
       investigation: investigation ?? undefined,
@@ -645,37 +679,50 @@ export function DecisionWorkflowApp() {
     setPacketSummary(packet.packetSummary ?? null);
     setPacketSummaryState("ready");
     setSelectedContextMetric(packet.selectedContextMetric ?? questionMapMetric(restoredPlan));
-    const restoredInvestigation = packet.investigation ?? runMarketInvestigation(restoredPlan);
-    const usesRegisteredEvidence = restoredPlan.planId.startsWith("plan-demo-") || restoredPlan.intent.selectedQueries.length > 0;
-    setInvestigation(usesRegisteredEvidence ? null : restoredInvestigation);
-    setSelectedLeadId(usesRegisteredEvidence
-      ? null
-      : packet.selectedLeadId && restoredInvestigation.leads.some((lead) => lead.id === packet.selectedLeadId)
+    const fallbackInvestigation = runMarketInvestigation(restoredPlan);
+    const restoredInvestigation = restoreSavedInvestigation(restoredPlan, packet.investigation, fallbackInvestigation);
+    const restoredSelectedLeadId = restoredInvestigation
+      ? packet.selectedLeadId && restoredInvestigation.leads.some((lead) => lead.id === packet.selectedLeadId)
         ? packet.selectedLeadId
-        : defaultLeadForQuestion(restoredPlan, restoredInvestigation)?.id ?? null);
+        : defaultLeadForQuestion(restoredPlan, restoredInvestigation)?.id ?? null
+      : null;
+    setInvestigation(restoredInvestigation);
+    setSelectedLeadId(restoredSelectedLeadId);
     setInvestigationFollowUps(packet.followUps ?? []);
-    const restoredBrief = packet.analysisBrief ?? buildAnalysisBrief(restoredPlan, restoredInvestigation);
-    const restoredEvidencePlan = packet.evidencePlan ?? buildEvidencePlan(restoredPlan);
+    const investigationForPlanning = restoredInvestigation ?? fallbackInvestigation;
+    const restoredBrief = packet.analysisBrief
+      && packet.analysisBrief.planId === restoredPlan.planId
+      && packet.analysisBrief.originalQuestion === restoredPlan.originalQuestion
+      ? packet.analysisBrief
+      : buildAnalysisBrief(restoredPlan, investigationForPlanning);
+    const restoredEvidencePlan = packet.evidencePlan
+      && packet.evidencePlan.planId === restoredPlan.planId
+      && packet.evidencePlan.originalQuestion === restoredPlan.originalQuestion
+      ? packet.evidencePlan
+      : buildEvidencePlan(restoredPlan);
     setAnalysisBrief(restoredBrief);
     setEvidencePlan(restoredEvidencePlan);
-    setEvaluationDefinition(packet.evaluationDefinition ?? generateEvaluationDefinitionDraft(restoredBrief, restoredInvestigation, restoredEvidencePlan));
+    setEvaluationDefinition(packet.evaluationDefinition?.planId === restoredPlan.planId
+      ? packet.evaluationDefinition
+      : generateEvaluationDefinitionDraft(restoredBrief, investigationForPlanning, restoredEvidencePlan));
     const restoredDraft: RecommendationDraft = {
       id: `draft-1-${Date.now().toString(36)}`,
       number: 1,
-      investigation: restoredInvestigation,
-      selectedLeadId: packet.selectedLeadId ?? null,
+      investigation: investigationForPlanning,
+      selectedLeadId: restoredSelectedLeadId,
       selectedContextMetric: packet.selectedContextMetric ?? questionMapMetric(restoredPlan),
       followUps: packet.followUps ?? [],
     };
-    const restoredDrafts = usesRegisteredEvidence
-      ? []
-      : packet.recommendationDrafts?.length ? packet.recommendationDrafts : [restoredDraft];
+    const restoredDrafts = restoredInvestigation
+      ? packet.recommendationDrafts?.length ? packet.recommendationDrafts : [restoredDraft]
+      : [];
     const restoredActiveDraftId = packet.activeDraftId && restoredDrafts.some((draft) => draft.id === packet.activeDraftId)
       ? packet.activeDraftId
       : restoredDrafts.at(-1)?.id ?? null;
     setRecommendationDrafts(restoredDrafts);
     setActiveDraftId(restoredActiveDraftId);
-    setSelectedActionId(restoredPlan.actions.some((action) => action.id === packet.actionId) ? packet.actionId : proposedActionFromPlan(restoredPlan).id);
+    const restoredPlanActionId = packet.planActionId ?? packet.actionId;
+    setSelectedActionId(restoredPlan.actions.some((action) => action.id === restoredPlanActionId) ? restoredPlanActionId : proposedActionFromPlan(restoredPlan).id);
     setRequestError(null);
     setSisterFollowUpNotice(null);
     setReplanNotice(savedPlan?.success
@@ -769,6 +816,23 @@ export function DecisionWorkflowApp() {
   const isAnimationPage = activeView === "workflow" && (phase === "interpreting" || phase === "running");
   const isResultPage = activeView === "workflow" && showPacket;
   const isErrorPage = activeView === "workflow" && phase === "error";
+
+  useEffect(() => {
+    if (!isResultPage) return;
+    let cancelled = false;
+    void fetch("/api/source-readiness", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return await response.json() as CompactSourceReadiness;
+      })
+      .then((readiness) => {
+        if (!cancelled && readiness) setSourceReadiness(readiness);
+      })
+      .catch(() => {
+        // The answer remains usable when the optional readiness summary is unavailable.
+      });
+    return () => { cancelled = true; };
+  }, [isResultPage]);
   const pagePhase = activeView === "saved"
     ? "saved-list"
     : isQuestionPage
@@ -825,7 +889,15 @@ export function DecisionWorkflowApp() {
             ) : null}
             <AdaptiveEvaluationWorkspace
               question={question}
-              savedPackets={savedPackets}
+              savedPackets={savedPackets.map((packet) => ({
+                id: packet.id,
+                question: packet.question,
+                title: packet.title,
+                savedAt: packet.savedAt,
+                perspectiveId: packet.perspectiveId,
+                viewId: packet.plan?.evidenceSelection.viewId,
+                selectedGeographicContexts: packet.selectedGeographicContexts,
+              }))}
               onQuestionChange={(value) => {
                 setQuestion(value);
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
@@ -836,6 +908,10 @@ export function DecisionWorkflowApp() {
                 setSisterFollowUpNotice(null);
               }}
               onOpenSaved={() => setActiveView("saved")}
+              onOpenSavedPacket={(id) => {
+                const packet = savedPackets.find((candidate) => candidate.id === id);
+                if (packet) openSavedPacket(packet);
+              }}
               selectedGeographicContexts={selectedGeographicContexts}
               onGeographicContextSelect={(context) => {
                 setGeographicContextNotice(null);
@@ -869,7 +945,7 @@ export function DecisionWorkflowApp() {
             </div>
             {replanNotice ? <div className="sister-follow-up-notice" role="status"><strong>Plan updated</strong><p>{replanNotice}</p></div> : null}
             {requestError ? <div className="packet-missing-gates" role="alert"><small>{requestError}</small></div> : null}
-            <AnalysisBriefPanel key={`${plan.planId}:${analysisBrief.originalQuestion}`} brief={analysisBrief} answerContract={plan.answerContract} onConfirm={confirmAndRun} />
+            <AnalysisBriefPanel key={`${plan.planId}:${analysisBrief.originalQuestion}`} brief={analysisBrief} answerContract={plan.answerContract} canRun onUpdatePlan={updateAnalysisPlan} onConfirm={confirmAndRun} />
           </section>
         ) : null}
 
@@ -905,20 +981,16 @@ export function DecisionWorkflowApp() {
                   <div className="eyebrow">Evidence graph in progress</div>
                   <h1 id="graph-title">Building the answer from checked evidence</h1>
                   <p className="plan-method-ribbon" data-proposal-method={plan.proposalMethod}>
-                    {proposalMethodLabel(plan.proposalMethod)} · {plan.capabilityId.replaceAll("_", " ")} · {plan.status.replaceAll("_", " ")}
+                    {proposalMethodLabel(plan.proposalMethod)} · {plan.capabilityId.replaceAll("_", " ")} · {plan.status === "blocked" ? "limited evidence — analysis continues" : plan.status.replaceAll("_", " ")}
                   </p>
                   <div className="animation-current-step">
-                    <small>Stage {Math.min(activeStep + 1, evidenceGraphSteps.length)} of {evidenceGraphSteps.length}</small>
-                    <strong>{evidenceGraphSteps[activeStep]?.label ?? "Preparing the evidence graph"}</strong>
-                    <span>{evidenceGraphSteps[activeStep]?.evidenceState === "waiting"
-                      ? "Waiting for compatible outcome evidence. This stage is not complete."
-                      : evidenceGraphSteps[activeStep]?.evidenceState === "pending"
-                        ? "Not run because an earlier evidence stage is incomplete."
-                        : evidenceGraphSteps[activeStep]?.result ?? "Checking evidence and conclusion boundary."}</span>
+                    <small>Active request</small>
+                    <strong>Investigating compatible registered evidence</strong>
+                    <span>The service is running a bounded investigation. Source passes and answer checks will be shown only after their execution receipts return.</span>
                   </div>
                   <div className="graph-footer">
                     <span className="progress-pulse" aria-hidden="true" />
-                    {evidenceGraphSteps[activeStep]?.label ?? "Preparing the evidence graph"}
+                    Waiting for verified execution receipts
                   </div>
                 </>
               ) : null}
@@ -951,13 +1023,13 @@ export function DecisionWorkflowApp() {
             >
               <div className="packet-heading">
                 <div>
-                  <div className="eyebrow">{phase === "saved" ? "Saved recommendation" : "Recommendation"}</div>
+                  <div className="eyebrow">{phase === "saved" ? `Saved ${showsActionPackage ? "action package" : "result"}` : showsActionPackage ? "Action package" : "Result"}</div>
                   <h1 id="packet-title">{workspaceHeading(plan, investigation)}</h1>
                   <p className="lead">{investigation?.readiness.summary ?? packetSummaryFromPlan(plan)}</p>
                 </div>
                 <div className="packet-heading-actions">
                   {recommendationDrafts.length ? (
-                    <div className="draft-ledger" role="tablist" aria-label="Recommendation drafts">
+                    <div className="draft-ledger" role="tablist" aria-label={showsActionPackage ? "Recommendation drafts" : "Result drafts"}>
                       {recommendationDrafts.map((draft) => (
                         <button
                           key={draft.id}
@@ -965,7 +1037,7 @@ export function DecisionWorkflowApp() {
                           role="tab"
                           aria-selected={draft.id === activeDraftId}
                           onClick={() => openRecommendationDraft(draft)}
-                          title={draft.analystPrompt ? `Revised to consider: ${draft.analystPrompt}` : "Original recommendation"}
+                          title={draft.analystPrompt ? `Revised to consider: ${draft.analystPrompt}` : showsActionPackage ? "Original recommendation" : "Original result"}
                         >
                           Draft {draft.number}
                         </button>
@@ -991,6 +1063,85 @@ export function DecisionWorkflowApp() {
                 </div>
               ) : null}
 
+              {reviewablePacket && packetAction ? (
+                <section className="decision-answer-summary" data-result-priority="answer-to-goal" aria-labelledby="decision-answer-title">
+                  <div className="section-label">Answer</div>
+                  <h2 id="decision-answer-title">{selectedLead?.title ?? workspaceHeading(plan, investigation)}</h2>
+                  <p>{selectedLead?.businessMeaning ?? reviewablePacket.finalAnswer.strongestSupportedConclusion}</p>
+                  {showsActionPackage ? (
+                    <div className="decision-answer-next-step">
+                      <span>Recommendation</span>
+                      <strong>{insightActionPlan?.recommendation ?? packetAction.title}</strong>
+                      <small>{insightActionPlan ? `${actionReadinessLabel(insightActionPlan.actionReadiness)} · ${insightActionPlan.confidence} confidence` : packetAction.nextStep}</small>
+                    </div>
+                  ) : null}
+                </section>
+              ) : null}
+
+              {displayedGeographicFocus && evidenceExecution?.query !== "clinic_performance_bundle" ? (
+                <div className="decision-map-answer-layout">
+                  <div className="decision-result-map-shell">
+                    <GeographicFocusMap
+                      focus={displayedGeographicFocus}
+                      modeLabel={geographyModeLabel(plan)}
+                      contextMetric={selectedContextMetric}
+                      measureOrigin={plan.evidenceSelection.datasetId || plan.intent.requestedMeasure !== "none" ? "Confirmed question measure" : "Supporting context measure"}
+                      findings={investigation?.leads ?? []}
+                      selectedLeadId={selectedLeadId}
+                      onSelectFinding={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
+                      questionContext={`Original question: ${plan.originalQuestion} Analyst-framed question: ${analysisBrief?.rewrittenQuestion ?? plan.originalQuestion}`}
+                      sourceIds={investigation?.sourceIds ?? ["SRC-016"]}
+                      workspaceDatasetId={plan.evidenceSelection.datasetId === "marketing_paid_search_cpc" && investigation?.leads.some((lead) => lead.supportingMeasures?.some((item) => item.id === "cost_per_conversion"))
+                        ? "marketing_paid_search_cost_per_conversion"
+                        : plan.evidenceSelection.datasetId}
+                      evidenceStage={investigation?.evidenceStage}
+                    />
+                  </div>
+                  <aside className="selected-finding-summary" aria-label={showsActionPackage ? "Selected finding and action readiness" : "Selected finding and answer boundary"}>
+                    <div className="section-label">Selected market signal</div>
+                    <h3>{selectedLead?.title ?? "Select a highlighted market"}</h3>
+                    <p>{selectedLead?.businessMeaning ?? "Choose a finding on the map to connect the geography to its supporting signal."}</p>
+                    <dl>
+                      <div><dt>Evidence detail</dt><dd>{selectedLead?.observation ?? "Select a finding to review its supporting evidence."}</dd></div>
+                      <div><dt>Evidence strength</dt><dd>{selectedLead?.strength ?? "No finding selected"}</dd></div>
+                      <div><dt>What could change this</dt><dd>{selectedLead?.challenge ?? "Select a finding to review its main challenge."}</dd></div>
+                      <div>
+                        <dt>{showsActionPackage ? "Action readiness" : "Answer boundary"}</dt>
+                        <dd>{showsActionPackage
+                          ? packetAction?.requiresApproval ? "Analyst validation ready; material action still requires review" : "Ready for the named analyst validation step"
+                          : plan.answerContract.strongestPermittedConclusion}</dd>
+                      </div>
+                    </dl>
+                  </aside>
+                </div>
+              ) : null}
+
+              {showsActionPackage && packetAction ? (
+                <section className="owned-action-plan" aria-labelledby="owned-action-plan-title">
+                  <div className="section-label">Owned next step</div>
+                  <h2 id="owned-action-plan-title">{insightActionPlan?.recommendation ?? packetAction.title}</h2>
+                  <div className="owned-action-plan-meta">
+                    <span><b>Owner</b>{insightActionPlan?.decisionOwner ?? packetAction.owner}</span>
+                    <span><b>Timing</b>{insightActionPlan?.decisionDueDate ?? packetAction.timing}</span>
+                    <span><b>Done next</b>{packetAction.nextStep}</span>
+                  </div>
+                </section>
+              ) : null}
+
+              {sourceReadiness ? <ConnectedDataGapsPanel readiness={sourceReadiness} /> : null}
+
+              <details className="decision-analysis-details">
+                <summary>How this answer was built</summary>
+                <div className="decision-analysis-details-body">
+
+              {evidenceExecution?.agenticLifecycle ? (
+                <AgenticRunSummary
+                  lifecycle={evidenceExecution.agenticLifecycle}
+                  selectedActionId={selectedActionId}
+                  actions={actionOptions.map((action) => ({ id: action.id, title: action.title }))}
+                />
+              ) : null}
+
               {evidenceExecution ? (
                 <EvidenceBundlePanel result={evidenceExecution} action={selectedAction} answer={reviewablePacket?.packetAnswer} />
               ) : (
@@ -998,26 +1149,6 @@ export function DecisionWorkflowApp() {
                   <small>The registered evidence bundle is unavailable. The validated plan remains visible, but no snapshot result is being represented as complete.</small>
                 </div>
               )}
-
-              {displayedGeographicFocus && evidenceExecution?.query !== "clinic_performance_bundle" ? (
-                <div className="decision-result-map-shell">
-                  <GeographicFocusMap
-                    focus={displayedGeographicFocus}
-                    modeLabel={geographyModeLabel(plan)}
-                    contextMetric={selectedContextMetric}
-                    measureOrigin={plan.evidenceSelection.datasetId || plan.intent.requestedMeasure !== "none" ? "Confirmed question measure" : "Supporting context measure"}
-                    findings={investigation?.leads ?? []}
-                    selectedLeadId={selectedLeadId}
-                    onSelectFinding={(lead: InvestigationLead) => setSelectedLeadId(lead.id)}
-                    questionContext={`Original question: ${plan.originalQuestion} Analyst-framed question: ${analysisBrief?.rewrittenQuestion ?? plan.originalQuestion}`}
-                    sourceIds={investigation?.sourceIds ?? ["SRC-016"]}
-                    workspaceDatasetId={plan.evidenceSelection.datasetId === "marketing_paid_search_cpc" && investigation?.leads.some((lead) => lead.supportingMeasures?.some((item) => item.id === "cost_per_conversion"))
-                      ? "marketing_paid_search_cost_per_conversion"
-                      : plan.evidenceSelection.datasetId}
-                    evidenceStage={investigation?.evidenceStage}
-                  />
-                </div>
-              ) : null}
 
               {investigation ? (
                 <>
@@ -1041,11 +1172,25 @@ export function DecisionWorkflowApp() {
                   <RecommendationRevisionBar
                     recommendedPrompt={recommendedInvestigationRevision(investigation)}
                     onRevise={reviseRecommendation}
+                    outputKind={showsActionPackage ? "recommendation" : "result"}
                   />
                 </>
               ) : null}
 
-              <div className="decision-review-primary">
+              {reviewablePacket ? (
+                <div className="goal-first-answer answer-contract-details">
+                  <AnswerCoveragePanel
+                    coverage={reviewablePacket.answerCoverage}
+                    answer={reviewablePacket.finalAnswer}
+                    evaluation={reviewablePacket.answerEvaluation}
+                  />
+                </div>
+              ) : null}
+
+                </div>
+              </details>
+
+              {showsActionPackage ? <div className="decision-review-primary">
                 <div className="decision-review-side">
                   <div className="action-packet-card">
                     <p className="action-packet-governance-note">
@@ -1122,13 +1267,6 @@ export function DecisionWorkflowApp() {
                       </>
                     )}
 
-                    {reviewablePacket ? (
-                      <AnswerCoveragePanel
-                        coverage={reviewablePacket.answerCoverage}
-                        answer={reviewablePacket.finalAnswer}
-                      />
-                    ) : null}
-
                     {!insightActionPlan && !validationWorkplan ? <details
                       className="packet-action-details"
                       open={actionDetailsOpen}
@@ -1192,7 +1330,26 @@ export function DecisionWorkflowApp() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> : reviewablePacket ? (
+                <section className="result-delivery-card" aria-label="Result actions">
+                  <div>
+                    <div className="section-label">Result record</div>
+                    <strong>Keep or share this evidence-backed result</strong>
+                    <p>The result preserves the answer, sources, limitations, and investigation trail without turning it into an action recommendation.</p>
+                  </div>
+                  <div className="packet-card-actions">
+                    <button className="primary-action" type="button" onClick={() => downloadDecisionBrief(reviewablePacket)}>
+                      Download result brief
+                    </button>
+                    <button className="secondary-action" type="button" onClick={() => downloadReviewableActionPacket(reviewablePacket)}>
+                      Download audit appendix
+                    </button>
+                    <button className="secondary-action" onClick={savePacket}>
+                      {phase === "saved" ? "Saved" : "Save result"} <span aria-hidden="true">✓</span>
+                    </button>
+                  </div>
+                </section>
+              ) : null}
 
               <SisterGeographiesSection
                 suggestions={sisterGeographies}
@@ -1200,10 +1357,12 @@ export function DecisionWorkflowApp() {
               />
 
               <div className="packet-disclosure">
-                <span>Decision record</span>
+                <span>{showsActionPackage ? "Decision record" : "Result record"}</span>
                 <p>
-                  This packet contains findings, evidence boundaries, and proposed next actions. It is not a final real-estate or business decision.
-                  Saved packets remain in this browser for this workspace. Downloading the packet does not approve or send it externally.
+                  {showsActionPackage
+                    ? "This action package contains findings, evidence boundaries, and proposed next actions. It is not a final real-estate or business decision."
+                    : "This result contains findings, evidence boundaries, and source-linked analysis. It does not imply a business action that was not asked for."}
+                  {" "}Saved items remain in this browser for this workspace. Downloading does not approve or send anything externally.
                 </p>
               </div>
             </section>

@@ -1,5 +1,7 @@
 import { evidenceExecutionResponseSchema } from "@/lib/evidence-snapshot/contracts";
-import { executeEvaluationPlanEvidence, evaluationPlanExecutionRequestSchema } from "@/lib/planning/execute-plan";
+import { executeAgenticEvidenceLoop } from "@/lib/planning/agentic-evidence-loop";
+import { evaluationPlanExecutionRequestSchema } from "@/lib/planning/execute-plan";
+import { loadVettedDynamicSourceRuntime } from "@/lib/planning/vetted-dynamic-source-registry";
 
 const headers = { "cache-control": "no-store" };
 
@@ -34,18 +36,22 @@ export async function POST(request: Request) {
   if (!parsed.success) return Response.json({ status: "error", message: "A valid evaluation plan and request ID are required." }, { status: 400, headers });
   try {
     const localEvidenceService = localEvidenceServiceUrl(process.env.LOCAL_EVIDENCE_SERVICE_URL);
-    const executed = localEvidenceService
-      ? evidenceExecutionResponseSchema.parse(await (await fetch(`${localEvidenceService}/execute`, {
+    const dynamicSources = await loadVettedDynamicSourceRuntime(parsed.data.plan);
+    const executed = await executeAgenticEvidenceLoop(parsed.data, {
+      snapshotDir: localPath(process.env.CLINIC_MARKET_SNAPSHOT_DIR),
+      databasePath: localPath(process.env.DUCKDB_PATH),
+      normalizedSnapshotDir: localPath(process.env.NORMALIZED_MARKET_DATA_DIR),
+      consumerInsightsSnapshotDir: localPath(process.env.CONSUMER_INSIGHTS_SNAPSHOT_DIR),
+      candidateResearchPasses: dynamicSources.candidateResearchPasses,
+      executeCandidatePass: dynamicSources.executeCandidatePass,
+      ...(localEvidenceService ? {
+        executePass: async (passRequest: typeof parsed.data) => evidenceExecutionResponseSchema.parse(await (await fetch(`${localEvidenceService}/execute`, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify(parsed.data),
-        })).json())
-      : await executeEvaluationPlanEvidence(parsed.data, {
-          snapshotDir: localPath(process.env.CLINIC_MARKET_SNAPSHOT_DIR),
-          databasePath: localPath(process.env.DUCKDB_PATH),
-          normalizedSnapshotDir: localPath(process.env.NORMALIZED_MARKET_DATA_DIR),
-          consumerInsightsSnapshotDir: localPath(process.env.CONSUMER_INSIGHTS_SNAPSHOT_DIR),
-        });
+          body: JSON.stringify(passRequest),
+        })).json()),
+      } : {}),
+    });
     const result = evidenceExecutionResponseSchema.parse({
       ...executed,
       missingEvidence: [...new Set([...parsed.data.plan.missingEvidence, ...executed.missingEvidence])],

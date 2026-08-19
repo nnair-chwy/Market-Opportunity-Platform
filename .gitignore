@@ -57,6 +57,7 @@ next-env.d.ts
 /data/approved/google-ads/
 /data/approved/consumer-insights/
 /data/approved/seo/
+/data/approved/zeus-ui/
 /reports/snowflake-*/
 
 # local DuckDB evidence layer

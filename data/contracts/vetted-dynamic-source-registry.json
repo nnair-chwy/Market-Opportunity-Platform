@@ -1,0 +1,5 @@
+{
+  "version": "vetted-dynamic-source-registry-v1",
+  "approvedRoots": ["data/approved"],
+  "entries": []
+}

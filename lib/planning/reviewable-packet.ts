@@ -33,6 +33,11 @@ import {
   composeFinalAnswer,
   composedFinalAnswerSchema,
 } from "./final-answer-composer.ts";
+import { evidenceReconciliationReportSchema } from "./evidence-compatibility.ts";
+import {
+  answerEvaluationReportSchema,
+  evaluateAnswerCompletion,
+} from "./answer-evaluation.ts";
 
 export const REVIEWABLE_ACTION_PACKET_VERSION = "reviewable-action-packet-v2" as const;
 export const PACKET_SUMMARY_PROMPT_VERSION = "evaluation-packet-findings-summary-v3" as const;
@@ -63,6 +68,9 @@ export const packetAnswerSchema = z.object({
     owner: z.string().trim().min(1),
     nextStep: z.string().trim().min(1),
     requiresApproval: z.boolean(),
+    kpi: z.string().trim().min(1).optional(),
+    validationThreshold: z.string().trim().min(1).optional(),
+    stopCondition: z.string().trim().min(1).optional(),
   }).strict(),
 }).strict();
 
@@ -87,6 +95,10 @@ const insightActionPlanSchema = z.object({
     action: z.string().trim().min(1),
     deliverable: z.string().trim().min(1),
     completionCriteria: z.string().trim().min(1),
+    // Optional on read so saved v1 packets remain valid; current builders always populate them.
+    kpi: z.string().trim().min(1).optional(),
+    validationThreshold: z.string().trim().min(1).optional(),
+    stopCondition: z.string().trim().min(1).optional(),
     status: z.enum(["ready_to_start", "blocked_on_evidence"]),
   }).strict()).min(1),
   decisionRules: z.array(z.object({
@@ -96,6 +108,20 @@ const insightActionPlanSchema = z.object({
   stakeholders: z.array(z.string().trim().min(1)).min(1),
   longerTermConsiderations: z.array(z.string().trim().min(1)).min(1),
   sourcePattern: z.string().trim().min(1),
+  // Optional on read so packets created before decision-grade lever metadata remain valid.
+  lever: z.enum(["paid_search_spend_test", "pricing_test", "clinic_footprint_validation"]).optional(),
+  actionReadiness: z.enum(["ready_for_bounded_test", "validation_required", "outcome_missing", "evidence_incompatible"]).optional(),
+  confidence: z.enum(["High", "Medium", "Low"]).optional(),
+  goalEvaluationStatus: z.enum(["pass", "partial", "fail"]).optional(),
+  baseline: z.object({
+    status: z.enum(["available", "partial", "missing"]),
+    description: z.string().trim().min(1),
+    evidenceIds: z.array(z.string().trim().min(1)),
+  }).strict().optional(),
+  kpi: z.string().trim().min(1).optional(),
+  validationThreshold: z.string().trim().min(1).optional(),
+  stopCondition: z.string().trim().min(1).optional(),
+  sensitivityAndContraryEvidence: z.string().trim().min(1).optional(),
 }).strict();
 
 export const reviewableActionPacketSchema = z.object({
@@ -120,6 +146,7 @@ export const reviewableActionPacketSchema = z.object({
   missingApprovals: evaluationPlanSchema.shape.missingApprovals,
   answerContract: evaluationPlanSchema.shape.answerContract,
   answerCoverage: investigationCoverageReportSchema,
+  answerEvaluation: answerEvaluationReportSchema.optional(),
   finalAnswer: composedFinalAnswerSchema,
   calculationVersions: z.object({
     evaluationPlanVersion: evaluationPlanSchema.shape.version,
@@ -186,7 +213,7 @@ export const reviewableActionPacketSchema = z.object({
     planId: z.string().trim().min(1),
     originalQuestion: evaluationPlanSchema.shape.originalQuestion,
     perspectiveId: evaluationPlanSchema.shape.perspectiveId,
-    geography: z.literal("CBSA"),
+    geography: z.enum(["CBSA", "supplied_trade_area"]),
     period: z.string().trim().min(1),
     dataSnapshotLabel: z.string().trim().min(1),
     dataSnapshotVersion: z.string().trim().min(1),
@@ -231,7 +258,7 @@ export const reviewableActionPacketSchema = z.object({
     }).strict(),
     leads: z.array(z.object({
       id: z.string().trim().min(1),
-      marketIds: z.array(z.string().trim().min(1).max(5)).max(5),
+      marketIds: z.array(z.string().trim().min(1).max(120)).max(5),
       title: z.string().trim().min(1),
       observation: z.string().trim().min(1),
       businessMeaning: z.string().trim().min(1),
@@ -262,6 +289,7 @@ export const reviewableActionPacketSchema = z.object({
     allowedUse: z.enum(["market_context_only", "internal_shadow_evaluation_only"]),
     scoringEligibility: z.literal("none"),
     evidenceStage: z.enum(["signal", "triangulated_finding"]),
+    reconciliation: evidenceReconciliationReportSchema.optional(),
     nextPass: z.object({
       status: z.enum(["waiting_for_evidence", "ready_to_run"]),
       question: z.string().trim().min(1),
@@ -342,7 +370,25 @@ function evidenceSourceIdsFor(plan: EvaluationPlan): string[] {
 }
 
 export function proposedActionFromPlan(plan: EvaluationPlan): PlannedAction {
-  return plan.actions[0];
+  const action = plan.actions[0];
+  const measurement = plan.perspectiveId === "marketing"
+    ? {
+      kpi: "Coverage of source-linked regional business outcomes and an approved comparison design for each validation market.",
+      validationThreshold: "All candidate markets have comparable approved outcomes, geography, periods, and an owner-approved measurement rule.",
+      stopCondition: "Stop before changing spend if outcomes, geography, comparison design, or approval is missing or incompatible.",
+    }
+    : plan.perspectiveId === "pricing"
+      ? {
+        kpi: "Representative geographic and matched-SKU coverage with compatible first-party outcomes.",
+        validationThreshold: "Owner-approved ZIP coverage, SKU-match reliability, period comparability, and business-outcome gates are all met.",
+        stopCondition: "Stop before changing price if coverage is unrepresentative, matches are unreliable, periods conflict, or outcomes are missing.",
+      }
+      : {
+        kpi: "Completion of governed demand, capacity, competitive-access, property, and economics evidence for the selected market.",
+        validationThreshold: "All required evidence workstreams meet owner-approved gates with no material stop condition.",
+        stopCondition: "Stop before footprint action if any required evidence is unresolved or a capacity, workforce, access, property, or economics gate fails.",
+      };
+  return plannedActionSchema.parse({ ...action, ...measurement });
 }
 
 function packetMetricLabel(metricId: string) {
@@ -485,6 +531,9 @@ export function buildPacketAnswer(
       owner: action.owner,
       nextStep: action.nextStep,
       requiresApproval: action.requiresApproval,
+      kpi: action.kpi,
+      validationThreshold: action.validationThreshold,
+      stopCondition: action.stopCondition,
     },
   });
 }
@@ -551,7 +600,19 @@ export function assembleReviewableActionPacket(
     throw new Error("The action plan does not belong to this evaluation plan and investigation.");
   }
   const answerCoverage = checkInvestigationCoverage(plan, investigation, action);
+  const answerEvaluation = evaluateAnswerCompletion(plan, investigation, answerCoverage, action);
   const finalAnswer = composeFinalAnswer(plan, investigation, action, answerCoverage);
+  const packetInvestigation = investigation && answerEvaluation.overallStatus !== "pass"
+    ? {
+        ...investigation,
+        nextPass: {
+          status: "waiting_for_evidence" as const,
+          question: answerEvaluation.nextPass.question,
+          evidenceNeeded: answerEvaluation.nextPass.evidenceNeeded,
+          completionRule: answerEvaluation.nextPass.completionRule,
+        },
+      }
+    : investigation;
 
   return reviewableActionPacketSchema.parse({
     packetKind: "draft_action_packet",
@@ -576,6 +637,7 @@ export function assembleReviewableActionPacket(
     missingApprovals: [...new Set([...plan.missingApprovals, ...(evidenceExecution?.missingApprovals ?? [])])],
     answerContract: plan.answerContract,
     answerCoverage,
+    answerEvaluation,
     finalAnswer,
     calculationVersions: {
       evaluationPlanVersion: plan.version,
@@ -599,7 +661,7 @@ export function assembleReviewableActionPacket(
     analysisBrief,
     actionPlan,
     validationWorkplan,
-    analysisAppendix: investigation ? { ...investigation, followUps } : undefined,
+    analysisAppendix: packetInvestigation ? { ...packetInvestigation, followUps } : undefined,
   });
 }
 
@@ -686,6 +748,20 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     ...packet.answerCoverage.domainCoverage.map((item) => `- ${item.label}: ${item.status} — ${item.explanation}`),
     "",
   ];
+  const answerEvaluationSections = packet.answerEvaluation ? [
+    "## Confirmed-goal completion check",
+    `- Evaluation version: ${packet.answerEvaluation.version}`,
+    `- Overall status: ${packet.answerEvaluation.overallStatus}`,
+    `- Criteria passed: ${packet.answerEvaluation.passedCount} of ${packet.answerEvaluation.criterionCount}`,
+    ...packet.answerEvaluation.criteria.map((criterion) => `- ${criterion.label}: ${criterion.status} — ${criterion.explanation}${criterion.evidenceIds.length ? ` [${criterion.evidenceIds.join(", ")}]` : ""}`),
+    "",
+    "### Bounded next pass",
+    `- Status: ${packet.answerEvaluation.nextPass.status.replaceAll("_", " ")}`,
+    `- Question: ${packet.answerEvaluation.nextPass.question}`,
+    `- Completion rule: ${packet.answerEvaluation.nextPass.completionRule}`,
+    ...packet.answerEvaluation.nextPass.evidenceNeeded.map((item) => `- Evidence needed: ${item}`),
+    "",
+  ] : [];
   const finalAnswerSections = [
     "## Contract-complete draft answer",
     `- Status: ${packet.finalAnswer.status.replaceAll("_", " ")}`,
@@ -750,6 +826,11 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `- Measures examined: ${packet.analysisAppendix.measuresExamined.join("; ")}`,
     `- Process: ${packet.analysisAppendix.toolsRun.join(" → ")}`,
     `- Readiness: ${packet.analysisAppendix.readiness.label} — ${packet.analysisAppendix.readiness.summary}`,
+    ...(packet.analysisAppendix.reconciliation ? [
+      `- Evidence compatibility: ${packet.analysisAppendix.reconciliation.status.replaceAll("_", " ")} (${packet.analysisAppendix.reconciliation.summary.errorCount} errors; ${packet.analysisAppendix.reconciliation.summary.warningCount} warnings)`,
+      `- Compatibility boundary: ${packet.analysisAppendix.reconciliation.conclusionBoundary}`,
+      ...packet.analysisAppendix.reconciliation.issues.map((item) => `- Reconciliation ${item.severity}: ${item.message}`),
+    ] : []),
     ...(packet.analysisAppendix.portfolioPattern ? [
       `- Portfolio pattern: ${packet.analysisAppendix.portfolioPattern.headline}. ${packet.analysisAppendix.portfolioPattern.summary}`,
       `- Pattern boundary: ${packet.analysisAppendix.portfolioPattern.implication}`,
@@ -820,6 +901,9 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
       `- Evidence: ${workstream.evidenceIds.join(", ")}`,
       `- Deliverable: ${workstream.deliverable}`,
       `- Done when: ${workstream.completionCriteria}`,
+      ...(workstream.kpi ? [`- KPI: ${workstream.kpi}`] : []),
+      ...(workstream.validationThreshold ? [`- Validation threshold: ${workstream.validationThreshold}`] : []),
+      ...(workstream.stopCondition ? [`- Stop condition: ${workstream.stopCondition}`] : []),
       "",
     ]),
     "### Validation disposition rules",
@@ -833,10 +917,19 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
   const actionPlanSections = packet.actionPlan ? [
     "## Decision handoff",
     `- Recommendation: ${packet.actionPlan.recommendation}`,
+    ...(packet.actionPlan.lever ? [`- Lever: ${packet.actionPlan.lever.replaceAll("_", " ")}`] : []),
+    ...(packet.actionPlan.actionReadiness ? [`- Action readiness: ${packet.actionPlan.actionReadiness.replaceAll("_", " ")}`] : []),
+    ...(packet.actionPlan.confidence ? [`- Confidence: ${packet.actionPlan.confidence}`] : []),
+    ...(packet.actionPlan.goalEvaluationStatus ? [`- Goal evaluation: ${packet.actionPlan.goalEvaluationStatus}`] : []),
     `- Market: ${packet.actionPlan.marketName}`,
     `- Decision owner: ${packet.actionPlan.decisionOwner}`,
     `- Decision review date: ${packet.actionPlan.decisionDueDate}`,
     `- Why now: ${packet.actionPlan.whyNow}`,
+    ...(packet.actionPlan.baseline ? [`- Baseline (${packet.actionPlan.baseline.status}): ${packet.actionPlan.baseline.description} [${packet.actionPlan.baseline.evidenceIds.join(", ")}]`] : []),
+    ...(packet.actionPlan.kpi ? [`- KPI: ${packet.actionPlan.kpi}`] : []),
+    ...(packet.actionPlan.validationThreshold ? [`- Validation threshold: ${packet.actionPlan.validationThreshold}`] : []),
+    ...(packet.actionPlan.stopCondition ? [`- Stop condition: ${packet.actionPlan.stopCondition}`] : []),
+    ...(packet.actionPlan.sensitivityAndContraryEvidence ? [`- Sensitivity and contrary evidence: ${packet.actionPlan.sensitivityAndContraryEvidence}`] : []),
     "",
     "### What this will inform",
     bulletList(packet.actionPlan.whatThisInforms, "None listed"),
@@ -848,6 +941,9 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `  - Action: ${packet.actionPlan.workstreams[0].action}`,
     `  - Deliverable: ${packet.actionPlan.workstreams[0].deliverable}`,
     `  - Done when: ${packet.actionPlan.workstreams[0].completionCriteria}`,
+    ...(packet.actionPlan.workstreams[0].kpi ? [`  - KPI: ${packet.actionPlan.workstreams[0].kpi}`] : []),
+    ...(packet.actionPlan.workstreams[0].validationThreshold ? [`  - Validation threshold: ${packet.actionPlan.workstreams[0].validationThreshold}`] : []),
+    ...(packet.actionPlan.workstreams[0].stopCondition ? [`  - Stop condition: ${packet.actionPlan.workstreams[0].stopCondition}`] : []),
     "",
     "### Validation workplan",
     ...packet.actionPlan.workstreams.flatMap((workstream) => [
@@ -858,6 +954,9 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
       `- Action: ${workstream.action}`,
       `- Deliverable: ${workstream.deliverable}`,
       `- Done when: ${workstream.completionCriteria}`,
+      ...(workstream.kpi ? [`- KPI: ${workstream.kpi}`] : []),
+      ...(workstream.validationThreshold ? [`- Validation threshold: ${workstream.validationThreshold}`] : []),
+      ...(workstream.stopCondition ? [`- Stop condition: ${workstream.stopCondition}`] : []),
       "",
     ]),
     "### Decision rules",
@@ -880,6 +979,14 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     `- Allowed use: ${packet.evidenceExecution.allowedUse}`,
     `- Sensitivity: ${packet.evidenceExecution.sensitivity}`,
     "",
+    ...(packet.evidenceExecution.agenticLifecycle ? [
+      "### Investigation lifecycle",
+      `- Status: ${packet.evidenceExecution.agenticLifecycle.status.replaceAll("_", " ")}`,
+      `- Goal check: ${packet.evidenceExecution.agenticLifecycle.finalAnswerStatus}`,
+      `- Stop reason: ${packet.evidenceExecution.agenticLifecycle.stopReason}`,
+      ...packet.evidenceExecution.agenticLifecycle.passes.map((pass) => `- Pass ${pass.iteration}: ${pass.selectedQueries.join(", ")} · ${pass.addedEvidenceCount} new evidence item(s) · answer ${pass.answerStatus}`),
+      "",
+    ] : []),
     "### Evidence items",
     ...packet.evidenceExecution.evidenceBundle.flatMap((item) => [
       `- ${item.metricId}: ${item.rawValue ?? "structured value"} ${item.unit ?? ""}`.trim(),
@@ -990,6 +1097,7 @@ export function formatReviewableActionPacketDocument(packet: ReviewableActionPac
     ...actionPlanSections,
     ...answerContractSections,
     ...answerCoverageSections,
+    ...answerEvaluationSections,
     ...finalAnswerSections,
     ...framingSections,
     ...evidencePlanningSections,
@@ -1048,6 +1156,7 @@ export function formatDecisionBriefDocument(packet: ReviewableActionPacket): str
     ...(packet.analysisAppendix?.limitations ?? []),
   ])).slice(0, 4);
   const firstWorkstream = packet.actionPlan?.workstreams[0];
+  const firstValidationWorkstream = packet.validationWorkplan?.workstreams[0];
   const sourceIds = packet.analysisAppendix?.sourceIds
     ?? packet.calculationVersions.evidenceSourceIds;
   const decisionStatus = isDecisionReady
@@ -1113,7 +1222,25 @@ export function formatDecisionBriefDocument(packet: ReviewableActionPacket): str
       `- **Action:** ${firstWorkstream.action}`,
       `- **Deliverable:** ${firstWorkstream.deliverable}`,
       `- **Done when:** ${firstWorkstream.completionCriteria}`,
-    ] : [nextAction?.content ?? `${packet.action.owner} should ${packet.action.nextStep}`]),
+      ...(firstWorkstream.kpi ? [`- **KPI:** ${firstWorkstream.kpi}`] : []),
+      ...(firstWorkstream.validationThreshold ? [`- **Validation threshold:** ${firstWorkstream.validationThreshold}`] : []),
+      ...(firstWorkstream.stopCondition ? [`- **Stop condition:** ${firstWorkstream.stopCondition}`] : []),
+    ] : firstValidationWorkstream ? [
+      `**${firstValidationWorkstream.title}**`,
+      "",
+      `- **Owner:** ${firstValidationWorkstream.owner}`,
+      `- **Action:** ${firstValidationWorkstream.action}`,
+      `- **Deliverable:** ${firstValidationWorkstream.deliverable}`,
+      `- **Done when:** ${firstValidationWorkstream.completionCriteria}`,
+      ...(firstValidationWorkstream.kpi ? [`- **KPI:** ${firstValidationWorkstream.kpi}`] : []),
+      ...(firstValidationWorkstream.validationThreshold ? [`- **Validation threshold:** ${firstValidationWorkstream.validationThreshold}`] : []),
+      ...(firstValidationWorkstream.stopCondition ? [`- **Stop condition:** ${firstValidationWorkstream.stopCondition}`] : []),
+    ] : [
+      nextAction?.content ?? `${packet.action.owner} should ${packet.action.nextStep}`,
+      ...(packet.action.kpi ? [`- **KPI:** ${packet.action.kpi}`] : []),
+      ...(packet.action.validationThreshold ? [`- **Validation threshold:** ${packet.action.validationThreshold}`] : []),
+      ...(packet.action.stopCondition ? [`- **Stop condition:** ${packet.action.stopCondition}`] : []),
+    ]),
     "",
     "## Evidence and review record",
     `- **Answer status:** ${packet.finalAnswer.status.replaceAll("_", " ")}`,

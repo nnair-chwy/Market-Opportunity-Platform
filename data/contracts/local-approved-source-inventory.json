@@ -1,0 +1,450 @@
+{
+  "version": "1.1.0",
+  "generatedAt": "2026-08-18T21:30:00.000Z",
+  "workspace": "Market-Opportunity-Platform-main",
+  "purpose": "Agent-discoverable inventory of local approved-root files with fail-closed path-and-hash approval state",
+  "rawAndSensitiveDataPolicy": "Files remain under ignored data/approved paths. New or changed files require explicit path-and-hash approval before adapter candidacy or querying.",
+  "approvalPolicy": {
+    "version": "local-source-approval-registry-v1",
+    "newFiles": "unregistered_file_requires_review",
+    "changedFiles": "hash_changed_requires_review",
+    "retainedApproval": "exact_package_path_and_sha256_only",
+    "explicitApproval": "data/contracts/local-source-approval-registry.json"
+  },
+  "gisDownloadStatus": {
+    "observedAt": "2026-08-18",
+    "cvcCustomerGeospatialDashboard": "permission_denied_no_download",
+    "cvcVetCompetitionDashboard": "permission_denied_no_download",
+    "demographicsLookup": "no_verified_export_surface",
+    "retainedData": "existing minimized data/sample/esri/2026-07-30 fixture only"
+  },
+  "skippedSymlinks": [],
+  "packages": [
+    {
+      "id": "google-ads-2026-07-14_2026-08-12",
+      "root": "data/approved/google-ads/2026-07-14_2026-08-12",
+      "sensitivity": "internal",
+      "allowedUse": "workspace_validation_only",
+      "contract": "data/contracts/google-ads/export-catalog.json",
+      "gitTracked": false,
+      "fileCount": 17,
+      "totalBytes": 245275907,
+      "files": [
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/excluded/chewy-canada_configured-location-performance_postal-campaign-adgroup_cad.csv",
+          "bytes": 20950177,
+          "sha256": "58371e430578ee81c55bc1564df4fea2e2ddef1e4fba2485a9a782d6af829b18",
+          "agentUse": "audit_only_excluded_from_evaluation",
+          "approvalReason": "excluded_path_policy"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/careplus_configured-targets_by-campaign-adgroup_us.csv",
+          "bytes": 70730,
+          "sha256": "1063c31143d73769281a231e0778961f814ada931c8aa586cfa97647e25aa783",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/careplus_matched-postal-campaign_us.csv",
+          "bytes": 8011222,
+          "sha256": "14127337e208a7f57ff2a78420c810e7f3761cb5e56675a23c1caee9d32d053e",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/connect-with-a-vet_configured-targets_by-campaign-adgroup_us.csv",
+          "bytes": 4810,
+          "sha256": "d11e0c8b2fcb9c4d918842ce3e4acc069fdaa78bb6f98a0ac4bff2dee6219ff3",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/connect-with-a-vet_matched-postal-campaign_us.csv",
+          "bytes": 741926,
+          "sha256": "a24aee2bb8720221b53050dcec7f2f1492128656d0a1583c7813e2df9c43dc72",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/cvc_configured-targets_by-campaign-adgroup_us.csv",
+          "bytes": 678289,
+          "sha256": "7d5f7c4a9541fbf6e6071a8f18a1942bb30d84a95ef9e98f18065fc80e9a6037",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/cvc_matched-postal-campaign_us.csv",
+          "bytes": 481264,
+          "sha256": "d6a866cbd25f34dd7220e5321a2ba30ffba88db58eae784e364933745fb3d31d",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/get-real_configured-targets_by-campaign-adgroup_us.csv",
+          "bytes": 1465853,
+          "sha256": "11c5043a380da4d3a12f84b26e7bca4772548ef6b66f1a8c4609640e262a0336",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/get-real_matched-postal-campaign_us.csv",
+          "bytes": 11927934,
+          "sha256": "0ce3d0ecc9387dc3d6f4ab384c2a23ebc98da22bc13816e3baeac565c98fac26",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/pharmacy_matched-dma-campaign-conversion-action_us.csv",
+          "bytes": 8226549,
+          "sha256": "fd1655268a73bb2e02d8b5adbdeb65ebf08be3ca5bb4baf696c0b0da4ec80301",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/pharmacy_matched-dma-campaign-performance_us.csv",
+          "bytes": 647175,
+          "sha256": "0e728fde0aee43cd299582ee4a489a24c2f46909bcafb2eb54cbd43ca387d74d",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/pharmacy_matched-dma_account-summary_us.csv",
+          "bytes": 21777,
+          "sha256": "a8bf9d8b30031c88511a7180612bc0f1e3986b5737498efd15918356d1437e8b",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/pharmacy_matched-postal_account-summary_us.csv",
+          "bytes": 1984420,
+          "sha256": "70a08ea9b5aa894c1c9e86e7d03d673d5e6145beb6c09a155315f7040d49221d",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/retail_matched-dma-campaign-conversion-action_us.csv",
+          "bytes": 175441899,
+          "sha256": "f309dc24924e43caad0c3505ce1a55f2336a5301fdd8c9478336870c1e0d5e64",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/retail_matched-dma-campaign-performance_us.csv",
+          "bytes": 12414850,
+          "sha256": "e76736c302048dfc229e8c2552340c25a7d4977add401a98227da72d3d8e387c",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/retail_matched-dma_account-summary_us.csv",
+          "bytes": 23439,
+          "sha256": "34e1955c7818507be69a4bdfae07e698ec8185756d9581a2ed2b50747a03c657",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/google-ads/2026-07-14_2026-08-12/raw/retail_matched-postal_account-summary_us.csv",
+          "bytes": 2183593,
+          "sha256": "17489d4d850ca044d1cd763c0dee1629b05b3836c08652fcfdfb9aca106271bd",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        }
+      ]
+    },
+    {
+      "id": "snowflake-pricing-2026-08-17",
+      "root": "data/approved/snowflake/pricing/2026-08-17",
+      "sensitivity": "internal",
+      "allowedUse": "internal_shadow_evaluation_and_source_validation_only",
+      "contract": "data/contracts/pricing-snowflake/export-manifest.json",
+      "gitTracked": false,
+      "fileCount": 19,
+      "totalBytes": 359591681,
+      "files": [
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/chewy-price-history_by-sku-90d_2026-08-17.csv",
+          "bytes": 30692783,
+          "sha256": "0521a285d6276ff255e49704ffedf290cc5589008f57c6765668f480fb1a7019",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/chewy-price-history_schema_2026-08-17.csv",
+          "bytes": 7695,
+          "sha256": "f786d7b092891a07ec1ceea728efa6d25609c1669897653f1fb29c20ba3028bf",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/competitor-price-geo_by-zip-competitor-category-30d_2026-08-17.csv",
+          "bytes": 793417,
+          "sha256": "26f3fc235f425b3e1e3932c07b6cdcb0b3ded8bcf4adb2b40428f7e17bff6121",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/competitor-price-geo_historical-validation-sample_2026-08-17.csv",
+          "bytes": 81114,
+          "sha256": "2ff6e9f77930314b1945b75e5595d444585e952f7e4021207428e43e2fcce718",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/competitor-price-geo_latest-by-zip-competitor-sku-30d_2026-08-17.csv",
+          "bytes": 70471615,
+          "sha256": "61c3b2b554a903cbce4ea1d3c2f5928024fb46ab98307dcda117381631a66820",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/competitor-price-geo_recent-30d-validation-sample_2026-08-17.csv",
+          "bytes": 64561,
+          "sha256": "3a4cec822994afdaaf6f19a51895f6924ac2b8658d50e5815361395aca1f14a7",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/competitor-price-history_schema_2026-08-17.csv",
+          "bytes": 8627,
+          "sha256": "3abca5af1943d5d3b09c71d622109fae0357f1c6ca05710fb5e7cfb7e9af91ee",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/competitor-price-history_unfiltered-validation-sample_2026-08-17.csv",
+          "bytes": 56049,
+          "sha256": "e9f001734d325af49c8abb91cc2d315b4c8d45d6e257b5f2afc18c3acbefd006",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/order-line_schema-only_2026-08-17.csv",
+          "bytes": 23952,
+          "sha256": "9c3489b5ecb1c7b1a7ce67ddc012bb9cf2ce1ae8fb474fb1758fb95dc8e377c7",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/pharmacy-merch-performance_by-sku-90d_2026-08-17.csv",
+          "bytes": 132648225,
+          "sha256": "8ccf09fb91a91d881cee8052d38ac86130ff40aa6ffbae13cf18846920999be3",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/pharmacy-merch-performance_schema_2026-08-17.csv",
+          "bytes": 37558,
+          "sha256": "2c297c2493d348f9a863684139ee61f5e8dc74c61c2a1f812f9fa7bd3b2a9f4f",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/product-catalog_active-flag-profile_2026-08-17.csv",
+          "bytes": 218,
+          "sha256": "a2e9ce744746deb1fa3f84e0a28d6165f85322bfb22cd664dcff30b73267cf88",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/product-catalog_active-us-product-spine_2026-08-17.csv",
+          "bytes": 91574015,
+          "sha256": "1e836b373239497069dc24d30064d45ede4be4fc1aba310fc068ae8b29839edf",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/product-catalog_schema_2026-08-17.csv",
+          "bytes": 34337,
+          "sha256": "d40195bf258bdbca8c2b2364686eed23fb23e8192d75d31df3890b0d9ab09a4c",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/pse-pricing-economics_by-us-category-current-day_2026-08-17.csv",
+          "bytes": 1751869,
+          "sha256": "4b0a2f377e1e17c91a73c2922208e3c93187c5d7f0454dac278841a0c022c584",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/pse-pricing-economics_by-us-sku-current-day_2026-08-17.csv",
+          "bytes": 31198265,
+          "sha256": "cfe98eb27858a69e94c10c27c5a7068894df9a3e3d11962f1469cfb214bb4dce",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/pse-pricing-economics_current-day-validation-sample_2026-08-17.csv",
+          "bytes": 121206,
+          "sha256": "8d377bcc1366764a649c6f153a48d045da49499ba3b98aec8d8c3af32ddf8fe7",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/pse-pricing-economics_schema_2026-08-17.csv",
+          "bytes": 25709,
+          "sha256": "f1a20e1d8e0b171d6cf6648efe23fb06fe4ac3a2ba1f80db2d6171bd7efe3cf1",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/snowflake/pricing/2026-08-17/raw/snowflake-pricing_object-access-map_2026-08-17.csv",
+          "bytes": 466,
+          "sha256": "d298e66e4f821ce3fbcdaff563104bd9845f634a69ae4b8549141b92ad768a43",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        }
+      ]
+    },
+    {
+      "id": "seo-keywords-2026-08-14",
+      "root": "data/approved/seo/2026-08-14",
+      "sensitivity": "internal",
+      "allowedUse": "national_demand_vocabulary_and_context_only",
+      "contract": "data/contracts/seo-keywords/manifest.json",
+      "gitTracked": false,
+      "fileCount": 15,
+      "totalBytes": 33441233,
+      "files": [
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_brand-chewy_us_2026-08-14.csv",
+          "bytes": 2588403,
+          "sha256": "fae1a0ee2f43bae4c6b0567eafb4f0e645091af8de1009c63d3996a04ef7622f",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_competitor-amazon-pet-supplies_us_2026-08-14.csv",
+          "bytes": 112926,
+          "sha256": "04c11228398f3f0be13313f6c263c77d556fba5d622ce162458f4be6f7948ae9",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_competitor-petco_us_2026-08-14.csv",
+          "bytes": 3020866,
+          "sha256": "35c5b3ec41eee01fc64031dbf719eb6174f5103f7c2f4b4bb8998824b1467e61",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_competitor-petsmart_us_2026-08-14.csv",
+          "bytes": 3362564,
+          "sha256": "a39aef3d44fa5327d69edac635085553188b285fa56dfe91ad5dc716630d2b7e",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_competitor-target-pet-supplies_us_2026-08-14.csv",
+          "bytes": 48511,
+          "sha256": "95d3c938df32689d69d003c7a240fb866a76ded56481110de6fd949c7e35fd1e",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_competitor-walmart-pet-supplies_us_2026-08-14.csv",
+          "bytes": 764479,
+          "sha256": "ee5fb64d492d64603735863ffb4689fe86c34923ee258548c0fbf906aa738375",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_topic-cat-food_us_2026-08-14.csv",
+          "bytes": 3677427,
+          "sha256": "4e71d4a85b0d6d5dbac7933a3e9df98384713507f11e5880cfb0de2594865663",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_topic-cat-litter_us_2026-08-14.csv",
+          "bytes": 3075641,
+          "sha256": "2ea5bd4e83dfa23187c056910eee08db569042ee27011fe63070fe6635cd47ea",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_topic-dog-food_us_2026-08-14.csv",
+          "bytes": 5686503,
+          "sha256": "ce17bb11ea150091e3bb94dc361d4f154ed7e94cc4b26c8b5f8fb5d13a70f837",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_topic-dog-toy_us_2026-08-14.csv",
+          "bytes": 2677320,
+          "sha256": "5dc8e91897a52811c8d49dbda3d3cf7c02b8439de3b5ab30574e91b3de291594",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_topic-flea-and-tick-treatment_us_2026-08-14.csv",
+          "bytes": 1038278,
+          "sha256": "bf5804adb4d73a9db893a52cf95aece48d55a859567d22c9347fc31c24ca2ef2",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_topic-online-vet_us_2026-08-14.csv",
+          "bytes": 459108,
+          "sha256": "27dc130602bd3cafc4fb3754a398be9bd2e5fea8f929014db1166fdf3b93c5fe",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_topic-pet-insurance_us_2026-08-14.csv",
+          "bytes": 2991512,
+          "sha256": "5040b265ca5d096bd02ae2c037e99789465e7b6ebc92a824de18f8c47ceae8ae",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_topic-pet-pharmacy_us_2026-08-14.csv",
+          "bytes": 335152,
+          "sha256": "54bc1657db7ed36665868972329e1ee68fdb06565744ca390c48b881fd0a3762",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/seo/2026-08-14/raw/semrush-keyword-demand_topic-veterinary-clinic_us_2026-08-14.csv",
+          "bytes": 3602543,
+          "sha256": "c606df6a31ce7c3ee08280109176b47eb585a47c2aded3e41265b3261bc0fadf",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        }
+      ]
+    },
+    {
+      "id": "zeus-ui-2026-08-18",
+      "root": "data/approved/zeus-ui/2026-08-18",
+      "sensitivity": "internal",
+      "allowedUse": "internal_source_discovery_and_shadow_evaluation_only",
+      "contract": "data/contracts/zeus-ui/export-manifest.json",
+      "gitTracked": false,
+      "fileCount": 3,
+      "totalBytes": 73822007,
+      "files": [
+        {
+          "file": "data/approved/zeus-ui/2026-08-18/sanitized/manifest.json",
+          "bytes": 2315,
+          "sha256": "3baabfc039957a941a1780f4ca2e19fbf3186369c2bee9ecc7201281b1892def",
+          "agentUse": "local_control_metadata",
+          "approvalReason": "control_metadata_path_policy"
+        },
+        {
+          "file": "data/approved/zeus-ui/2026-08-18/sanitized/zeus-ui_pricing-exceptions_by-us-sku-current-state_2026-08-18.csv",
+          "bytes": 1906,
+          "sha256": "88963b9bc477193e71d0b80319c26864dd92044d86508b9347b17f54d3b0b8b7",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        },
+        {
+          "file": "data/approved/zeus-ui/2026-08-18/sanitized/zeus-ui_product-pricing-state_by-us-sku-current-day_2026-08-18.csv",
+          "bytes": 73817786,
+          "sha256": "0710b40de3ce35bff2ecacb7f8d11f58bb341f1cf07e794fdcb706b8bcdb90b1",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "retained_exact_prior_approval"
+        }
+      ]
+    }
+  ]
+}

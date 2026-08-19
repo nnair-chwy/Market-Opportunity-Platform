@@ -43,6 +43,14 @@ export const composedFinalAnswerSchema = z.object({
 
 export type ComposedFinalAnswer = z.infer<typeof composedFinalAnswerSchema>;
 
+const MAX_SECTION_CONTENT_LENGTH = 5000;
+
+function boundedSectionContent(content: string) {
+  if (content.length <= MAX_SECTION_CONTENT_LENGTH) return content;
+  const suffix = "\n\nAdditional source-linked details remain available in the investigation record.";
+  return `${content.slice(0, MAX_SECTION_CONTENT_LENGTH - suffix.length).trimEnd()}${suffix}`;
+}
+
 function supportStatus(
   sectionId: AnswerContract["requiredSections"][number]["sectionId"],
   coverage: InvestigationCoverageReport,
@@ -74,7 +82,7 @@ function answerStatus(
   coverage: InvestigationCoverageReport,
 ): ComposedFinalAnswer["status"] {
   if (coverage.overallStatus === "complete") return "draft_for_review";
-  if (plan.answerContract.fallbackOutcome === "draft_for_review") return "research_needed";
+  if (coverage.overallStatus === "partial" && plan.answerContract.fallbackOutcome === "draft_for_review") return "draft_for_review";
   return plan.answerContract.fallbackOutcome;
 }
 
@@ -94,18 +102,19 @@ export function composeFinalAnswer(
     .filter((step) => step.status === "completed")
     .map((step) => `${step.label}: ${step.result} Contribution: ${step.contributionToAnswer}`)
     .join("\n");
+  const leadScope = leads.length
+    ? `Supported scope: ${leads.length} source-linked ${evidenceTerm}(s) at ${investigation?.geography ?? "the validated geography"} for ${investigation?.period ?? "the recorded period"}.`
+    : "Supported scope: no question-compatible signal was retained.";
   const directAnswer = !investigation
     ? "The requested answer is blocked because no confirmed investigation result is attached."
     : leads.length
-      ? coverage.overallStatus === "complete"
-        ? `${coverage.permittedConclusion} The investigation retained ${leads.length} source-linked ${evidenceTerm}(s).`
-        : `The investigation retained ${leads.length} bounded ${evidenceTerm}(s), but it does not support the requested decision-level conclusion. ${coverage.permittedConclusion}`
+      ? `Best available answer: ${leadScope} ${coverage.permittedConclusion}`
       : `The connected evidence does not support a question-compatible business finding. ${coverage.permittedConclusion}`;
   const portfolioPattern = investigation?.portfolioPattern
     ? `Portfolio pattern: ${investigation.portfolioPattern.headline}. ${investigation.portfolioPattern.summary} ${investigation.portfolioPattern.implication}\n\n`
     : "";
   const findings = leads.length
-    ? `${portfolioPattern}${evidenceTerm === "signal" ? "Signals—not final findings—until compatible outcome evidence is connected:" : "Triangulated findings:"}\n${leads.map((lead) => `${lead.title}: ${lead.observation}`).join("\n")}${completedPath ? `\n\nHow the investigation contributed:\n${completedPath}` : ""}`
+    ? `${portfolioPattern}${evidenceTerm === "signal" ? "Supported investigation signals—not material-action recommendations:" : "Triangulated findings:"}\n${leads.map((lead) => `${lead.title}: ${lead.observation}\nWhy it may matter: ${lead.businessMeaning}\nNext evidence needed: ${lead.nextEvidence}`).join("\n\n")}${completedPath ? `\n\nHow the investigation contributed:\n${completedPath}` : ""}`
     : "Unsupported: no question-compatible finding was produced from the permitted evidence.";
   const contrary = investigation
     ? [
@@ -137,14 +146,14 @@ export function composeFinalAnswer(
     contractId: plan.answerContract.contractId,
     coverageVersion: coverage.version,
     status: answerStatus(plan, coverage),
-    title: "Contract-complete draft answer",
+    title: coverage.overallStatus === "complete" ? "Contract-complete draft answer" : "Best available draft answer",
     decisionBoundary: plan.answerContract.decisionFrame.decisionBoundary,
     strongestSupportedConclusion: coverage.permittedConclusion,
     sections: plan.answerContract.requiredSections.map((section) => ({
       sectionId: section.sectionId,
       label: section.label,
       supportStatus: supportStatus(section.sectionId, coverage),
-      content: contentBySection[section.sectionId],
+      content: boundedSectionContent(contentBySection[section.sectionId]),
       sourceIds: ["direct_answer", "evidence_findings", "contrary_evidence", "uncertainty", "source_and_version_notes"].includes(section.sectionId)
         ? sources
         : [],

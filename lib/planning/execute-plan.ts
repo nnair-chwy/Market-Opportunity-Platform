@@ -12,6 +12,8 @@ import { executeEvidenceRequest, type EvidenceExecutionOptions } from "../eviden
 import { loadSourceStatus, sourceFamily } from "../evidence-snapshot/source-status.ts";
 import { DEFAULT_NORMALIZED_SNAPSHOT_VERSION, type NormalizedQueryRequest, type NormalizedQueryResponse } from "../data-normalization/contracts.ts";
 import { queryNormalizedMarketData } from "../data-normalization/query.ts";
+import { executeGoldenQuestionEvidence, goldenQuestionFamilyForPlan } from "../golden-question-evidence/execute.ts";
+import { loadGoldenQuestionEvidence } from "../golden-question-evidence/load.ts";
 import {
   DEMO_SNAPSHOT_VERSION,
   PHOENIX_DEMO_MARKET,
@@ -36,6 +38,7 @@ export type PlanExecutionOptions = EvidenceExecutionOptions & {
   requestedAt?: string;
   normalizedSnapshotDir?: string;
   consumerInsightsSnapshotDir?: string;
+  goldenQuestionEvidencePath?: string;
 };
 
 function unique(values: string[]) {
@@ -736,6 +739,18 @@ async function consumerInsightsEvidenceBundle(plan: EvaluationPlan, requestId: s
 export async function executeEvaluationPlanEvidence(input: unknown, options: PlanExecutionOptions = {}): Promise<EvidenceExecutionResponse> {
   const { requestId, plan } = evaluationPlanExecutionRequestSchema.parse(input);
   if (plan.status === "blocked") return blocked(plan, requestId, "The validated evaluation plan is blocked and was not executed.");
+  const goldenQuestionFamily = goldenQuestionFamilyForPlan(plan);
+  if (goldenQuestionFamily) {
+    try {
+      const snapshot = await loadGoldenQuestionEvidence({ path: options.goldenQuestionEvidencePath });
+      return executeGoldenQuestionEvidence(plan, requestId, snapshot, goldenQuestionFamily);
+    } catch (error) {
+      return evidenceExecutionResponseSchema.parse({
+        ...responseBase(plan, requestId, "frozen_snapshot_demo"), status: "failed", rows: [], evidenceBundle: [], sourceIds: [], qualityWarnings: [], missingEvidence: [], unknowns: [], allowedUse: "none", sensitivity: "internal",
+        errorCode: "GOLDEN_QUESTION_EVIDENCE_FAILED", errorMessage: error instanceof Error && !error.message.includes("/") ? error.message : "The registered golden-question evidence snapshot failed validation or could not be loaded.",
+      });
+    }
+  }
   const nationalRegisteredQuery = plan.intent.topic === "source_coverage" || plan.intent.topic === "growth_test_screening";
   if (["clarification", "unavailable", "needs_selection"].includes(plan.geographyResolution.mode) && !nationalRegisteredQuery) return blocked(plan, requestId, "Resolve an exact supported geography before execution.");
   if (plan.intent.selectedQueries.length) {

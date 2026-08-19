@@ -130,6 +130,7 @@ export function MarketInvestigationPanel({
           <h3>{investigation.analystRevision.summary}</h3>
           <p><strong>Human direction</strong>{investigation.analystRevision.prompt}</p>
           <p>{investigation.analystRevision.effectOnRecommendation}</p>
+          <p><strong>New evidence request</strong>{investigation.analystRevision.recommendedFollowUp}</p>
         </section>
       ) : null}
 
@@ -221,6 +222,13 @@ export function MarketInvestigationPanel({
           <div><strong>Coverage</strong><span>{investigation.screeningScope.eligibleCohort} · {investigation.screeningScope.eligibleComparisons.toLocaleString()} compatible pairwise comparisons examined</span></div>
           <div><strong>Selection</strong><span>{investigation.screeningScope.selectionRule}</span></div>
           <div><strong>Data</strong><span>{investigation.dataSnapshotLabel} · {investigation.dataSnapshotVersion}</span></div>
+          {investigation.reconciliation ? (
+            <>
+              <div><strong>Compatibility</strong><span>{investigation.reconciliation.status.replaceAll("_", " ")} · {investigation.reconciliation.summary.errorCount} errors · {investigation.reconciliation.summary.warningCount} warnings</span></div>
+              <div><strong>Conclusion boundary</strong><span>{investigation.reconciliation.conclusionBoundary}</span></div>
+              {investigation.reconciliation.issues.length ? <div><strong>Reconciliation checks</strong><span>{investigation.reconciliation.issues.slice(0, 6).map((item) => item.message).join(" · ")}</span></div> : null}
+            </>
+          ) : null}
           <div><strong>Runtime</strong><span>Fixed arithmetic over the checked-in snapshot. No live research, recommendation score, or causal inference.</span></div>
         </div>
         <section className="investigation-continuation" aria-label="Continuous investigation status">

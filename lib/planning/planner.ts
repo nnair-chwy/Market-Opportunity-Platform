@@ -20,6 +20,7 @@ import type { PerspectiveViewId } from "../perspectives/contracts.ts";
 import { getDefaultView, selectPerspectiveView } from "../perspectives/index.ts";
 
 const MARKETING_COST_INTENT = /\b(cost per click|cpc|ad cost|ad costs|ad spend|media spend|spend|spending|paying|overpay\w*|paid too much|too much on ads?|spend efficiency|budget efficiency)\b/;
+const PRICING_INVESTIGATION_INTENT = /\b(competitor|availability|offers?|pricing)\w*\b.*\b(condition|economics?|investigat|signals?|validat|warrant)\w*\b|\b(investigat|validat|warrant)\w*\b.*\b(competitor|availability|offers?|pricing)\w*\b/;
 
 function inferredViewId(question: string, perspectiveId: EvaluationPlan["perspectiveId"]): PerspectiveViewId | undefined {
   const value = question.toLowerCase();
@@ -184,6 +185,9 @@ function decisionInterpretationForView(
   }
 
   if (perspectiveId === "pricing") {
+    if (has(value, /\b(raise|raising|increase|increasing|higher)\b.{0,24}\b(prices?|pricing)\b|\b(prices?|pricing)\b.{0,24}\b(raise|raising|increase|increasing|higher)\b/)) {
+      return "Identify regions where Chewy could evaluate raising prices, then test comparable current prices, customer demand and conversion, unit economics, competitive price position, and product comparability before recommending a change.";
+    }
     if (activeViewId === "observed_equalized_price" || has(value, /\b(observed price|offer price|price level)\b/)) {
       return "Identify regions where observed equalized offer prices differ, then validate product comparability, observation coverage, timing, and business outcomes before recommending a pricing action.";
     }
@@ -212,7 +216,8 @@ export function inferPlanningIntent(question: string): PlanningIntent {
   const ads = has(value, /\b(google ads?|ad spend|advertising|impressions?|clicks?|conversions?)\b/);
   const coverage = has(value, /\b(coverage|available sources?|data availability|have both|has both)\b/)
     || has(value, /\bwhat evidence (?:is|are) available\b/)
-    || has(value, /\bwhat (?:data|evidence) (?:is|are) available\b/);
+    || has(value, /\bwhat (?:data|evidence) (?:is|are) available\b/)
+    || has(value, /\bwhich (?:markets?|regions?|metros?|cbsas?) (?:have|has|contain|include)\b[^?.]{0,120}\b(?:data|evidence|sources?)\b/);
   const growth = growthLanguage || has(value, /\bawareness\b/);
   const growthScreening = has(value, /\b(strongest|rank|ranking|prioriti[sz]e|screen|candidates?)\b/)
     && has(value, /\b(growth|regional opportunity|test market|growth test)\b/);
@@ -451,7 +456,9 @@ function isNormalizedDemoTopic(topic: PlanningIntent["topic"]) {
 
 function normalizedActionFor(intent: PlanningIntent): PlannedAction {
   const places = intent.requestedPlaces.map((place) => place.name).join(" and ") || "the eligible market cohort";
-  const registeredEvidence = intent.selectedQueries.map((query) => `Registered query: ${query}`);
+  const registeredEvidence = intent.selectedQueries.length
+    ? intent.selectedQueries.map((query) => `Registered query: ${query}`)
+    : [`Selected governed evidence: ${intent.conciseInterpretation}`];
   if (intent.topic === "clinic_location") return {
     id: "review-clinic-location-evidence",
     title: `Review clinic-location evidence for ${places}`,
@@ -517,19 +524,30 @@ function normalizedActionFor(intent: PlanningIntent): PlannedAction {
     outputId: intent.requestedMetrics.some((metric) => ["brand_funnel", "brand_relevance", "brand_drivers", "generation_brand_health"].includes(metric)) ? "brand_health_review" : "consumer_insights_profile",
     requiresApproval: false,
   };
-  if (intent.topic === "multi_market_comparison") return {
-    id: "review-descriptive-clinic-market-comparison",
-    title: `Review the descriptive clinic-market comparison for ${places}`,
-    summary: "Compare the five aggregate clinic activity measures market by market without converting them into an operating score or winner.",
-    owner: "CVC Analytics",
-    timing: "After evidence review",
-    confidence: "Medium",
-    evidence: registeredEvidence,
-    tradeoffs: ["Market aggregates do not measure individual clinic performance", "No approved KPI, maturity adjustment, or peer rule is applied"],
-    nextStep: "Confirm that the source period and market aggregates are comparable, then define an approved clinic-level KPI and peer rule if a performance conclusion is needed.",
-    outputId: "candidate_site_comparison",
-    requiresApproval: false,
-  };
+  if (intent.topic === "multi_market_comparison") {
+    const clinicComparison = intent.sourceFamilies.includes("clinic");
+    return {
+      id: clinicComparison ? "review-descriptive-clinic-market-comparison" : "review-descriptive-market-comparison",
+      title: clinicComparison
+        ? `Review the descriptive clinic-market comparison for ${places}`
+        : `Review the descriptive market comparison for ${places}`,
+      summary: clinicComparison
+        ? "Compare the five aggregate clinic activity measures market by market without converting them into an operating score or winner."
+        : "Compare the requested governed measures market by market without converting them into an opportunity score or business recommendation.",
+      owner: clinicComparison ? "CVC Analytics" : "Market Intelligence",
+      timing: "After evidence review",
+      confidence: "Medium",
+      evidence: registeredEvidence,
+      tradeoffs: clinicComparison
+        ? ["Market aggregates do not measure individual clinic performance", "No approved KPI, maturity adjustment, or peer rule is applied"]
+        : ["Descriptive differences do not establish business impact", "Source coverage, timing, and metric comparability remain visible"],
+      nextStep: clinicComparison
+        ? "Confirm that the source period and market aggregates are comparable, then define an approved clinic-level KPI and peer rule if a performance conclusion is needed."
+        : "Confirm that source periods, geography, coverage, and metric definitions are comparable before drawing a narrower business conclusion.",
+      outputId: clinicComparison ? "candidate_site_comparison" : "market_context_profile",
+      requiresApproval: false,
+    };
+  }
   if (intent.topic === "multi_source_evidence") return {
     id: "reconcile-multi-source-evidence",
     title: `Reconcile regional, clinic, and Ads evidence for ${places}`,
@@ -719,8 +737,26 @@ export function compileEvaluationPlan(
     ...intent,
     requestedPlaces: normalizeRequestedPlaces(question, intent.requestedPlaces),
   }));
+  const boundedPricingInvestigation = perspectiveId === "pricing"
+    && queryNormalizedIntent.requestedAction !== "approve"
+    && PRICING_INVESTIGATION_INTENT.test(question.toLowerCase());
+  const boundedMarketingInvestigation = perspectiveId === "marketing"
+    && queryNormalizedIntent.requestedAction !== "approve"
+    && /\b(paid[ -]?search|google ads?|campaign|marketing)\b/i.test(question)
+    && /\b(comparable|geograph|markets?|regional)\w*\b/i.test(question)
+    && /\b(response|outcomes?|validat|investigat|signals?)\w*\b/i.test(question);
   const normalizedIntent = planningIntentSchema.parse(
-    perspectiveId && activeViewId && queryNormalizedIntent.topic === "other"
+    boundedPricingInvestigation
+      ? {
+          ...queryNormalizedIntent,
+          topic: "market_context",
+          geographyGrain: "cbsa",
+          requestedAction: "investigate",
+          clarificationRequired: false,
+          clarificationReason: "none",
+          conciseInterpretation: "Investigate observed regional competitor conditions, coverage, and current commercial context, then identify the outcome and guardrail evidence required before any pricing action.",
+        }
+      : perspectiveId && activeViewId && queryNormalizedIntent.topic === "other"
       ? {
           ...queryNormalizedIntent,
           clarificationRequired: false,
@@ -751,11 +787,21 @@ export function compileEvaluationPlan(
   const selectedViewId = questionViewId ?? activeViewId ?? getDefaultView(resolvedPerspectiveId).viewId;
   const selectedViewResult = selectPerspectiveView(resolvedPerspectiveId, selectedViewId);
   const selectedView = "status" in selectedViewResult ? getDefaultView(resolvedPerspectiveId) : selectedViewResult;
+  const questionSelectsPublicMeasure = validatedIntent.requestedMeasure !== "none"
+    && validatedIntent.sourceFamilies.includes("census")
+    && !questionViewId;
+  const materialActionRequest = resolvedPerspectiveId === "pricing"
+    ? /\b(change|set|raise|lower|increase|decrease|recommend)\w*\b.*\b(prices?|pricing)\b|\b(prices?|pricing)\b.*\b(change|set|raise|lower|increase|decrease|recommend)\w*\b/i.test(question)
+    : resolvedPerspectiveId === "marketing"
+      ? /\b(increase|decrease|change|shift|allocate|recommend)\w*\b.*\b(spend|budget)\b|\b(spend|budget)\b.*\b(increase|decrease|change|shift|allocate|recommend)\w*\b/i.test(question)
+      : /\b(open|approve|prioriti[sz]e|build|lease|recommend)\w*\b.*\b(clinic|site|footprint)\b|\b(clinic|site|footprint)\b.*\b(open|approve|prioriti[sz]e|build|lease|recommend)\w*\b/i.test(question);
   const exploratoryQuestion = /\b(comparable|which|where|patterns?|worth investigating|differ)\b/i.test(question);
   const canAssumeNationalCohort = exploratoryQuestion
     && validatedIntent.selectedQueries.length === 0
+    && validatedIntent.topic !== "source_coverage"
+    && !(questionSelectsPublicMeasure && resolvedPerspectiveId !== "cvc")
     && validatedIntent.requestedPlaces.length === 0
-    && (perspectiveId !== undefined || /\b(marketing|campaign|media|ads?|advertis\w*|paid search|test market|control market|clinic|cvc|veterinar|vet)\b/i.test(question))
+    && (perspectiveId !== undefined || /\b(marketing|campaign|media|ads?|advertis\w*|paid[ -]?search|test market|control market|clinic|cvc|veterinar|vet)\b/i.test(question))
     && (resolvedPerspectiveId === "marketing" || resolvedPerspectiveId === "cvc")
     && !(resolvedPerspectiveId === "cvc" && validatedIntent.topic === "local_growth")
     && validatedIntent.requestedAction !== "approve";
@@ -811,8 +857,19 @@ export function compileEvaluationPlan(
     : resolvedGeography;
   const normalizedDemoExecutable = isNormalizedDemoTopic(effectiveIntent.topic)
     && (effectiveIntent.topic === "source_coverage" || effectiveIntent.topic === "growth_test_screening" || geography.selectedCbsaCodes.length > 0);
+  const hasExploratoryEvidence = selectedView.mapBinding.kind === "workspace_snapshot"
+    || (effectiveIntent.topic === "clinic_location" && (geography.mode === "national" || geography.mode === "needs_selection"));
+  const boundedMaterialInvestigation = materialActionRequest
+    && effectiveIntent.requestedAction !== "approve"
+    && (selectedView.mapBinding.kind === "workspace_snapshot" || effectiveIntent.topic === "clinic_location");
+  const hardExecutionBlock = effectiveIntent.requestedAction === "approve"
+    || effectiveIntent.topic === "clinic_performance";
   const status: EvaluationPlan["status"] = effectiveIntent.clarificationRequired || geography.mode === "clarification" || geography.mode === "unavailable"
     ? "blocked"
+    : hardExecutionBlock
+      ? "blocked"
+    : boundedMaterialInvestigation || boundedPricingInvestigation
+      ? "partially_executable"
     : effectiveIntent.topic === "clinic_location" && !effectiveIntent.selectedQueries.length && (geography.mode === "national" || geography.mode === "needs_selection")
       ? "partially_executable"
     : normalizedDemoExecutable
@@ -823,6 +880,8 @@ export function compileEvaluationPlan(
       ? "executable"
       : assessment.outcome === "partially_supported"
         ? "partially_executable"
+        : !hardExecutionBlock && hasExploratoryEvidence
+          ? "partially_executable"
         : "blocked";
   const resultWorkspaceType = deriveResultWorkspaceType({
     intent: effectiveIntent,
@@ -836,7 +895,14 @@ export function compileEvaluationPlan(
     "Property, permitting, trade-area feasibility, and physical-site constraints are not connected.",
     "Clinic economics, cannibalization, mature outcomes, and an approved opening rule are not connected.",
   ];
-  const missingEvidence = normalizedDemoExecutable
+  const pricingInvestigationMissingEvidence = [
+    "A privacy-safe regional Chewy commercial outcome is not connected.",
+    "Representative-ZIP coverage, matched-SKU reliability, prior interventions, promotions, and inventory controls require validation.",
+    "Elasticity, test guardrails, rollback rules, and authorized Pricing approval are required before a price change.",
+  ];
+  const missingEvidence = boundedPricingInvestigation
+    ? pricingInvestigationMissingEvidence
+    : normalizedDemoExecutable
     ? effectiveIntent.topic === "clinic_location" ? clinicLocationMissingEvidence : []
     : assessment.missingEvidence;
   const missingApprovals = normalizedDemoExecutable
@@ -844,7 +910,31 @@ export function compileEvaluationPlan(
       ? ["Accountable material clinic-opening approval remains required after evidence validation."]
       : []
     : assessment.missingApprovals;
-  const actions = actionsFor(effectiveIntent, assessment, geography, resultWorkspaceType);
+  const actions: PlannedAction[] = boundedPricingInvestigation ? [{
+    id: "review-pricing-investigation-leads",
+    title: "Review regional competitor-condition leads",
+    summary: "Review dated competitor-condition and monitoring-coverage contrasts, then validate product matching, commercial outcomes, prior interventions, and guardrails.",
+    owner: "Pricing Analytics and Pricing Science",
+    timing: "Before proposing any controlled price test or price change",
+    confidence: "Low",
+    evidence: [`Selected evidence: ${selectedView.label}`, ...selectedView.sourceIds],
+    tradeoffs: ["Observed competitor conditions may reflect monitoring coverage or assortment mix", "No regional Chewy outcome or causal price response is established"],
+    nextStep: "Validate representative ZIP and matched-SKU coverage, connect privacy-safe regional outcomes and intervention history, then decide whether a controlled-test design is warranted.",
+    outputId: "market_context_profile",
+    requiresApproval: false,
+  }] : boundedMarketingInvestigation ? [{
+    id: "review-marketing-response-leads",
+    title: "Review comparable paid-search response leads",
+    summary: "Review aggregate response contrasts and identify which comparable markets warrant first-party outcome validation.",
+    owner: "Marketing Science",
+    timing: "Available now as an investigation lead review",
+    confidence: "Low",
+    evidence: [`Selected evidence: ${selectedView.label}`, ...selectedView.sourceIds],
+    tradeoffs: ["Response metrics are not incremental business outcomes", "The postal-to-CBSA bridge is not yet an approved operational crosswalk"],
+    nextStep: "Validate campaign comparability and join privacy-safe regional outcomes before proposing a controlled test or spend change.",
+    outputId: "growth_test_measurement",
+    requiresApproval: false,
+  }] : actionsFor(effectiveIntent, assessment, geography, resultWorkspaceType);
   const findings = derivePlanFindings({
     intent: effectiveIntent,
     proposalMethod,
@@ -871,13 +961,21 @@ export function compileEvaluationPlan(
     evidenceSelection: {
       viewId: selectedView.viewId,
       measureId: selectedView.activeMeasure,
-      datasetId: selectedView.mapBinding.kind === "workspace_snapshot" ? selectedView.mapBinding.datasetId : null,
-      sourceIds: selectedView.sourceIds,
-      selectionReason: questionViewId ? "question_inference" : activeViewId ? "explicit_view" : "perspective_default",
-      evidenceBoundary: selectedView.evidenceBoundary,
+      datasetId: questionSelectsPublicMeasure
+        ? null
+        : selectedView.mapBinding.kind === "workspace_snapshot" ? selectedView.mapBinding.datasetId : null,
+      sourceIds: questionSelectsPublicMeasure ? ["SRC-016"] : selectedView.sourceIds,
+      selectionReason: questionSelectsPublicMeasure ? "question_inference" : questionViewId ? "question_inference" : activeViewId ? "explicit_view" : "perspective_default",
+      evidenceBoundary: questionSelectsPublicMeasure
+        ? "The explicitly requested public Census measure is descriptive market context only. It cannot be replaced by the active business view or treated as an opportunity score."
+        : selectedView.evidenceBoundary,
     },
     status,
-    evidenceBoundary: effectiveIntent.topic === "clinic_location"
+    evidenceBoundary: boundedMaterialInvestigation
+      ? `${selectedView.evidenceBoundary} The requested material action is treated as an investigation goal only: the result may identify validation or controlled-test candidates, but it cannot authorize a spend, price, site, lease, or opening change.`
+      : boundedPricingInvestigation
+      ? `${selectedView.evidenceBoundary} The result may prioritize investigation only and cannot authorize a regional or item price change.`
+      : effectiveIntent.topic === "clinic_location"
       ? "Connected market, regional, and aggregate clinic evidence supports a bounded investigation only. It does not establish site suitability or authorize a clinic opening."
       : requirement.capabilityId === "census_market_context"
       ? "Public Census context describes compatible market measures. It does not rank business opportunity or authorize action."

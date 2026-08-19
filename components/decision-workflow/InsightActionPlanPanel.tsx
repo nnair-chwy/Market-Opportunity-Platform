@@ -1,4 +1,5 @@
 import type { InsightActionPlan } from "@/lib/planning/insight-action-plan";
+import { actionReadinessLabel } from "@/lib/planning/result-language";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00.000Z`));
@@ -12,6 +13,7 @@ export function InsightActionPlanPanel({ actionPlan }: { actionPlan: InsightActi
           <div className="section-label">Decision handoff</div>
           <h2 id="insight-action-title">{actionPlan.recommendation}</h2>
           <p>{actionPlan.whyNow}</p>
+          <p><strong>{actionReadinessLabel(actionPlan.actionReadiness)} · {actionPlan.confidence} confidence</strong></p>
         </div>
         <div className="insight-action-decision-date">
           <span>Decision review</span>
@@ -28,6 +30,9 @@ export function InsightActionPlanPanel({ actionPlan }: { actionPlan: InsightActi
           <div><dt>Owner</dt><dd>{actionPlan.workstreams[0].owner}</dd></div>
           <div><dt>Due</dt><dd>{formatDate(actionPlan.workstreams[0].dueDate)}</dd></div>
           <div><dt>Done when</dt><dd>{actionPlan.workstreams[0].completionCriteria}</dd></div>
+          <div><dt>KPI</dt><dd>{actionPlan.kpi}</dd></div>
+          <div><dt>Validation threshold</dt><dd>{actionPlan.validationThreshold}</dd></div>
+          <div><dt>Stop condition</dt><dd>{actionPlan.stopCondition}</dd></div>
         </dl>
       </section>
 
@@ -56,6 +61,8 @@ export function InsightActionPlanPanel({ actionPlan }: { actionPlan: InsightActi
           <section><strong>What this will inform</strong><ul>{actionPlan.whatThisInforms.map((item) => <li key={item}>{item}</li>)}</ul></section>
           <section><strong>Stakeholders</strong><p>{actionPlan.stakeholders.join(" · ")}</p></section>
           <section><strong>Longer-term considerations</strong><ul>{actionPlan.longerTermConsiderations.map((item) => <li key={item}>{item}</li>)}</ul></section>
+          <section><strong>Baseline evidence</strong><p>{actionPlan.baseline.description}</p><small>{actionPlan.baseline.evidenceIds.join(" · ")}</small></section>
+          <section><strong>Sensitivity and contrary evidence</strong><p>{actionPlan.sensitivityAndContraryEvidence}</p></section>
         </div>
       </details>
     </section>

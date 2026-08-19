@@ -1,0 +1,162 @@
+{
+  "version": "1.0.0",
+  "snapshotId": "golden-question-evidence-2026-08-18-v1",
+  "generatedAt": "2026-08-18T20:57:36.861Z",
+  "allowedUse": "internal_shadow_evaluation_only",
+  "scoringEligibility": "none",
+  "actionAuthority": "investigation_leads_only_no_material_action",
+  "sourceSnapshots": {
+    "mapSignalsGeneratedAt": "2026-08-18T17:07:22.263Z",
+    "pricing": "snowflake-pricing-2026-08-17",
+    "marketing": "google-ads-2026-07-14_2026-08-12",
+    "cvc": "esri-demo-2026-07-30",
+    "cbsaUniverse": "2023-07",
+    "zeus": "zeus-ui-2026-08-18"
+  },
+  "operationalContext": {
+    "pricing": {
+      "snapshotDate": "2026-08-18",
+      "exportedProductSkus": 250000,
+      "sourceUiProductEntries": 313351,
+      "productExportCoveragePercent": 79.78,
+      "currentRegularExceptions": 5,
+      "productExportCompleteness": "partial_export_cap_reached",
+      "exceptionExportCompleteness": "current_regular_exception_view",
+      "allowedUse": "internal_source_discovery_and_shadow_evaluation_only",
+      "scoringEligibility": "none"
+    }
+  },
+  "selectionRules": {
+    "marketing": "Metropolitan CBSA; >=10,000 clicks; >=500 configured conversions; >=10 mapped postal geographies; conversion rate at/above eligible-cohort p75; CPC at/below eligible-cohort median; take two highest configured-conversion counts.",
+    "pricing": "Metropolitan CBSA; monitored offer volume at/above the metropolitan median; select the lowest documented availability rate. This is a coverage/anomaly screen, not a price-opportunity score.",
+    "cvc": "Source-provided, non-synthetic trade areas in market-label cohorts with at least three complete records; pet-households-per-clinic above the cohort median and reported Chewy online customers at/above the cohort median; select the largest ratio contrast."
+  },
+  "cohortDiagnostics": {
+    "marketing": {
+      "eligibleMarkets": 198,
+      "medianCtrPercent": 1.55,
+      "medianCpcUsd": 0.88,
+      "medianConfiguredConversionRatePercent": 13.16,
+      "p75ConfiguredConversionRatePercent": 14.23
+    },
+    "pricing": {
+      "metropolitanMarketsWithCompleteSignals": 131,
+      "eligibleMarkets": 66,
+      "medianOfferRowsAllMetropolitan": 3923,
+      "medianAvailabilityPercentEligible": 78.07
+    },
+    "cvc": {
+      "sourceLinkedCompleteRecords": 66,
+      "comparableMarketLabelCohorts": 9
+    }
+  },
+  "candidates": {
+    "marketing": [
+      {
+        "geography": {
+          "type": "cbsa",
+          "id": "37980",
+          "name": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"
+        },
+        "cohort": "Metropolitan CBSAs with >=10,000 clicks, >=500 configured conversions, and >=10 mapped postal geographies (198 eligible)",
+        "observationWindow": "2026-07-14 through 2026-08-12",
+        "metrics": {
+          "clicks": 301307,
+          "impressions": 19405485,
+          "ctrPercent": 1.55,
+          "cpcUsd": 0.87,
+          "configuredConversions": 43143.8,
+          "configuredConversionRatePercent": 14.32,
+          "costUsd": 263236.65,
+          "mappedPostalGeographies": 322
+        },
+        "comparison": {
+          "cohortMedianCtrPercent": 1.55,
+          "cohortMedianCpcUsd": 0.88,
+          "cohortMedianConfiguredConversionRatePercent": 13.16,
+          "conversionRateDifferenceVsMedianPercentagePoints": 1.16
+        }
+      },
+      {
+        "geography": {
+          "type": "cbsa",
+          "id": "41700",
+          "name": "San Antonio-New Braunfels, TX"
+        },
+        "cohort": "Metropolitan CBSAs with >=10,000 clicks, >=500 configured conversions, and >=10 mapped postal geographies (198 eligible)",
+        "observationWindow": "2026-07-14 through 2026-08-12",
+        "metrics": {
+          "clicks": 78949,
+          "impressions": 5526373,
+          "ctrPercent": 1.43,
+          "cpcUsd": 0.86,
+          "configuredConversions": 11722.81,
+          "configuredConversionRatePercent": 14.85,
+          "costUsd": 67805.11,
+          "mappedPostalGeographies": 112
+        },
+        "comparison": {
+          "cohortMedianCtrPercent": 1.55,
+          "cohortMedianCpcUsd": 0.88,
+          "cohortMedianConfiguredConversionRatePercent": 13.16,
+          "conversionRateDifferenceVsMedianPercentagePoints": 1.69
+        }
+      }
+    ],
+    "pricing": [
+      {
+        "geography": {
+          "type": "cbsa",
+          "id": "28100",
+          "name": "Kankakee, IL"
+        },
+        "cohort": "Metropolitan CBSAs with monitored offer volume at/above the metropolitan median (66 eligible)",
+        "observationWindow": "Competitor observations from 2026-07-18 through 2026-08-17",
+        "metrics": {
+          "documentedAvailabilityPercent": 74.99,
+          "monitoredOfferRows": 4835,
+          "summedDistinctSkuObservations": 4455,
+          "offerRowWeightedEqualizedPriceUsd": 25.9,
+          "mappedZipGeographies": 1
+        },
+        "comparison": {
+          "eligibleCohortMedianAvailabilityPercent": 78.07,
+          "availabilityDifferenceVsMedianPercentagePoints": -3.08,
+          "metropolitanMedianOfferRows": 3923
+        }
+      }
+    ],
+    "cvc": [
+      {
+        "geography": {
+          "type": "supplied_trade_area",
+          "siteId": "esri-site-a77abfca-07ed-4dad-8c6b-4caeb3b3ac4d",
+          "siteName": "Modern Animal Santa Clara",
+          "marketLabel": "San Jose"
+        },
+        "cohort": "San Jose supplied source-linked trade areas with complete contrast measures (7 records)",
+        "observationWindow": "Unknown observation date; snapshot received 2026-07-30",
+        "metrics": {
+          "petHouseholds": 121788,
+          "reportedVeterinaryClinicCount": 49,
+          "reportedPetHouseholdsPerClinic": 2485,
+          "reportedChewyOnlineCustomers": 40899.91
+        },
+        "comparison": {
+          "cohortMedianPetHouseholdsPerClinic": 1739,
+          "cohortMedianChewyOnlineCustomers": 22862.59,
+          "petHouseholdsPerClinicMultipleVsMedian": 1.43
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "Every candidate is an investigation lead; none authorizes a price, campaign-spend, clinic, lease, or other material action.",
+    "Pricing metrics are competitor-monitoring aggregates whose ZIP coverage rotates and whose price/availability mix varies by competitor, category, SKU, package normalization, and crawl timing.",
+    "Pricing lacks a connected local Chewy outcome and a complete prior-intervention/promotion/inventory exclusion in this snapshot.",
+    "Zeus adds current national SKU and exception context only; the product export is capped, the exception view is current-state only, and neither provides destination geography or historical price-decision outcomes.",
+    "Marketing metrics reflect the retail account's configured Google Ads conversion semantics and campaign mix, not incrementality or first-party commercial outcomes.",
+    "Postal-to-CBSA assignment uses the versioned zip-zcta-centroid-cbsa-v1 approximation and is not an approved operational crosswalk.",
+    "CVC trade-area observation dates, construction method, clinic-count definition, metric units/ownership, and production reuse approval are unresolved."
+  ]
+}

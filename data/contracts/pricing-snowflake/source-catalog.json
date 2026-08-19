@@ -120,6 +120,30 @@
       "sourceIds": ["SRC-025"]
     },
     {
+      "datasetId": "pricing_override_history",
+      "table": "EDLDB.CHEWYBI.DREAM_WEAVER_OVERRIDES",
+      "latestStateTable": "EDLDB.CHEWYBI.DREAM_WEAVER_LATEST_OVERRIDES",
+      "status": "workspace_visible_schema_and_aggregate_profile_2026_08_18",
+      "grain": "override_event_or_replication_record",
+      "knownFields": ["OVERRIDE_DATA", "OVERRIDE_ID", "REASON_CODE", "REASON_TEXT"],
+      "prohibitedFields": ["CREATED_BY"],
+      "intendedFile": "pricing-override-history_aggregate-profile.csv",
+      "use": "Identify prior or active override state before treating a pricing condition as untreated",
+      "limitations": ["1,623,421 history rows and approximately 11,137 override IDs observed on 2026-08-18", "Latest-state view contained 12 rows", "OVERRIDE_DATA is VARIANT and its filter, effective-time, deletion, and override semantics require owner validation", "Do not export creator identity or payload values"],
+      "sourceIds": ["SRC-025"]
+    },
+    {
+      "datasetId": "pricing_competitor_match_state",
+      "table": "EDLDB.CHEWYBI.COMPETITOR_MATCH_BUNGEE",
+      "status": "workspace_visible_schema_and_aggregate_profile_2026_08_18",
+      "grain": "competitor_match_id_x_match_event",
+      "knownFields": ["COMPETITOR_MATCH_ID", "PARTNUMBER", "COMPETITOR", "COMPETITOR_PARTNUMBER", "IS_ACTIVE", "MATCH_TIME", "DW_CREATE_DTTM"],
+      "intendedFile": "pricing-competitor-match_aggregate-profile.csv",
+      "use": "Active/inactive and timestamp context for match-configuration review",
+      "limitations": ["24,095,886 rows and approximately 487,753 distinct match IDs observed on 2026-08-18", "Latest MATCH_TIME observed was 2026-02-03 12:28:00", "The visible schema has no reliability score, reviewer outcome, or false-match label", "Do not export URL values or treat active state as match quality"],
+      "sourceIds": ["SRC-025"]
+    },
+    {
       "datasetId": "pricing_sku_elasticity",
       "table": null,
       "status": "owner_and_table_unknown",

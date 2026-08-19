@@ -1,6 +1,7 @@
 import type { EvidenceExecutionResponse, ExecutionEvidenceItem } from "@/lib/evidence-snapshot/contracts";
 import type { PlannedAction } from "@/lib/planning/contracts";
 import { buildEvidenceBundleView } from "@/lib/planning/evidence-bundle-view";
+import { evidenceResultCopy, productLabel } from "@/lib/planning/result-language";
 import type { PacketAnswer } from "@/lib/planning/reviewable-packet";
 import styles from "./evidence-bundle-panel.module.css";
 
@@ -12,7 +13,24 @@ function value(item: ExecutionEvidenceItem) {
 }
 
 function label(metricId: string) {
-  return metricId.replace(/^synthetic\./, "").replaceAll(/[._]/g, " ");
+  return productLabel(metricId);
+}
+
+function reviewedContract(item: ExecutionEvidenceItem) {
+  const candidate = item.structuredValue?.reviewedSourceContract;
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return null;
+  const value = candidate as Record<string, unknown>;
+  if (typeof value.contractId !== "string" || typeof value.reviewedBy !== "string" || typeof value.reviewedAt !== "string") return null;
+  return {
+    contractId: value.contractId,
+    reviewedBy: value.reviewedBy,
+    reviewedAt: value.reviewedAt,
+    validatedRowCount: typeof value.validatedRowCount === "number" ? value.validatedRowCount : null,
+    sourceRowsRead: typeof value.sourceRowsRead === "number" ? value.sourceRowsRead : null,
+    sourceRowsMatched: typeof value.sourceRowsMatched === "number" ? value.sourceRowsMatched : null,
+    suppressedGroupCount: typeof value.suppressedGroupCount === "number" ? value.suppressedGroupCount : null,
+    sourceRowsTruncated: value.sourceRowsTruncated === true,
+  };
 }
 
 function Calculation({ result }: { result: EvidenceExecutionResponse }) {
@@ -47,26 +65,37 @@ function Calculation({ result }: { result: EvidenceExecutionResponse }) {
 
 export function EvidenceBundlePanel({ result, action, answer }: { result: EvidenceExecutionResponse; action?: PlannedAction; answer?: PacketAnswer }) {
   const view = buildEvidenceBundleView(result, action);
-  const geographyScope = result.geographyIds.length
-    ? result.geographyIds.join(", ")
-    : result.query === "growth_test_screening_bundle" || result.query === "source_coverage_bundle"
-      ? "Eligible national CBSA cohort"
-      : "No resolved geography";
+  const copy = evidenceResultCopy(result, answer);
   return <section className={styles.panel} aria-labelledby="evidence-bundle-title" data-query={result.query} data-execution-mode={result.executionMode}>
     <div className={styles.question}><span>Original question</span><strong>{result.originalQuestion}</strong></div>
-    <header><div><span className={styles.status}>{view.statusLabel}</span><h2 id="evidence-bundle-title">Evidence-backed answer</h2><p>{answer?.directAnswer ?? view.headline}</p><small>{geographyScope}</small></div><div className={styles.mode}><strong>{result.executionMode.replaceAll("_", " ")}</strong><small>{result.snapshotVersion}</small><small>{result.calculationVersion}</small></div></header>
-    <div className={styles.section}><h3>Calculation or comparison</h3><Calculation result={result} /></div>
-    <div className={styles.section}><h3>Evidence used</h3><div className={styles.evidenceGrid}>{result.evidenceBundle.map((item) => <article key={item.evidenceId}>
-      <div><strong>{label(item.metricId)}</strong><span data-status={item.evidenceStatus}>{item.evidenceStatus}</span></div>
-      <dl><div><dt>Value</dt><dd>{value(item)}</dd></div><div><dt>Quality</dt><dd>{item.qualityStatus}</dd></div><div><dt>Source ID</dt><dd>{item.sourceId}</dd></div><div><dt>Snapshot ID</dt><dd>{item.snapshotId}</dd></div><div><dt>Period</dt><dd>{item.period.label}</dd></div><div><dt>Report scope</dt><dd>{item.reportScope ?? "Not applicable"}</dd></div><div><dt>Currency</dt><dd>{item.currency ?? "Not applicable"}</dd></div><div><dt>Allowed use</dt><dd>{item.allowedUse.replaceAll("_", " ")}</dd></div></dl>
-      {item.warning ? <p>{item.warning}</p> : null}
-    </article>)}</div></div>
+    <header><div><span className={styles.status}>{copy.status}</span><h2 id="evidence-bundle-title">Evidence behind the answer</h2><p>{copy.answer}</p></div></header>
     <div className={styles.reviewGrid}>
-      <section><h3>Reliability</h3><p>{view.reliability}</p>{result.qualityWarnings.length ? <ul>{result.qualityWarnings.map((item) => <li key={item}>{item}</li>)}</ul> : null}</section>
-      <section><h3>Unknowns</h3><ul>{[...result.missingEvidence, ...result.unknowns].map((item) => <li key={item}>{item}</li>)}</ul></section>
-      <section><h3>Limitations</h3><ul>{result.guardrails.map((item) => <li key={item}>{item}</li>)}</ul></section>
-      <section><h3>Required approvals</h3>{result.missingApprovals.length ? <ul>{result.missingApprovals.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No additional approval is required to review this descriptive bundle.</p>}</section>
+      <section><h3>Finding</h3><p>{copy.finding}</p></section>
+      <section><h3>Where</h3><p>{copy.where}</p></section>
+      <section><h3>Why it matters</h3><p>{view.headline}</p></section>
+      <section><h3>Confidence and readiness</h3><p>{view.reliability}</p><small>{copy.gapCount} evidence or interpretation gap{copy.gapCount === 1 ? "" : "s"} to validate.</small></section>
     </div>
-    <div className={styles.nextAction}><span>Proposed next action</span><strong>{view.nextAction}</strong><small>Draft for accountable human review. No action was launched, approved, or sent.</small></div>
+    {answer?.facts.length ? <div className={styles.metrics} aria-label="Key evidence behind the finding">{answer.facts.slice(0, 4).map((fact) => <article key={fact.evidenceId}><span>{fact.metricLabel}</span><strong>{fact.displayValue}</strong><small>{fact.geographyLabel} · {fact.periodLabel}</small></article>)}</div> : null}
+    <div className={styles.nextAction}><span>What to validate next</span><strong>{view.nextAction}</strong><small>Draft for accountable human review. Nothing was changed, approved, or sent.</small></div>
+    <details className={styles.section}>
+      <summary>Evidence and method details · {result.evidenceBundle.length} evidence item{result.evidenceBundle.length === 1 ? "" : "s"}</summary>
+      <div className={styles.mode}><strong>Execution and versions</strong><small>{result.executionMode.replaceAll("_", " ")}</small><small>{result.snapshotVersion}</small><small>{result.calculationVersion}</small></div>
+      <div><h3>Calculation or comparison</h3><Calculation result={result} /></div>
+      <div><h3>Evidence used</h3><div className={styles.evidenceGrid}>{result.evidenceBundle.map((item) => {
+        const contract = reviewedContract(item);
+        return <article key={item.evidenceId}>
+        <div><strong>{label(item.metricId)}</strong><span data-status={item.evidenceStatus}>{item.evidenceStatus}</span></div>
+        <dl><div><dt>Value</dt><dd>{value(item)}</dd></div><div><dt>Quality</dt><dd>{item.qualityStatus}</dd></div><div><dt>Source ID</dt><dd>{item.sourceId}</dd></div><div><dt>Snapshot ID</dt><dd>{item.snapshotId}</dd></div><div><dt>Period</dt><dd>{item.period.label}</dd></div><div><dt>Report scope</dt><dd>{item.reportScope ?? "Not applicable"}</dd></div><div><dt>Currency</dt><dd>{item.currency ?? "Not applicable"}</dd></div><div><dt>Allowed use</dt><dd>{item.allowedUse.replaceAll("_", " ")}</dd></div></dl>
+        {contract ? <details><summary>Reviewed source contract</summary><dl><div><dt>Contract</dt><dd>{contract.contractId}</dd></div><div><dt>Reviewed by</dt><dd>{contract.reviewedBy}</dd></div><div><dt>Reviewed at</dt><dd>{contract.reviewedAt}</dd></div><div><dt>Validated rows</dt><dd>{contract.validatedRowCount ?? "Not supplied"}</dd></div><div><dt>Rows scanned</dt><dd>{contract.sourceRowsRead ?? "Not supplied"}</dd></div><div><dt>Rows matched</dt><dd>{contract.sourceRowsMatched ?? "Not supplied"}</dd></div><div><dt>Small groups suppressed</dt><dd>{contract.suppressedGroupCount ?? "Not supplied"}</dd></div><div><dt>Source scan capped</dt><dd>{contract.sourceRowsTruncated ? "Yes" : "No"}</dd></div></dl></details> : null}
+        {item.warning ? <p>{item.warning}</p> : null}
+      </article>})}</div></div>
+      <div className={styles.reviewGrid}>
+        <section><h3>Quality checks</h3>{result.qualityWarnings.length ? <ul>{result.qualityWarnings.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No quality warning was returned.</p>}</section>
+        <section><h3>Missing evidence and unknowns</h3><ul>{[...result.missingEvidence, ...result.unknowns].map((item) => <li key={item}>{item}</li>)}</ul></section>
+        <section><h3>Guardrails</h3><ul>{result.guardrails.map((item) => <li key={item}>{item}</li>)}</ul></section>
+        <section><h3>Required approvals</h3>{result.missingApprovals.length ? <ul>{result.missingApprovals.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No additional approval is required to review this descriptive bundle.</p>}</section>
+      </div>
+      <p><strong>Query mechanics:</strong> {result.componentQueries.map(productLabel).join(" → ") || productLabel(result.query)}</p>
+    </details>
   </section>;
 }

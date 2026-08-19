@@ -1,0 +1,305 @@
+{
+  "version": "first-party-outcome-readiness-v1",
+  "contractVersion": "first-party-regional-outcome-v1",
+  "generatedAt": "2026-08-18T00:00:00.000Z",
+  "discoveryRegistryVersion": "approved-source-discovery-v1",
+  "outcomes": [
+    {
+      "outcomeId": "regional_orders",
+      "label": "Regional orders",
+      "status": "gap",
+      "readySourceIds": [],
+      "candidateCount": 0,
+      "missingEvidence": [
+        "No approved, privacy-safe source currently satisfies the regional orders contract: one period x approved aggregate geography; no order, customer, or address identifiers."
+      ],
+      "assessments": [
+        {
+          "outcomeId": "regional_orders",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-ADCD8EC0508F2C25",
+          "packageId": "google-ads-2026-07-14_2026-08-12",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Distinct or total completed orders observed for a bounded business period and non-national geography.",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        }
+      ]
+    },
+    {
+      "outcomeId": "new_customers",
+      "label": "New customers",
+      "status": "gap",
+      "readySourceIds": [],
+      "candidateCount": 0,
+      "missingEvidence": [
+        "No approved, privacy-safe source currently satisfies the new customers contract: one period x approved aggregate geography; no customer identifier or address retained."
+      ],
+      "assessments": [
+        {
+          "outcomeId": "new_customers",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-ADCD8EC0508F2C25",
+          "packageId": "google-ads-2026-07-14_2026-08-12",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Count of customers whose governed acquisition definition falls within the bounded period and geography.",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        }
+      ]
+    },
+    {
+      "outcomeId": "contribution_profit",
+      "label": "Contribution or profit",
+      "status": "gap",
+      "readySourceIds": [],
+      "candidateCount": 0,
+      "missingEvidence": [
+        "No approved, privacy-safe source currently satisfies the contribution or profit contract: one period x approved aggregate geography and optional product cohort; privacy-safe small-cell rule required."
+      ],
+      "assessments": [
+        {
+          "outcomeId": "contribution_profit",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-ADCD8EC0508F2C25",
+          "packageId": "google-ads-2026-07-14_2026-08-12",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Realized aggregate contribution, contribution margin, or profit under an owner-approved cost definition.",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "contribution_profit",
+          "status": "incompatible",
+          "sourceId": "DISCOVERED-E31694A24B68ED45",
+          "packageId": "snowflake-pricing-2026-08-17",
+          "matchedMetricFields": [
+            "GROSS_MARGIN",
+            "CONTRIBUTION_MARGIN"
+          ],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [
+            "FIRST_ACTIVITY_DATE",
+            "LATEST_ACTIVITY_DATE"
+          ],
+          "missingRequirements": [
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area)"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        }
+      ]
+    },
+    {
+      "outcomeId": "clinic_capacity",
+      "label": "Clinic capacity",
+      "status": "gap",
+      "readySourceIds": [],
+      "candidateCount": 0,
+      "missingEvidence": [
+        "No approved, privacy-safe source currently satisfies the clinic capacity contract: one clinic or approved service geography x period; no employee schedule or patient detail."
+      ],
+      "assessments": [
+        {
+          "outcomeId": "clinic_capacity",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-ADCD8EC0508F2C25",
+          "packageId": "google-ads-2026-07-14_2026-08-12",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Staffed or schedulable clinical capacity for an identified clinic or approved service geography and period.",
+            "context field matching ^(clinic_id|site_id|clinic)$",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        }
+      ]
+    },
+    {
+      "outcomeId": "appointments",
+      "label": "Appointments",
+      "status": "gap",
+      "readySourceIds": [],
+      "candidateCount": 0,
+      "missingEvidence": [
+        "No approved, privacy-safe source currently satisfies the appointments contract: one clinic or approved aggregate geography x period x appointment dimensions; no patient identifier."
+      ],
+      "assessments": [
+        {
+          "outcomeId": "appointments",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-ADCD8EC0508F2C25",
+          "packageId": "google-ads-2026-07-14_2026-08-12",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Aggregate booked, completed, available, or cancelled appointment count with explicit status/type semantics.",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        }
+      ]
+    },
+    {
+      "outcomeId": "mature_clinic_performance",
+      "label": "Mature-clinic performance",
+      "status": "gap",
+      "readySourceIds": [],
+      "candidateCount": 0,
+      "missingEvidence": [
+        "No approved, privacy-safe source currently satisfies the mature-clinic performance contract: one clinic x bounded performance period with approved maturity rule and peer cohort."
+      ],
+      "assessments": [
+        {
+          "outcomeId": "mature_clinic_performance",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-ADCD8EC0508F2C25",
+          "packageId": "google-ads-2026-07-14_2026-08-12",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: A named clinic outcome paired with an explicit opening date, months-open measure, or approved maturity status.",
+            "context field matching ^(clinic_id|site_id)$",
+            "context field matching ^(open_date|opening_date|months_open|maturity_status|mature_flag)$",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "mature_clinic_performance",
+          "status": "incompatible",
+          "sourceId": "DISCOVERED-E31694A24B68ED45",
+          "packageId": "snowflake-pricing-2026-08-17",
+          "matchedMetricFields": [
+            "NET_SALES"
+          ],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [
+            "FIRST_ACTIVITY_DATE",
+            "LATEST_ACTIVITY_DATE"
+          ],
+          "missingRequirements": [
+            "context field matching ^(clinic_id|site_id)$",
+            "context field matching ^(open_date|opening_date|months_open|maturity_status|mature_flag)$",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "mature_clinic_performance",
+          "status": "incompatible",
+          "sourceId": "DISCOVERED-B0FADADFDDFAC163",
+          "packageId": "snowflake-pricing-2026-08-17",
+          "matchedMetricFields": [
+            "NET_SALES"
+          ],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [
+            "ACTIVITY_DATE"
+          ],
+          "missingRequirements": [
+            "context field matching ^(clinic_id|site_id)$",
+            "context field matching ^(open_date|opening_date|months_open|maturity_status|mature_flag)$",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "mature_clinic_performance",
+          "status": "incompatible",
+          "sourceId": "DISCOVERED-FEB5D50301693074",
+          "packageId": "snowflake-pricing-2026-08-17",
+          "matchedMetricFields": [
+            "NET_SALES"
+          ],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [
+            "ACTIVITY_DATE"
+          ],
+          "missingRequirements": [
+            "context field matching ^(clinic_id|site_id)$",
+            "context field matching ^(open_date|opening_date|months_open|maturity_status|mature_flag)$",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "mature_clinic_performance",
+          "status": "incompatible",
+          "sourceId": "DISCOVERED-C122534D9DE90C3E",
+          "packageId": "snowflake-pricing-2026-08-17",
+          "matchedMetricFields": [
+            "NET_SALES"
+          ],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [
+            "ACTIVITY_DATE"
+          ],
+          "missingRequirements": [
+            "context field matching ^(clinic_id|site_id)$",
+            "context field matching ^(open_date|opening_date|months_open|maturity_status|mature_flag)$",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        }
+      ]
+    }
+  ],
+  "adapterCandidates": [],
+  "summary": {
+    "readyOutcomeCount": 0,
+    "gapOutcomeCount": 6,
+    "adapterCandidateCount": 0,
+    "executableQueryCount": 0
+  },
+  "conclusionBoundary": "Discovery can nominate a typed adapter candidate, but it cannot register arbitrary SQL, approve metric semantics, or expose a raw file. No query becomes executable until contract, privacy, full-file grain, quality, and source-owner review are complete."
+}

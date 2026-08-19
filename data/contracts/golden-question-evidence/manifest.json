@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "snapshotId": "golden-question-evidence-2026-08-18-v1",
+  "generatedAt": "2026-08-18T20:57:36.861Z",
+  "output": "data/approved/golden-question-evidence/current.json",
+  "sha256": "fe480580d3ceb8ca28f549acbccd76bee2f08d829fe52250cd9e0e0abed2681d",
+  "bytes": 7142,
+  "candidateCounts": {
+    "pricing": 1,
+    "marketing": 2,
+    "cvc": 1
+  },
+  "inputs": [
+    "data/approved/derived-map-signals/current.json",
+    "data/public/census/cbsa-universe/2023-07/markets.json",
+    "data/sample/esri/2026-07-30/trade-areas.json",
+    "data/sample/esri/2026-07-30/site-identities.json",
+    "data/sample/esri/2026-07-30/site-trade-area-crosswalk.json",
+    "data/contracts/zeus-ui/export-manifest.json"
+  ],
+  "allowedUse": "internal_shadow_evaluation_only",
+  "scoringEligibility": "none",
+  "actionAuthority": "investigation_leads_only_no_material_action",
+  "sensitiveIdentifiersIncluded": false
+}

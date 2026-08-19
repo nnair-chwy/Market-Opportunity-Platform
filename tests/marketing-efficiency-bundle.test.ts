@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { getApprovedWorkspaceSnapshotBundle } from "../lib/perspectives/approved-workspace-snapshot.ts";
+import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
+import { buildInsightActionPlan } from "../lib/planning/insight-action-plan.ts";
 import { planEvaluation } from "../lib/planning/index.ts";
 import { reviseMarketInvestigation, runMarketInvestigation } from "../lib/planning/market-investigation.ts";
 
@@ -53,4 +55,22 @@ test("analyst feedback creates a bounded revised investigation without inventing
   assert.match(revised.analystRevision?.effectOnRecommendation ?? "", /cannot be generalized/i);
   assert.match(revised.leads[0].nextEvidence, /Analyst-requested check/i);
   assert.equal(original.analystRevision, undefined);
+});
+
+test("adding YouTube produces a revised recommendation and a visible pending evidence pass", () => {
+  const plan = planEvaluation("Which region are we paying more than we should for ads?", "marketing");
+  const original = runMarketInvestigation(plan);
+  const revised = reviseMarketInvestigation(original, "Consider YouTube", 2);
+  const lead = revised.leads[0];
+  const brief = buildAnalysisBrief(plan, revised);
+  const actionPlan = buildInsightActionPlan(plan, revised, lead, brief, "2026-08-19T12:00:00.000Z");
+
+  assert.match(revised.analystRevision?.summary ?? "", /YouTube was added/i);
+  assert.match(revised.analystRevision?.effectOnRecommendation ?? "", /No compatible YouTube evidence is connected/i);
+  assert.match(lead.businessMeaning, /Added factor — YouTube/i);
+  assert.ok(revised.nextPass.evidenceNeeded.some((item) => /YouTube regional spend/i.test(item)));
+  assert.equal(revised.investigationPath.at(-1)?.status, "waiting_for_evidence");
+  assert.match(revised.investigationPath.at(-1)?.result ?? "", /new evidence request was generated/i);
+  assert.match(actionPlan?.recommendation ?? "", /separate YouTube comparison/i);
+  assert.ok(actionPlan?.workstreams.some((item) => item.id === "evaluate-analyst-factor" && /YouTube/i.test(item.title)));
 });
