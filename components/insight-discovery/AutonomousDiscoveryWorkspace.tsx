@@ -13,47 +13,72 @@ const ACTIONABILITY_LABELS = {
   descriptive_only: "Context only",
 } as const;
 
-function InsightCard({ finding, rankLabel, onInvestigate }: {
+function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
   finding: AutonomousInsight;
   rankLabel: string;
   onInvestigate: (question: string) => void;
+  selected?: boolean;
 }) {
   const interpretation = finding.analystInterpretation;
   return (
-    <article className="autonomous-insight-card" data-department={finding.department}>
-      <header>
-        <span>{LABELS[finding.department]}</span>
-        <small>{rankLabel} · {finding.priority}</small>
+    <article
+      className="autonomous-insight-card"
+      data-department={finding.department}
+      data-selected={selected || undefined}
+      id={`discovery-${finding.insightId.replaceAll(":", "-")}`}
+      tabIndex={-1}
+    >
+      <header className="discovery-card-header">
+        <div className="discovery-card-identity">
+          <b>{rankLabel}</b>
+          <span>{LABELS[finding.department]}</span>
+          <small>{finding.marketName}</small>
+        </div>
+        <div className="discovery-card-status">
+          <div className="discovery-importance" data-tier={finding.importance.tier}>
+            <strong>{finding.importance.label}</strong>
+            <span>{finding.importance.score}/100</span>
+          </div>
+          {interpretation ? (
+            <div className="discovery-actionability" data-level={interpretation.actionabilityLevel}>
+              {ACTIONABILITY_LABELS[interpretation.actionabilityLevel]}
+            </div>
+          ) : null}
+        </div>
       </header>
       {interpretation ? (
         <>
-          <div className="discovery-actionability" data-level={interpretation.actionabilityLevel}>
-            {ACTIONABILITY_LABELS[interpretation.actionabilityLevel]}
-          </div>
           <h2>{finding.headline}</h2>
-          <p>{finding.whyInteresting}</p>
-          <div className="discovery-analyst-action">
-            <span>Analyst recommendation</span>
-            <strong>{interpretation.recommendedNextDecisionOrAction}</strong>
+          <div className="discovery-card-decision">
+            <div className="discovery-value-translation" data-kind={finding.valueTranslation.kind}>
+              <span>Value signal</span>
+              <strong>{finding.valueTranslation.statement}</strong>
+            </div>
+            <div className="discovery-analyst-action">
+              <span>Do next</span>
+              <strong>{interpretation.recommendedNextDecisionOrAction}</strong>
+            </div>
           </div>
-          <p>{interpretation.whyThisMattersToBusinessOutcome}</p>
         </>
       ) : (
         <><h2>{finding.headline}</h2><p>{finding.whyInteresting}</p></>
       )}
-      <div className="discovery-applicability">
-        <span>Owner for the next step</span>
-        <strong>{finding.applicability.primaryTeamLabel}</strong>
-        <small>{finding.applicability.reason}</small>
+      <div className="discovery-card-footer">
+        <p><span>Owner</span><strong>{finding.applicability.primaryTeamLabel}</strong></p>
+        <button className="secondary-action" type="button" onClick={() => onInvestigate(finding.question)}>Open investigation →</button>
       </div>
       <details>
-        <summary>Why this surfaced, evidence, and remaining gaps</summary>
+        <summary>Evidence, caveats, and decision rules</summary>
         <dl>
+          <div><dt>What this could change</dt><dd>{interpretation?.whyThisMattersToBusinessOutcome ?? finding.whyInteresting}</dd></div>
+          <div><dt>Important caveat</dt><dd>{finding.valueTranslation.caveat}</dd></div>
+          <div><dt>Why this owner</dt><dd>{finding.applicability.reason}</dd></div>
           <div><dt>Analyst read</dt><dd>{interpretation?.analystConclusion ?? finding.whyInteresting}</dd></div>
           <div><dt>Decision question</dt><dd>{interpretation?.decisionQuestion ?? finding.question}</dd></div>
           <div><dt>Observed signal</dt><dd>{finding.headline}. {finding.whyInteresting}</dd></div>
           <div><dt>Evidence detail</dt><dd>{finding.evidenceDetail}</dd></div>
           <div><dt>Why it ranked here</dt><dd>{finding.decisionValue?.reason ?? "This earlier run did not record a decision-value explanation."}</dd></div>
+          <div><dt>Importance</dt><dd>{finding.importance.reason}</dd></div>
           <div><dt>Screens combined</dt><dd>{finding.signalCount} screen{finding.signalCount === 1 ? "" : "s"}: {finding.hypothesisIds.join(", ")}</dd></div>
           <div><dt>Sources</dt><dd>{finding.sourceIds.join(", ")}</dd></div>
           <div><dt>Exact evidence still needed</dt><dd>{interpretation?.exactMissingEvidence.join(" ") ?? finding.nextValidation}</dd></div>
@@ -61,16 +86,17 @@ function InsightCard({ finding, rankLabel, onInvestigate }: {
           <div><dt>Decision boundary</dt><dd>{interpretation?.approvalBoundary ?? finding.applicability.approvalBoundary}</dd></div>
         </dl>
       </details>
-      <button className="secondary-action" type="button" onClick={() => onInvestigate(finding.question)}>Investigate this finding →</button>
     </article>
   );
 }
 
-export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
+export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFindingId = null, initialRun = null }: {
   onBack: () => void;
   onInvestigate: (question: string) => void;
+  initialFindingId?: string | null;
+  initialRun?: CurrentDataDiscoveryRun | null;
 }) {
-  const [run, setRun] = useState<CurrentDataDiscoveryRun | null>(null);
+  const [run, setRun] = useState<CurrentDataDiscoveryRun | null>(initialRun);
   const [error, setError] = useState<string | null>(null);
   const [isRerunning, setIsRerunning] = useState(false);
   const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
@@ -92,6 +118,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
   }, []);
 
   useEffect(() => {
+    if (initialRun) return;
     let cancelled = false;
     void requestRun()
       .then((payload) => { if (!cancelled) setRun(payload); })
@@ -99,7 +126,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
         if (!cancelled) setError(reason instanceof Error ? reason.message : "The insight scan did not complete.");
       });
     return () => { cancelled = true; };
-  }, [requestRun]);
+  }, [initialRun, requestRun]);
 
   async function runAgain() {
     if (!run || isRerunning) return;
@@ -117,12 +144,34 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
     }
   }
 
-  const primaryFindings = useMemo(() => run?.primaryFindings.filter((finding) => department === "all" || finding.department === department) ?? [], [department, run]);
-  const additionalFindings = useMemo(() => run?.additionalFindings.filter((finding) => department === "all" || finding.department === department) ?? [], [department, run]);
+  const primaryFindings = useMemo(() => (run?.primaryFindings
+    .filter((finding) => department === "all" || finding.department === department)
+    .sort((left, right) => right.importance.score - left.importance.score) ?? []), [department, run]);
+  const additionalFindings = useMemo(() => (run?.additionalFindings
+    .filter((finding) => department === "all" || finding.department === department)
+    .sort((left, right) => right.importance.score - left.importance.score) ?? []), [department, run]);
+  const selectedFinding = useMemo(
+    () => run?.findings.find((finding) => finding.insightId === initialFindingId) ?? null,
+    [initialFindingId, run],
+  );
   const warehouseTemplates = useMemo(() => {
     const templates = run?.snowflakeEscalations.flatMap((assessment) => assessment.accessRequest?.templates ?? []) ?? [];
     return [...new Map(templates.map((template) => [template.templateId, template])).values()];
   }, [run]);
+  const screenCounts = useMemo(() => ({
+    marketing: run?.traces.filter((trace) => trace.department === "marketing").length ?? 0,
+    pricing: run?.traces.filter((trace) => trace.department === "pricing").length ?? 0,
+    cvc: run?.traces.filter((trace) => trace.department === "cvc").length ?? 0,
+  }), [run]);
+
+  useEffect(() => {
+    if (!selectedFinding) return;
+    requestAnimationFrame(() => {
+      const target = document.getElementById(`discovery-${selectedFinding.insightId.replaceAll(":", "-")}`);
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      target?.focus({ preventScroll: true });
+    });
+  }, [selectedFinding]);
 
   if (error && !run) return (
     <section className="autonomous-discovery-page" aria-labelledby="autonomous-discovery-title">
@@ -153,7 +202,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
         <div className="discovery-run-controls">
           <span>Run {run.runSequence} complete · {new Date(run.completedAt).toLocaleString()}</span>
           <button className="discovery-run-again" type="button" onClick={() => void runAgain()} disabled={isRerunning}>
-            {isRerunning ? "Running every screen…" : "Run again"}
+            {isRerunning ? `Re-running ${run.analysesRun} screens…` : "Find next signals"}
           </button>
         </div>
       </div>
@@ -161,7 +210,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
         <div>
           <div className="section-label">Autonomous insight discovery</div>
           <h1 id="autonomous-discovery-title">The strongest regional signals in the current data</h1>
-          <p>{run.analysesRun} investigations ran automatically. The digest represents the full portfolio; every additional finding that passes evidence and validation checks remains available below it.</p>
+          <p>The system tested {run.analysesRun} predefined regional questions, ranked the qualified signals by decision value, and translated the strongest ones into a measurable next action.</p>
         </div>
         <span className="discovery-method">Reviewed query registry · deterministic evidence checks</span>
       </header>
@@ -186,42 +235,11 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
       {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
 
       <dl className="discovery-run-metrics">
-        <div><dt>Analyses run</dt><dd>{run.analysesRun}</dd></div>
-        <div><dt>Markets scanned</dt><dd>{run.marketUniverse}</dd></div>
-        <div><dt>Measures examined</dt><dd>{run.measuresExamined}</dd></div>
-        <div><dt>Reviewable leads</dt><dd>{run.findings.length}</dd></div>
+        <div><dt>Decision screens tested</dt><dd>{run.analysesRun}</dd><small>{screenCounts.marketing} Marketing · {screenCounts.pricing} Pricing · {screenCounts.cvc} CVC</small></div>
+        <div><dt>Markets compared</dt><dd>{run.marketUniverse}</dd><small>National CBSA comparison universe</small></div>
+        <div><dt>Measures checked</dt><dd>{run.measuresExamined}</dd><small>Unique measures in approved snapshots</small></div>
+        <div><dt>Qualified leads</dt><dd>{run.findings.length}</dd><small>Evidence-backed leads, not approved actions</small></div>
       </dl>
-
-      <section className="discovery-data-expansion" aria-labelledby="discovery-data-expansion-title">
-        <div>
-          <div className="section-label">Evidence expansion</div>
-          <h2 id="discovery-data-expansion-title">{run.dataAccessSummary.status === "additional_access_recommended" ? "The local scan found leads; governed warehouse evidence would make them more actionable" : "The current approved evidence is sufficient for this scan"}</h2>
-          <p>{run.dataAccessSummary.status === "additional_access_recommended"
-            ? `${run.dataAccessSummary.questionsNeedingWarehouseEvidence} investigations still need business outcomes or operating context that are not present in the approved local snapshots.`
-            : "The run did not identify a warehouse-data requirement beyond the evidence already available."}</p>
-        </div>
-        {warehouseTemplates.length ? (
-          <details>
-            <summary>Review {warehouseTemplates.length} prepared read-only Snowflake request{warehouseTemplates.length === 1 ? "" : "s"}</summary>
-            <p>The agent requests a governed aggregate semantic view—not credentials, raw identifiers, arbitrary SQL, or permission to change a business action.</p>
-            <div className="discovery-access-request-grid">
-              {warehouseTemplates.map((template) => (
-                <article key={template.templateId}>
-                  <span>{template.owningTeam}</span>
-                  <h3>{template.semanticViewConcept.replace(/^governed_/, "").replaceAll("_", " ")}</h3>
-                  <p>{template.purpose}</p>
-                  <dl>
-                    <div><dt>Metrics</dt><dd>{template.requiredMetrics.join(", ")}</dd></div>
-                    <div><dt>Geography</dt><dd>{template.parameters.geographyGrains.join(", ")} · {template.parameters.geographyScope.replaceAll("_", " ")}</dd></div>
-                    <div><dt>Time</dt><dd>{template.parameters.timeGrain} · {template.parameters.lookbackDays}-day lookback · finalized periods only</dd></div>
-                    <div><dt>Privacy floor</dt><dd>Groups of at least {template.parameters.minimumGroupSize}</dd></div>
-                  </dl>
-                </article>
-              ))}
-            </div>
-          </details>
-        ) : null}
-      </section>
 
       <div className="discovery-department-tabs" role="tablist" aria-label="Insight department">
         {(["all", "marketing", "pricing", "cvc"] as const).map((item) => (
@@ -239,21 +257,51 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
 
       <div className="autonomous-insight-grid">
         {primaryFindings.map((finding: AutonomousInsight, index) => (
-          <InsightCard key={finding.insightId} finding={finding} rankLabel={`#${index + 1}`} onInvestigate={onInvestigate} />
+          <InsightCard key={finding.insightId} finding={finding} rankLabel={`#${index + 1}`} onInvestigate={onInvestigate} selected={finding.insightId === initialFindingId} />
         ))}
       </div>
 
       {additionalFindings.length > 0 ? (
-        <details className="discovery-additional-findings">
+        <details className="discovery-additional-findings" open={Boolean(initialFindingId && additionalFindings.some((finding) => finding.insightId === initialFindingId)) || undefined}>
           <summary>Show {additionalFindings.length} additional reviewable lead{additionalFindings.length === 1 ? "" : "s"}</summary>
           <p>These have traceable evidence and a next validation step, but rank below the primary digest on present decision value.</p>
           <div className="autonomous-insight-grid">
             {additionalFindings.map((finding: AutonomousInsight, index) => (
-              <InsightCard key={finding.insightId} finding={finding} rankLabel={`Additional #${index + 1}`} onInvestigate={onInvestigate} />
+              <InsightCard key={finding.insightId} finding={finding} rankLabel={`Additional #${index + 1}`} onInvestigate={onInvestigate} selected={finding.insightId === initialFindingId} />
             ))}
           </div>
         </details>
       ) : null}
+
+      <details className="discovery-data-expansion">
+        <summary>
+          <div>
+            <div className="section-label">Evidence needed next</div>
+            <h2 id="discovery-data-expansion-title">{run.dataAccessSummary.status === "additional_access_recommended" ? "Connect business outcomes before turning these leads into material decisions" : "The current approved evidence is sufficient for this scan"}</h2>
+            <p>{run.dataAccessSummary.status === "additional_access_recommended"
+              ? `${run.dataAccessSummary.questionsNeedingWarehouseEvidence} screens still need first-party outcomes or operating context.`
+              : "No additional warehouse evidence was identified for this run."}</p>
+          </div>
+          <span>Review evidence requests</span>
+        </summary>
+        {warehouseTemplates.length ? (
+          <div className="discovery-access-request-grid">
+            {warehouseTemplates.map((template) => (
+              <article key={template.templateId}>
+                <span>{template.owningTeam}</span>
+                <h3>{template.semanticViewConcept.replace(/^governed_/, "").replaceAll("_", " ")}</h3>
+                <p>{template.purpose}</p>
+                <dl>
+                  <div><dt>Metrics</dt><dd>{template.requiredMetrics.join(", ")}</dd></div>
+                  <div><dt>Geography</dt><dd>{template.parameters.geographyGrains.join(", ")} · {template.parameters.geographyScope.replaceAll("_", " ")}</dd></div>
+                  <div><dt>Time</dt><dd>{template.parameters.timeGrain} · {template.parameters.lookbackDays}-day lookback · finalized periods only</dd></div>
+                  <div><dt>Privacy floor</dt><dd>Groups of at least {template.parameters.minimumGroupSize}</dd></div>
+                </dl>
+              </article>
+            ))}
+          </div>
+        ) : null}
+      </details>
 
       <details className="discovery-run-audit">
         <summary>How the autonomous run worked · {run.traces.length} executed analyses</summary>

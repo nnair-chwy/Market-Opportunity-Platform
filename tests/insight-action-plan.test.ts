@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ExecutionEvidenceItem } from "../lib/evidence-snapshot/contracts.ts";
 import {
   assembleReviewableActionPacket,
+  boundedActionSummary,
   buildInsightActionPlan,
   planEvaluation,
   proposedActionFromPlan,
@@ -96,6 +97,17 @@ test("marketing finding produces a bounded paid-search lever plan with outcome a
   assert.match(actionPlan.stopCondition, /do not change live spend/i);
   assert.match(actionPlan.sensitivityAndContraryEvidence, /are not|does not|cannot|different/i);
   assert.ok(actionPlan.workstreams.every((workstream) => workstream.kpi && workstream.validationThreshold && workstream.stopCondition));
+  const proposedTest = boundedActionSummary(actionPlan);
+  assert.match(proposedTest.action, /10%/);
+  assert.match(proposedTest.testWindow, /14 days/i);
+  assert.match(proposedTest.expectedLearning, /incremental new-customer contribution per dollar/i);
+  assert.equal(proposedTest.resultStatus, "not_estimable");
+  assert.match(proposedTest.expectedResult, /sales-growth or contribution-profit.*cannot yet be forecast/i);
+  assert.ok(proposedTest.calculationSteps.some((step) => /Sales growth %/.test(step)));
+  assert.ok(proposedTest.calculationSteps.some((step) => /CCP gain %/.test(step)));
+  assert.ok(proposedTest.requiredResultInputs.some((input) => /regional orders and net sales/i.test(input)));
+  assert.match(proposedTest.successRule, /at least 10% versus control/i);
+  assert.match(proposedTest.evidenceNote, /not a forecast/i);
 
   const packet = assembleReviewableActionPacket(
     plan,
@@ -120,6 +132,7 @@ test("spend-more question produces an increase-aligned package while retaining c
   const actionPlan = buildInsightActionPlan(plan, investigation, selectedLead, brief, brief.confirmedAt);
 
   assert.ok(actionPlan);
+  assert.match(actionPlan.marketName, /^[^;]+, [A-Z]{2}(?:-[A-Z]{2})?/);
   assert.match(actionPlan.recommendation, /bounded paid-search spend-increase test/i);
   assert.match(actionPlan.recommendation, /pre-registered reversible treatment/i);
   assert.doesNotMatch(actionPlan.recommendation, /reduce|overpaying/i);

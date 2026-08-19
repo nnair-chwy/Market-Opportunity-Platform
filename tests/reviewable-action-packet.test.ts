@@ -5,6 +5,7 @@ import {
   assembleReviewableActionPacket,
   buildInsightActionPlan,
   deterministicFindingsAndProposalSummary,
+  deterministicReviewablePacketSummary,
   formatDecisionBriefDocument,
   formatReviewableActionPacketDocument,
   planEvaluation,
@@ -19,7 +20,7 @@ import {
 } from "../lib/planning/market-investigation.ts";
 import { buildAnalysisBrief } from "../lib/planning/analysis-brief.ts";
 import { buildEvidencePlan, generateEvaluationDefinitionDraft } from "../lib/planning/evidence-plan.ts";
-import { explainFindingsAndProposal } from "../lib/planning/packet-ai-summary.ts";
+import { explainFindingsAndProposal, explainReviewablePacket, packetSummaryInstructions } from "../lib/planning/packet-ai-summary.ts";
 import { DEMO_QUESTIONS, planConfiguredDemoQuestion } from "../lib/demo/scenarios.ts";
 import { executeEvaluationPlanEvidence } from "../lib/planning/execute-plan.ts";
 
@@ -108,7 +109,7 @@ test("selected investigation evidence replaces the generic plan action in the de
   assert.equal(action.title, `Validate ${lead.title}`);
   assert.equal(action.nextStep, lead.nextEvidence);
   assert.match(action.evidence.join(" "), /cost per attributed conversion/i);
-  assert.match(document, /higher paid-search cost with weaker attributed conversion efficiency than comparable markets/i);
+  assert.match(document, /average CPC.*cost per attributed conversion.*weaker attributed conversion response/is);
   assert.match(document, /Portfolio pattern/);
   assert.match(document, /not a time trend/i);
   assert.doesNotMatch(document, /name the decision, geography or cohort, and required output, then resubmit/i);
@@ -171,6 +172,57 @@ test("packet AI summary falls back when the model is unavailable", async () => {
   assert.equal(summary.origin, "deterministic_fallback");
   assert.equal(summary.state, "provider_error");
   assert.match(summary.summary, /select a measure and market|Explore governed market context|Inspect the resolved market context|Compare resolved markets/i);
+});
+
+test("partial exploratory packet tells the summarizer that findings exist even when material action is unsupported", () => {
+  const plan = planEvaluation("Which regions have unusually high or low paid-search click-through response?", "marketing", [], "paid_search_ctr");
+  const investigation = runMarketInvestigation(plan);
+  const action = actionForInvestigationLead(proposedActionFromPlan(plan), investigation, investigation.leads[0]);
+  const packet = assembleReviewableActionPacket(plan, action, "2026-08-19T00:00:00.000Z", investigation);
+
+  assert.equal(investigation.leads.length, 5);
+  assert.equal(packet.packetAnswer.state, "partial");
+  assert.match(packet.packetAnswer.directAnswer, /descriptive answer is available.*5 source-linked findings/i);
+  assert.doesNotMatch(packet.packetAnswer.directAnswer, /does not claim an analytical answer/i);
+  assert.match(packetSummaryInstructions(packet), /Lead with the best available findings/i);
+  assert.match(packetSummaryInstructions(packet), /descriptive answer is available.*material action is not yet supported/i);
+  const immediateSummary = deterministicReviewablePacketSummary(packet);
+  assert.match(immediateSummary.summary, /A descriptive answer is available: 5 source-linked findings/i);
+  assert.doesNotMatch(immediateSummary.summary, /no validated answer|evaluation.*blocked/i);
+});
+
+test("AI summary rejecting supported findings falls back to findings-first descriptive answer", async () => {
+  const plan = planEvaluation("Which regions have unusually high or low paid-search click-through response?", "marketing", [], "paid_search_ctr");
+  const investigation = runMarketInvestigation(plan);
+  const action = actionForInvestigationLead(proposedActionFromPlan(plan), investigation, investigation.leads[0]);
+  const packet = assembleReviewableActionPacket(plan, action, "2026-08-19T00:00:00.000Z", investigation);
+  const summary = await explainReviewablePacket(packet, async () => ({
+    output: { summary: `There is no validated answer and the evaluation remains blocked. ${action.owner} should collect more evidence. This is draft-only for human review.` },
+    model: "contradictory-test-model",
+  }));
+
+  assert.equal(summary.origin, "deterministic_fallback");
+  assert.equal(summary.state, "validation_rejected");
+  assert.match(summary.summary, /A descriptive answer is available: 5 source-linked findings/i);
+  assert.match(summary.summary, new RegExp(investigation.leads[0]!.title.split(":")[0]!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+  assert.match(summary.summary, /do not support or authorize a material business action/i);
+  assert.doesNotMatch(summary.summary, /no validated answer|evaluation remains blocked/i);
+});
+
+test("valid exploratory AI summary leads with findings and separates answer availability from action readiness", async () => {
+  const plan = planEvaluation("Which regions have unusually high or low paid-search click-through response?", "marketing", [], "paid_search_ctr");
+  const investigation = runMarketInvestigation(plan);
+  const action = actionForInvestigationLead(proposedActionFromPlan(plan), investigation, investigation.leads[0]);
+  const packet = assembleReviewableActionPacket(plan, action, "2026-08-19T00:00:00.000Z", investigation);
+  const market = investigation.leads[0]!.title.split(":")[0]!;
+  const summary = await explainReviewablePacket(packet, async () => ({
+    output: { summary: `The descriptive answer identifies ${market} as a source-linked paid-search response signal. These findings do not support or authorize a live spend change. ${action.owner} should ${action.nextStep} This remains draft-only for human review.` },
+    model: "valid-test-model",
+  }));
+
+  assert.equal(summary.origin, "ai");
+  assert.equal(summary.state, "available");
+  assert.match(summary.summary, new RegExp(market.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
 });
 
 test("reviewable packet carries the exact analyst screening and lead follow-up", () => {
@@ -333,13 +385,19 @@ test("decision brief leads with the answer and leaves audit mechanics in the app
   );
   const document = formatDecisionBriefDocument(packet);
   assert.match(document, /^# Decision brief:/);
-  assert.match(document, /## Recommendation/);
-  assert.match(document, /## What the evidence supports/);
-  assert.match(document, /## Screening signals—not final findings/);
-  assert.match(document, /## What is still unknown/);
-  assert.match(document, /## Checks that could change the conclusion/);
-  assert.match(document, /## Recommended next action/);
-  assert.match(document, /audit appendix contains/);
+  assert.match(document, /## Decision at a glance/);
+  assert.match(document, /### Proposed action/);
+  assert.match(document, /10-business-day demand-and-capacity gate review/i);
+  assert.match(document, /What this should prove/);
+  assert.match(document, /Expected result/);
+  assert.match(document, /How the expected result is calculated/);
+  assert.match(document, /Inputs still required/);
+  assert.match(document, /Success rule/);
+  assert.match(document, /Stop or rollback/);
+  assert.match(document, /## Evidence to connect before scaling/);
+  assert.doesNotMatch(document, /Virginia Beach|Charleston-North Charleston/);
+  assert.match(document, /## Execution owner and immediate deliverable/);
+  assert.match(document, /See the audit appendix/);
   assert.doesNotMatch(document, /## Final-answer contract/);
   assert.doesNotMatch(document, /## Structured packet \(JSON\)/);
   assert.ok(document.length < formatReviewableActionPacketDocument(packet).length / 2);

@@ -19,7 +19,21 @@ import {
 export type PacketDocxKind = "decision_brief" | "audit_appendix";
 
 function plain(value: string) {
-  return value.replace(/\*\*/g, "").replace(/^>\s*/, "").trim();
+  return value.replace(/^>\s*/, "").replace(/^#{1,6}\s+/, "").replace(/\*\*/g, "").trim();
+}
+
+function inlineRuns(value: string) {
+  const normalized = value.replace(/^>\s*/, "").replace(/^#{1,6}\s+/, "").trim();
+  const runs: TextRun[] = [];
+  let cursor = 0;
+  for (const match of normalized.matchAll(/\*\*(.+?)\*\*/g)) {
+    const start = match.index ?? 0;
+    if (start > cursor) runs.push(new TextRun(normalized.slice(cursor, start)));
+    runs.push(new TextRun({ text: match[1], bold: true }));
+    cursor = start + match[0].length;
+  }
+  if (cursor < normalized.length) runs.push(new TextRun(normalized.slice(cursor)));
+  return runs.length ? runs : [new TextRun(plain(normalized))];
 }
 
 function markdownParagraphs(markdown: string) {
@@ -50,15 +64,19 @@ function markdownParagraphs(markdown: string) {
       children.push(new Paragraph({ text: plain(line.slice(4)), heading: HeadingLevel.HEADING_2 }));
       continue;
     }
+    if (line.startsWith("#### ")) {
+      children.push(new Paragraph({ text: plain(line.slice(5)), heading: HeadingLevel.HEADING_3 }));
+      continue;
+    }
     if (/^-\s+/.test(line)) {
-      children.push(new Paragraph({ text: plain(line.replace(/^-\s+/, "")), bullet: { level: 0 } }));
+      children.push(new Paragraph({ children: inlineRuns(line.replace(/^-\s+/, "")), bullet: { level: 0 } }));
       continue;
     }
     if (/^\s+-\s+/.test(rawLine)) {
-      children.push(new Paragraph({ text: plain(rawLine.replace(/^\s+-\s+/, "")), bullet: { level: 1 } }));
+      children.push(new Paragraph({ children: inlineRuns(rawLine.replace(/^\s+-\s+/, "")), bullet: { level: 1 } }));
       continue;
     }
-    children.push(new Paragraph({ text: plain(line) }));
+    children.push(new Paragraph({ children: inlineRuns(line) }));
   }
   return children;
 }

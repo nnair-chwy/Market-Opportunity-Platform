@@ -4,6 +4,7 @@ import type { InvestigationLead, MarketInvestigation } from "./market-investigat
 import { evaluateAnswerCompletion, type AnswerEvaluationReport } from "./answer-evaluation.ts";
 import { checkInvestigationCoverage } from "./investigation-coverage.ts";
 import { requestedActionDirection } from "./action-direction.ts";
+import { publicMarkets } from "../data/public-market-ui.ts";
 
 export type InsightActionWorkstream = {
   id: string;
@@ -50,6 +51,88 @@ export type InsightActionPlan = {
   sensitivityAndContraryEvidence: string;
 };
 
+export type BoundedActionSummary = {
+  label: string;
+  action: string;
+  testWindow: string;
+  resultStatus: "forecast" | "scenario" | "measurement_target" | "not_estimable";
+  expectedResult: string;
+  calculationSteps: string[];
+  requiredResultInputs: string[];
+  expectedLearning: string;
+  successRule: string;
+  stopOrRollbackRule: string;
+  evidenceNote: string;
+};
+
+export function boundedActionSummary(actionPlan: InsightActionPlan): BoundedActionSummary {
+  const lever = actionPlan.lever
+    ?? (/paid.search|spend/i.test(actionPlan.recommendation)
+      ? "paid_search_spend_test"
+      : /pric/i.test(actionPlan.recommendation)
+        ? "pricing_test"
+        : "clinic_footprint_validation");
+  if (lever === "paid_search_spend_test") {
+    const isIncrease = /increase/i.test(actionPlan.recommendation);
+    return {
+      label: "Proposed controlled test",
+      action: `${isIncrease ? "Increase" : "Reallocate"} paid-search budget by 10% in ${actionPlan.marketName} against a stable matched control. Do not make the change permanent before the test is read out.`,
+      testWindow: "14 days after outcome tracking, control assignment, and approval are confirmed",
+      resultStatus: "not_estimable",
+      expectedResult: "A sales-growth or contribution-profit (CCP) gain cannot yet be forecast from the connected regional data. The measurable target is at least a 10% improvement in incremental new-customer contribution per dollar versus control, with no material sales, CPA, or substitution guardrail failure.",
+      calculationSteps: [
+        "Incremental spend = approved 14-day regional baseline paid-search spend × 10%.",
+        "Incremental sales = treatment net sales − the control-adjusted sales expected without the spend change.",
+        "Sales growth % = incremental sales ÷ baseline regional net sales × 100.",
+        "CCP gain % = incremental owner-approved CCP ÷ baseline regional CCP × 100. Subtract incremental media spend only when the approved CCP definition does not already include it.",
+      ],
+      requiredResultInputs: ["14-day regional paid-search baseline", "matched test/control outcomes", "regional orders and net sales", "new-customer definition", "owner-approved CCP definition and baseline", "paid versus organic/direct substitution"],
+      expectedLearning: "Whether the regional signal produces more incremental new-customer contribution per dollar—not merely more platform-attributed conversions.",
+      successRule: "Keep or expand the treatment only if incremental new-customer contribution per dollar improves by at least 10% versus control and CPA, organic/direct substitution, and total-contribution guardrails hold.",
+      stopOrRollbackRule: "Return the treatment to baseline if the lift threshold is missed, contribution declines, attribution cannot be reconciled, or a pre-registered guardrail fails.",
+      evidenceNote: "The 10% treatment and success threshold are proposed experiment bounds, not a forecast of lift from the current descriptive data.",
+    };
+  }
+  if (lever === "pricing_test") {
+    return {
+      label: "Proposed controlled test",
+      action: `Run a 14-day, 3% matched-SKU price treatment in ${actionPlan.marketName} against an unchanged control cohort, limited to approved products with reliable competitor matching and inventory coverage.`,
+      testWindow: "14 days after SKU matching, margin floors, inventory controls, and approval are confirmed",
+      resultStatus: "not_estimable",
+      expectedResult: "A contribution or sales lift cannot yet be forecast from the connected regional data. Success means positive incremental contribution versus control while unit, conversion, margin, inventory, and customer guardrails hold.",
+      calculationSteps: [
+        "Incremental net sales = treatment net sales − control-adjusted net sales.",
+        "Incremental contribution = treatment contribution − control-adjusted contribution.",
+        "Contribution gain % = incremental contribution ÷ baseline matched-cohort contribution × 100.",
+        "Report unit and conversion changes beside contribution so a price effect is not mistaken for demand growth.",
+      ],
+      requiredResultInputs: ["matched-SKU test/control cohorts", "regional unit and net-sales outcomes", "owner-approved contribution definition", "promotion and inventory controls", "customer-response outcomes"],
+      expectedLearning: "Whether the price treatment improves contribution dollars without unacceptable unit, conversion, customer, or availability loss.",
+      successRule: "Advance only if contribution dollars improve versus control and every approved margin, unit-volume, conversion, inventory, and customer guardrail holds.",
+      stopOrRollbackRule: "Restore baseline prices if contribution does not improve, matching degrades, or any margin, inventory, conversion, or customer guardrail fails.",
+      evidenceNote: "The 3% treatment is a proposed reversible test bound, not a claim that current competitor observations prove elasticity or profit lift.",
+    };
+  }
+  return {
+    label: "Proposed validation sprint",
+    action: `Complete a 10-business-day demand-and-capacity gate review for ${actionPlan.marketName}; decide whether to advance this market into detailed trade-area research, hold it, or stop it.`,
+    testWindow: "10 business days for the first gate; no site search or opening approval in this step",
+    resultStatus: "not_estimable",
+    expectedResult: "Clinic revenue, appointment, or contribution impact is not yet estimable. The expected result is an evidence-backed Advance, Hold, or Stop decision based on demand, capacity, mature-clinic performance, workforce feasibility, and unit economics.",
+    calculationSteps: [
+      "Demand gap = approved market demand benchmark − current served demand.",
+      "Capacity gap = forecast appointment demand − staffed and schedulable appointment capacity.",
+      "Incremental clinic contribution = forecast completed appointments × contribution per completed appointment − incremental fixed and operating costs.",
+      "Advance only when the owner-approved demand, capacity, workforce, property, and economics thresholds all pass.",
+    ],
+    requiredResultInputs: ["governed appointment demand", "staffed and schedulable capacity", "mature-clinic performance benchmark", "trade-area definition", "clinic unit economics and property costs"],
+    expectedLearning: "Whether first-party demand, appointment capacity, mature-clinic performance, workforce supply, and unit economics support continued market research.",
+    successRule: "Advance only if the approved demand benchmark is met, no material capacity or workforce constraint remains, and the operating owner confirms the market is viable enough for trade-area research.",
+    stopOrRollbackRule: "Stop or hold if demand misses the benchmark, existing capacity or cannibalization removes the whitespace case, or required operating evidence cannot be made comparable.",
+    evidenceNote: "The current household-per-clinic contrast prioritizes validation; it does not estimate appointments, clinic economics, or the value of opening a site.",
+  };
+}
+
 function dateOnly(value: Date) {
   return value.toISOString().slice(0, 10);
 }
@@ -66,6 +149,8 @@ function addBusinessDays(start: Date, days: number) {
 }
 
 function marketNameFromLead(lead: InvestigationLead) {
+  const registeredMarket = publicMarkets.find((market) => market.cbsa_code === lead.marketIds[0]);
+  if (registeredMarket) return registeredMarket.cbsa_name;
   return lead.title
     .replace(/ has the highest.*$/i, "")
     .replace(/ has (?:higher|mixed|source-linked).*$/i, "")

@@ -103,6 +103,11 @@ test("action handoff uses product readiness language and keeps baseline evidence
   };
   const html = renderToStaticMarkup(createElement(InsightActionPlanPanel, { actionPlan }));
   assert.match(html, /Business outcome still needed · Low confidence/);
+  assert.match(html, /Expected result/);
+  assert.match(html, /Not yet a forecast/);
+  assert.match(html, /How this result is calculated/);
+  assert.match(html, /Sales growth %/);
+  assert.match(html, /CCP gain %/);
   assert.match(html, /KPI/);
   assert.match(html, /Validation threshold/);
   assert.match(html, /Stop condition/);

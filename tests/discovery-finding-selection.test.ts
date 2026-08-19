@@ -30,6 +30,19 @@ function finding(overrides: Partial<AutonomousInsight> & Pick<AutonomousInsight,
       approvalBoundary: "The finding may inform review but cannot authorize a material action.",
     },
     decisionValue: overrides.decisionValue ?? { score: 50, reason: "Default review value for this fixture.", flags: [] },
+    valueTranslation: overrides.valueTranslation ?? {
+      kind: "observed_value",
+      label: "Observed regional signal",
+      statement: "The reviewed metric differs from its comparison cohort.",
+      caveat: "This is descriptive, not causal.",
+    },
+    importance: overrides.importance ?? {
+      score: overrides.decisionValue?.score ?? 50,
+      tier: "watch",
+      label: "Watch",
+      reason: "The test fixture does not yet justify immediate focus.",
+      notificationCandidate: false,
+    },
   };
 }
 

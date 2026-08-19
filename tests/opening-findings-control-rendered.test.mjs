@@ -14,11 +14,20 @@ test("the opening findings inbox loads current findings and exposes a numeric ba
   assert.match(findings, /aria-expanded=\{open\}/);
 });
 
-test("findings can be filtered by stakeholder team and moved into the question composer", () => {
+test("findings can be filtered by stakeholder team and opened without rerunning question analysis", () => {
   assert.match(findings, /\["all", "marketing", "pricing", "cvc"\]/);
   assert.match(findings, /finding\.department === team/);
-  assert.match(findings, /Ask about this finding/);
-  assert.match(evaluation, /onInvestigate=\{onQuestionChange\}/);
+  assert.match(findings, /onOpenDiscovery\(finding\.insightId, run \?\? undefined\)/);
+  assert.match(findings, /Open finding:/);
+  assert.doesNotMatch(findings, /Ask about this finding/);
+});
+
+test("the inbox starts with a short value-ranked focus list and can reveal the full inventory", () => {
+  assert.match(findings, /finding\.importance\.score >= 70/);
+  assert.match(findings, /Show all \{teamFindings\.length\}/);
+  assert.match(findings, /Show focus/);
+  assert.match(findings, /data-importance=\{finding\.importance\.tier\}/);
+  assert.match(findings, /finding\.valueTranslation\.statement/);
 });
 
 test("help, findings, and saved work share one compact toolbar", () => {
@@ -29,10 +38,14 @@ test("help, findings, and saved work share one compact toolbar", () => {
 });
 
 test("the header reset control resets both the map camera and selected map state", () => {
-  assert.ok(evaluation.indexOf("adaptive-map-reset-trigger") > evaluation.indexOf("adaptive-layer-trigger"));
+  assert.ok(evaluation.indexOf("adaptive-map-reset-trigger") < evaluation.indexOf("adaptive-layer-trigger"));
   assert.match(evaluation, /setMapResetRequest\(\(request\) => request \+ 1\)/);
   assert.match(market, /resetRequest=\{resetRequest\}/);
   assert.match(market, /showResetControl=\{!opening\}/);
   assert.match(map, /mapRef\.current\?\.fitBounds\(MAINLAND_MARKET_BOUNDS/);
   assert.match(map, /onReset\(\)/);
+});
+
+test("map help is the right-most control in the opening toolbar", () => {
+  assert.ok(market.indexOf("{openingControls}") < market.indexOf("adaptive-map-help-trigger"));
 });

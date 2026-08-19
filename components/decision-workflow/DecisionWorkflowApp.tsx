@@ -16,6 +16,7 @@ import { SisterGeographiesSection } from "@/components/decision-workflow/SisterG
 import { ValidationWorkplanPanel } from "@/components/decision-workflow/ValidationWorkplanPanel";
 import { EvidenceBundlePanel } from "@/components/evidence/EvidenceBundlePanel";
 import { AutonomousDiscoveryWorkspace } from "@/components/insight-discovery/AutonomousDiscoveryWorkspace";
+import type { CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
 import { evidenceExecutionResponseSchema, type EvidenceExecutionResponse } from "@/lib/evidence-snapshot/contracts";
 import type { CompactSourceReadiness } from "@/lib/data-discovery/readiness-service";
 import { publicMarkets } from "@/lib/data/public-market-ui";
@@ -50,6 +51,7 @@ import {
   buildValidationWorkplan,
   buildSisterFollowUpQuestion,
   deterministicFindingsAndProposalSummary,
+  deterministicReviewablePacketSummary,
   downloadDecisionBrief,
   downloadReviewableActionPacket,
   evaluationPlanSchema,
@@ -215,6 +217,8 @@ export function DecisionWorkflowApp() {
   const [recommendationDrafts, setRecommendationDrafts] = useState<RecommendationDraft[]>([]);
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [sourceReadiness, setSourceReadiness] = useState<CompactSourceReadiness | null>(null);
+  const [selectedDiscoveryFindingId, setSelectedDiscoveryFindingId] = useState<string | null>(null);
+  const [selectedDiscoveryRun, setSelectedDiscoveryRun] = useState<CurrentDataDiscoveryRun | null>(null);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
   const showsActionPackage = plan ? presentsActionPackage(plan) : false;
@@ -372,13 +376,16 @@ export function DecisionWorkflowApp() {
     let cancelled = false;
     void (async () => {
       if (cancelled) return;
+      const localSummary = reviewablePacket
+        ? deterministicReviewablePacketSummary(reviewablePacket)
+        : deterministicFindingsAndProposalSummary(plan, packetAction, evidenceExecution);
       setPacketSummaryState("loading");
-      setPacketSummary(deterministicFindingsAndProposalSummary(plan, packetAction, evidenceExecution));
+      setPacketSummary(localSummary);
       try {
         const response = await fetch("/api/evaluation-plans/summary", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ plan, actionId: packetAction.id, action: packetAction, evidenceExecution }),
+          body: JSON.stringify({ plan, actionId: packetAction.id, action: packetAction, evidenceExecution, packet: reviewablePacket }),
         });
         const payload: unknown = await response.json();
         const parsed = packetFindingsSummarySchema.safeParse(
@@ -390,19 +397,19 @@ export function DecisionWorkflowApp() {
         if (parsed.success) {
           setPacketSummary(parsed.data);
         } else {
-          setPacketSummary(deterministicFindingsAndProposalSummary(plan, packetAction, evidenceExecution));
+          setPacketSummary(localSummary);
         }
         setPacketSummaryState("ready");
       } catch {
         if (cancelled) return;
-        setPacketSummary(deterministicFindingsAndProposalSummary(plan, packetAction, evidenceExecution));
+        setPacketSummary(localSummary);
         setPacketSummaryState("ready");
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [evidenceExecution, persistedReviewablePacket, phase, plan, packetAction]);
+  }, [evidenceExecution, persistedReviewablePacket, phase, plan, packetAction, reviewablePacket]);
 
   async function startWorkflow(
     nextQuestion = question,
@@ -933,7 +940,11 @@ export function DecisionWorkflowApp() {
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
               }}
               onSubmit={(nextPerspectiveId, activeViewId) => void startWorkflow(question, nextPerspectiveId, activeViewId)}
-              onDiscoverInsights={() => setPhase("discovery")}
+              onDiscoverInsights={(findingId, discoveryRun) => {
+                setSelectedDiscoveryFindingId(findingId ?? null);
+                setSelectedDiscoveryRun(discoveryRun ?? null);
+                setPhase("discovery");
+              }}
               onPerspectiveChange={() => {
                 setQuestion("");
                 setSisterFollowUpNotice(null);
@@ -967,7 +978,9 @@ export function DecisionWorkflowApp() {
         {isDiscoveryPage ? (
           <section className="decision-content">
             <AutonomousDiscoveryWorkspace
-              onBack={() => setPhase("question")}
+              initialFindingId={selectedDiscoveryFindingId}
+              initialRun={selectedDiscoveryRun}
+              onBack={() => { setSelectedDiscoveryFindingId(null); setSelectedDiscoveryRun(null); setPhase("question"); }}
               onInvestigate={(nextQuestion) => { setQuestion(nextQuestion); setPhase("question"); }}
             />
           </section>

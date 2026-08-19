@@ -53,6 +53,32 @@ test("the first digest favors stakeholder decisions over raw market scale", () =
   assert.ok(run.primaryFindings.some((finding) => finding.department === "pricing" && finding.decisionValue.flags.includes("coverage_risk")));
 });
 
+test("autonomous findings translate statistical signals into quantified value or decision-risk language", () => {
+  const run = runCurrentDataInsightDiscovery(fixed);
+  const mcAllen = run.findings.find((finding) => finding.marketName === "McAllen-Edinburg-Mission, TX" && finding.department === "marketing");
+  assert.match(mcAllen?.headline ?? "", /Test whether.*1\.8×.*attributed spend efficiency can scale/i);
+  assert.equal(mcAllen?.valueTranslation.kind, "modeled_scenario");
+  assert.match(mcAllen?.valueTranslation.statement ?? "", /\$1,000.*259 attributed conversions.*1\.8×.*median/i);
+  assert.match(mcAllen?.valueTranslation.caveat ?? "", /not marginal lift.*forecast/i);
+  assert.match(mcAllen?.analystInterpretation?.recommendedNextDecisionOrAction ?? "", /pre-register a bounded geo test/i);
+  assert.equal(mcAllen?.importance.tier, "priority_now");
+  assert.equal(mcAllen?.importance.notificationCandidate, true);
+
+  const eaglePass = run.findings.find((finding) => finding.marketName === "Eagle Pass, TX" && finding.department === "pricing");
+  assert.match(eaglePass?.headline ?? "", /monitoring is too thin.*local price decision/i);
+  assert.equal(eaglePass?.valueTranslation.kind, "decision_boundary");
+  assert.match(eaglePass?.valueTranslation.statement ?? "", /221 monitored offer rows.*93% below.*183 observed SKUs.*94% below/i);
+  assert.match(eaglePass?.analystInterpretation?.recommendedNextDecisionOrAction ?? "", /Repair.*mapped ZIP.*SKU.*coverage/i);
+  assert.equal(eaglePass?.importance.tier, "validate_next");
+  assert.equal(eaglePass?.importance.notificationCandidate, false);
+
+  const phoenix = run.findings.find((finding) => finding.marketName === "Phoenix-Mesa-Chandler, AZ" && finding.department === "cvc");
+  assert.match(phoenix?.headline ?? "", /Prioritize.*appointment and capacity validation/i);
+  assert.match(phoenix?.valueTranslation.statement ?? "", /2\.9 times the median/i);
+  assert.equal(phoenix?.importance.tier, "validate_next");
+  assert.ok(run.findings.every((finding, index, findings) => index === 0 || findings[index - 1]!.importance.score >= finding.importance.score));
+});
+
 test("the same approved snapshots produce a deterministic discovery result", () => {
   const first = runCurrentDataInsightDiscovery(fixed);
   const second = runCurrentDataInsightDiscovery(fixed);

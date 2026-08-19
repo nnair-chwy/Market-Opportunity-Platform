@@ -20,6 +20,7 @@ import {
 import type { WorkflowCategory } from "@/lib/workflow/market-workflow";
 import type { SelectedGeographicContext } from "@/lib/planning/geographic-context";
 import { listStarterQuestions, type PreviousInvestigationQuestion } from "@/lib/questions";
+import type { CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
 
 type SavedPacketPreview = PreviousInvestigationQuestion & {
   id: string;
@@ -32,7 +33,7 @@ type AdaptiveEvaluationWorkspaceProps = {
   savedPackets: SavedPacketPreview[];
   onQuestionChange: (value: string) => void;
   onSubmit: (perspectiveId?: PerspectiveId, activeViewId?: PerspectiveViewId) => void;
-  onDiscoverInsights: () => void;
+  onDiscoverInsights: (findingId?: string, run?: CurrentDataDiscoveryRun) => void;
   onPerspectiveChange: (perspectiveId: PerspectiveId) => void;
   onOpenSaved: () => void;
   onOpenSavedPacket: (id: string) => void;
@@ -290,6 +291,14 @@ export function AdaptiveEvaluationWorkspace({
           ) : null}
           <div className="adaptive-view-secondary-actions" data-controls-owner={comparisonView ? "view-b" : "view-a"}>
             <button
+              className="adaptive-map-reset-trigger"
+              type="button"
+              onClick={() => setMapResetRequest((request) => request + 1)}
+              aria-label="Reset map to national view"
+            >
+              <span aria-hidden="true">↶</span> Reset
+            </button>
+            <button
               className={`adaptive-layer-trigger${layerManagerOpen ? " active" : ""}`}
               type="button"
               aria-expanded={layerManagerOpen}
@@ -303,14 +312,6 @@ export function AdaptiveEvaluationWorkspace({
               onClick={() => setLayerManagerOpen((open) => !open)}
             >
               <span aria-hidden="true">◇</span> Map layers
-            </button>
-            <button
-              className="adaptive-map-reset-trigger"
-              type="button"
-              onClick={() => setMapResetRequest((request) => request + 1)}
-              aria-label="Reset map to national view"
-            >
-              Reset
             </button>
             <button
               className={`adaptive-add-view-trigger${comparisonView ? " active" : ""}`}
@@ -422,7 +423,6 @@ export function AdaptiveEvaluationWorkspace({
           <>
             <OpeningFindingsControl
               onOpenDiscovery={onDiscoverInsights}
-              onInvestigate={onQuestionChange}
             />
             {savedPackets.length > 0 ? (
               <button

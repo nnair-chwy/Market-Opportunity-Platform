@@ -784,6 +784,7 @@ export function AdaptiveMarketWorkspace({
         <div className="adaptive-opening-info-stack" aria-label="Map context help">
           <div className="adaptive-opening-disclosure">
             <div className="adaptive-opening-toolbar" role="toolbar" aria-label="Map help, findings, and saved work">
+              {openingControls}
               <button
                 className="adaptive-map-help-trigger"
                 type="button"
@@ -792,7 +793,6 @@ export function AdaptiveMarketWorkspace({
                 aria-controls="adaptive-opening-map-help"
                 onClick={() => setMapHelpOpen((open) => !open)}
               >?</button>
-              {openingControls}
             </div>
             {mapHelpOpen ? <div id="adaptive-opening-map-help" className="adaptive-opening-help-panel">
             <div className="adaptive-opening-map-chrome" role="status">

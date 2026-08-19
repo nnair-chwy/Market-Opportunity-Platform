@@ -220,6 +220,9 @@ export function interpretAutonomousFinding(input: AutonomousAnalystInterpretatio
   const partnerRoute = validationPartner(teamRoute);
   const partner = getReceivingTeam(partnerRoute.teamId);
   const isClinicCapacityReview = finding.department === "cvc" && teamRoute.primaryTeam.teamId === "clinic_operations";
+  const isMarketingEfficiencyConflict = finding.department === "marketing" && finding.decisionValue.flags.includes("cross_measure_contradiction");
+  const isPricingCoverageRisk = finding.department === "pricing" && finding.decisionValue.flags.includes("coverage_risk");
+  const isPricingAggregateAnomaly = finding.department === "pricing" && /quarantine|extreme competitor aggregate/i.test(finding.headline);
   const conclusionSuffix: Record<AnalystActionabilityLevel, string> = {
     decision_ready: "The supplied outcome, compatibility, guardrail, lineage, and approval gates support authorized decision review, not automatic execution.",
     test_ready: "The supplied outcome, compatibility, guardrail, and lineage gates support a controlled test, but not a live lever change.",
@@ -238,6 +241,12 @@ export function interpretAutonomousFinding(input: AutonomousAnalystInterpretatio
       ? `Validate appointment demand, staffed and schedulable capacity, status accuracy, clinic maturity, and utilization in ${finding.marketName}; do not add staffing or capacity from this signal yet.`
       : isClinicCapacityReview && actionabilityLevel === "descriptive_only"
         ? `Keep ${finding.marketName} as clinic-capacity context only until appointment, staffing, maturity, and lineage are compatible.`
+        : isMarketingEfficiencyConflict && actionabilityLevel === "investigation_ready"
+          ? `Verify the configured conversion, join new-customer and contribution outcomes, then pre-register a bounded geo test of query, audience, or creative changes in ${finding.marketName}; keep live spend unchanged until the test is approved.`
+          : isPricingCoverageRisk && actionabilityLevel === "investigation_ready"
+            ? `Repair ${finding.marketName}'s mapped ZIP, retailer, category, SKU, package, and freshness coverage before using its apparent competitor price or availability in a pricing review.`
+            : isPricingAggregateAnomaly && actionabilityLevel === "investigation_ready"
+              ? `Quarantine ${finding.marketName}'s aggregate from pricing decisions and audit repeated rows, geography joins, retailer/category mix, and package equalization before rerunning the screen.`
         : policy.next[actionabilityLevel](finding),
     recommendationKind: actionabilityLevel === "decision_ready"
       ? "authorized_review"

@@ -198,9 +198,17 @@ test("View A source wiring preserves mode switching, sync, and fail-safe unsuppo
   assert.doesNotMatch(market, /from ["'][^"']*\/evaluation\/engine/);
 
   assert.match(css, /\.adaptive-opening \{[^}]*overflow-x: hidden/s);
+  assert.match(css, /\.adaptive-opening \.unified-map-card \{[^}]*inset: 0;[^}]*margin: 0;/s);
   assert.match(css, /\.adaptive-view-controls/);
   assert.match(css, /\.adaptive-view-primary-row/);
   assert.match(css, /\.adaptive-view-secondary-actions/);
+  assert.match(css, /\.adaptive-perspective \{[^}]*height: 54px;[^}]*min-height: 54px;/s);
+  assert.match(css, /\.adaptive-view-controls \{[^}]*min-height: 54px;/s);
+  assert.match(css, /\.adaptive-opening-info-stack \{[^}]*top: 4\.67rem;/s);
+  assert.match(css, /\.adaptive-opening-tool \{[^}]*height: 30px;[^}]*padding: 0 \.5rem;/s);
+  assert.match(css, /\.adaptive-map-reset-trigger \{[^}]*height: 30px;/s);
+  assert.match(css, /\.adaptive-layer-trigger \{[^}]*height: 30px;/s);
+  assert.match(css, /\.adaptive-add-view-trigger \{[^}]*height: 30px;/s);
   assert.match(css, /@media \(max-width: 1050px\)/);
   assert.match(css, /@media \(max-width: 680px\)/);
   assert.match(css, /\.adaptive-opening \.adaptive-view-controls \{ display: grid; \}/);

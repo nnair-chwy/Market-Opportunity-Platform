@@ -56,17 +56,17 @@ test("opening experience exposes the approved perspective-specific evidence ques
 
 test("opening experience offers a question-free autonomous insight path", () => {
   assert.match(questionWorkspace, /OpeningFindingsControl/);
-  assert.match(openingFindings, /Findings worth a closer look/);
+  assert.match(openingFindings, /Evidence inbox/);
   assert.match(openingFindings, /Run discovery/);
   assert.match(workflow, /phase === "discovery"/);
   assert.match(workflow, /AutonomousDiscoveryWorkspace/);
   assert.match(discoveryWorkspace, /\/api\/insight-discovery/);
-  assert.match(discoveryWorkspace, /investigations ran automatically/);
+  assert.match(discoveryWorkspace, /predefined regional questions/);
   assert.match(discoveryWorkspace, /five-item portfolio digest plus every additional qualified finding/i);
-  assert.match(discoveryWorkspace, /prepared read-only Snowflake request/);
-  assert.match(discoveryWorkspace, /Owner for the next step/);
-  assert.match(discoveryWorkspace, /Investigate this finding/);
-  assert.match(discoveryWorkspace, /Run again/);
+  assert.match(discoveryWorkspace, /Evidence needed next/);
+  assert.match(discoveryWorkspace, /Decision screens tested/);
+  assert.match(discoveryWorkspace, /Open investigation/);
+  assert.match(discoveryWorkspace, /Find next signals/);
   assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
   assert.match(discoveryWorkspace, /no data refresh is claimed/i);
   assert.match(discoveryWorkspace, /reviewed query registry · deterministic evidence checks/i);

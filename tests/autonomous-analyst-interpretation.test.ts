@@ -37,6 +37,19 @@ function finding(department: AutonomousInsight["department"], overrides: Partial
       approvalBoundary: route.approvalBoundary,
     },
     decisionValue: { score: 50, reason: "A reviewable test fixture.", flags: [] },
+    valueTranslation: {
+      kind: "observed_value",
+      label: "Observed regional signal",
+      statement: "The reviewed metric differs from its comparison cohort.",
+      caveat: "This is descriptive, not causal.",
+    },
+    importance: {
+      score: 50,
+      tier: "watch",
+      label: "Watch",
+      reason: "The fixture does not yet justify immediate focus.",
+      notificationCandidate: false,
+    },
     ...overrides,
   };
 }

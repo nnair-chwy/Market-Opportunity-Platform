@@ -12,15 +12,14 @@ const TEAM_LABELS: Record<PerspectiveId, string> = {
 
 export function OpeningFindingsControl({
   onOpenDiscovery,
-  onInvestigate,
 }: {
-  onOpenDiscovery: () => void;
-  onInvestigate: (question: string) => void;
+  onOpenDiscovery: (findingId?: string, run?: CurrentDataDiscoveryRun) => void;
 }) {
   const [run, setRun] = useState<CurrentDataDiscoveryRun | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [team, setTeam] = useState<"all" | PerspectiveId>("all");
+  const [showAll, setShowAll] = useState(false);
   const controlRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,10 +58,18 @@ export function OpeningFindingsControl({
     };
   }, [open]);
 
-  const findings = useMemo(
+  const teamFindings = useMemo(
     () => run?.findings.filter((finding) => team === "all" || finding.department === team) ?? [],
     [run, team],
   );
+  const findings = useMemo(
+    () => showAll ? teamFindings : teamFindings.filter((finding) => finding.importance.score >= 70),
+    [showAll, teamFindings],
+  );
+  const importanceCounts = useMemo(() => ({
+    priority: run?.findings.filter((finding) => finding.importance.tier === "priority_now").length ?? 0,
+    validate: run?.findings.filter((finding) => finding.importance.tier === "validate_next").length ?? 0,
+  }), [run]);
 
   return (
     <div className="adaptive-findings-control" ref={controlRef}>
@@ -82,55 +89,72 @@ export function OpeningFindingsControl({
       </button>
 
       {open ? (
-        <section id="adaptive-findings-panel" className="adaptive-findings-panel" aria-labelledby="adaptive-findings-title">
+        <section id="adaptive-findings-panel" className="adaptive-findings-panel" aria-label="Findings inbox">
           <header>
-            <div>
+            <div className="adaptive-findings-heading">
               <span>Evidence inbox</span>
-              <h2 id="adaptive-findings-title">Findings worth a closer look</h2>
+              <div className="adaptive-findings-filters" role="tablist" aria-label="Filter findings by team">
+                {(["all", "marketing", "pricing", "cvc"] as const).map((item) => {
+                  const count = item === "all"
+                    ? run?.findings.length ?? 0
+                    : run?.findings.filter((finding) => finding.department === item).length ?? 0;
+                  return (
+                    <button key={item} type="button" role="tab" aria-selected={team === item} onClick={() => setTeam(item)}>
+                      {item === "all" ? "All" : TEAM_LABELS[item]} <span>{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <button type="button" aria-label="Close findings" onClick={() => setOpen(false)}>×</button>
           </header>
-
-          <div className="adaptive-findings-filters" role="tablist" aria-label="Filter findings by team">
-            {(["all", "marketing", "pricing", "cvc"] as const).map((item) => {
-              const count = item === "all"
-                ? run?.findings.length ?? 0
-                : run?.findings.filter((finding) => finding.department === item).length ?? 0;
-              return (
-                <button key={item} type="button" role="tab" aria-selected={team === item} onClick={() => setTeam(item)}>
-                  {item === "all" ? "All" : TEAM_LABELS[item]} <span>{count}</span>
-                </button>
-              );
-            })}
-          </div>
 
           <div className="adaptive-findings-list" aria-live="polite">
             {!run && !error ? <p role="status">Reviewing the current approved data…</p> : null}
             {error ? <p role="alert">{error}</p> : null}
             {findings.map((finding) => (
-              <article key={finding.insightId}>
-                <div>
-                  <span>{TEAM_LABELS[finding.department]}</span>
+              <article key={finding.insightId} data-importance={finding.importance.tier}>
+                <div className="adaptive-finding-heading-row">
+                  <div className="adaptive-finding-heading-tags">
+                    <span className="adaptive-finding-team">{TEAM_LABELS[finding.department]}</span>
+                    <span className="adaptive-finding-importance" data-tier={finding.importance.tier}>
+                      <strong>{finding.importance.label}</strong>
+                      <span>{finding.importance.score}</span>
+                    </span>
+                  </div>
                   <small>{finding.marketName}</small>
                 </div>
                 <h3>{finding.headline}</h3>
-                <p>{finding.analystInterpretation?.recommendedNextDecisionOrAction ?? finding.whyInteresting}</p>
+                <div className="adaptive-finding-value" data-kind={finding.valueTranslation.kind}>
+                  <span>{finding.valueTranslation.label}</span>
+                  <strong>{finding.valueTranslation.statement}</strong>
+                </div>
+                <p><b>Next:</b> {finding.analystInterpretation?.recommendedNextDecisionOrAction ?? finding.nextValidation}</p>
                 <button
+                  className="adaptive-finding-open"
                   type="button"
                   onClick={() => {
-                    onInvestigate(finding.question);
+                    onOpenDiscovery(finding.insightId, run ?? undefined);
                     setOpen(false);
                   }}
+                  aria-label={`Open finding: ${finding.headline}`}
                 >
-                  Ask about this finding
+                  View <span aria-hidden="true">→</span>
                 </button>
               </article>
             ))}
           </div>
 
           <footer>
-            <span>{run ? `${findings.length} of ${run.findings.length} findings shown` : "Preparing findings"}</span>
-            <button type="button" onClick={onOpenDiscovery}>Run discovery →</button>
+            <span>{run ? `${importanceCounts.priority} priority now · ${findings.length} in focus · ${run.findings.length} total` : "Preparing findings"}</span>
+            <div>
+              {run && teamFindings.length > findings.length ? (
+                <button type="button" onClick={() => setShowAll(true)}>Show all {teamFindings.length}</button>
+              ) : showAll ? (
+                <button type="button" onClick={() => setShowAll(false)}>Show focus</button>
+              ) : null}
+              <button type="button" onClick={() => onOpenDiscovery()}>Run discovery →</button>
+            </div>
           </footer>
         </section>
       ) : null}

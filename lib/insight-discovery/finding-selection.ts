@@ -100,7 +100,8 @@ function departmentIndex(department: PerspectiveId) {
 function compareFindings(left: AutonomousInsight, right: AutonomousInsight) {
   const leftQuality = evaluateDiscoveryFindingQuality(left);
   const rightQuality = evaluateDiscoveryFindingQuality(right);
-  return (right.decisionValue?.score ?? 0) - (left.decisionValue?.score ?? 0)
+  return (right.importance?.score ?? right.decisionValue?.score ?? 0) - (left.importance?.score ?? left.decisionValue?.score ?? 0)
+    || (right.decisionValue?.score ?? 0) - (left.decisionValue?.score ?? 0)
     || right.signalCount - left.signalCount
     || rightQuality.distinctSourceCount - leftQuality.distinctSourceCount
     || rightQuality.distinctMarketCount - leftQuality.distinctMarketCount

@@ -8,7 +8,7 @@ import {
 } from "./contracts.ts";
 import type { InvestigationFollowUp, InvestigationLead, MarketInvestigation } from "./market-investigation.ts";
 import type { AnalysisBrief } from "./analysis-brief.ts";
-import type { InsightActionPlan } from "./insight-action-plan.ts";
+import { boundedActionSummary, type InsightActionPlan } from "./insight-action-plan.ts";
 import {
   evidencePlanSchema,
   evaluationDefinitionDraftSchema,
@@ -487,6 +487,7 @@ export function buildPacketAnswer(
   plan: EvaluationPlan,
   action: PlannedAction = proposedActionFromPlan(plan),
   evidenceExecution: EvidenceExecutionResponse | null = null,
+  investigation?: MarketInvestigation,
 ): PacketAnswer {
   const facts = (evidenceExecution?.evidenceBundle ?? []).slice(0, 60).map((item) => ({
     evidenceId: item.evidenceId,
@@ -504,7 +505,7 @@ export function buildPacketAnswer(
     warning: item.warning,
   }));
   const state: PacketAnswer["state"] = !evidenceExecution
-    ? "unavailable"
+    ? investigation?.leads.length ? "partial" : "unavailable"
     : evidenceExecution.status === "blocked" || evidenceExecution.status === "failed"
       ? "blocked"
       : evidenceExecution.status === "partial"
@@ -512,11 +513,14 @@ export function buildPacketAnswer(
         : "answered";
   const directAnswer = evidenceExecution
     ? querySpecificDirectAnswer(plan, evidenceExecution, facts)
-    : "The validated plan is available, but no registered evidence execution was supplied, so this packet does not claim an analytical answer.";
+    : investigation?.leads.length
+      ? boundedSummaryText(`A descriptive answer is available: ${investigation.leads.length} source-linked finding${investigation.leads.length === 1 ? "" : "s"} survived the registered ${investigation.screeningScope.requestedMeasure} screen. ${investigation.leads.slice(0, 3).map((lead) => `${lead.title}: ${boundedSummaryText(lead.observation, 280)}`).join(" ")} These findings support investigation and validation, but do not support a material business action.`, 1800)
+      : "The validated plan is available, but no registered evidence execution was supplied, so this packet does not claim an analytical answer.";
   const limitations = [...new Set([
     ...(evidenceExecution?.qualityWarnings ?? []),
     ...(evidenceExecution?.missingEvidence ?? []),
     ...(evidenceExecution?.unknowns ?? []),
+    ...(investigation?.readiness.missing ?? []),
     ...plan.missingEvidence,
     ...plan.missingApprovals,
   ])].slice(0, 40);
@@ -653,7 +657,7 @@ export function assembleReviewableActionPacket(
       executionMode: evidenceExecution?.executionMode ?? null,
     },
     action,
-    packetAnswer: buildPacketAnswer(plan, action, evidenceExecution),
+    packetAnswer: buildPacketAnswer(plan, action, evidenceExecution, investigation),
     findings: plan.findings,
     execution,
     evidenceExecution,
@@ -1136,57 +1140,70 @@ export function formatDecisionBriefDocument(packet: ReviewableActionPacket): str
   const owner = packet.actionPlan?.decisionOwner ?? packet.action.owner;
   const reviewDate = packet.actionPlan?.decisionDueDate ?? packet.action.timing;
   const recommendation = packet.actionPlan?.recommendation ?? packet.action.summary;
-  const places = packet.geographicFocus.placeLabels.join("; ") || packet.geographicFocus.message;
+  const places = packet.actionPlan?.marketName
+    ?? (packet.geographicFocus.placeLabels.join("; ") || packet.geographicFocus.message);
   const coveragePercent = packet.answerCoverage.requiredCount
     ? Math.round((packet.answerCoverage.coveredRequiredCount / packet.answerCoverage.requiredCount) * 100)
     : 0;
   const isDecisionReady = packet.answerCoverage.overallStatus === "complete";
-  const evidenceLabel = packet.analysisAppendix?.evidenceStage === "triangulated_finding"
-    ? "Triangulated findings"
-    : "Screening signals—not final findings";
   const selectedLead = packet.reviewContext?.selectedLeadId
     ? packet.analysisAppendix?.leads.find((lead) => lead.id === packet.reviewContext?.selectedLeadId)
     : packet.analysisAppendix?.leads[0];
-  const orderedLeads = packet.analysisAppendix
-    ? [
-      ...(selectedLead ? [selectedLead] : []),
-      ...packet.analysisAppendix.leads.filter((lead) => lead.id !== selectedLead?.id),
-    ].slice(0, 4)
-    : [];
   const unmetRequirements = packet.answerCoverage.domainCoverage
     .filter((item) => item.required && item.status !== "covered" && item.status !== "not_applicable")
     .slice(0, 5);
-  const challengeNotes = Array.from(new Set([
-    ...(selectedLead?.challenge ? [selectedLead.challenge] : []),
-    ...(packet.analysisAppendix?.rejectedPatterns ?? []),
-    ...(packet.analysisAppendix?.limitations ?? []),
-  ])).slice(0, 4);
   const firstWorkstream = packet.actionPlan?.workstreams[0];
   const firstValidationWorkstream = packet.validationWorkplan?.workstreams[0];
   const sourceIds = packet.analysisAppendix?.sourceIds
     ?? packet.calculationVersions.evidenceSourceIds;
-  const decisionStatus = isDecisionReady
-    ? "Ready for accountable review"
-    : "Research needed before a decision-level recommendation";
-  const boundedRecommendation = isDecisionReady
-    ? recommendation
-    : `Do not treat the current ${packet.analysisAppendix?.evidenceStage === "signal" ? "screening signal" : "partial evidence"} as authorization for a material action. ${recommendation}`;
+  const boundedAction = packet.actionPlan ? boundedActionSummary(packet.actionPlan) : null;
+  const actionNow = boundedAction?.action ?? recommendation;
+  const successRule = boundedAction?.successRule
+    ?? packet.actionPlan?.validationThreshold
+    ?? packet.action.validationThreshold
+    ?? "The accountable owner confirms the result clears the approved decision threshold.";
+  const stopRule = boundedAction?.stopOrRollbackRule
+    ?? packet.actionPlan?.stopCondition
+    ?? packet.action.stopCondition
+    ?? "Stop if required evidence is missing or the agreed business guardrail fails.";
+  const evidenceBoundary = boundedAction?.evidenceNote
+    ?? directAnswer?.content
+    ?? packet.answerCoverage.permittedConclusion;
 
   return [
     `# Decision brief: ${packet.originalQuestion}`,
     "",
-    `> **${decisionStatus}.** ${packet.reviewDisclaimer}`,
+    `> **Decision status:** ${isDecisionReady ? "Ready for accountable review." : "Proposed bounded action; measurement and approval gates remain."}`,
     "",
-    "## Recommendation",
-    boundedRecommendation,
+    "## Decision at a glance",
+    "### Proposed action",
+    actionNow,
     "",
     `- **Decision owner:** ${owner}`,
     `- **Review timing:** ${reviewDate}`,
     `- **Geography:** ${places}`,
-    `- **Evidence coverage:** ${packet.answerCoverage.coveredRequiredCount} of ${packet.answerCoverage.requiredCount} required items (${coveragePercent}%)`,
+    ...(boundedAction ? [
+      `- **Test window:** ${boundedAction.testWindow}`,
+      `- **Expected result:** ${boundedAction.expectedResult}`,
+      `- **What this should prove:** ${boundedAction.expectedLearning}`,
+    ] : []),
+    `- **Success rule:** ${successRule}`,
+    `- **Stop or rollback:** ${stopRule}`,
     "",
-    "## What the evidence supports",
-    directAnswer?.content ?? packet.answerCoverage.permittedConclusion,
+    ...(boundedAction ? [
+      "### How the expected result is calculated",
+      ...boundedAction.calculationSteps.map((step) => `- ${step}`),
+      `- **Inputs still required:** ${boundedAction.requiredResultInputs.join("; ")}`,
+      "",
+    ] : []),
+    "### Why this region is first",
+    selectedLead?.observation ?? directAnswer?.content ?? packet.answerCoverage.permittedConclusion,
+    "",
+    selectedLead?.businessMeaning ?? "This is the strongest source-linked lead available for the confirmed question.",
+    "",
+    `**Evidence boundary:** ${evidenceBoundary}`,
+    "",
+    `**Coverage:** ${packet.answerCoverage.coveredRequiredCount} of ${packet.answerCoverage.requiredCount} required evidence items (${coveragePercent}%).`,
     "",
     ...(packet.analysisAppendix?.portfolioPattern ? [
       "## Portfolio pattern",
@@ -1211,23 +1228,12 @@ export function formatDecisionBriefDocument(packet: ReviewableActionPacket): str
       `**Recommended follow-up:** ${packet.analysisAppendix.analystRevision.recommendedFollowUp}`,
       "",
     ] : []),
-    `## ${evidenceLabel}`,
-    ...(orderedLeads.length ? orderedLeads.flatMap((lead) => [
-      `### ${lead.title}`,
-      `- **Observed:** ${lead.observation}`,
-      `- **Why it matters:** ${lead.businessMeaning}`,
-      `- **Interpretation boundary:** ${lead.challenge}`,
-      "",
-    ]) : ["No question-compatible regional finding was produced from the permitted evidence.", ""]),
-    "## What is still unknown",
+    "## Evidence to connect before scaling",
     ...(unmetRequirements.length
       ? unmetRequirements.map((item) => `- **${item.label}:** ${item.explanation}`)
       : ["- No required evidence gap remains in the answer contract."]),
     "",
-    "## Checks that could change the conclusion",
-    ...(challengeNotes.length ? challengeNotes.map((item) => `- ${item}`) : ["- No additional challenge was recorded."]),
-    "",
-    "## Recommended next action",
+    "## Execution owner and immediate deliverable",
     ...(firstWorkstream ? [
       `**${firstWorkstream.title}**`,
       "",
@@ -1236,9 +1242,6 @@ export function formatDecisionBriefDocument(packet: ReviewableActionPacket): str
       `- **Action:** ${firstWorkstream.action}`,
       `- **Deliverable:** ${firstWorkstream.deliverable}`,
       `- **Done when:** ${firstWorkstream.completionCriteria}`,
-      ...(firstWorkstream.kpi ? [`- **KPI:** ${firstWorkstream.kpi}`] : []),
-      ...(firstWorkstream.validationThreshold ? [`- **Validation threshold:** ${firstWorkstream.validationThreshold}`] : []),
-      ...(firstWorkstream.stopCondition ? [`- **Stop condition:** ${firstWorkstream.stopCondition}`] : []),
     ] : firstValidationWorkstream ? [
       `**${firstValidationWorkstream.title}**`,
       "",
@@ -1263,8 +1266,7 @@ export function formatDecisionBriefDocument(packet: ReviewableActionPacket): str
     `- **Snapshot:** ${packet.analysisAppendix ? `${packet.analysisAppendix.dataSnapshotLabel} (${packet.analysisAppendix.dataSnapshotVersion})` : "See audit appendix"}`,
     `- **Accountable reviewer:** ${packet.finalAnswer.reviewRequiredBy}`,
     "",
-    "---",
-    "The audit appendix contains the full answer contract, calculation method, coverage checks, limitations, source versions, and structured record.",
+    "See the audit appendix for methods, limitations, and source versions.",
     "",
   ].join("\n");
 }
@@ -1337,5 +1339,37 @@ export function deterministicFindingsAndProposalSummary(
     whyActionRelevant: boundedSummaryText(`${action.title}: ${action.summary}`),
     ownerNextStep: boundedSummaryText(`${action.owner} should ${action.nextStep} Timing: ${action.timing}.`),
     remainsUnknown: boundedSummaryText(`Missing evidence: ${answer.limitations.join("; ") || plan.evidenceBoundary}`),
+  });
+}
+
+export function deterministicReviewablePacketSummary(
+  packet: ReviewableActionPacket,
+): PacketFindingsSummary {
+  const directAnswer = packet.finalAnswer.sections.find((section) => section.sectionId === "direct_answer")?.content
+    ?? packet.packetAnswer.directAnswer;
+  const missingEvidence = packet.finalAnswer.sections.find((section) => section.sectionId === "missing_evidence")?.content
+    || packet.missingEvidence.join("; ")
+    || packet.evidenceBoundary;
+  const leads = packet.analysisAppendix?.leads ?? [];
+  const evidenceStatement = leads.length
+    ? `A descriptive answer is available: ${leads.length} source-linked finding${leads.length === 1 ? "" : "s"} survived the registered investigation. Leading findings: ${leads.slice(0, 3).map((lead) => lead.title).join("; ")}.`
+    : directAnswer;
+  const actionBoundary = leads.length
+    ? "These findings support further investigation, but they do not support or authorize a material business action."
+    : "This draft does not approve spend, leases, openings, campaigns, or other material actions.";
+
+  return packetFindingsSummarySchema.parse({
+    title: "Findings and proposed action",
+    draftOnlyNotice:
+      "Draft summary for human review only. It restates the validated action packet and is not a final real-estate or business decision.",
+    origin: "deterministic_fallback",
+    state: "deterministic_fallback",
+    modelVersion: null,
+    promptVersion: PACKET_SUMMARY_PROMPT_VERSION,
+    summary: boundedSummaryText(`${evidenceStatement} ${actionBoundary} ${packet.action.owner} should ${packet.action.nextStep} This remains draft-only for human review.`, 1400),
+    evidenceIndicates: boundedSummaryText(evidenceStatement),
+    whyActionRelevant: boundedSummaryText(`${packet.action.title}: ${packet.action.summary}`),
+    ownerNextStep: boundedSummaryText(`${packet.action.owner} should ${packet.action.nextStep} Timing: ${packet.action.timing}.`),
+    remainsUnknown: boundedSummaryText(`Remaining limitation: ${missingEvidence}`),
   });
 }

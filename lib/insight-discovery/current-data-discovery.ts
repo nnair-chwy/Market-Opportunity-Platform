@@ -8,8 +8,10 @@ import { assessGovernedSnowflakeEscalationFromLocalEvidence, type GovernedSnowfl
 import { interpretAutonomousFinding, type AutonomousAnalystInterpretation } from "./analyst-interpretation.ts";
 import { selectDiscoveryFindings, type DiscoveryFindingSelectionCounts } from "./finding-selection.ts";
 import { encodeInsightDiscoveryCursor } from "./rerun-contract.ts";
+import { getApprovedWorkspaceSnapshotDataset } from "../perspectives/approved-workspace-snapshot.ts";
+import type { WorkspaceSnapshotDatasetId } from "../perspectives/workspace-snapshot.ts";
 
-export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v2" as const;
+export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v3" as const;
 
 export type DiscoveryHypothesis = {
   id: string;
@@ -66,6 +68,19 @@ export type AutonomousInsight = {
     score: number;
     reason: string;
     flags: Array<"cross_measure_contradiction" | "coverage_risk" | "scale_only" | "capacity_validation" | "peer_diligence">;
+  };
+  valueTranslation: {
+    kind: "observed_value" | "derived_indicator" | "modeled_scenario" | "decision_boundary";
+    label: string;
+    statement: string;
+    caveat: string;
+  };
+  importance: {
+    score: number;
+    tier: "priority_now" | "validate_next" | "watch";
+    label: "Priority now" | "Validate next" | "Watch";
+    reason: string;
+    notificationCandidate: boolean;
   };
   analystInterpretation?: AutonomousAnalystInterpretation;
 };
@@ -216,6 +231,162 @@ function decisionValueForGroup(group: LeadOccurrence[]): AutonomousInsight["deci
   return { score: Math.max(0, Math.min(100, score)), reason, flags };
 }
 
+type GroupMetric = {
+  id: string;
+  label: string;
+  rawValue: number | null;
+  formattedValue: string;
+  percentile: number;
+};
+
+function groupMetrics(group: LeadOccurrence[]) {
+  const metrics = new Map<string, GroupMetric>();
+  for (const item of group) {
+    if (item.lead.measureValue) {
+      metrics.set(item.hypothesis.viewId, {
+        id: item.hypothesis.viewId,
+        label: item.lead.measureValue.label,
+        rawValue: item.lead.measureValue.rawValue,
+        formattedValue: item.lead.measureValue.formattedValue,
+        percentile: item.lead.measureValue.percentile,
+      });
+    }
+    for (const measure of item.lead.supportingMeasures ?? []) {
+      if (!metrics.has(measure.id)) {
+        const parsedValue = Number(measure.formattedValue.replace(/[^0-9.-]+/g, ""));
+        metrics.set(measure.id, { ...measure, rawValue: Number.isFinite(parsedValue) ? parsedValue : null });
+      }
+    }
+  }
+  return metrics;
+}
+
+function snapshotMedian(datasetId: WorkspaceSnapshotDatasetId) {
+  const values = getApprovedWorkspaceSnapshotDataset(datasetId).values
+    .map((item) => item.rawValue)
+    .filter(Number.isFinite)
+    .sort((left, right) => left - right);
+  if (!values.length) return null;
+  const middle = Math.floor(values.length / 2);
+  return values.length % 2 ? values[middle]! : (values[middle - 1]! + values[middle]!) / 2;
+}
+
+function relativeToMedian(value: number, median: number) {
+  if (value >= median * 10) return `${(value / median).toLocaleString("en-US", { maximumFractionDigits: 0 })}× the snapshot median`;
+  const difference = Math.abs(value / median - 1) * 100;
+  return `${difference.toFixed(0)}% ${value < median ? "below" : "above"} the snapshot median`;
+}
+
+function synthesizedHeadline(name: string, department: PerspectiveId, decisionValue: AutonomousInsight["decisionValue"], metrics: Map<string, GroupMetric>, fallback: string) {
+  if (decisionValue.flags.includes("coverage_risk")) {
+    return `${name}: competitor monitoring is too thin to support a local price decision`;
+  }
+  if (decisionValue.flags.includes("cross_measure_contradiction")) {
+    const ctr = metrics.get("paid_search_ctr");
+    const conversionRate = metrics.get("marketing_paid_search_conversion_rate");
+    const cpa = metrics.get("marketing_paid_search_cost_per_conversion");
+    const medianCpa = snapshotMedian("marketing_paid_search_cost_per_conversion");
+    const attributedEfficiencyRatio = cpa?.rawValue && medianCpa ? medianCpa / cpa.rawValue : null;
+    if ((ctr?.percentile ?? 50) <= 10 && ((conversionRate?.percentile ?? 0) >= 90 || (cpa?.percentile ?? 100) <= 10)) {
+      return attributedEfficiencyRatio && attributedEfficiencyRatio >= 1.1
+        ? `Test whether ${name}'s ${attributedEfficiencyRatio.toFixed(1)}× observed attributed spend efficiency can scale`
+        : `Test whether ${name}'s strong post-click efficiency can scale`;
+    }
+    return `Diagnose ${name}'s conflicting paid-search response and attributed efficiency before changing spend`;
+  }
+  if (decisionValue.flags.includes("capacity_validation")) return `Prioritize ${name} for appointment and capacity validation—not automatic expansion`;
+  if (department === "pricing") {
+    const volume = metrics.get("offer_observation_volume");
+    const medianVolume = snapshotMedian("pricing_offer_observation_volume");
+    if (volume?.rawValue && medianVolume && volume.rawValue >= medianVolume * 10) {
+      return `Quarantine ${name}'s extreme competitor aggregate until its joins and duplication are audited`;
+    }
+    if (metrics.has("observed_equalized_price")) return `${name}: observed competitor prices need a matched-SKU comparison before action`;
+  }
+  return fallback;
+}
+
+function valueTranslationForGroup(group: LeadOccurrence[], decisionValue: AutonomousInsight["decisionValue"]): AutonomousInsight["valueTranslation"] {
+  const first = group[0]!;
+  const metrics = groupMetrics(group);
+  if (first.hypothesis.department === "marketing") {
+    const cpa = metrics.get("marketing_paid_search_cost_per_conversion");
+    const medianCpa = snapshotMedian("marketing_paid_search_cost_per_conversion");
+    if (cpa?.rawValue && medianCpa && cpa.rawValue > 0 && medianCpa > 0) {
+      const currentConversions = 1000 / cpa.rawValue;
+      const medianConversions = 1000 / medianCpa;
+      return {
+        kind: "modeled_scenario",
+        label: "Non-incremental spend scenario",
+        statement: `At the observed platform-attributed CPA of ${cpa.formattedValue}, $1,000 corresponds to about ${currentConversions.toFixed(0)} attributed conversions—${(currentConversions / medianConversions).toFixed(1)}× the count implied by the snapshot median CPA of $${medianCpa.toFixed(2)}.`,
+        caveat: "This holds the observed attributed CPA constant. It is not marginal lift, incrementality, a forecast, or a recommendation to change spend.",
+      };
+    }
+  }
+  if (first.hypothesis.department === "pricing") {
+    const volume = metrics.get("offer_observation_volume");
+    const breadth = metrics.get("assortment_breadth");
+    const price = metrics.get("observed_equalized_price");
+    const parts: string[] = [];
+    const volumeMedian = snapshotMedian("pricing_offer_observation_volume");
+    const breadthMedian = snapshotMedian("pricing_assortment_breadth");
+    const priceMedian = snapshotMedian("pricing_observed_equalized_price");
+    if (volume?.rawValue !== null && volume?.rawValue !== undefined && volumeMedian) parts.push(`${volume.formattedValue} monitored offer rows (${relativeToMedian(volume.rawValue, volumeMedian)})`);
+    if (breadth?.rawValue !== null && breadth?.rawValue !== undefined && breadthMedian) parts.push(`${breadth.formattedValue} observed SKUs (${relativeToMedian(breadth.rawValue, breadthMedian)})`);
+    if (price?.rawValue !== null && price?.rawValue !== undefined && priceMedian) parts.push(`${price.formattedValue} observed equalized offer price (${relativeToMedian(price.rawValue, priceMedian)})`);
+    return {
+      kind: "decision_boundary",
+      label: decisionValue.flags.includes("coverage_risk") ? "Coverage audit value" : "Observed competitor context",
+      statement: `${parts.slice(0, 3).join("; ")}. Business value is not estimable until matched Chewy SKU economics, margin, and customer outcomes are joined.`,
+      caveat: "Monitoring depth and product mix can create apparent regional price differences; this is not a price-change opportunity estimate.",
+    };
+  }
+  if (decisionValue.flags.includes("capacity_validation")) {
+    return {
+      kind: "derived_indicator",
+      label: "Footprint-load indicator",
+      statement: first.lead.observation,
+      caveat: "Households per published clinic is a derived screening proxy—not appointment demand, staffed capacity, clinic performance, or proof that another clinic is needed.",
+    };
+  }
+  return {
+    kind: "observed_value",
+    label: "Observed regional signal",
+    statement: first.lead.observation,
+    caveat: "This is descriptive regional evidence, not a causal effect or a quantified business impact.",
+  };
+}
+
+function importanceForFinding(
+  decisionValue: AutonomousInsight["decisionValue"],
+  valueTranslation: AutonomousInsight["valueTranslation"],
+): AutonomousInsight["importance"] {
+  const valueAdjustment = valueTranslation.kind === "modeled_scenario"
+    ? 8
+    : valueTranslation.kind === "derived_indicator"
+      ? 7
+      : valueTranslation.kind === "decision_boundary"
+        ? 0
+        : -8;
+  const score = Math.max(0, Math.min(100, decisionValue.score + valueAdjustment));
+  const tier = score >= 80 ? "priority_now" : score >= 60 ? "validate_next" : "watch";
+  const label = tier === "priority_now" ? "Priority now" : tier === "validate_next" ? "Validate next" : "Watch";
+  const reason = tier === "priority_now"
+    ? valueTranslation.kind === "modeled_scenario"
+      ? "The finding has a substantial quantified proxy and a bounded test that can validate business value."
+      : "The finding exposes a large, measurable decision risk with a concrete remediation step."
+    : tier === "validate_next"
+      ? "The signal is substantial enough to validate next, but business value or action readiness is incomplete."
+      : "The signal is interesting but does not yet justify taking focus from higher-value findings.";
+  return {
+    score,
+    tier,
+    label,
+    reason,
+    notificationCandidate: tier === "priority_now" && !decisionValue.flags.includes("scale_only"),
+  };
+}
+
 function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsight {
   const first = group[0]!;
   const signals = unique(group.map((item) => item.lead.businessMeaning));
@@ -230,14 +401,15 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
     viewId: cvcCapacitySignal ? "clinic_performance_context" : first.hypothesis.viewId,
     topic: cvcCapacitySignal ? "clinic_performance" : first.topic,
   });
+  const decisionValue = decisionValueForGroup(group);
+  const metrics = groupMetrics(group);
+  const valueTranslation = valueTranslationForGroup(group, decisionValue);
   const finding: AutonomousInsight = {
     insightId: `insight:${key.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`,
     department: first.hypothesis.department,
     marketIds: unique(group.flatMap((item) => item.lead.marketIds)),
     marketName: name,
-    headline: signalCount > 1
-      ? `${name} appears in ${signalCount} registered ${first.hypothesis.department.toUpperCase()} regional screens`
-      : first.lead.title,
+    headline: synthesizedHeadline(name, first.hypothesis.department, decisionValue, metrics, first.lead.title),
     whyInteresting: signalCount > 1
       ? `${signals.slice(0, 2).join(" ")} Repeated appearance across correlated measures makes this a higher-priority diagnostic lead, not independent corroboration or a causal conclusion.`
       : signals[0] ?? "This market produced a question-compatible regional contrast.",
@@ -259,7 +431,9 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
       })),
       approvalBoundary: route.approvalBoundary,
     },
-    decisionValue: decisionValueForGroup(group),
+    decisionValue,
+    valueTranslation,
+    importance: importanceForFinding(decisionValue, valueTranslation),
   };
   finding.analystInterpretation = interpretAutonomousFinding({
     finding,
@@ -349,7 +523,11 @@ export function runCurrentDataInsightDiscovery(input: {
     ...(input.previousPrimaryFindingIds ?? []),
   ]);
   const selection = selectDiscoveryFindings(allFindings, { excludedPrimaryFindingIds: excludedPreviousPrimaryFindingIds });
-  const findings = [...selection.primaryDigest, ...selection.additionalFindings];
+  const findings = [...selection.primaryDigest, ...selection.additionalFindings].sort((left, right) =>
+    right.importance.score - left.importance.score
+    || right.decisionValue.score - left.decisionValue.score
+    || left.marketName.localeCompare(right.marketName),
+  );
   const accessRequests = snowflakeEscalations.flatMap((assessment) => assessment.accessRequest ? [assessment.accessRequest] : []);
   const uniqueTemplateIds = unique(accessRequests.flatMap((request) => request.templates.map((template) => template.templateId)));
   const governanceReviewCount = snowflakeEscalations.filter((assessment) => assessment.status === "governance_review_required").length;
