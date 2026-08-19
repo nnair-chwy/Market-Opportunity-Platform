@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { UnifiedEvaluatorMap } from "@/components/UnifiedEvaluatorMap";
 import {
   PUBLIC_MARKET_METRICS,
@@ -143,6 +143,8 @@ type AdaptiveMarketWorkspaceProps = {
   mapMode?: MapViewMode;
   onGeographicContextSelect?: (context: { cbsaCode: string; cbsaName: string }) => void;
   showLayerManager?: boolean;
+  resetRequest?: number;
+  openingControls?: ReactNode;
 };
 
 export function AdaptiveMarketWorkspace({
@@ -162,6 +164,8 @@ export function AdaptiveMarketWorkspace({
   mapMode = "single",
   onGeographicContextSelect,
   showLayerManager = false,
+  resetRequest = 0,
+  openingControls,
 }: AdaptiveMarketWorkspaceProps) {
   const [metricState, setMetricState] = useState<CbsaAcsMetricKey>(initialMetric);
   const [includeMicropolitanState, setIncludeMicropolitanState] = useState(false);
@@ -779,14 +783,17 @@ export function AdaptiveMarketWorkspace({
       {opening ? (
         <div className="adaptive-opening-info-stack" aria-label="Map context help">
           <div className="adaptive-opening-disclosure">
-            <button
-              className="adaptive-map-help-trigger"
-              type="button"
-              aria-label={mapHelpOpen ? "Hide map context and legend" : "Show map context and legend"}
-              aria-expanded={mapHelpOpen}
-              aria-controls="adaptive-opening-map-help"
-              onClick={() => setMapHelpOpen((open) => !open)}
-            >?</button>
+            <div className="adaptive-opening-toolbar" role="toolbar" aria-label="Map help, findings, and saved work">
+              <button
+                className="adaptive-map-help-trigger"
+                type="button"
+                aria-label={mapHelpOpen ? "Hide map context and legend" : "Show map context and legend"}
+                aria-expanded={mapHelpOpen}
+                aria-controls="adaptive-opening-map-help"
+                onClick={() => setMapHelpOpen((open) => !open)}
+              >?</button>
+              {openingControls}
+            </div>
             {mapHelpOpen ? <div id="adaptive-opening-map-help" className="adaptive-opening-help-panel">
             <div className="adaptive-opening-map-chrome" role="status">
               <strong id="adaptive-opening-map-title">{presentation.mapTitle}</strong>
@@ -1119,6 +1126,8 @@ export function AdaptiveMarketWorkspace({
           })
         }
         onChooseLocation={() => undefined}
+        resetRequest={resetRequest}
+        showResetControl={!opening}
         onReset={() => {
           setSelectedCode("");
           setComparisonCodes(clearComparisonRegions());

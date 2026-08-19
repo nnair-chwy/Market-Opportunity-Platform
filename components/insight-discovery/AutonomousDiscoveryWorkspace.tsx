@@ -53,7 +53,7 @@ function InsightCard({ finding, rankLabel, onInvestigate }: {
           <div><dt>Decision question</dt><dd>{interpretation?.decisionQuestion ?? finding.question}</dd></div>
           <div><dt>Observed signal</dt><dd>{finding.headline}. {finding.whyInteresting}</dd></div>
           <div><dt>Evidence detail</dt><dd>{finding.evidenceDetail}</dd></div>
-          <div><dt>Why it ranked here</dt><dd>{finding.decisionValue.reason}</dd></div>
+          <div><dt>Why it ranked here</dt><dd>{finding.decisionValue?.reason ?? "This earlier run did not record a decision-value explanation."}</dd></div>
           <div><dt>Screens combined</dt><dd>{finding.signalCount} screen{finding.signalCount === 1 ? "" : "s"}: {finding.hypothesisIds.join(", ")}</dd></div>
           <div><dt>Sources</dt><dd>{finding.sourceIds.join(", ")}</dd></div>
           <div><dt>Exact evidence still needed</dt><dd>{interpretation?.exactMissingEvidence.join(" ") ?? finding.nextValidation}</dd></div>

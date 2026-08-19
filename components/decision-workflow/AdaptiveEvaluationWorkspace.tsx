@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AdaptiveMarketWorkspace } from "@/components/decision-workflow/AdaptiveMarketWorkspace";
 import { RecommendedQuestionTypeahead } from "@/components/decision-workflow/RecommendedQuestionTypeahead";
+import { OpeningFindingsControl } from "@/components/insight-discovery/OpeningFindingsControl";
 import {
   coerceSupportedMapMode,
   createDefaultActiveViews,
@@ -61,6 +62,7 @@ export function AdaptiveEvaluationWorkspace({
   const [perspectiveOpen, setPerspectiveOpen] = useState(false);
   const [mapMode, setMapMode] = useState<MapViewMode>("single");
   const [layerManagerOpen, setLayerManagerOpen] = useState(false);
+  const [mapResetRequest, setMapResetRequest] = useState(0);
   const [comparisonViewId, setComparisonViewId] = useState<PerspectiveViewId | null>(null);
   const [category, setCategory] = useState<WorkflowCategory>("all");
   const [includeMicropolitan, setIncludeMicropolitan] = useState(false);
@@ -303,6 +305,14 @@ export function AdaptiveEvaluationWorkspace({
               <span aria-hidden="true">◇</span> Map layers
             </button>
             <button
+              className="adaptive-map-reset-trigger"
+              type="button"
+              onClick={() => setMapResetRequest((request) => request + 1)}
+              aria-label="Reset map to national view"
+            >
+              Reset
+            </button>
+            <button
               className={`adaptive-add-view-trigger${comparisonView ? " active" : ""}`}
               type="button"
               aria-expanded={Boolean(comparisonView)}
@@ -392,11 +402,6 @@ export function AdaptiveEvaluationWorkspace({
             <small className="adaptive-composer-note">
               The map changes to fit the question, not a fixed score.
             </small>
-            <button className="adaptive-discovery-entry" type="button" onClick={onDiscoverInsights}>
-              <span aria-hidden="true">✦</span>
-              <span><strong>Don&apos;t have a question?</strong><small>Autonomously discover the most interesting Marketing, Pricing, and CVC signals in the current data.</small></span>
-              <b aria-hidden="true">Run insight discovery →</b>
-            </button>
           </form>
         </div>
       </div>
@@ -412,22 +417,29 @@ export function AdaptiveEvaluationWorkspace({
         includeMicropolitan={includeMicropolitan}
         onIncludeMicropolitanChange={setIncludeMicropolitan}
         onGeographicContextSelect={onGeographicContextSelect}
+        resetRequest={mapResetRequest}
+        openingControls={(
+          <>
+            <OpeningFindingsControl
+              onOpenDiscovery={onDiscoverInsights}
+              onInvestigate={onQuestionChange}
+            />
+            {savedPackets.length > 0 ? (
+              <button
+                className="adaptive-opening-tool adaptive-saved-trigger"
+                type="button"
+                onClick={onOpenSaved}
+                aria-label={`Open ${savedPackets.length} saved action ${savedPackets.length === 1 ? "packet" : "packets"}`}
+                title={`Latest: ${savedPackets[0]?.title ?? "Saved action packet"}`}
+              >
+                <span aria-hidden="true">↗</span>
+                <strong>Saved</strong>
+                <small>{savedPackets.length}</small>
+              </button>
+            ) : null}
+          </>
+        )}
       />
-
-      {savedPackets.length > 0 ? (
-        <div className="adaptive-recent-packets">
-          <button
-            type="button"
-            onClick={onOpenSaved}
-            aria-label={`Open ${savedPackets.length} saved action ${savedPackets.length === 1 ? "packet" : "packets"}`}
-            title={`Latest: ${savedPackets[0]?.title ?? "Saved action packet"}`}
-          >
-            <span aria-hidden="true">↗</span>
-            <strong>Saved</strong>
-            <small>{savedPackets.length}</small>
-          </button>
-        </div>
-      ) : null}
     </section>
   );
 }

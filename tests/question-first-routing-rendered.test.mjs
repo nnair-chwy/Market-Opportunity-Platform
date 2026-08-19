@@ -17,6 +17,7 @@ const questionRegistry = fs.readFileSync(new URL("../lib/questions/registry.ts",
 const sister = fs.readFileSync(new URL("../components/decision-workflow/SisterGeographiesSection.tsx", import.meta.url), "utf8");
 const sisterLib = fs.readFileSync(new URL("../lib/planning/sister-geographies.ts", import.meta.url), "utf8");
 const discoveryWorkspace = fs.readFileSync(new URL("../components/insight-discovery/AutonomousDiscoveryWorkspace.tsx", import.meta.url), "utf8");
+const openingFindings = fs.readFileSync(new URL("../components/insight-discovery/OpeningFindingsControl.tsx", import.meta.url), "utf8");
 
 test("question results do not hard-code Seattle or fixed findings", () => {
   assert.doesNotMatch(market, /useState\("42660"\)/);
@@ -54,8 +55,9 @@ test("opening experience exposes the approved perspective-specific evidence ques
 });
 
 test("opening experience offers a question-free autonomous insight path", () => {
-  assert.match(questionWorkspace, /Don&apos;t have a question\?/);
-  assert.match(questionWorkspace, /Run insight discovery/);
+  assert.match(questionWorkspace, /OpeningFindingsControl/);
+  assert.match(openingFindings, /Findings worth a closer look/);
+  assert.match(openingFindings, /Run discovery/);
   assert.match(workflow, /phase === "discovery"/);
   assert.match(workflow, /AutonomousDiscoveryWorkspace/);
   assert.match(discoveryWorkspace, /\/api\/insight-discovery/);
@@ -246,11 +248,12 @@ test("results lead with the answer and map before structured evidence", () => {
   assert.match(workflow, /answer-contract-details/);
 });
 
-test("the opening map keeps saved work in a compact control below map help", () => {
+test("the opening map keeps findings and saved work in the map-help toolbar", () => {
   assert.match(questionWorkspace, /aria-label={`Open \$\{savedPackets\.length\} saved action/);
   assert.match(questionWorkspace, /<strong>Saved<\/strong>/);
   assert.doesNotMatch(questionWorkspace, /<strong>Recent action packets<\/strong>/);
-  assert.match(globalStyles, /\.adaptive-opening \.adaptive-recent-packets \{[^}]*top: 8\.55rem;[^}]*left: 1rem/);
+  assert.match(market, /adaptive-opening-toolbar/);
+  assert.match(globalStyles, /\.adaptive-opening-toolbar \{[^}]*display: flex/);
 });
 
 test("review action packet uses the full result width", () => {

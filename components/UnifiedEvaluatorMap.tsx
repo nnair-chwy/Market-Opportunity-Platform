@@ -109,6 +109,8 @@ type UnifiedEvaluatorMapProps = {
   onOpenMarketComparison: () => void;
   onChooseLocation: (location: UnifiedMapLocation) => void;
   onReset: () => void;
+  resetRequest?: number;
+  showResetControl?: boolean;
 };
 
 const SECONDARY_SCORE_COLORS = {
@@ -259,6 +261,8 @@ export function UnifiedEvaluatorMap({
   onOpenMarketComparison,
   onChooseLocation,
   onReset,
+  resetRequest = 0,
+  showResetControl = true,
 }: UnifiedEvaluatorMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapCanvasRef = useRef<HTMLDivElement>(null);
@@ -277,6 +281,7 @@ export function UnifiedEvaluatorMap({
   const seattleOverlayRef = useRef(seattleDeepDiveOverlay);
   const seattleOverlayCallbackRef = useRef(onChooseSeattleSubmarket);
   const locationsRef = useRef(locations);
+  const resetRequestRef = useRef(resetRequest);
   const initialViewRef = useRef({
     visibleMarketCodes,
     selectedMarketCode,
@@ -931,6 +936,17 @@ export function UnifiedEvaluatorMap({
     onReset();
   }
 
+  useEffect(() => {
+    if (resetRequestRef.current === resetRequest) return;
+    resetRequestRef.current = resetRequest;
+    setFallbackResetSelectionKey(selectionKey);
+    mapRef.current?.fitBounds(MAINLAND_MARKET_BOUNDS, {
+      padding: 20,
+      duration: 650,
+    });
+    onReset();
+  }, [onReset, resetRequest, selectionKey]);
+
   function setSwipeFromPointer(clientX: number) {
     const bounds = mapCanvasRef.current?.getBoundingClientRect();
     if (!bounds?.width) return;
@@ -1263,14 +1279,14 @@ export function UnifiedEvaluatorMap({
           );
         })() : null}
 
-        <button
+        {showResetControl ? <button
           type="button"
           className="market-reset-map"
           aria-label="Reset map to national view"
           onClick={resetMap}
         >
           Reset
-        </button>
+        </button> : null}
 
         {useFallback ? (
           <p className="basemap-fallback-note" role="status">
