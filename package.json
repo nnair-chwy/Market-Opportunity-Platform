@@ -33,7 +33,7 @@
     "data:query:clinic-market-readiness": "node --experimental-strip-types scripts/query-clinic-market-readiness.ts",
     "data:ingest:evidence-snapshot": "node --experimental-strip-types scripts/ingest-evidence-snapshot.ts",
     "data:audit:esri-sources": "node --experimental-strip-types scripts/audit-esri-sources.ts",
-    "test": "vinext build && node --experimental-strip-types --test tests/*.test.ts tests/data/*.test.ts tests/adapters/census/*.test.ts tests/adapters/cvc-performance/*.test.ts tests/adapters/google-ads/*.test.ts && node --test tests/*.test.mjs",
+    "test": "vinext build && node --experimental-strip-types --test tests/*.test.ts tests/data/*.test.ts tests/adapters/census/*.test.ts tests/adapters/cvc-performance/*.test.ts tests/adapters/google-ads/*.test.ts tests/adapters/marketing-outcomes/*.test.ts && node --test tests/*.test.mjs",
     "test:cbsa-acs": "node --experimental-strip-types --test tests/adapters/census/census-adapter.test.ts tests/adapters/census/census-contract.test.ts tests/cbsa-acs.test.ts tests/cbsa-market-context.test.ts",
     "test:cbsa-geometry": "node --experimental-strip-types --test tests/cbsa-geometry.test.ts tests/cbsa-market-context.test.ts",
     "test:cbsa-universe": "node --experimental-strip-types --test tests/cbsa-universe.test.ts",

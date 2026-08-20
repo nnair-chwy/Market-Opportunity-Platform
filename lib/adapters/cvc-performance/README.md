@@ -5,6 +5,12 @@ aggregate export. The CSV may have been produced from an authorized Tableau
 export or an authorized Snowflake-derived workflow. The adapter does not query,
 scrape, authenticate to, or imply access to either system.
 
+## Weekly site × metro export
+
+`parseCvcWeeklySiteMetroCsv` is the intake path for geographic insight discovery. It requires one row per `SITE_ID × CBSA_CODE × WEEK_START_DATE` with `COMPLETED_APPOINTMENTS`, `STAFFED_CAPACITY`, and either `MATURITY_STATUS` or `MONTHS_OPEN`. `NET_SALES` and `NEW_TO_CHEWY_COUNT` are recommended so the platform can size observed value rather than only utilization.
+
+The weekly adapter rejects direct customer, order, patient, address, employee, email, and phone identifiers. Passing the parser means the file is structurally compatible; it does not approve the source or metric semantics.
+
 `SRC-002` documents that current CVC reports and dashboards exist. Access,
 stable metric definitions, the primary outcome, the maturity rule, and
 comparable-clinic rules remain unresolved. See `OQ-004`, `OQ-009`, and

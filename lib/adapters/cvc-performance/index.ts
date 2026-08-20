@@ -1,5 +1,11 @@
 export { parseCvcPerformanceCsv } from "./csv.ts";
 export {
+  CVC_WEEKLY_SITE_METRO_REQUIRED_COLUMNS,
+  parseCvcWeeklySiteMetroCsv,
+  type CvcWeeklySiteMetroImport,
+  type CvcWeeklySiteMetroRecord,
+} from "./weekly-site-metro.ts";
+export {
   filterByMaturityWindow,
   prepareCvcPerformanceComparison,
 } from "./comparison.ts";

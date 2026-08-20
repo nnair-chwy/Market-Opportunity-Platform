@@ -12,7 +12,7 @@ test("value definitions preserve the governed distinction between CCP, CCV, and 
   assert.match(CHEWY_VALUE_DEFINITIONS.marketingEfficiency.definition, /counterfactual.*not the same as platform-attributed/i);
 });
 
-test("reviewed Tableau exports declare usable grain, metrics, and limitations", () => {
+test("reviewed Tableau workbooks declare target grain, metrics, and honest connection limits", () => {
   const dma = TABLEAU_FIRST_PARTY_EXPORTS.find((source) => source.id === "dma-marketing-outcomes");
   const cvc = TABLEAU_FIRST_PARTY_EXPORTS.find((source) => source.id === "cvc-site-outcomes");
   const ccp = TABLEAU_FIRST_PARTY_EXPORTS.find((source) => source.id === "ccp-channel-value");
@@ -20,8 +20,9 @@ test("reviewed Tableau exports declare usable grain, metrics, and limitations", 
   assert.equal(dma?.status, "available_partial");
   assert.match(dma?.targetGrain ?? "", /DMA/i);
   assert.match(dma?.limitation ?? "", /not incremental or CCP-valued/i);
-  assert.equal(cvc?.status, "available_now");
+  assert.equal(cvc?.status, "available_partial");
   assert.ok(cvc?.metrics.includes("completed appointments"));
+  assert.match(cvc?.limitation ?? "", /has not yet passed the new adapter/i);
   assert.equal(ccp?.status, "needs_geo_join");
   assert.equal(newCustomers?.status, "needs_geo_join");
   assert.match(newCustomers?.limitation ?? "", /no approved DMA field/i);

@@ -54,11 +54,11 @@ export const TABLEAU_FIRST_PARTY_EXPORTS: readonly FirstPartyValueExport[] = [
   {
     id: "cvc-site-outcomes",
     label: "CVC site and metro performance",
-    status: "available_now",
+    status: "available_partial",
     targetGrain: "week × CVC site × metro × acquisition segment",
     metrics: ["spend", "appointments", "completed appointments", "new-to-Chewy appointments", "new-to-CVC appointments", "net sales", "net sales per completed appointment"],
     valueUse: "Sizes clinic demand and sales opportunity at the same site/metro grain used by footprint findings.",
-    limitation: "Capacity, staffed appointment slots, clinic contribution and CCP are still required before footprint or spend recommendations are decision-ready.",
+    limitation: "The workbook contains relevant measures, but a privacy-safe week × site × metro export has not yet passed the new adapter. Capacity, clinic contribution and CCP also remain required for a decision-ready recommendation.",
     tableauUrl: "https://prod-useast-b.online.tableau.com/#/site/chewy/redirect_to_view/13932416",
   },
   {
@@ -108,7 +108,7 @@ export function assessBusinessValue(department: PerspectiveId): BusinessValueAss
     return {
       status: "export_available",
       label: "Outcome export available",
-      headline: "Appointments, completed visits and net sales can size this market once the CVC site/metro export is connected.",
+      headline: "The site × metro adapter is ready; appointments, completed visits and net sales can size this market after a compatible export passes validation.",
       formula: "Observed sales opportunity = expected incremental completed appointments × net sales per completed appointment",
       requiredInputs: ["CVC site/metro performance export", "staffed appointment capacity", "clinic contribution or CCP", "mature-clinic comparison cohort"],
       sourceIds: ["cvc-site-outcomes"],
