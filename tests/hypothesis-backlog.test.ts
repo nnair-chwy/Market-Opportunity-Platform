@@ -7,10 +7,12 @@ test("cross-source backlog creates falsifiable same-market hypotheses", () => {
   const backlog = buildCrossSourceHypothesisBacklog(run);
 
   assert.ok(backlog.length >= 2);
-  assert.ok(backlog.some((lead) => lead.marketName === "Eagle Pass, TX" && lead.departments.includes("marketing") && lead.departments.includes("pricing")));
+  const eaglePass = backlog.find((lead) => lead.marketName === "Eagle Pass, TX" && lead.departments.includes("marketing") && lead.departments.includes("pricing"));
+  assert.ok(eaglePass);
+  assert.equal(eaglePass.status, "waiting_for_join");
   assert.ok(backlog.some((lead) => lead.marketName.includes("Virginia Beach") && lead.departments.includes("cvc") && lead.departments.includes("pricing")));
   for (const lead of backlog) {
-    assert.match(lead.whyItEmerged, /new question to test, not proof/i);
+    assert.match(lead.whyItEmerged, /unanswered question, not proof/i);
     assert.ok(lead.nextTest.length > 80);
     assert.ok(lead.falsificationRule.length > 60);
     assert.ok(lead.requiredInputs.length >= 4);

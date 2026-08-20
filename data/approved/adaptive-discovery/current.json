@@ -1,6 +1,6 @@
 {
   "version": "adaptive-analyst-discovery-v1",
-  "generatedAt": "2026-08-20T22:23:23.509Z",
+  "generatedAt": "2026-08-20T22:46:57.793Z",
   "builderVersion": "adaptive-analyst-discovery-builder-v1",
   "allowedUse": "internal_shadow_evaluation_only",
   "scoringEligibility": "none",
@@ -96,7 +96,7 @@
         {
           "id": "matched-dma:joint_opportunity:lubbock-tx-texas-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in Lubbock TX, Texas, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in Lubbock TX, Texas, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -145,7 +145,7 @@
             "Retail: 15,193 clicks and 2,571.2 attributed conversions.",
             "Pharmacy: 1,939 clicks and 34.6 attributed conversions."
           ],
-          "implication": "Lubbock TX, Texas, United States delivered attributed conversions at 26.8% below the eligible-DMA median CPA for Retail and 29.8% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In Lubbock TX, Texas, United States, Retail cost $5.04 per attributed conversion versus a $6.88 peer median; Pharmacy cost $228 versus $324.66. That is 26.8% and 29.8% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep Lubbock TX, Texas, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [
@@ -165,7 +165,7 @@
         {
           "id": "matched-dma:joint_opportunity:louisville-ky-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in Louisville KY, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in Louisville KY, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -214,7 +214,7 @@
             "Retail: 99,461 clicks and 19,897.5 attributed conversions.",
             "Pharmacy: 12,462 clicks and 192.6 attributed conversions."
           ],
-          "implication": "Louisville KY, United States delivered attributed conversions at 32.8% below the eligible-DMA median CPA for Retail and 20.4% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In Louisville KY, United States, Retail cost $4.62 per attributed conversion versus a $6.88 peer median; Pharmacy cost $258.37 versus $324.66. That is 32.8% and 20.4% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep Louisville KY, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [
@@ -234,7 +234,7 @@
         {
           "id": "matched-dma:joint_opportunity:lexington-ky-kentucky-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in Lexington KY, Kentucky, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in Lexington KY, Kentucky, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -283,7 +283,7 @@
             "Retail: 67,768 clicks and 9,845.7 attributed conversions.",
             "Pharmacy: 9,025 clicks and 123.8 attributed conversions."
           ],
-          "implication": "Lexington KY, Kentucky, United States delivered attributed conversions at 15.2% below the eligible-DMA median CPA for Retail and 19.3% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In Lexington KY, Kentucky, United States, Retail cost $5.83 per attributed conversion versus a $6.88 peer median; Pharmacy cost $262.14 versus $324.66. That is 15.2% and 19.3% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep Lexington KY, Kentucky, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [
@@ -303,7 +303,7 @@
         {
           "id": "matched-dma:joint_opportunity:wichita-falls-tx-lawton-ok-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in Wichita Falls TX & Lawton OK, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in Wichita Falls TX & Lawton OK, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -352,7 +352,7 @@
             "Retail: 14,084 clicks and 2,150.8 attributed conversions.",
             "Pharmacy: 2,076 clicks and 27.4 attributed conversions."
           ],
-          "implication": "Wichita Falls TX & Lawton OK, United States delivered attributed conversions at 19.7% below the eligible-DMA median CPA for Retail and 11.9% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In Wichita Falls TX & Lawton OK, United States, Retail cost $5.53 per attributed conversion versus a $6.88 peer median; Pharmacy cost $286.11 versus $324.66. That is 19.7% and 11.9% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep Wichita Falls TX & Lawton OK, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [
@@ -372,7 +372,7 @@
         {
           "id": "matched-dma:joint_opportunity:houston-tx-texas-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in Houston TX, Texas, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in Houston TX, Texas, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -421,7 +421,7 @@
             "Retail: 253,513 clicks and 39,688.1 attributed conversions.",
             "Pharmacy: 44,951 clicks and 649.2 attributed conversions."
           ],
-          "implication": "Houston TX, Texas, United States delivered attributed conversions at 16.9% below the eligible-DMA median CPA for Retail and 11% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In Houston TX, Texas, United States, Retail cost $5.72 per attributed conversion versus a $6.88 peer median; Pharmacy cost $289.04 versus $324.66. That is 16.9% and 11% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep Houston TX, Texas, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [
@@ -441,7 +441,7 @@
         {
           "id": "matched-dma:joint_opportunity:dallas-ft-worth-tx-texas-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in Dallas-Ft. Worth TX, Texas, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in Dallas-Ft. Worth TX, Texas, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -490,7 +490,7 @@
             "Retail: 359,956 clicks and 56,273 attributed conversions.",
             "Pharmacy: 55,112 clicks and 796 attributed conversions."
           ],
-          "implication": "Dallas-Ft. Worth TX, Texas, United States delivered attributed conversions at 14.3% below the eligible-DMA median CPA for Retail and 9.5% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In Dallas-Ft. Worth TX, Texas, United States, Retail cost $5.9 per attributed conversion versus a $6.88 peer median; Pharmacy cost $293.72 versus $324.66. That is 14.3% and 9.5% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep Dallas-Ft. Worth TX, Texas, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [
@@ -510,7 +510,7 @@
         {
           "id": "matched-dma:joint_opportunity:tucson-sierra-vista-az-arizona-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in Tucson (Sierra Vista) AZ, Arizona, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in Tucson (Sierra Vista) AZ, Arizona, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -559,7 +559,7 @@
             "Retail: 58,672 clicks and 8,151.9 attributed conversions.",
             "Pharmacy: 5,479 clicks and 90.6 attributed conversions."
           ],
-          "implication": "Tucson (Sierra Vista) AZ, Arizona, United States delivered attributed conversions at 8% below the eligible-DMA median CPA for Retail and 27.3% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In Tucson (Sierra Vista) AZ, Arizona, United States, Retail cost $6.33 per attributed conversion versus a $6.88 peer median; Pharmacy cost $235.92 versus $324.66. That is 8% and 27.3% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep Tucson (Sierra Vista) AZ, Arizona, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [
@@ -579,7 +579,7 @@
         {
           "id": "matched-dma:joint_opportunity:austin-tx-texas-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in Austin TX, Texas, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in Austin TX, Texas, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -628,7 +628,7 @@
             "Retail: 142,177 clicks and 21,533.1 attributed conversions.",
             "Pharmacy: 18,616 clicks and 334.5 attributed conversions."
           ],
-          "implication": "Austin TX, Texas, United States delivered attributed conversions at 7% below the eligible-DMA median CPA for Retail and 16.1% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In Austin TX, Texas, United States, Retail cost $6.4 per attributed conversion versus a $6.88 peer median; Pharmacy cost $272.53 versus $324.66. That is 7% and 16.1% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep Austin TX, Texas, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [
@@ -648,7 +648,7 @@
         {
           "id": "matched-dma:joint_opportunity:el-paso-tx-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in El Paso TX, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in El Paso TX, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -697,7 +697,7 @@
             "Retail: 28,529 clicks and 3,708.5 attributed conversions.",
             "Pharmacy: 3,671 clicks and 57 attributed conversions."
           ],
-          "implication": "El Paso TX, United States delivered attributed conversions at 6% below the eligible-DMA median CPA for Retail and 29.7% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In El Paso TX, United States, Retail cost $6.46 per attributed conversion versus a $6.88 peer median; Pharmacy cost $228.12 versus $324.66. That is 6% and 29.7% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep El Paso TX, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [
@@ -717,7 +717,7 @@
         {
           "id": "matched-dma:joint_opportunity:phoenix-az-arizona-united-states",
           "type": "joint_opportunity",
-          "question": "Why are both Retail and Pharmacy converting efficiently in Phoenix AZ, Arizona, United States, and is the pattern incremental?",
+          "question": "Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in Phoenix AZ, Arizona, United States, and does that advantage persist on first-party outcomes?",
           "hypothesis": "A shared local demand, auction, customer, or operating condition may support both accounts.",
           "geography": {
             "type": "google_ads_matched_dma_label",
@@ -766,7 +766,7 @@
             "Retail: 303,722 clicks and 40,756.3 attributed conversions.",
             "Pharmacy: 27,585 clicks and 464.4 attributed conversions."
           ],
-          "implication": "Phoenix AZ, Arizona, United States delivered attributed conversions at 5% below the eligible-DMA median CPA for Retail and 26.9% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.",
+          "implication": "In Phoenix AZ, Arizona, United States, Retail cost $6.53 per attributed conversion versus a $6.88 peer median; Pharmacy cost $237.22 versus $324.66. That is 5% and 26.9% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.",
           "proposedAction": "Keep Phoenix AZ, Arizona, United States in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.",
           "decisionBoundary": "Do not change spend or infer incrementality from attributed conversions alone.",
           "limits": [

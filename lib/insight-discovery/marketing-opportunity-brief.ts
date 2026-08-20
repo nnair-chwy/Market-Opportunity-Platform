@@ -43,7 +43,7 @@ export function buildMarketingOpportunityBrief(run?: CurrentDataDiscoveryRun): M
       {
         market: "Louisville, KY",
         decision: "Protect and test for scalable growth",
-        evidence: findingText(run, "joint_opportunity:louisville", "Retail CPA is 32.8% below its eligible-DMA median and Pharmacy CPA is 20.4% below its median."),
+        evidence: findingText(run, "joint_opportunity:louisville", "Retail cost per attributed conversion is 32.8% lower than its eligible-DMA median and Pharmacy is 20.4% lower than its median."),
         action: actionText(run, "joint_opportunity:louisville", "Protect current efficient investment and use Louisville as a candidate in the next approved cross-account incrementality test."),
       },
       {

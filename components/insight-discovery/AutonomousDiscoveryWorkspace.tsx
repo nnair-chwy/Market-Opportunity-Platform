@@ -9,7 +9,9 @@ import { buildCrossSourceHypothesisBacklog } from "@/lib/insight-discovery/hypot
 import type { PerspectiveId } from "@/lib/perspectives";
 
 const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing: "Pricing", cvc: "CVC" };
-const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v1";
+// Bump when generated finding semantics change so an older browser-saved run
+// cannot silently reintroduce superseded recommendations or source language.
+const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v2";
 const DISCOVERY_HISTORY_LIMIT = 5;
 
 function adaptiveMetricValue(value: number, unit: string) {
@@ -301,6 +303,8 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   }), [run]);
   const marketingOpportunityBrief = useMemo(() => buildMarketingOpportunityBrief(run ?? undefined), [run]);
   const emergingHypotheses = useMemo(() => run ? buildCrossSourceHypothesisBacklog(run) : [], [run]);
+  const readyHypotheses = useMemo(() => emergingHypotheses.filter((lead) => lead.status === "ready_to_test"), [emergingHypotheses]);
+  const incompleteHypotheses = useMemo(() => emergingHypotheses.filter((lead) => lead.status === "waiting_for_join"), [emergingHypotheses]);
   const adaptiveFindings = useMemo(() => {
     if (!run) return [];
     if (department === "all") return adaptivePortfolioDigest(run.adaptiveDiscovery.findings);
@@ -425,23 +429,23 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         <div><dt>Analyses completed</dt><dd>{run.analysesRun}</dd><small>{run.adaptiveDiscovery.testedCount} adaptive · {screenCounts.marketing + screenCounts.pricing + screenCounts.cvc} baseline screens</small></div>
         <div><dt>Markets compared</dt><dd>{run.marketUniverse}</dd><small>National CBSA comparison universe</small></div>
         <div><dt>Measures checked</dt><dd>{run.measuresExamined}</dd><small>Unique measures in approved snapshots</small></div>
-        <div><dt>Data-generated decisions</dt><dd>{run.adaptiveDiscovery.testedCount}</dd><small>Cohort, contradiction, channel, SKU, and cross-source tests</small></div>
+        <div><dt>Evidence-backed analyses</dt><dd>{run.adaptiveDiscovery.testedCount}</dd><small>Cohort, contradiction, channel, SKU, and cross-source tests</small></div>
       </dl>
 
-      {emergingHypotheses.length ? (
+      {readyHypotheses.length ? (
         <section className="discovery-hypothesis-backlog" aria-labelledby="discovery-hypothesis-backlog-title">
           <header>
             <div>
               <div className="section-label">Emerging cross-source questions</div>
               <h2 id="discovery-hypothesis-backlog-title">New hypotheses opened by this run</h2>
-              <p>These appeared because independent team signals surfaced in the same market. They are queued research ideas, not recommendations.</p>
+              <p>These questions have compatible evidence available for a bounded test. They are research priorities, not recommendations.</p>
             </div>
-            <span>{emergingHypotheses.length} in backlog</span>
+            <span>{readyHypotheses.length} ready to test</span>
           </header>
           <div>
-            {emergingHypotheses.map((lead) => (
+            {readyHypotheses.map((lead) => (
               <article key={lead.hypothesisId}>
-                <div><span>{lead.departments.map((item) => LABELS[item]).join(" + ")}</span><small>{lead.status === "ready_to_test" ? "Ready to test" : "Waiting for joined outcomes"}</small></div>
+                <div><span>{lead.departments.map((item) => LABELS[item]).join(" + ")}</span><small>Ready to test</small></div>
                 <h3>{lead.marketName}: {lead.headline}</h3>
                 <p>{lead.hypothesis}</p>
                 <strong>Next test</strong><p>{lead.nextTest}</p>
@@ -466,7 +470,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
           <header>
             <div>
               <div className="section-label">Generated from the evidence</div>
-              <h2 id="adaptive-decision-findings-title">Decisions the fixed question list did not ask</h2>
+              <h2 id="adaptive-decision-findings-title">Cross-source signals that change a decision</h2>
               <p>Each question was opened by a repeatable pattern in the current data and tested with a bounded analytical recipe. The conclusion comes first; calculation and limits stay attached.</p>
             </div>
             <span>{adaptiveFindings.length} shown</span>
@@ -485,12 +489,30 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
                     <div key={metric.id}><strong>{adaptiveMetricValue(metric.value, metric.unit)}</strong><span>{metric.label}</span>{metric.benchmark !== undefined ? <small>Peer benchmark {adaptiveMetricValue(Number(metric.benchmark), metric.unit)}</small> : null}</div>
                   ))}
                 </div>
-                <div className="adaptive-decision-action"><span>Decision supported</span><p>{finding.proposedAction}</p></div>
+                <div className="adaptive-decision-action"><span>What this changes now</span><p>{finding.proposedAction}</p></div>
                 <details><summary>Evidence, calculation, and limits</summary><p>{finding.evidence.join(" ")}</p><p><strong>Confidence:</strong> {finding.confidence.reason}</p><p><strong>Boundary:</strong> {finding.decisionBoundary}</p><p><strong>Limits:</strong> {finding.limits.join(" ")}</p></details>
               </article>
             ))}
           </div>
         </section>
+      ) : null}
+
+      {incompleteHypotheses.length ? (
+        <details className="discovery-hypothesis-backlog discovery-hypothesis-backlog-pending">
+          <summary>Incomplete cross-source questions · {incompleteHypotheses.length}</summary>
+          <p>These are not findings. The system noticed signals from different teams in the same named market, but the geography, period, or business outcomes are not compatible enough to determine whether the signals are related.</p>
+          <div>
+            {incompleteHypotheses.map((lead) => (
+              <article key={lead.hypothesisId}>
+                <div><span>{lead.departments.map((item) => LABELS[item]).join(" + ")}</span><small>Incomplete · do not act</small></div>
+                <h3>{lead.marketName}: {lead.headline}</h3>
+                <p><strong>What we know:</strong> Separate team findings appeared in the same market.</p>
+                <p><strong>What we do not know:</strong> {lead.hypothesis}</p>
+                <details><summary>What would make this answerable</summary><p>{lead.nextTest}</p><p><b>Required evidence:</b> {lead.requiredInputs.join("; ")}.</p><p><b>Reject if:</b> {lead.falsificationRule}</p></details>
+              </article>
+            ))}
+          </div>
+        </details>
       ) : null}
 
       {department === "all" || department === "marketing" ? (

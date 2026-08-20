@@ -12,7 +12,7 @@ test("Costa brief shares broad Marketing opportunities rather than a PetSmart or
   assert.match(brief.recommendation, /Lubbock/i);
   assert.match(brief.recommendation, /Wilkes-Barre/i);
   assert.match(brief.recommendation, /Denver|Fort Lauderdale/i);
-  assert.match(text, /32\.8% below/i);
+  assert.match(text, /32\.8% and 20\.4% lower/i);
   assert.match(text, /97\.7% above/i);
   assert.match(text, /5×/i);
   assert.match(text, /incremental new customers/i);

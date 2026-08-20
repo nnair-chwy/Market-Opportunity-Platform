@@ -163,6 +163,11 @@
 .discovery-hypothesis-backlog article > strong { margin-top: 3px; color: #315d94; font-size: .64rem; text-transform: uppercase; }
 .discovery-hypothesis-backlog details { color: #52657f; font-size: .69rem; }
 .discovery-hypothesis-backlog details summary { color: #315d94; cursor: pointer; font-weight: 750; }
+.discovery-hypothesis-backlog-pending { border-color: #d9dde5; background: #f6f7f9; }
+.discovery-hypothesis-backlog-pending > summary { color: #536176; cursor: pointer; font-size: .78rem; font-weight: 820; list-style-position: inside; }
+.discovery-hypothesis-backlog-pending > p { margin: 0; color: #657186; font-size: .72rem; line-height: 1.5; }
+.discovery-hypothesis-backlog-pending article { border-color: #dfe3e9; }
+.discovery-hypothesis-backlog-pending article > div small { color: #8b4e45; }
 .adaptive-decision-findings { display: grid; gap: 14px; padding: 20px; border: 1px solid #9fc7bb; border-left: 5px solid #17745f; border-radius: 14px; background: linear-gradient(135deg, #f7fcfa, #edf8f4); }
 .adaptive-decision-findings > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .adaptive-decision-findings h2 { margin: 5px 0; color: #123f37; font-size: 1.16rem; }

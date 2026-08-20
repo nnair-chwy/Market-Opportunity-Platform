@@ -133,7 +133,7 @@ async function buildMatchedDmaDiscovery(connection: Awaited<ReturnType<typeof op
     id: `matched-dma:${type}:${row.dma.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
     type,
     question: type === "joint_opportunity"
-      ? `Why are both Retail and Pharmacy converting efficiently in ${row.dma}, and is the pattern incremental?`
+      ? `Why did both Retail and Pharmacy cost less per attributed conversion than their peer medians in ${row.dma}, and does that advantage persist on first-party outcomes?`
       : `Why do Retail and Pharmacy show opposite acquisition efficiency in ${row.dma}?`,
     hypothesis: type === "joint_opportunity"
       ? "A shared local demand, auction, customer, or operating condition may support both accounts."
@@ -149,7 +149,7 @@ async function buildMatchedDmaDiscovery(connection: Awaited<ReturnType<typeof op
     ],
     evidence: [`Retail: ${Math.round(row.retailClicks).toLocaleString("en-US")} clicks and ${round(row.retailConversions, 1).toLocaleString("en-US")} attributed conversions.`, `Pharmacy: ${Math.round(row.pharmacyClicks).toLocaleString("en-US")} clicks and ${round(row.pharmacyConversions, 1).toLocaleString("en-US")} attributed conversions.`],
     implication: type === "joint_opportunity"
-      ? `${row.dma} delivered attributed conversions at ${round((1 - row.retailCpaRatio) * 100, 1)}% below the eligible-DMA median CPA for Retail and ${round((1 - row.pharmacyCpaRatio) * 100, 1)}% below it for Pharmacy. Protect this market from broad efficiency cuts and make it the first candidate for an incremental cross-account test.`
+      ? `In ${row.dma}, Retail cost $${round(row.retailCpa!, 2).toLocaleString("en-US")} per attributed conversion versus a $${round(retailMedianCpa, 2).toLocaleString("en-US")} peer median; Pharmacy cost $${round(row.pharmacyCpa!, 2).toLocaleString("en-US")} versus $${round(pharmacyMedianCpa, 2).toLocaleString("en-US")}. That is ${round((1 - row.retailCpaRatio) * 100, 1)}% and ${round((1 - row.pharmacyCpaRatio) * 100, 1)}% lower, respectively. Preserve this efficiency signal for testing, but do not assume more spend will return at the same rate.`
       : `${row.dma} points in opposite directions by account: Retail CPA is ${round(Math.abs(1 - row.retailCpaRatio) * 100, 1)}% ${row.retailCpaRatio <= 1 ? "below" : "above"} its eligible-DMA median while Pharmacy is ${round(Math.abs(1 - row.pharmacyCpaRatio) * 100, 1)}% ${row.pharmacyCpaRatio <= 1 ? "below" : "above"}. Do not use a blended market score here.`,
     proposedAction: type === "joint_opportunity"
       ? `Keep ${row.dma} in the protected high-efficiency cohort and use it as the first candidate in the next approved paid-search incrementality test; size the test from current account budgets and judge it on incremental new customers and contribution, not platform conversions alone.`

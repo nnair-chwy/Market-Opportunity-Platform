@@ -63,7 +63,9 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(discoveryWorkspace, /\/api\/insight-discovery/);
   assert.match(discoveryWorkspace, /generated decision hypotheses from the data/i);
   assert.match(discoveryWorkspace, /cohort, contradiction, channel-mix, quality, and matched-SKU operators/i);
-  assert.match(discoveryWorkspace, /Decisions the fixed question list did not ask/);
+  assert.match(discoveryWorkspace, /Cross-source signals that change a decision/);
+  assert.match(discoveryWorkspace, /Incomplete cross-source questions/);
+  assert.match(discoveryWorkspace, /These are not findings/);
   assert.match(discoveryWorkspace, /Evidence needed next/);
   assert.match(discoveryWorkspace, /Analyses completed/);
   assert.match(discoveryWorkspace, /Open in Ask AI/);
