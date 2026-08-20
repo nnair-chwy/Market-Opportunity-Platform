@@ -13,6 +13,7 @@ const packages: LocalSourcePackage[] = [
   { id: "snowflake-pricing-2026-08-17", root: "data/approved/snowflake/pricing/2026-08-17", sensitivity: "internal", allowedUse: "internal_shadow_evaluation_and_source_validation_only", contract: "data/contracts/pricing-snowflake/export-manifest.json" },
   { id: "seo-keywords-2026-08-14", root: "data/approved/seo/2026-08-14", sensitivity: "internal", allowedUse: "national_demand_vocabulary_and_context_only", contract: "data/contracts/seo-keywords/manifest.json" },
   { id: "zeus-ui-2026-08-18", root: "data/approved/zeus-ui/2026-08-18", sensitivity: "internal", allowedUse: "internal_source_discovery_and_shadow_evaluation_only", contract: "data/contracts/zeus-ui/export-manifest.json" },
+  { id: "tableau-cvc-2026-08-20", root: "data/approved/tableau-cvc/2026-08-20", sensitivity: "internal", allowedUse: "aggregate_clinic_and_marketing_outcome_analysis", contract: "data/contracts/tableau-cvc/export-manifest.json" },
 ];
 
 async function optionalJson<T>(file: string): Promise<T | null> {

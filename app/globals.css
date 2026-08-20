@@ -101,6 +101,12 @@
 .discovery-hero { display: grid; gap: 12px; }
 .discovery-page-nav { align-items: center; }
 .discovery-page-nav > span { color: #6d7c91; font-size: .74rem; }
+.discovery-run-history { padding: 10px 12px; border: 1px solid #d7e1ed; border-radius: 11px; background: #f8faff; }
+.discovery-run-history > summary { color: #315d94; cursor: pointer; font-size: .74rem; font-weight: 800; }
+.discovery-run-history > div { display: grid; gap: 6px; margin-top: 9px; }
+.discovery-run-history button { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 11px; border: 1px solid #dce5f0; border-radius: 9px; background: #fff; color: #315777; cursor: pointer; text-align: left; }
+.discovery-run-history button strong { font-size: .72rem; }
+.discovery-run-history button span { color: #6d7d92; font-size: .67rem; }
 .discovery-run-controls { display: flex; align-items: center; gap: 12px; color: #6d7c91; font-size: .74rem; }
 .discovery-run-again { min-width: 104px; padding: 8px 13px; border: 1px solid #285b95; border-radius: 9px; background: #fff; color: #285b95; cursor: pointer; font: inherit; font-size: .76rem; font-weight: 800; }
 .discovery-share-all { padding: 8px 13px; border: 1px solid #315949; border-radius: 9px; background: #edf7f2; color: #245542; cursor: pointer; font: inherit; font-size: .76rem; font-weight: 800; }
@@ -7488,6 +7494,7 @@ textarea:focus-visible {
 .data-refresh-file-list small { color: #778aa1; font-size: .58rem; }
 .data-refresh-readiness { margin: .65rem 0; padding: .62rem .7rem; border: 1px solid #dce6f2; border-radius: 12px; }
 .data-refresh-readiness > summary { color: #315d94; font-size: .71rem; font-weight: 800; cursor: pointer; }
+.data-refresh-connection-guidance { margin: .55rem 0 0; color: #526d8e; font-size: .67rem; line-height: 1.45; }
 .data-refresh-value-export-list { display: grid; gap: .48rem; margin-top: .62rem; }
 .data-refresh-value-export-list article { display: grid; gap: .32rem; padding: .62rem; border: 1px solid #dce6f2; border-left: 4px solid #7ba5dc; border-radius: 10px; background: #fff; }
 .data-refresh-value-export-list article[data-status="available_now"] { border-left-color: #42a477; }

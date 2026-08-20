@@ -54,11 +54,11 @@ export const TABLEAU_FIRST_PARTY_EXPORTS: readonly FirstPartyValueExport[] = [
   {
     id: "cvc-site-outcomes",
     label: "CVC site and metro performance",
-    status: "available_partial",
+    status: "available_now",
     targetGrain: "week × CVC site × metro × acquisition segment",
     metrics: ["spend", "appointments", "completed appointments", "new-to-Chewy appointments", "new-to-CVC appointments", "net sales", "net sales per completed appointment"],
     valueUse: "Sizes clinic demand and sales opportunity at the same site/metro grain used by footprint findings.",
-    limitation: "The workbook contains relevant measures, but a privacy-safe week × site × metro export has not yet passed the new adapter. Capacity, clinic contribution and CCP also remain required for a decision-ready recommendation.",
+    limitation: "A privacy-safe metro × week × channel export is connected for fiscal P01 2025. It contains appointments and net sales, but remains historical; metro labels still need an approved CBSA/DMA crosswalk, and capacity, contribution and CCP remain missing.",
     tableauUrl: "https://prod-useast-b.online.tableau.com/#/site/chewy/redirect_to_view/13932416",
   },
   {

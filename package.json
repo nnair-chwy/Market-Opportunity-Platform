@@ -29,6 +29,7 @@
     "data:prepare:snowflake-playbook": "node --experimental-strip-types scripts/prepare-snowflake-playbook.ts",
     "data:build:approved-snowflake-snapshot": "node --experimental-strip-types scripts/build-approved-snowflake-snapshot.ts",
     "data:build:clinic-market-snapshot": "node --experimental-strip-types scripts/build-clinic-market-evidence-snapshot.ts",
+    "data:build:tableau-cvc-outcomes": "node --experimental-strip-types scripts/build-tableau-cvc-outcomes.ts",
     "data:build:normalized-market": "node --experimental-strip-types scripts/build-normalized-market-data.ts",
     "data:query:clinic-market-readiness": "node --experimental-strip-types scripts/query-clinic-market-readiness.ts",
     "data:ingest:evidence-snapshot": "node --experimental-strip-types scripts/ingest-evidence-snapshot.ts",

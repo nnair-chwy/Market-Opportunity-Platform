@@ -1,7 +1,7 @@
 {
   "version": "first-party-outcome-readiness-v1",
   "contractVersion": "first-party-regional-outcome-v1",
-  "generatedAt": "2026-08-20T00:43:11.536Z",
+  "generatedAt": "2026-08-20T19:00:00.000Z",
   "discoveryRegistryVersion": "approved-source-discovery-v1",
   "outcomes": [
     {
@@ -19,6 +19,24 @@
           "status": "excluded",
           "sourceId": "DISCOVERED-ADCD8EC0508F2C25",
           "packageId": "google-ads-2026-07-14_2026-08-12",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Distinct or total completed orders observed for a bounded business period and non-national geography.",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "regional_orders",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-958546E53E54C354",
+          "packageId": "tableau-cvc-2026-08-20",
           "matchedMetricFields": [],
           "matchedContextFields": [],
           "geography": "unknown",
@@ -49,6 +67,24 @@
           "status": "excluded",
           "sourceId": "DISCOVERED-ADCD8EC0508F2C25",
           "packageId": "google-ads-2026-07-14_2026-08-12",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Count of customers whose governed acquisition definition falls within the bounded period and geography.",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "new_customers",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-958546E53E54C354",
+          "packageId": "tableau-cvc-2026-08-20",
           "matchedMetricFields": [],
           "matchedContextFields": [],
           "geography": "unknown",
@@ -112,6 +148,24 @@
           ],
           "warnings": [],
           "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "contribution_profit",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-958546E53E54C354",
+          "packageId": "tableau-cvc-2026-08-20",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Realized aggregate contribution, contribution margin, or profit under an owner-approved cost definition.",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
         }
       ]
     },
@@ -143,18 +197,37 @@
           ],
           "warnings": [],
           "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "clinic_capacity",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-958546E53E54C354",
+          "packageId": "tableau-cvc-2026-08-20",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Staffed or schedulable clinical capacity for an identified clinic or approved service geography and period.",
+            "context field matching ^(clinic_id|site_id|clinic)$",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
         }
       ]
     },
     {
       "outcomeId": "appointments",
       "label": "Appointments",
-      "status": "gap",
-      "readySourceIds": [],
-      "candidateCount": 0,
-      "missingEvidence": [
-        "No approved, privacy-safe source currently satisfies the appointments contract: one clinic or approved aggregate geography x period x appointment dimensions; no patient identifier."
+      "status": "ready",
+      "readySourceIds": [
+        "DISCOVERED-0FBF1F8123FE6E3B"
       ],
+      "candidateCount": 1,
+      "missingEvidence": [],
       "assessments": [
         {
           "outcomeId": "appointments",
@@ -167,7 +240,42 @@
           "timeFields": [],
           "missingRequirements": [
             "metric: Aggregate booked, completed, available, or cancelled appointment count with explicit status/type semantics.",
-            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)",
+            "compatible aggregate geography (zip, cbsa, metro, dma, state, county, trade_area, drive_time, point)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "appointments",
+          "status": "ready_for_adapter",
+          "sourceId": "DISCOVERED-0FBF1F8123FE6E3B",
+          "packageId": "tableau-cvc-2026-08-20",
+          "matchedMetricFields": [
+            "COMPLETED_APPOINTMENTS"
+          ],
+          "matchedContextFields": [],
+          "geography": "metro",
+          "timeFields": [
+            "WEEK_START_DATE"
+          ],
+          "missingRequirements": [],
+          "warnings": [],
+          "queryRegistration": "candidate_for_typed_query"
+        },
+        {
+          "outcomeId": "appointments",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-958546E53E54C354",
+          "packageId": "tableau-cvc-2026-08-20",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: Aggregate booked, completed, available, or cancelled appointment count with explicit status/type semantics.",
+            "compatible aggregate geography (zip, cbsa, metro, dma, state, county, trade_area, drive_time, point)",
             "bounded observation period",
             "reviewable aggregate row grain"
           ],
@@ -290,15 +398,66 @@
           ],
           "warnings": [],
           "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "mature_clinic_performance",
+          "status": "incompatible",
+          "sourceId": "DISCOVERED-0FBF1F8123FE6E3B",
+          "packageId": "tableau-cvc-2026-08-20",
+          "matchedMetricFields": [
+            "COMPLETED_APPOINTMENTS",
+            "NET_SALES"
+          ],
+          "matchedContextFields": [],
+          "geography": "metro",
+          "timeFields": [
+            "WEEK_START_DATE"
+          ],
+          "missingRequirements": [
+            "context field matching ^(clinic_id|site_id)$",
+            "context field matching ^(open_date|opening_date|months_open|maturity_status|mature_flag)$",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
+        },
+        {
+          "outcomeId": "mature_clinic_performance",
+          "status": "excluded",
+          "sourceId": "DISCOVERED-958546E53E54C354",
+          "packageId": "tableau-cvc-2026-08-20",
+          "matchedMetricFields": [],
+          "matchedContextFields": [],
+          "geography": "unknown",
+          "timeFields": [],
+          "missingRequirements": [
+            "metric: A named clinic outcome paired with an explicit opening date, months-open measure, or approved maturity status.",
+            "context field matching ^(clinic_id|site_id)$",
+            "context field matching ^(open_date|opening_date|months_open|maturity_status|mature_flag)$",
+            "compatible aggregate geography (zip, cbsa, dma, state, county, trade_area, drive_time, point)",
+            "bounded observation period",
+            "reviewable aggregate row grain"
+          ],
+          "warnings": [],
+          "queryRegistration": "not_registered"
         }
       ]
     }
   ],
-  "adapterCandidates": [],
+  "adapterCandidates": [
+    {
+      "sourceId": "DISCOVERED-0FBF1F8123FE6E3B",
+      "outcomeIds": [
+        "appointments"
+      ],
+      "registrationState": "candidate_for_typed_adapter",
+      "allowedQuery": "none_until_contract_review"
+    }
+  ],
   "summary": {
-    "readyOutcomeCount": 0,
-    "gapOutcomeCount": 6,
-    "adapterCandidateCount": 0,
+    "readyOutcomeCount": 1,
+    "gapOutcomeCount": 5,
+    "adapterCandidateCount": 1,
     "executableQueryCount": 0
   },
   "conclusionBoundary": "Discovery can nominate a typed adapter candidate, but it cannot register arbitrary SQL, approve metric semantics, or expose a raw file. No query becomes executable until contract, privacy, full-file grain, quality, and source-owner review are complete."

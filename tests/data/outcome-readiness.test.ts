@@ -73,7 +73,7 @@ test("exposes a compact product summary without source paths or column metadata"
   assert.equal(response.status, 200);
   const body = await response.json() as { outcomes: unknown[]; summary: { gapOutcomeCount: number } };
   assert.equal(body.outcomes.length, 6);
-  assert.equal(body.summary.gapOutcomeCount, 6);
+  assert.equal(body.summary.gapOutcomeCount, 5);
   const serialized = JSON.stringify(body);
   assert.equal(serialized.includes("relativePath"), false);
   assert.equal(serialized.includes("columns"), false);

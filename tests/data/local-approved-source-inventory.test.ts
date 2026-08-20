@@ -6,7 +6,7 @@ const inventory = JSON.parse(
   await readFile(new URL("../../data/contracts/local-approved-source-inventory.json", import.meta.url), "utf8"),
 );
 
-test("local source inventory exposes the four contracted packages", () => {
+test("local source inventory exposes the five contracted packages", () => {
   assert.deepEqual(
     inventory.packages.map((sourcePackage: { id: string }) => sourcePackage.id),
     [
@@ -14,11 +14,12 @@ test("local source inventory exposes the four contracted packages", () => {
       "snowflake-pricing-2026-08-17",
       "seo-keywords-2026-08-14",
       "zeus-ui-2026-08-18",
+      "tableau-cvc-2026-08-20",
     ],
   );
   assert.equal(
     inventory.packages.reduce((total: number, sourcePackage: { fileCount: number }) => total + sourcePackage.fileCount, 0),
-    54,
+    56,
   );
   assert.ok(inventory.packages.every((sourcePackage: { gitTracked: boolean }) => sourcePackage.gitTracked === false));
 });

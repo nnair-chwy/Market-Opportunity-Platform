@@ -5,6 +5,7 @@ export {
   type CvcWeeklySiteMetroImport,
   type CvcWeeklySiteMetroRecord,
 } from "./weekly-site-metro.ts";
+export { parseTableauCvcMetroOutcomesCsv, type TableauCvcMetroOutcomeRecord } from "./tableau-metro-outcomes.ts";
 export {
   filterByMaturityWindow,
   prepareCvcPerformanceComparison,

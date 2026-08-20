@@ -59,7 +59,7 @@ export const discoveredSourceProfileSchema = z.object({
     confidence: z.enum(["high", "medium", "low", "none"]),
   }).strict(),
   geography: z.object({
-    grain: z.enum(["zip", "cbsa", "dma", "state", "county", "trade_area", "drive_time", "point", "national", "unknown"]),
+    grain: z.enum(["zip", "cbsa", "metro", "dma", "state", "county", "trade_area", "drive_time", "point", "national", "unknown"]),
     fields: z.array(z.string()),
     confidence: z.enum(["high", "medium", "low", "none"]),
     alternatives: z.array(z.string()),

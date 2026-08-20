@@ -9,6 +9,7 @@ const matches = (name: string, patterns: RegExp[]) => patterns.some((pattern) =>
 const geographyPatterns: Array<[string, RegExp[]]> = [
   ["zip", [/(^|_)(zip|zipcode|zip_code|postal|postal_code|zcta|zcta5)($|_)/]],
   ["cbsa", [/(^|_)(cbsa|metro_code|metropolitan_statistical_area)($|_)/]],
+  ["metro", [/(^|_)metro($|_)/]],
   ["dma", [/(^|_)(dma|designated_market_area|nielsen_market)($|_)/]],
   ["state", [/(^|_)(state|state_code|state_fips)($|_)/]],
   ["county", [/(^|_)(county|county_fips)($|_)/]],
@@ -95,7 +96,7 @@ export function inferProfile(columns: DiscoveredColumn[], rowCount: number | nul
     const fields = columns.filter((column) => matches(column.normalizedName, patterns)).map((column) => column.name);
     return fields.length ? [{ grain, fields }] : [];
   });
-  let geography: { grain: "zip" | "cbsa" | "dma" | "state" | "county" | "trade_area" | "drive_time" | "point" | "national" | "unknown"; fields: string[]; confidence: Confidence; alternatives: string[] };
+  let geography: { grain: "zip" | "cbsa" | "metro" | "dma" | "state" | "county" | "trade_area" | "drive_time" | "point" | "national" | "unknown"; fields: string[]; confidence: Confidence; alternatives: string[] };
   if (geoMatches.length === 0) {
     geography = { grain: "unknown", fields: [], confidence: "none", alternatives: [] };
     uncertainties.push({ field: "geography", reason: "No recognized geographic field was found in the sampled schema.", candidates: [] });

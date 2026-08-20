@@ -1,12 +1,212 @@
 {
   "version": "semantic-source-contract-registry-v1",
-  "generatedAt": "2026-08-20T00:43:11.536Z",
+  "generatedAt": "2026-08-20T19:00:00.000Z",
   "rawRowsStored": false,
-  "reports": [],
-  "contracts": [],
+  "reports": [
+    {
+      "version": "discovered-source-full-validation-v1",
+      "sourceId": "DISCOVERED-0FBF1F8123FE6E3B",
+      "status": "structurally_valid_candidate",
+      "rowsValidated": 438,
+      "distinctGrainKeys": 438,
+      "duplicateRowCount": 0,
+      "fieldValidation": [
+        {
+          "field": "METRO",
+          "role": "geography",
+          "missingCount": 0,
+          "invalidCount": 0
+        },
+        {
+          "field": "WEEK_START_DATE",
+          "role": "time",
+          "missingCount": 0,
+          "invalidCount": 0
+        },
+        {
+          "field": "CHANNEL_CODE",
+          "role": "grain",
+          "missingCount": 0,
+          "invalidCount": 0
+        },
+        {
+          "field": "COMPLETED_APPOINTMENTS",
+          "role": "metric",
+          "missingCount": 0,
+          "invalidCount": 0
+        }
+      ],
+      "failures": [],
+      "rawRowsStored": false,
+      "semanticContract": {
+        "version": "semantic-regional-outcome-source-v1",
+        "sourceId": "DISCOVERED-0FBF1F8123FE6E3B",
+        "packageId": "tableau-cvc-2026-08-20",
+        "fileSha256": "f3a720ef441aefd21fe72089406a8e36ef3078c0a46a1203a359b70deea07fb5",
+        "format": "csv",
+        "rowCount": 438,
+        "rawRowsStored": false,
+        "allowedUse": "aggregate_clinic_and_marketing_outcome_analysis",
+        "sensitivity": "internal",
+        "privacy": {
+          "directIdentifiersDetected": false,
+          "aggregateOnly": true
+        },
+        "grain": {
+          "keyFields": [
+            "METRO",
+            "WEEK_START_DATE",
+            "CHANNEL_CODE"
+          ],
+          "uniqueness": "validated_unique",
+          "duplicateRowCount": 0
+        },
+        "geography": {
+          "grain": "metro",
+          "fields": [
+            "METRO"
+          ],
+          "validity": "all_rows_valid",
+          "semanticStatus": "candidate_requires_owner_review"
+        },
+        "time": {
+          "grain": "week",
+          "fields": [
+            "WEEK_START_DATE"
+          ],
+          "validity": "all_rows_valid",
+          "semanticStatus": "candidate_requires_owner_review"
+        },
+        "metrics": [
+          {
+            "outcomeId": "appointments",
+            "sourceField": "COMPLETED_APPOINTMENTS",
+            "unit": "count",
+            "validity": "all_rows_numeric",
+            "definitionStatus": "candidate_requires_owner_review"
+          }
+        ],
+        "fieldValidation": [
+          {
+            "field": "METRO",
+            "role": "geography",
+            "missingCount": 0,
+            "invalidCount": 0
+          },
+          {
+            "field": "WEEK_START_DATE",
+            "role": "time",
+            "missingCount": 0,
+            "invalidCount": 0
+          },
+          {
+            "field": "CHANNEL_CODE",
+            "role": "grain",
+            "missingCount": 0,
+            "invalidCount": 0
+          },
+          {
+            "field": "COMPLETED_APPOINTMENTS",
+            "role": "metric",
+            "missingCount": 0,
+            "invalidCount": 0
+          }
+        ],
+        "approvalState": "candidate_requires_owner_review",
+        "queryEligibility": "none_pending_semantic_approval",
+        "limitations": [
+          "Column-name inference does not approve metric meaning, geography semantics, period semantics, cohort rules, small-cell policy, or source-owner use.",
+          "A reviewer must approve this semantic contract before a typed adapter or allowlisted query is registered."
+        ]
+      }
+    }
+  ],
+  "contracts": [
+    {
+      "version": "semantic-regional-outcome-source-v1",
+      "sourceId": "DISCOVERED-0FBF1F8123FE6E3B",
+      "packageId": "tableau-cvc-2026-08-20",
+      "fileSha256": "f3a720ef441aefd21fe72089406a8e36ef3078c0a46a1203a359b70deea07fb5",
+      "format": "csv",
+      "rowCount": 438,
+      "rawRowsStored": false,
+      "allowedUse": "aggregate_clinic_and_marketing_outcome_analysis",
+      "sensitivity": "internal",
+      "privacy": {
+        "directIdentifiersDetected": false,
+        "aggregateOnly": true
+      },
+      "grain": {
+        "keyFields": [
+          "METRO",
+          "WEEK_START_DATE",
+          "CHANNEL_CODE"
+        ],
+        "uniqueness": "validated_unique",
+        "duplicateRowCount": 0
+      },
+      "geography": {
+        "grain": "metro",
+        "fields": [
+          "METRO"
+        ],
+        "validity": "all_rows_valid",
+        "semanticStatus": "candidate_requires_owner_review"
+      },
+      "time": {
+        "grain": "week",
+        "fields": [
+          "WEEK_START_DATE"
+        ],
+        "validity": "all_rows_valid",
+        "semanticStatus": "candidate_requires_owner_review"
+      },
+      "metrics": [
+        {
+          "outcomeId": "appointments",
+          "sourceField": "COMPLETED_APPOINTMENTS",
+          "unit": "count",
+          "validity": "all_rows_numeric",
+          "definitionStatus": "candidate_requires_owner_review"
+        }
+      ],
+      "fieldValidation": [
+        {
+          "field": "METRO",
+          "role": "geography",
+          "missingCount": 0,
+          "invalidCount": 0
+        },
+        {
+          "field": "WEEK_START_DATE",
+          "role": "time",
+          "missingCount": 0,
+          "invalidCount": 0
+        },
+        {
+          "field": "CHANNEL_CODE",
+          "role": "grain",
+          "missingCount": 0,
+          "invalidCount": 0
+        },
+        {
+          "field": "COMPLETED_APPOINTMENTS",
+          "role": "metric",
+          "missingCount": 0,
+          "invalidCount": 0
+        }
+      ],
+      "approvalState": "candidate_requires_owner_review",
+      "queryEligibility": "none_pending_semantic_approval",
+      "limitations": [
+        "Column-name inference does not approve metric meaning, geography semantics, period semantics, cohort rules, small-cell policy, or source-owner use.",
+        "A reviewer must approve this semantic contract before a typed adapter or allowlisted query is registered."
+      ]
+    }
+  ],
   "summary": {
-    "validatedCandidateCount": 0,
+    "validatedCandidateCount": 1,
     "failedClosedCount": 0,
-    "pendingOwnerReviewCount": 0
+    "pendingOwnerReviewCount": 1
   }
 }

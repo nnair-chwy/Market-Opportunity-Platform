@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "generatedAt": "2026-08-20T00:43:11.729Z",
+  "generatedAt": "2026-08-20T19:00:00.000Z",
   "workspace": "Market-Opportunity-Platform-main",
   "purpose": "Agent-discoverable inventory of local approved-root files with fail-closed path-and-hash approval state",
   "rawAndSensitiveDataPolicy": "Files remain under ignored data/approved paths. New or changed files require explicit path-and-hash approval before adapter candidacy or querying.",
@@ -443,6 +443,34 @@
           "sha256": "0710b40de3ce35bff2ecacb7f8d11f58bb341f1cf07e794fdcb706b8bcdb90b1",
           "agentUse": "approved_local_source_file",
           "approvalReason": "retained_exact_prior_approval"
+        }
+      ]
+    },
+    {
+      "id": "tableau-cvc-2026-08-20",
+      "root": "data/approved/tableau-cvc/2026-08-20",
+      "sensitivity": "internal",
+      "allowedUse": "aggregate_clinic_and_marketing_outcome_analysis",
+      "contract": "data/contracts/tableau-cvc/export-manifest.json",
+      "gitTracked": false,
+      "fileCount": 2,
+      "totalBytes": 306426,
+      "files": [
+        {
+          "file": "data/approved/tableau-cvc/2026-08-20/cvc-metro-week-outcomes.csv",
+          "bytes": 27276,
+          "sha256": "f3a720ef441aefd21fe72089406a8e36ef3078c0a46a1203a359b70deea07fb5",
+          "agentUse": "approved_local_source_file",
+          "approvalReason": "explicit_path_and_hash_approval",
+          "approvedBy": "workspace-user-approved-tableau-export",
+          "approvedAt": "2026-08-20T19:00:00.000Z"
+        },
+        {
+          "file": "data/approved/tableau-cvc/2026-08-20/excluded/cvc-metrics-self-serve.original.csv",
+          "bytes": 279150,
+          "sha256": "11beee7f4c2c00098832a8d26e45205db634903c1bea5c179a3e177011408df3",
+          "agentUse": "audit_only_excluded_from_evaluation",
+          "approvalReason": "excluded_path_policy"
         }
       ]
     }

@@ -20,9 +20,9 @@ test("reviewed Tableau workbooks declare target grain, metrics, and honest conne
   assert.equal(dma?.status, "available_partial");
   assert.match(dma?.targetGrain ?? "", /DMA/i);
   assert.match(dma?.limitation ?? "", /not incremental or CCP-valued/i);
-  assert.equal(cvc?.status, "available_partial");
+  assert.equal(cvc?.status, "available_now");
   assert.ok(cvc?.metrics.includes("completed appointments"));
-  assert.match(cvc?.limitation ?? "", /has not yet passed the new adapter/i);
+  assert.match(cvc?.limitation ?? "", /connected.*historical.*crosswalk/i);
   assert.equal(ccp?.status, "needs_geo_join");
   assert.equal(newCustomers?.status, "needs_geo_join");
   assert.match(newCustomers?.limitation ?? "", /no approved DMA field/i);

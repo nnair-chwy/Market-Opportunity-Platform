@@ -12,8 +12,8 @@ test("autonomous discovery runs every reviewed hypothesis and returns a five-ite
   const run = runCurrentDataInsightDiscovery(fixed);
   assert.equal(run.status, "completed");
   assert.equal(run.generationMethod, "reviewed_hypothesis_registry");
-  assert.equal(run.analysesRun, 9);
-  assert.equal(run.traces.length, CURRENT_DATA_HYPOTHESES.length);
+  assert.equal(run.analysesRun, CURRENT_DATA_HYPOTHESES.length + 3);
+  assert.equal(run.traces.length, CURRENT_DATA_HYPOTHESES.length + 3);
   assert.equal(run.marketUniverse, 383);
   assert.ok(run.measuresExamined >= 15);
   assert.ok(run.sourceIds.includes("SRC-018"));
@@ -106,9 +106,9 @@ test("a rerun executes every hypothesis and surfaces the next qualified same-sna
 
   assert.notEqual(second.runId, first.runId);
   assert.equal(second.runSequence, 2);
-  assert.equal(second.analysesRun, CURRENT_DATA_HYPOTHESES.length);
-  assert.equal(second.traces.length, CURRENT_DATA_HYPOTHESES.length);
-  assert.equal(second.runAudit.reranHypothesisCount, CURRENT_DATA_HYPOTHESES.length);
+  assert.equal(second.analysesRun, CURRENT_DATA_HYPOTHESES.length + 3);
+  assert.equal(second.traces.length, CURRENT_DATA_HYPOTHESES.length + 3);
+  assert.equal(second.runAudit.reranHypothesisCount, CURRENT_DATA_HYPOTHESES.length + 3);
   assert.equal(second.runAudit.mode, "same_snapshot_reprioritization");
   assert.equal(second.runAudit.snapshotFingerprint, first.runAudit.snapshotFingerprint);
   assert.deepEqual(second.runAudit.repeatedPrimaryFindingIds, []);

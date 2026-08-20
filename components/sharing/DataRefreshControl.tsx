@@ -87,7 +87,7 @@ export function DataRefreshControl() {
         <header><div><div className="section-label">Data refresh</div><h2 id="data-refresh-title">Refresh the app&apos;s insight data</h2></div><button type="button" onClick={() => setOpen(false)} aria-label="Close data refresh">×</button></header>
         <p>Refresh checks for newly exported CSVs, validates them, and rebuilds the findings used throughout the app. If validation fails, the current working data stays unchanged.</p>
         {status ? <>
-          <div className="data-refresh-summary"><strong>{status.csvFileCount} approved CSV files found</strong><span>{status.sourcePackages.length} source packages</span><small>Last connected {new Date(status.inventoryGeneratedAt).toLocaleString()}</small></div>
+          <div className="data-refresh-summary"><strong>{status.csvFileCount} CSV files inventoried</strong><span>{status.sourcePackages.length} source packages</span><small>Each file below is labeled available or excluded · Last connected {new Date(status.inventoryGeneratedAt).toLocaleString()}</small></div>
           <section className="data-refresh-inventory" aria-label="Existing CSV inventory">
             <div className="data-refresh-inventory-heading"><strong>Files currently available</strong><span>Open a source to review every file</span></div>
             {status.sourcePackages.map((sourcePackage) => (
@@ -101,7 +101,8 @@ export function DataRefreshControl() {
           </section>
           <details className="data-refresh-readiness"><summary>Business-outcome connections</summary><div className="data-refresh-sources">{status.sourceGroups.map((source) => <div key={source.label} data-status={source.status}><strong>{source.label}</strong><span>{source.status}</span><small>{source.detail}</small></div>)}</div></details>
           <details className="data-refresh-readiness data-refresh-value-exports" open>
-            <summary>First-party exports to connect next</summary>
+            <summary>Data connections and requests</summary>
+            <p className="data-refresh-connection-guidance">Your only manual step is authentication. After access is available, the data agent downloads the approved aggregate, validates its geography and measures, registers it, and rebuilds the insight snapshot.</p>
             <div className="data-refresh-value-export-list">
               {status.valueDataRequests.map((source) => (
                 <article key={source.id} data-status={source.status}>
@@ -110,18 +111,18 @@ export function DataRefreshControl() {
                   <small><b>Target grain:</b> {source.targetGrain}</small>
                   <small><b>Measures:</b> {source.metrics.join(", ")}</small>
                   <small><b>Limit:</b> {source.limitation}</small>
-                  <a href={source.tableauUrl} target="_blank" rel="noreferrer">Open source in Tableau →</a>
+                  <a href={source.tableauUrl} target="_blank" rel="noreferrer">{source.status === "available_now" ? "Review authenticated source →" : "Authenticate in Tableau →"}</a>
                 </article>
               ))}
             </div>
           </details>
         </> : <p role="status">Loading source status…</p>}
-        <ol className="data-refresh-steps"><li>Find approved CSV exports in the secure workspace.</li><li>Check file structure, dates, and geography fields.</li><li>Rebuild the findings and recommendation evidence.</li></ol>
+        <ol className="data-refresh-steps"><li>Authenticate to the approved source.</li><li>The agent downloads and validates the aggregate export.</li><li>The prior snapshot stays live until the new findings pass checks.</li></ol>
         {notice ? <p className="data-refresh-notice" role="status">{notice}</p> : null}
         <footer>
           <button type="button" className="primary-action" disabled={Boolean(busy) || status?.mode !== "local"} onClick={() => void run("rebuild")}>{busy === "rebuild" ? "Refreshing insights…" : "Refresh insights"}</button>
         </footer>
-        {status?.mode === "hosted" ? <small className="data-refresh-hosted-note">This shared view shows freshness but cannot open private source exports. A data administrator can run Refresh insights from the secure workspace, then publish the update.</small> : <small className="data-refresh-hosted-note">This usually takes a few minutes. Keep this window open until the refresh finishes.</small>}
+        {status?.mode === "hosted" ? <small className="data-refresh-hosted-note">The shared site can show connected data and open the authentication page, but it cannot borrow your private Tableau session. Once authenticated, run the secure data agent to complete download, validation, and publication.</small> : <small className="data-refresh-hosted-note">This usually takes a few minutes. Keep this window open until the refresh finishes.</small>}
       </section>
     </div>
   ) : null;

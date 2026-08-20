@@ -1,11 +1,12 @@
 {
   "version": "approved-source-discovery-v1",
-  "generatedAt": "2026-08-20T00:43:11.536Z",
+  "generatedAt": "2026-08-20T19:00:00.000Z",
   "workspace": "Market-Opportunity-Platform-main",
   "approvedRoots": [
     "data/approved/google-ads/2026-07-14_2026-08-12",
     "data/approved/seo/2026-08-14",
     "data/approved/snowflake/pricing/2026-08-17",
+    "data/approved/tableau-cvc/2026-08-20",
     "data/approved/zeus-ui/2026-08-18"
   ],
   "sourceInventoryVersion": "1.1.0",
@@ -8966,6 +8967,342 @@
     },
     {
       "profileVersion": "approved-source-discovery-v1",
+      "sourceId": "DISCOVERED-0FBF1F8123FE6E3B",
+      "packageId": "tableau-cvc-2026-08-20",
+      "relativePath": "data/approved/tableau-cvc/2026-08-20/cvc-metro-week-outcomes.csv",
+      "format": "csv",
+      "bytes": 27276,
+      "sha256": "f3a720ef441aefd21fe72089406a8e36ef3078c0a46a1203a359b70deea07fb5",
+      "agentUse": "approved_local_source_file",
+      "inheritedSensitivity": "internal",
+      "inferredSensitivity": "internal",
+      "sensitivitySignals": [],
+      "allowedUse": "aggregate_clinic_and_marketing_outcome_analysis",
+      "approvalState": "approved_local_source",
+      "evidenceStatus": "Reported",
+      "rowCount": 200,
+      "sampledRowCount": 200,
+      "columns": [
+        {
+          "name": "METRO",
+          "normalizedName": "metro",
+          "inferredType": "string",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 4,
+          "roles": [
+            "geography"
+          ],
+          "inferredUnit": null
+        },
+        {
+          "name": "WEEK_START_DATE",
+          "normalizedName": "week_start_date",
+          "inferredType": "date",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 14,
+          "roles": [
+            "time"
+          ],
+          "inferredUnit": null
+        },
+        {
+          "name": "CHANNEL_CODE",
+          "normalizedName": "channel_code",
+          "inferredType": "string",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 4,
+          "roles": [
+            "identifier"
+          ],
+          "inferredUnit": null
+        },
+        {
+          "name": "SPEND",
+          "normalizedName": "spend",
+          "inferredType": "number",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 200,
+          "roles": [
+            "metric"
+          ],
+          "inferredUnit": "currency_unspecified"
+        },
+        {
+          "name": "IMPRESSIONS",
+          "normalizedName": "impressions",
+          "inferredType": "integer",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 190,
+          "roles": [
+            "metric"
+          ],
+          "inferredUnit": "count"
+        },
+        {
+          "name": "CLICKS",
+          "normalizedName": "clicks",
+          "inferredType": "integer",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 148,
+          "roles": [
+            "metric"
+          ],
+          "inferredUnit": "count"
+        },
+        {
+          "name": "CVC_APPOINTMENTS",
+          "normalizedName": "cvc_appointments",
+          "inferredType": "integer",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 7,
+          "roles": [
+            "metric"
+          ],
+          "inferredUnit": "count"
+        },
+        {
+          "name": "COMPLETED_APPOINTMENTS",
+          "normalizedName": "completed_appointments",
+          "inferredType": "integer",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 7,
+          "roles": [
+            "metric"
+          ],
+          "inferredUnit": "count"
+        },
+        {
+          "name": "NEW_TO_CHEWY_APPOINTMENTS",
+          "normalizedName": "new_to_chewy_appointments",
+          "inferredType": "integer",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 6,
+          "roles": [
+            "metric"
+          ],
+          "inferredUnit": "count"
+        },
+        {
+          "name": "NET_SALES",
+          "normalizedName": "net_sales",
+          "inferredType": "number",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 99,
+          "roles": [
+            "metric"
+          ],
+          "inferredUnit": "currency_unspecified"
+        },
+        {
+          "name": "SITE_COUNT",
+          "normalizedName": "site_count",
+          "inferredType": "integer",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 2,
+          "roles": [
+            "metric"
+          ],
+          "inferredUnit": "count"
+        },
+        {
+          "name": "SOURCE_ROWS",
+          "normalizedName": "source_rows",
+          "inferredType": "integer",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 2,
+          "roles": [
+            "metric"
+          ],
+          "inferredUnit": null
+        }
+      ],
+      "grain": {
+        "description": "one row per inferred combination of METRO × WEEK_START_DATE × CHANNEL_CODE",
+        "keyFields": [
+          "METRO",
+          "WEEK_START_DATE",
+          "CHANNEL_CODE"
+        ],
+        "confidence": "medium"
+      },
+      "geography": {
+        "grain": "metro",
+        "fields": [
+          "METRO"
+        ],
+        "confidence": "high",
+        "alternatives": []
+      },
+      "time": {
+        "fields": [
+          "WEEK_START_DATE"
+        ],
+        "grain": "week",
+        "confidence": "high"
+      },
+      "metrics": [
+        {
+          "field": "SPEND",
+          "unit": "currency_unspecified",
+          "confidence": "high"
+        },
+        {
+          "field": "IMPRESSIONS",
+          "unit": "count",
+          "confidence": "high"
+        },
+        {
+          "field": "CLICKS",
+          "unit": "count",
+          "confidence": "high"
+        },
+        {
+          "field": "CVC_APPOINTMENTS",
+          "unit": "count",
+          "confidence": "high"
+        },
+        {
+          "field": "COMPLETED_APPOINTMENTS",
+          "unit": "count",
+          "confidence": "high"
+        },
+        {
+          "field": "NEW_TO_CHEWY_APPOINTMENTS",
+          "unit": "count",
+          "confidence": "high"
+        },
+        {
+          "field": "NET_SALES",
+          "unit": "currency_unspecified",
+          "confidence": "high"
+        },
+        {
+          "field": "SITE_COUNT",
+          "unit": "count",
+          "confidence": "high"
+        },
+        {
+          "field": "SOURCE_ROWS",
+          "unit": null,
+          "confidence": "medium"
+        }
+      ],
+      "uncertainties": [
+        {
+          "field": "unit",
+          "reason": "Metric-like field \"SOURCE_ROWS\" has no inferable unit.",
+          "candidates": []
+        },
+        {
+          "field": "grain",
+          "reason": "Grain is a schema hypothesis until uniqueness is validated across the complete source.",
+          "candidates": [
+            "METRO",
+            "WEEK_START_DATE",
+            "CHANNEL_CODE"
+          ]
+        }
+      ],
+      "warnings": [],
+      "containsRawRows": false,
+      "integration": {
+        "inventoryFileMatched": true,
+        "queryEligibility": "candidate_for_adapter",
+        "nextStep": "Review inferred contract, validate full-file grain and quality, then register a typed adapter and allowlisted query."
+      }
+    },
+    {
+      "profileVersion": "approved-source-discovery-v1",
+      "sourceId": "DISCOVERED-958546E53E54C354",
+      "packageId": "tableau-cvc-2026-08-20",
+      "relativePath": "data/approved/tableau-cvc/2026-08-20/excluded/cvc-metrics-self-serve.original.csv",
+      "format": "csv",
+      "bytes": 279150,
+      "sha256": "11beee7f4c2c00098832a8d26e45205db634903c1bea5c179a3e177011408df3",
+      "agentUse": "audit_only_excluded_from_evaluation",
+      "inheritedSensitivity": "internal",
+      "inferredSensitivity": "internal",
+      "sensitivitySignals": [],
+      "allowedUse": "aggregate_clinic_and_marketing_outcome_analysis",
+      "approvalState": "excluded",
+      "evidenceStatus": "Reported",
+      "rowCount": 200,
+      "sampledRowCount": 200,
+      "columns": [
+        {
+          "name": "��C\u0000o\u0000l\u0000\t\u0000F\u0000i\u0000n\u0000a\u0000n\u0000c\u0000i\u0000a\u0000l\u0000 \u0000Y\u0000e\u0000a\u0000r\u0000\t\u0000F\u0000i\u0000n\u0000a\u0000n\u0000c\u0000i\u0000a\u0000l\u0000 \u0000P\u0000e\u0000r\u0000i\u0000o\u0000d\u0000\t\u0000F\u0000i\u0000n\u0000a\u0000n\u0000c\u0000i\u0000a\u0000l\u0000 \u0000W\u0000e\u0000e\u0000k\u0000 \u0000O\u0000f\u0000 \u0000Y\u0000e\u0000a\u0000r\u0000\t\u0000C\u0000a\u0000m\u0000p\u0000a\u0000i\u0000g\u0000n\u0000 \u0000D\u0000a\u0000t\u0000e\u0000\t\u0000C\u0000h\u0000a\u0000n\u0000n\u0000e\u0000l\u0000\t\u0000N\u0000e\u0000t\u0000w\u0000o\u0000r\u0000k\u0000\t\u0000B\u0000u\u0000d\u0000g\u0000e\u0000t\u0000\t\u0000E\u0000n\u0000t\u0000i\u0000t\u0000y\u0000\t\u0000P\u0000r\u0000o\u0000g\u0000r\u0000a\u0000m\u0000\t\u0000M\u0000e\u0000t\u0000r\u0000o\u0000\t\u0000C\u0000a\u0000m\u0000p\u0000a\u0000i\u0000g\u0000n\u0000 \u0000T\u0000a\u0000r\u0000g\u0000e\u0000t\u0000 \u0000C\u0000l\u0000i\u0000n\u0000i\u0000c\u0000\t\u0000S\u0000i\u0000t\u0000e\u0000 \u0000I\u0000D\u0000\t\u0000C\u0000a\u0000m\u0000p\u0000a\u0000i\u0000g\u0000n\u0000I\u0000D\u0000_\u0000N\u0000a\u0000m\u0000e\u0000 \u0000\t\u0000S\u0000p\u0000e\u0000n\u0000d\u0000\t\u0000I\u0000m\u0000p\u0000r\u0000e\u0000s\u0000s\u0000i\u0000o\u0000n\u0000s\u0000\t\u0000C\u0000l\u0000i\u0000c\u0000k\u0000s\u0000\t\u0000C\u0000T\u0000R\u0000 \u0000(\u0000C\u0000l\u0000i\u0000c\u0000k\u0000 \u0000T\u0000h\u0000r\u0000u\u0000 \u0000R\u0000a\u0000t\u0000e\u0000)\u0000\t\u0000C\u0000V\u0000C\u0000 \u0000L\u0000a\u0000n\u0000d\u0000i\u0000n\u0000g\u0000 \u0000p\u0000a\u0000g\u0000e\u0000 \u0000S\u0000e\u0000s\u0000s\u0000i\u0000o\u0000n\u0000s\u0000\t\u0000C\u0000V\u0000C\u0000 \u0000B\u0000o\u0000o\u0000k\u0000i\u0000n\u0000g\u0000 \u0000S\u0000t\u0000a\u0000r\u0000t\u0000 \u0000S\u0000e\u0000s\u0000s\u0000i\u0000o\u0000n\u0000s\u0000\t\u0000C\u0000V\u0000C\u0000 \u0000B\u0000o\u0000o\u0000k\u0000i\u0000n\u0000g\u0000 \u0000S\u0000c\u0000h\u0000e\u0000d\u0000u\u0000l\u0000e\u0000d\u0000 \u0000S\u0000e\u0000s\u0000s\u0000i\u0000o\u0000n\u0000s\u0000\t\u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000C\u0000h\u0000e\u0000w\u0000y\u0000 \u0000-\u0000 \u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000C\u0000V\u0000C\u0000 \u0000-\u0000 \u0000O\u0000n\u0000l\u0000i\u0000n\u0000e\u0000 \u0000A\u0000p\u0000p\u0000t\u0000s\u0000\t\u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000H\u0000e\u0000a\u0000l\u0000t\u0000h\u0000c\u0000a\u0000r\u0000e\u0000 \u0000-\u0000 \u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000C\u0000V\u0000C\u0000 \u0000-\u0000 \u0000O\u0000n\u0000l\u0000i\u0000n\u0000e\u0000 \u0000A\u0000p\u0000p\u0000t\u0000s\u0000\t\u0000E\u0000x\u0000i\u0000s\u0000t\u0000i\u0000n\u0000g\u0000 \u0000t\u0000o\u0000 \u0000C\u0000h\u0000e\u0000w\u0000y\u0000 \u0000-\u0000 \u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000C\u0000V\u0000C\u0000 \u0000-\u0000 \u0000O\u0000n\u0000l\u0000i\u0000n\u0000e\u0000 \u0000A\u0000p\u0000p\u0000t\u0000s\u0000\t\u0000E\u0000x\u0000i\u0000s\u0000t\u0000i\u0000n\u0000g\u0000 \u0000t\u0000o\u0000 \u0000C\u0000h\u0000e\u0000w\u0000y\u0000 \u0000&\u0000 \u0000C\u0000V\u0000C\u0000 \u0000-\u0000 \u0000O\u0000n\u0000l\u0000i\u0000n\u0000e\u0000 \u0000A\u0000p\u0000p\u0000t\u0000s\u0000\t\u0000C\u0000V\u0000C\u0000 \u0000A\u0000p\u0000p\u0000o\u0000i\u0000n\u0000t\u0000m\u0000e\u0000n\u0000t\u0000s\u0000\t\u0000C\u0000o\u0000m\u0000p\u0000l\u0000e\u0000t\u0000e\u0000d\u0000 \u0000A\u0000p\u0000p\u0000o\u0000i\u0000n\u0000t\u0000m\u0000e\u0000n\u0000t\u0000s\u0000\t\u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000C\u0000h\u0000e\u0000w\u0000y\u0000 \u0000-\u0000 \u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000C\u0000V\u0000C\u0000 \u0000A\u0000p\u0000p\u0000t\u0000s\u0000\t\u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000H\u0000e\u0000a\u0000l\u0000t\u0000h\u0000c\u0000a\u0000r\u0000e\u0000 \u0000-\u0000 \u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000C\u0000V\u0000C\u0000 \u0000A\u0000p\u0000p\u0000t\u0000s\u0000\t\u0000E\u0000x\u0000i\u0000s\u0000t\u0000i\u0000n\u0000g\u0000 \u0000t\u0000o\u0000 \u0000C\u0000h\u0000e\u0000w\u0000y\u0000 \u0000-\u0000 \u0000N\u0000e\u0000w\u0000 \u0000t\u0000o\u0000 \u0000C\u0000V\u0000C\u0000 \u0000A\u0000p\u0000p\u0000t\u0000s\u0000\t\u0000E\u0000x\u0000i\u0000s\u0000t\u0000i\u0000n\u0000g\u0000 \u0000t\u0000o\u0000 \u0000C\u0000h\u0000e\u0000w\u0000y\u0000 \u0000&\u0000 \u0000C\u0000V\u0000C\u0000 \u0000A\u0000p\u0000p\u0000t\u0000s\u0000\t\u0000A\u0000p\u0000p\u0000o\u0000i\u0000n\u0000t\u0000m\u0000e\u0000n\u0000t\u0000s\u0000 \u0000B\u0000o\u0000o\u0000k\u0000e\u0000d\u0000 \u0000-\u0000 \u0000O\u0000S\u0000\t\u0000A\u0000p\u0000p\u0000o\u0000i\u0000n\u0000t\u0000m\u0000e\u0000n\u0000t\u0000s\u0000 \u0000B\u0000o\u0000o\u0000k\u0000e\u0000d\u0000 \u0000-\u0000 \u0000C\u0000l\u0000i\u0000n\u0000i\u0000c\u0000\t\u0000A\u0000p\u0000p\u0000o\u0000i\u0000n\u0000t\u0000m\u0000e\u0000n\u0000t\u0000s\u0000 \u0000B\u0000o\u0000o\u0000k\u0000e\u0000d\u0000 \u0000-\u0000 \u0000C\u0000S\u0000R\u0000\t\u0000N\u0000e\u0000t\u0000 \u0000S\u0000a\u0000l\u0000e\u0000s\u0000\t\u0000N\u0000e\u0000t\u0000 \u0000S\u0000a\u0000l\u0000e\u0000s\u0000 \u0000/\u0000 \u0000C\u0000o\u0000m\u0000p\u0000l\u0000e\u0000t\u0000e\u0000d\u0000 \u0000A\u0000p\u0000p\u0000t\u0000\t\u0000C\u0000V\u0000R\u0000 \u0000(\u0000L\u0000P\u0000 \u0000S\u0000e\u0000s\u0000s\u0000i\u0000o\u0000n\u0000 \u0000t\u0000o\u0000 \u0000B\u0000o\u0000o\u0000k\u0000i\u0000n\u0000g\u0000 \u0000S\u0000t\u0000a\u0000r\u0000t\u0000)\u0000\t\u0000C\u0000V\u0000R\u0000 \u0000(\u0000L\u0000P\u0000 \u0000S\u0000e\u0000s\u0000s\u0000i\u0000o\u0000n\u0000 \u0000t\u0000o\u0000 \u0000B\u0000o\u0000o\u0000k\u0000i\u0000n\u0000g\u0000 \u0000S\u0000c\u0000h\u0000e\u0000d\u0000u\u0000l\u0000e\u0000d\u0000)\u0000\t\u0000C\u0000V\u0000R\u0000 \u0000(\u0000B\u0000o\u0000o\u0000k\u0000i\u0000n\u0000g\u0000 \u0000S\u0000t\u0000a\u0000r\u0000t\u0000 \u0000t\u0000o\u0000 \u0000B\u0000o\u0000o\u0000k\u0000i\u0000n\u0000g\u0000 \u0000S\u0000c\u0000h\u0000e\u0000d\u0000u\u0000l\u0000e\u0000d\u0000)\u0000\t\u0000C\u0000P\u0000M\u0000 \u0000\t\u0000C\u0000o\u0000s\u0000t\u0000-\u0000P\u0000e\u0000r\u0000-\u0000C\u0000l\u0000i\u0000c\u0000k\u0000 \u0000\t\u0000C\u0000o\u0000s\u0000t\u0000-\u0000P\u0000e\u0000r\u0000-\u0000B\u0000o\u0000o\u0000k\u0000i\u0000n\u0000g\u0000 \u0000S\u0000t\u0000a\u0000r\u0000t\u0000\t\u0000C\u0000o\u0000s\u0000t\u0000-\u0000P\u0000e\u0000r\u0000-\u0000B\u0000o\u0000o\u0000k\u0000i\u0000n\u0000g\u0000 \u0000S\u0000c\u0000h\u0000e\u0000d\u0000u\u0000l\u0000e\u0000d\u0000",
+          "normalizedName": "c_o_l_f_i_n_a_n_c_i_a_l_y_e_a_r_f_i_n_a_n_c_i_a_l_p_e_r_i_o_d_f_i_n_a_n_c_i_a_l_w_e_e_k_o_f_y_e_a_r_c_a_m_p_a_i_g_n_d_a_t_e_c_h_a_n_n_e_l_n_e_t_w_o_r_k_b_u_d_g_e_t_e_n_t_i_t_y_p_r_o_g_r_a_m_m_e_t_r_o_c_a_m_p_a_i_g_n_t_a_r_g_e_t_c_l_i_n_i_c_s_i_t_e_i_d_c_a_m_p_a_i_g_n_i_d_n_a_m_e_s_p_e_n_d_i_m_p_r_e_s_s_i_o_n_s_c_l_i_c_k_s_c_t_r_c_l_i_c_k_t_h_r_u_r_a_t_e_c_v_c_l_a_n_d_i_n_g_p_a_g_e_s_e_s_s_i_o_n_s_c_v_c_b_o_o_k_i_n_g_s_t_a_r_t_s_e_s_s_i_o_n_s_c_v_c_b_o_o_k_i_n_g_s_c_h_e_d_u_l_e_d_s_e_s_s_i_o_n_s_n_e_w_t_o_c_h_e_w_y_n_e_w_t_o_c_v_c_o_n_l_i_n_e_a_p_p_t_s_n_e_w_t_o_h_e_a_l_t_h_c_a_r_e_n_e_w_t_o_c_v_c_o_n_l_i_n_e_a_p_p_t_s_e_x_i_s_t_i_n_g_t_o_c_h_e_w_y_n_e_w_t_o_c_v_c_o_n_l_i_n_e_a_p_p_t_s_e_x_i_s_t_i_n_g_t_o_c_h_e_w_y_c_v_c_o_n_l_i_n_e_a_p_p_t_s_c_v_c_a_p_p_o_i_n_t_m_e_n_t_s_c_o_m_p_l_e_t_e_d_a_p_p_o_i_n_t_m_e_n_t_s_n_e_w_t_o_c_h_e_w_y_n_e_w_t_o_c_v_c_a_p_p_t_s_n_e_w_t_o_h_e_a_l_t_h_c_a_r_e_n_e_w_t_o_c_v_c_a_p_p_t_s_e_x_i_s_t_i_n_g_t_o_c_h_e_w_y_n_e_w_t_o_c_v_c_a_p_p_t_s_e_x_i_s_t_i_n_g_t_o_c_h_e_w_y_c_v_c_a_p_p_t_s_a_p_p_o_i_n_t_m_e_n_t_s_b_o_o_k_e_d_o_s_a_p_p_o_i_n_t_m_e_n_t_s_b_o_o_k_e_d_c_l_i_n_i_c_a_p_p_o_i_n_t_m_e_n_t_s_b_o_o_k_e_d_c_s_r_n_e_t_s_a_l_e_s_n_e_t_s_a_l_e_s_c_o_m_p_l_e_t_e_d_a_p_p_t_c_v_r_l_p_s_e_s_s_i_o_n_t_o_b_o_o_k_i_n_g_s_t_a_r_t_c_v_r_l_p_s_e_s_s_i_o_n_t_o_b_o_o_k_i_n_g_s_c_h_e_d_u_l_e_d_c_v_r_b_o_o_k_i_n_g_s_t_a_r_t_t_o_b_o_o_k_i_n_g_s_c_h_e_d_u_l_e_d_c_p_m_c_o_s_t_p_e_r_c_l_i_c_k_c_o_s_t_p_e_r_b_o_o_k_i_n_g_s_t_a_r_t_c_o_s_t_p_e_r_b_o_o_k_i_n_g_s_c_h_e_d_u_l_e_d",
+          "inferredType": "string",
+          "nullable": false,
+          "sampledNonNullCount": 200,
+          "sampledDistinctCount": 200,
+          "roles": [
+            "dimension"
+          ],
+          "inferredUnit": null
+        }
+      ],
+      "grain": {
+        "description": "row grain unknown",
+        "keyFields": [],
+        "confidence": "none"
+      },
+      "geography": {
+        "grain": "unknown",
+        "fields": [],
+        "confidence": "none",
+        "alternatives": []
+      },
+      "time": {
+        "fields": [],
+        "grain": "unknown",
+        "confidence": "none"
+      },
+      "metrics": [],
+      "uncertainties": [
+        {
+          "field": "geography",
+          "reason": "No recognized geographic field was found in the sampled schema.",
+          "candidates": []
+        },
+        {
+          "field": "time",
+          "reason": "No observation or reporting period field was found.",
+          "candidates": []
+        },
+        {
+          "field": "metric",
+          "reason": "No numeric or conventionally named metric field was found.",
+          "candidates": []
+        },
+        {
+          "field": "grain",
+          "reason": "Grain is a schema hypothesis until uniqueness is validated across the complete source.",
+          "candidates": []
+        }
+      ],
+      "warnings": [],
+      "containsRawRows": false,
+      "integration": {
+        "inventoryFileMatched": true,
+        "queryEligibility": "excluded",
+        "nextStep": "Retain for audit only; do not expose to evaluation."
+      }
+    },
+    {
+      "profileVersion": "approved-source-discovery-v1",
       "sourceId": "DISCOVERED-E571005D2983BEFA",
       "packageId": "zeus-ui-2026-08-18",
       "relativePath": "data/approved/zeus-ui/2026-08-18/sanitized/manifest.json",
@@ -10212,8 +10549,8 @@
   ],
   "skipped": [],
   "summary": {
-    "discoveredFileCount": 54,
-    "profiledFileCount": 54,
+    "discoveredFileCount": 56,
+    "profiledFileCount": 56,
     "reviewRequiredCount": 0,
     "restrictedSignalCount": 0
   }

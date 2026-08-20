@@ -1,4 +1,13 @@
 {
   "version": "local-source-approval-registry-v1",
-  "approvals": []
+  "approvals": [
+    {
+      "packageId": "tableau-cvc-2026-08-20",
+      "file": "data/approved/tableau-cvc/2026-08-20/cvc-metro-week-outcomes.csv",
+      "sha256": "f3a720ef441aefd21fe72089406a8e36ef3078c0a46a1203a359b70deea07fb5",
+      "approvedBy": "workspace-user-approved-tableau-export",
+      "approvedAt": "2026-08-20T19:00:00.000Z",
+      "agentUse": "approved_local_source_file"
+    }
+  ]
 }

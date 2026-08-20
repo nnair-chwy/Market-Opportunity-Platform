@@ -11,8 +11,10 @@ import { encodeInsightDiscoveryCursor } from "./rerun-contract.ts";
 import { getApprovedWorkspaceSnapshotDataset } from "../perspectives/approved-workspace-snapshot.ts";
 import type { WorkspaceSnapshotDatasetId } from "../perspectives/workspace-snapshot.ts";
 import { assessBusinessValue, type BusinessValueAssessment } from "../business-value/first-party-value-framework.ts";
+import { getTableauCvcMetroSummaries, median, TABLEAU_CVC_OUTCOME_SNAPSHOT_VERSION, TABLEAU_CVC_OUTCOME_SOURCE_ID } from "../business-value/tableau-cvc-metro-summary.ts";
 
 export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v3" as const;
+const TABLEAU_CVC_OUTCOME_ANALYSES = ["cvc-completed-appointments-per-spend", "cvc-net-sales-per-spend", "cvc-new-to-chewy-appointment-mix"] as const;
 
 export type DiscoveryHypothesis = {
   id: string;
@@ -465,6 +467,53 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
   return finding;
 }
 
+function tableauCvcOutcomeFindings(): AutonomousInsight[] {
+  const summaries = getTableauCvcMetroSummaries();
+  const medianCompletedPerThousand = median(summaries.map((item) => item.completedAppointmentsPerThousandSpend));
+  const medianSalesPerThousand = median(summaries.map((item) => item.netSalesPerThousandSpend));
+  return summaries.map((summary) => {
+    const marketId = `tableau-metro:${summary.metro.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    const route = routeAutonomousGeoFinding({ perspectiveId: "cvc", viewId: "clinic_performance_context", topic: "clinic_performance" });
+    const completedRatio = medianCompletedPerThousand > 0 ? summary.completedAppointmentsPerThousandSpend / medianCompletedPerThousand : 0;
+    const salesRatio = medianSalesPerThousand > 0 ? summary.netSalesPerThousandSpend / medianSalesPerThousand : 0;
+    const evidenceDetail = `${summary.metro} recorded ${summary.completedAppointments.toLocaleString("en-US")} completed appointments, ${summary.newToChewyAppointments.toLocaleString("en-US")} new-to-Chewy appointments, ${summary.netSales.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} net sales, and ${summary.spend.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} tracked media spend from ${summary.periodStart} through ${summary.periodEnd}. That equals ${summary.completedAppointmentsPerThousandSpend.toFixed(2)} completed appointments and ${summary.netSalesPerThousandSpend.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} net sales per $1,000 of observed spend.`;
+    const finding: AutonomousInsight = {
+      insightId: `insight:cvc-tableau-outcomes-${marketId.split(":")[1]}`,
+      department: "cvc",
+      marketIds: [marketId],
+      marketName: summary.metro,
+      headline: `Validate ${summary.metro}'s observed clinic-acquisition economics before changing CVC media or capacity`,
+      whyInteresting: `Observed completed appointments per $1,000 were ${completedRatio.toFixed(1)}× the five-metro median and net sales per $1,000 were ${salesRatio.toFixed(1)}× the median. This joins marketing cost to clinic outcomes in one approved aggregate, which is more decision-relevant than clicks alone.`,
+      evidenceDetail,
+      nextValidation: `Refresh the same export for the current period, map the Tableau metro label to the approved market geography, add staffed capacity and contribution or CCP, then compare like-for-like channel and clinic cohorts before a bounded test.`,
+      sourceIds: [TABLEAU_CVC_OUTCOME_SOURCE_ID],
+      snapshotVersions: [TABLEAU_CVC_OUTCOME_SNAPSHOT_VERSION],
+      hypothesisIds: [...TABLEAU_CVC_OUTCOME_ANALYSES],
+      signalCount: TABLEAU_CVC_OUTCOME_ANALYSES.length,
+      priority: "multi-signal lead",
+      question: `Which CVC metros combine observed media efficiency, completed appointments, new-to-Chewy appointment mix, and net sales strongly enough to justify current-period validation?`,
+      applicability: {
+        primaryTeamId: route.primaryTeam.teamId,
+        primaryTeamLabel: getReceivingTeam(route.primaryTeam.teamId).label,
+        reason: route.primaryTeam.reason,
+        partnerTeams: route.partnerTeams.map((partner) => ({ ...partner, label: getReceivingTeam(partner.teamId).label })),
+        approvalBoundary: route.approvalBoundary,
+      },
+      decisionValue: { score: Math.min(74, 50 + Math.round(Math.max(completedRatio, salesRatio) * 8)), reason: "The finding connects observed media cost to appointments and net sales, but the period is historical and lacks capacity, incrementality, and contribution.", flags: ["capacity_validation"] },
+      valueTranslation: { kind: "observed_value", label: "Observed clinic outcomes", statement: `${summary.completedAppointmentsPerThousandSpend.toFixed(2)} completed appointments and ${summary.netSalesPerThousandSpend.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} net sales per $1,000 of tracked spend; ${(summary.newToChewyShare ?? 0).toLocaleString("en-US", { style: "percent", maximumFractionDigits: 0 })} of completed appointments were new to Chewy.`, caveat: "Historical observed ratios only. They are not incremental lift, marginal returns, capacity availability, contribution, or CCP." },
+      businessValue: { status: "outcome_connected", label: "Observed outcomes connected", headline: `Appointments and net sales are connected for the approved ${summary.periodStart}–${summary.periodEnd} Tableau period.`, formula: "Observed net sales per $1,000 spend = aggregate clinic net sales ÷ tracked media spend × 1,000", requiredInputs: ["current-period refresh", "approved metro crosswalk", "staffed capacity", "contribution or CCP", "test/control counterfactual"], sourceIds: [TABLEAU_CVC_OUTCOME_SOURCE_ID] },
+      importance: { score: Math.min(69, 54 + Math.round(Math.max(completedRatio, salesRatio) * 6)), tier: "validate_next", label: "Validate next", reason: "First-party clinic outcomes are connected, but the historical period and missing crosswalk, capacity, contribution, and counterfactual prevent a current action.", notificationCandidate: false },
+    };
+    finding.analystInterpretation = interpretAutonomousFinding({
+      finding,
+      teamRoute: route,
+      evidenceReadiness: { firstPartyOutcome: "connected", actionGuardrails: "missing", geographyCompatibility: "missing", cohortComparability: "missing", accountableApproval: "missing", missingEvidence: finding.businessValue.requiredInputs, contraryEvidence: [finding.valueTranslation.caveat] },
+      sourceLineage: [{ sourceId: TABLEAU_CVC_OUTCOME_SOURCE_ID, snapshotVersion: TABLEAU_CVC_OUTCOME_SNAPSHOT_VERSION, role: "first_party_outcome", description: "Approved aggregate Tableau CVC spend, appointment, acquisition-segment, and net-sales outcomes." }],
+    });
+    return finding;
+  });
+}
+
 export function runCurrentDataInsightDiscovery(input: {
   now?: () => string;
   runId?: string;
@@ -525,7 +574,25 @@ export function runCurrentDataInsightDiscovery(input: {
     });
   }
 
-  const allFindings = groupOccurrences(occurrences).map(([key, group]) => insightFromGroup(key, group));
+  const outcomeFindings = tableauCvcOutcomeFindings();
+  outcomeFindings.forEach((finding) => {
+    finding.sourceIds.forEach((sourceId) => sources.add(sourceId));
+    ["completed appointments", "new-to-Chewy appointments", "net sales per spend"].forEach((measure) => measures.add(measure));
+  });
+  traces.push(...TABLEAU_CVC_OUTCOME_ANALYSES.map((analysisId) => ({
+    hypothesisId: analysisId,
+    department: "cvc" as const,
+    question: "Which CVC metros connect observed marketing cost to clinic outcomes strongly enough for current-period validation?",
+    objective: "Join regional marketing cost to completed appointments, new-to-Chewy appointment mix, and net sales.",
+    planStatus: "executable",
+    leadsFound: outcomeFindings.length,
+    comparisonsExamined: outcomeFindings.length,
+    measuresExamined: ["spend", "completed appointments", "new-to-Chewy appointments", "net sales"],
+    sourceIds: [TABLEAU_CVC_OUTCOME_SOURCE_ID],
+    snapshotVersion: TABLEAU_CVC_OUTCOME_SNAPSHOT_VERSION,
+    readiness: "Approved historical aggregate connected; current-period refresh, geography crosswalk, capacity, contribution, and counterfactual remain required.",
+  })));
+  const allFindings = [...groupOccurrences(occurrences).map(([key, group]) => insightFromGroup(key, group)), ...outcomeFindings];
   const excludedPreviousPrimaryFindingIds = unique([
     ...(input.previouslyExcludedPrimaryFindingIds ?? []),
     ...(input.previousPrimaryFindingIds ?? []),
@@ -561,7 +628,7 @@ export function runCurrentDataInsightDiscovery(input: {
     startedAt,
     completedAt: now(),
     generationMethod: "reviewed_hypothesis_registry",
-    analysesRun: CURRENT_DATA_HYPOTHESES.length,
+    analysesRun: CURRENT_DATA_HYPOTHESES.length + TABLEAU_CVC_OUTCOME_ANALYSES.length,
     departmentsScanned: ["marketing", "pricing", "cvc"],
     marketUniverse,
     measuresExamined: measures.size,
@@ -595,7 +662,7 @@ export function runCurrentDataInsightDiscovery(input: {
       mode,
       snapshotFingerprint,
       previousSnapshotFingerprint: input.previousSnapshotFingerprint ?? null,
-      reranHypothesisCount: CURRENT_DATA_HYPOTHESES.length,
+      reranHypothesisCount: CURRENT_DATA_HYPOTHESES.length + TABLEAU_CVC_OUTCOME_ANALYSES.length,
       excludedPreviousPrimaryFindingIds,
       newPrimaryFindingIds: primaryFindingIds.filter((findingId) => !previousPrimaryIds.has(findingId)),
       repeatedPrimaryFindingIds: primaryFindingIds.filter((findingId) => previousPrimaryIds.has(findingId)),

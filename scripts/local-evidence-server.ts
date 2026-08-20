@@ -7,12 +7,13 @@ import { executeEvaluationPlanEvidence } from "../lib/planning/execute-plan.ts";
 
 const execFileAsync = promisify(execFile);
 const CHECK_SCRIPTS = [
+  "build-local-approved-source-inventory.ts",
   "discover-approved-sources.ts",
   "validate-discovered-source-contracts.ts",
-  "build-local-approved-source-inventory.ts",
   "verify-local-approved-sources.ts",
 ] as const;
 const REBUILD_SCRIPTS = [
+  "build-tableau-cvc-outcomes.ts",
   ...CHECK_SCRIPTS,
   "build-perspective-map-signals.ts",
   "build-pricing-economics-snapshot.ts",

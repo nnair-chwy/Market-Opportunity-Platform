@@ -64,10 +64,10 @@ async function statusPayload(message: string) {
     csvFileCount: sourcePackages.reduce((total, sourcePackage) => total + sourcePackage.csvFileCount, 0),
     sourcePackages,
     sourceGroups: [
-      { label: "Business outcomes", status: ready ? "partial" as const : "manual" as const, detail: `${ready} of ${report.outcomes.length} outcome families have connected evidence.` },
+      { label: "Business outcomes", status: ready ? "partial" as const : "manual" as const, detail: `${ready} of ${report.outcomes.length} outcome families have validated adapter candidates; CVC appointments are connected for the approved historical period.` },
       { label: "Paid media & search", status: "connected" as const, detail: "Google Ads and approved search snapshots are checked before publication." },
       { label: "Pricing & product", status: "partial" as const, detail: "Zeus and pricing exports require a governed manual export today." },
-      { label: "Clinics & market context", status: "partial" as const, detail: "Clinic, Esri, and Census snapshots retain source and geography boundaries." },
+      { label: "Clinics & market context", status: "connected" as const, detail: "CVC appointments and net sales are connected at Tableau metro × week × channel grain; capacity, maturity and the production crosswalk remain open." },
     ],
     valueDataRequests: TABLEAU_FIRST_PARTY_EXPORTS,
     message,

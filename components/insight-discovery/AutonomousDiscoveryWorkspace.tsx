@@ -5,6 +5,8 @@ import type { AutonomousInsight, CurrentDataDiscoveryRun } from "@/lib/insight-d
 import type { PerspectiveId } from "@/lib/perspectives";
 
 const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing: "Pricing", cvc: "CVC" };
+const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v1";
+const DISCOVERY_HISTORY_LIMIT = 5;
 
 const ACTIONABILITY_LABELS = {
   decision_ready: "Ready for accountable review",
@@ -107,6 +109,24 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const [slackConfig, setSlackConfig] = useState<{ configured: boolean; destination: string } | null>(null);
   const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
   const [department, setDepartment] = useState<"all" | PerspectiveId>("all");
+  const [runHistory, setRunHistory] = useState<CurrentDataDiscoveryRun[]>([]);
+
+  const rememberRun = useCallback((completedRun: CurrentDataDiscoveryRun) => {
+    setRunHistory((history) => {
+      const next = [completedRun, ...history.filter((item) => item.runId !== completedRun.runId)].slice(0, DISCOVERY_HISTORY_LIMIT);
+      try { window.localStorage.setItem(DISCOVERY_HISTORY_KEY, JSON.stringify(next)); } catch { /* The completed run still remains in memory. */ }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(DISCOVERY_HISTORY_KEY) ?? "[]") as unknown;
+      if (Array.isArray(stored)) setRunHistory(stored.filter((item): item is CurrentDataDiscoveryRun => Boolean(item) && typeof item === "object" && "runId" in item && "findings" in item).slice(0, DISCOVERY_HISTORY_LIMIT));
+    } catch { setRunHistory([]); }
+  }, []);
+
+  useEffect(() => { if (initialRun) rememberRun(initialRun); }, [initialRun, rememberRun]);
 
   const requestRun = useCallback(async (previousRun?: CurrentDataDiscoveryRun) => {
     const response = await fetch("/api/insight-discovery", {
@@ -127,12 +147,12 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     if (initialRun) return;
     let cancelled = false;
     void requestRun()
-      .then((payload) => { if (!cancelled) setRun(payload); })
+      .then((payload) => { if (!cancelled) { setRun(payload); rememberRun(payload); } })
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof Error ? reason.message : "The insight scan did not complete.");
       });
     return () => { cancelled = true; };
-  }, [initialRun, requestRun]);
+  }, [initialRun, rememberRun, requestRun]);
 
   async function runAgain() {
     if (!run || isRerunning) return;
@@ -141,6 +161,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     try {
       const nextRun = await requestRun(run);
       setRun(nextRun);
+      rememberRun(nextRun);
       setDepartment("all");
       requestAnimationFrame(() => resultsHeadingRef.current?.focus());
     } catch (reason) {
@@ -240,6 +261,19 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
           </button>
         </div>
       </div>
+      {runHistory.some((item) => item.runId !== run.runId) ? (
+        <details className="discovery-run-history">
+          <summary>Previous investigations · {runHistory.filter((item) => item.runId !== run.runId).length}</summary>
+          <div>
+            {runHistory.filter((item) => item.runId !== run.runId).map((item) => (
+              <button key={item.runId} type="button" onClick={() => { setRun(item); setDepartment("all"); requestAnimationFrame(() => resultsHeadingRef.current?.focus()); }}>
+                <strong>Run {item.runSequence}</strong>
+                <span>{new Date(item.completedAt).toLocaleString()} · {item.findings.length} qualified findings</span>
+              </button>
+            ))}
+          </div>
+        </details>
+      ) : null}
       {shareStatus ? <div className="discovery-share-status" role="status"><span>{shareStatus}</span><button type="button" aria-label="Dismiss Slack delivery status" onClick={() => setShareStatus(null)}>×</button></div> : null}
       <header className="discovery-hero">
         <div>

@@ -28,7 +28,7 @@ export const semanticSourceContractSchema = z.object({
   sensitivity: z.enum(["public", "internal"]),
   privacy: z.object({ directIdentifiersDetected: z.literal(false), aggregateOnly: z.literal(true) }).strict(),
   grain: z.object({ keyFields: z.array(z.string()).min(1), uniqueness: z.literal("validated_unique"), duplicateRowCount: z.literal(0) }).strict(),
-  geography: z.object({ grain: z.enum(["zip", "cbsa", "dma", "state", "county", "trade_area", "drive_time", "point"]), fields: z.array(z.string()).min(1), validity: z.literal("all_rows_valid"), semanticStatus: z.literal("candidate_requires_owner_review") }).strict(),
+  geography: z.object({ grain: z.enum(["zip", "cbsa", "metro", "dma", "state", "county", "trade_area", "drive_time", "point"]), fields: z.array(z.string()).min(1), validity: z.literal("all_rows_valid"), semanticStatus: z.literal("candidate_requires_owner_review") }).strict(),
   time: z.object({ grain: z.enum(["day", "week", "month", "quarter", "year", "range", "snapshot"]), fields: z.array(z.string()).min(1), validity: z.literal("all_rows_valid"), semanticStatus: z.literal("candidate_requires_owner_review") }).strict(),
   metrics: z.array(z.object({ outcomeId: firstPartyOutcomeIdSchema, sourceField: z.string(), unit: z.string(), validity: z.literal("all_rows_numeric"), definitionStatus: z.literal("candidate_requires_owner_review") }).strict()).min(1),
   fieldValidation: z.array(fieldValidationSchema),

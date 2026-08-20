@@ -1,0 +1,25 @@
+{
+  "version": "tableau-cvc-export-v1",
+  "source": "Marketing - CVC Performance Summary / CVC Metrics Self-Serve / Data Download",
+  "tableauUrl": "https://prod-useast-b.online.tableau.com/#/site/chewy/redirect_to_view/13932416",
+  "approvedAt": "2026-08-20T19:00:00.000Z",
+  "rawEncoding": "UTF-16LE",
+  "rawDelimiter": "tab",
+  "sourcePeriod": "2025 fiscal P01 (2025-02-03 through 2025-03-02)",
+  "privacy": "Aggregate marketing and clinic measures only; no customer, patient, order, address, email, or phone identifiers retained.",
+  "canonicalGrain": "week x Tableau metro label x channel",
+  "connectedMeasures": [
+    "spend",
+    "impressions",
+    "clicks",
+    "CVC appointments",
+    "completed appointments",
+    "new-to-Chewy CVC appointments",
+    "net sales"
+  ],
+  "limitations": [
+    "The current approved export covers a four-week 2025 fiscal period and must be refreshed before current-period decisions.",
+    "Tableau metro labels are retained as-is and are not silently treated as CBSA or DMA codes.",
+    "The export does not contain staffed capacity, clinic maturity, contribution profit, or CCP."
+  ]
+}
