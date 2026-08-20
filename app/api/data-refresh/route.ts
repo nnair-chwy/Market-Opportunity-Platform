@@ -1,33 +1,25 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import path from "node:path";
 import { compactSourceReadiness, loadFirstPartyOutcomeReadiness } from "@/lib/data-discovery/readiness-service";
 import approvedInventory from "@/data/contracts/local-approved-source-inventory.json";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const execFileAsync = promisify(execFile);
-const CHECK_SCRIPTS = [
-  "discover-approved-sources.ts",
-  "validate-discovered-source-contracts.ts",
-  "build-local-approved-source-inventory.ts",
-  "verify-local-approved-sources.ts",
-] as const;
-const REBUILD_SCRIPTS = [
-  ...CHECK_SCRIPTS,
-  "build-consumer-insights-snapshot.ts",
-  "build-perspective-map-signals.ts",
-  "build-pricing-economics-snapshot.ts",
-  "build-golden-question-evidence.ts",
-] as const;
-
-function isLocal(request: Request) {
-  const host = new URL(request.url).hostname;
-  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+function localEvidenceServiceUrl(value: string | undefined): string | null {
+  if (!value?.trim()) return null;
+  try {
+    const parsed = new URL(value.trim());
+    if (parsed.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(parsed.hostname)) return null;
+    return parsed.origin;
+  } catch {
+    return null;
+  }
 }
 
-async function statusPayload(request: Request, message: string) {
+function fileName(file: string) {
+  return file.split(/[\\/]/).at(-1) ?? file;
+}
+
+async function statusPayload(message: string) {
   const report = compactSourceReadiness(await loadFirstPartyOutcomeReadiness());
   const ready = report.outcomes.filter((outcome) => outcome.status !== "gap").length;
   const gaps = report.outcomes.length - ready;
@@ -55,7 +47,7 @@ async function statusPayload(request: Request, message: string) {
       totalBytes: sourcePackage.totalBytes,
       csvFileCount: csvFiles.length,
       files: csvFiles.map((file) => ({
-        name: path.basename(file.file),
+        name: fileName(file.file),
         bytes: file.bytes,
         status: file.agentUse === "approved_local_source_file" ? "available" as const : "excluded" as const,
         statusDetail: file.agentUse.replaceAll("_", " "),
@@ -63,7 +55,7 @@ async function statusPayload(request: Request, message: string) {
     };
   });
   return {
-    mode: isLocal(request) ? "local" as const : "hosted" as const,
+    mode: localEvidenceServiceUrl(process.env.LOCAL_EVIDENCE_SERVICE_URL) ? "local" as const : "hosted" as const,
     generatedAt: report.generatedAt,
     ready,
     gaps,
@@ -81,25 +73,28 @@ async function statusPayload(request: Request, message: string) {
 }
 
 export async function GET(request: Request) {
-  return Response.json(await statusPayload(request, "Current published snapshot status."), { headers: { "cache-control": "no-store" } });
+  void request;
+  return Response.json(await statusPayload("Current published snapshot status."), { headers: { "cache-control": "no-store" } });
 }
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { action?: unknown } | null;
   if (body?.action !== "check" && body?.action !== "rebuild") return Response.json({ message: "Choose check or rebuild." }, { status: 400 });
-  if (!isLocal(request)) {
-    return Response.json(await statusPayload(request, "The hosted site cannot access private exports. Ask the data administrator to refresh them in the secure workspace, then publish the validated snapshot."), { status: 409 });
+  const localEvidenceService = localEvidenceServiceUrl(process.env.LOCAL_EVIDENCE_SERVICE_URL);
+  if (!localEvidenceService) {
+    return Response.json(await statusPayload("Refresh is available only from the secure data workspace. This shared site can show the latest published data but cannot access private exports."), { status: 409 });
   }
-  const scripts = body.action === "rebuild" ? REBUILD_SCRIPTS : CHECK_SCRIPTS;
   try {
-    for (const script of scripts) {
-      await execFileAsync(process.execPath, ["--experimental-strip-types", path.resolve("scripts", script)], { cwd: process.cwd(), timeout: 120_000, maxBuffer: 2_000_000 });
-    }
-    console.info(JSON.stringify({ event: "approved_snapshot_refresh", action: body.action, status: "completed", generatedAt: new Date().toISOString() }));
-    return Response.json(await statusPayload(request, body.action === "rebuild" ? "Validated snapshot rebuilt. Restart the local app to load every updated artifact; publish only after review." : "Approved export check completed. The current snapshot was not replaced."));
+    const refreshResponse = await fetch(`${localEvidenceService}/refresh`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: body.action }),
+    });
+    const refreshResult = await refreshResponse.json() as { message?: unknown };
+    const message = typeof refreshResult.message === "string" ? refreshResult.message : "The data refresh did not return a status.";
+    return Response.json(await statusPayload(message), { status: refreshResponse.ok ? 200 : refreshResponse.status });
   } catch (error) {
-    const detail = error instanceof Error ? error.message.split("\n")[0] : "Unknown refresh error";
-    console.warn(JSON.stringify({ event: "approved_snapshot_refresh", action: body.action, status: "failed", detail, generatedAt: new Date().toISOString() }));
-    return Response.json({ ...(await statusPayload(request, `Refresh stopped safely: ${detail}`)) }, { status: 422 });
+    const detail = error instanceof Error ? error.message.split("\n")[0] : "The local data service is unavailable.";
+    return Response.json(await statusPayload(`Refresh stopped safely: ${detail}`), { status: 503 });
   }
 }

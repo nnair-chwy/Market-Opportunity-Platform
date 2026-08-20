@@ -1,12 +1,12 @@
 {
   "version": "1.0.0",
   "snapshotId": "golden-question-evidence-2026-08-18-v1",
-  "generatedAt": "2026-08-19T20:22:01.739Z",
+  "generatedAt": "2026-08-20T00:43:13.627Z",
   "allowedUse": "internal_shadow_evaluation_only",
   "scoringEligibility": "none",
   "actionAuthority": "investigation_leads_only_no_material_action",
   "sourceSnapshots": {
-    "mapSignalsGeneratedAt": "2026-08-18T17:07:22.263Z",
+    "mapSignalsGeneratedAt": "2026-08-20T00:43:13.352Z",
     "pricing": "snowflake-pricing-2026-08-17",
     "marketing": "google-ads-2026-07-14_2026-08-12",
     "cvc": "esri-demo-2026-07-30",

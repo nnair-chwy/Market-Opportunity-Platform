@@ -27,12 +27,10 @@ type RefreshStatus = {
 
 export function DataRefreshControl() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<RefreshStatus | null>(null);
   const [busy, setBusy] = useState<"check" | "rebuild" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  useEffect(() => setMounted(true), []);
   useEffect(() => {
     if (!open) return;
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
@@ -46,14 +44,17 @@ export function DataRefreshControl() {
     setStatus(await response.json() as RefreshStatus);
   }
 
-  useEffect(() => {
-    if (!open || status) return;
-    void loadStatus().catch((error) => setNotice(error instanceof Error ? error.message : "Refresh status is unavailable."));
-  }, [open, status]);
+  function togglePanel() {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+    if (nextOpen && !status) {
+      void loadStatus().catch((error) => setNotice(error instanceof Error ? error.message : "Refresh status is unavailable."));
+    }
+  }
 
   async function run(action: "check" | "rebuild") {
     setBusy(action);
-    setNotice(action === "check" ? "Checking approved exports…" : "Building a new validated snapshot…");
+    setNotice(action === "check" ? "Scanning approved CSV folders…" : "Finding new CSVs, validating them, and refreshing insights…");
     try {
       const response = await fetch("/api/data-refresh", {
         method: "POST",
@@ -73,8 +74,8 @@ export function DataRefreshControl() {
   const panel = open ? (
     <div className="data-refresh-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
       <section id="data-refresh-panel" className="data-refresh-panel" role="dialog" aria-modal="true" aria-labelledby="data-refresh-title">
-        <header><div><div className="section-label">Data refresh</div><h2 id="data-refresh-title">Update the evidence snapshot</h2></div><button type="button" onClick={() => setOpen(false)} aria-label="Close data refresh">×</button></header>
-        <p>The live site reads a validated, versioned snapshot. Private exports are refreshed only from the secure workspace; a failed check never replaces the published data.</p>
+        <header><div><div className="section-label">Data refresh</div><h2 id="data-refresh-title">Refresh the app&apos;s insight data</h2></div><button type="button" onClick={() => setOpen(false)} aria-label="Close data refresh">×</button></header>
+        <p>Refresh checks for newly exported CSVs, validates them, and rebuilds the findings used throughout the app. If validation fails, the current working data stays unchanged.</p>
         {status ? <>
           <div className="data-refresh-summary"><strong>{status.csvFileCount} approved CSV files found</strong><span>{status.sourcePackages.length} source packages</span><small>Last connected {new Date(status.inventoryGeneratedAt).toLocaleString()}</small></div>
           <section className="data-refresh-inventory" aria-label="Existing CSV inventory">
@@ -90,23 +91,22 @@ export function DataRefreshControl() {
           </section>
           <details className="data-refresh-readiness"><summary>Business-outcome connections</summary><div className="data-refresh-sources">{status.sourceGroups.map((source) => <div key={source.label} data-status={source.status}><strong>{source.label}</strong><span>{source.status}</span><small>{source.detail}</small></div>)}</div></details>
         </> : <p role="status">Loading source status…</p>}
-        <ol className="data-refresh-steps"><li>Confirm access to the source systems.</li><li>Place approved exports in the secure workspace.</li><li>Validate, rebuild, and publish a new snapshot.</li></ol>
+        <ol className="data-refresh-steps"><li>Find approved CSV exports in the secure workspace.</li><li>Check file structure, dates, and geography fields.</li><li>Rebuild the findings and recommendation evidence.</li></ol>
         {notice ? <p className="data-refresh-notice" role="status">{notice}</p> : null}
         <footer>
-          <button type="button" className="secondary-action" disabled={Boolean(busy)} onClick={() => void run("check")}>{busy === "check" ? "Checking…" : "Check new exports"}</button>
-          <button type="button" className="primary-action" disabled={Boolean(busy) || status?.mode !== "local"} onClick={() => void run("rebuild")}>{busy === "rebuild" ? "Rebuilding…" : "Build validated snapshot"}</button>
+          <button type="button" className="primary-action" disabled={Boolean(busy) || status?.mode !== "local"} onClick={() => void run("rebuild")}>{busy === "rebuild" ? "Refreshing insights…" : "Refresh insights"}</button>
         </footer>
-        {status?.mode === "hosted" ? <small className="data-refresh-hosted-note">Hosted viewers can inspect freshness. Snapshot rebuilding stays administrator-only because the source systems and raw exports are private.</small> : null}
+        {status?.mode === "hosted" ? <small className="data-refresh-hosted-note">This shared view shows freshness but cannot open private source exports. A data administrator can run Refresh insights from the secure workspace, then publish the update.</small> : <small className="data-refresh-hosted-note">This usually takes a few minutes. Keep this window open until the refresh finishes.</small>}
       </section>
     </div>
   ) : null;
 
   return (
     <div className="data-refresh-control">
-      <button className="adaptive-opening-tool data-refresh-trigger" type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="data-refresh-panel">
+      <button className="adaptive-opening-tool data-refresh-trigger" type="button" onClick={togglePanel} aria-expanded={open} aria-controls="data-refresh-panel">
         <span aria-hidden="true">↻</span><strong>Data</strong>
       </button>
-      {mounted && panel ? createPortal(panel, document.body) : null}
+      {panel && typeof document !== "undefined" ? createPortal(panel, document.body) : null}
     </div>
   );
 }
