@@ -5,8 +5,8 @@ export const MARKETING_OPPORTUNITY_BRIEF_VERSION = "marketing-opportunity-brief-
 export type MarketingOpportunityBrief = {
   version: typeof MARKETING_OPPORTUNITY_BRIEF_VERSION;
   title: string;
-  preparedFor: string;
-  recipientRole: string;
+  primaryTeam: string;
+  partnerTeams: string[];
   recommendation: string;
   why: string;
   opportunityMoves: Array<{ market: string; decision: string; evidence: string; action: string }>;
@@ -30,13 +30,13 @@ function actionText(run: CurrentDataDiscoveryRun | undefined, fragment: string, 
   return adaptiveFinding(run, fragment)?.proposedAction ?? fallback;
 }
 
-/** A cross-market Marketing opportunity readout for Costa, not a project handoff. */
+/** A reusable cross-market Marketing opportunity readout, not an individual project handoff. */
 export function buildMarketingOpportunityBrief(run?: CurrentDataDiscoveryRun): MarketingOpportunityBrief {
   return {
     version: MARKETING_OPPORTUNITY_BRIEF_VERSION,
     title: "The regional Marketing opportunities worth acting on next",
-    preparedFor: "Costa Angelakis",
-    recipientRole: "Growth Marketing and regional test planning",
+    primaryTeam: "Growth Marketing",
+    partnerTeams: ["Marketing Measurement", "Regional test planning"],
     recommendation: "Protect Louisville and Lubbock from broad efficiency cuts and use them as the first candidate markets for incremental paid-search testing. Keep Retail and Pharmacy decisions separate in Wilkes-Barre, where the accounts point in opposite directions. For CVC growth, test Paid Search first in Denver or Fort Lauderdale instead of spreading incremental budget evenly across channels.",
     why: "These are the strongest patterns that repeat across accounts or connect media spend to a downstream operating outcome. They are more useful than a list of low-CPA markets because they distinguish where a regional decision can be shared across businesses, where it must remain account-specific, and where the next dollar should be tested against appointments rather than clicks.",
     opportunityMoves: [

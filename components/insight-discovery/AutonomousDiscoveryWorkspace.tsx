@@ -561,7 +561,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
             <div>
               <div className="section-label">Shareable Marketing opportunity brief</div>
               <h2 id="marketing-opportunity-brief-title">{marketingOpportunityBrief.title}</h2>
-              <p>Prepared for {marketingOpportunityBrief.preparedFor} · {marketingOpportunityBrief.recipientRole}</p>
+              <p>Relevant teams: {marketingOpportunityBrief.primaryTeam} · {marketingOpportunityBrief.partnerTeams.join(" · ")}</p>
             </div>
             <button type="button" onClick={() => void downloadFindings("marketing", "docx")} disabled={Boolean(isExporting)}>
               {isExporting === "marketing:docx" ? "Preparing…" : "Download Word brief"}

@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildMarketingOpportunityBrief, runCurrentDataInsightDiscovery } from "../lib/insight-discovery/index.ts";
 
-test("Costa brief shares broad Marketing opportunities rather than a PetSmart or Petco project handoff", () => {
+test("Marketing brief shares portfolio opportunities without an individual recipient or retailer-project handoff", () => {
   const run = runCurrentDataInsightDiscovery({ runId: "marketing-brief:test", now: () => "2026-08-20T12:00:00.000Z" });
   const brief = buildMarketingOpportunityBrief(run);
   const text = JSON.stringify(brief);
 
   assert.match(brief.title, /regional Marketing opportunities/i);
+  assert.equal(brief.primaryTeam, "Growth Marketing");
+  assert.deepEqual(brief.partnerTeams, ["Marketing Measurement", "Regional test planning"]);
   assert.match(brief.recommendation, /Louisville/i);
   assert.match(brief.recommendation, /Lubbock/i);
   assert.match(brief.recommendation, /Wilkes-Barre/i);
@@ -16,7 +18,7 @@ test("Costa brief shares broad Marketing opportunities rather than a PetSmart or
   assert.match(text, /97\.7% above/i);
   assert.match(text, /5×/i);
   assert.match(text, /incremental new customers/i);
-  assert.doesNotMatch(text, /PetSmart|Petco/i);
+  assert.doesNotMatch(text, /Costa|Angelakis|PetSmart|Petco/i);
 });
 
 test("Marketing opportunity brief separates protect, split, scale, and stop decisions", () => {

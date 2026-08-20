@@ -3888,7 +3888,7 @@
           }
         ],
         "overlappingPetcoPetsmartDogFoodSkus": 0,
-        "interpretation": "The stale validation sample proves a join path but cannot compare Petco with PetSmart or rank Costa's test markets."
+        "interpretation": "The stale validation sample proves a join path but cannot compare Petco with PetSmart or rank approved regional test markets."
       },
       "limitations": [
         "The current joined Dog Food feed contains Walmart only.",

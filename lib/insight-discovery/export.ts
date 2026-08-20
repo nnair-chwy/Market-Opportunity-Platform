@@ -189,7 +189,7 @@ export async function buildDiscoveryDocx(run: CurrentDataDiscoveryRun, scope: Di
   const marketingBrief = buildMarketingOpportunityBrief(run);
   const marketingBriefParagraphs: Paragraph[] = scope === "all" || scope === "marketing" ? [
     new Paragraph({ text: marketingBrief.title, heading: HeadingLevel.HEADING_1 }),
-    bodyParagraph("Prepared for", `${marketingBrief.preparedFor} · ${marketingBrief.recipientRole}`),
+    bodyParagraph("Relevant teams", `${marketingBrief.primaryTeam} · ${marketingBrief.partnerTeams.join(" · ")}`),
     bodyParagraph("Portfolio recommendation", marketingBrief.recommendation),
     bodyParagraph("Why these opportunities matter", marketingBrief.why),
     ...marketingBrief.opportunityMoves.flatMap((move) => [

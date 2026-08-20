@@ -345,7 +345,7 @@ async function buildDogFoodPricing(connection: Awaited<ReturnType<typeof openDuc
     },
     raiseCandidates: raises, riskCandidates: risks,
     rejectedBySanity: { rawDirectionalCandidates: rawDirectional.length, acceptedCandidates: accepted.length, rejectedCandidates: rawDirectional.length - accepted.length, gates: "Reject gaps above 30%, regional price ranges above 50%, nonpositive or extreme price-cost proxies, and invalid price bounds." },
-    petRetailTestContext: { rows: historical, overlappingPetcoPetsmartDogFoodSkus: numberValue(petcoSkus[0]?.overlap), interpretation: "The stale validation sample proves a join path but cannot compare Petco with PetSmart or rank Costa's test markets." },
+    petRetailTestContext: { rows: historical, overlappingPetcoPetsmartDogFoodSkus: numberValue(petcoSkus[0]?.overlap), interpretation: "The stale validation sample proves a join path but cannot compare Petco with PetSmart or rank approved regional test markets." },
     limitations: ["The current joined Dog Food feed contains Walmart only.", "PSE cost is a commercial proxy, not contribution or destination-specific cost-to-serve.", "Candidates are review queues for controlled analysis, not approved prices or regional actions."],
   };
 }
