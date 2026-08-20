@@ -1,5 +1,6 @@
 import { compactSourceReadiness, loadFirstPartyOutcomeReadiness } from "@/lib/data-discovery/readiness-service";
 import approvedInventory from "@/data/contracts/local-approved-source-inventory.json";
+import { TABLEAU_FIRST_PARTY_EXPORTS } from "@/lib/business-value/first-party-value-framework";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,6 +69,7 @@ async function statusPayload(message: string) {
       { label: "Pricing & product", status: "partial" as const, detail: "Zeus and pricing exports require a governed manual export today." },
       { label: "Clinics & market context", status: "partial" as const, detail: "Clinic, Esri, and Census snapshots retain source and geography boundaries." },
     ],
+    valueDataRequests: TABLEAU_FIRST_PARTY_EXPORTS,
     message,
   };
 }

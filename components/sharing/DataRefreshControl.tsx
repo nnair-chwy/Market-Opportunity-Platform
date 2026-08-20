@@ -22,6 +22,16 @@ type RefreshStatus = {
     files: Array<{ name: string; bytes: number; status: "available" | "excluded"; statusDetail: string }>;
   }>;
   sourceGroups: Array<{ label: string; status: "connected" | "partial" | "manual"; detail: string }>;
+  valueDataRequests: Array<{
+    id: string;
+    label: string;
+    status: "available_now" | "available_partial" | "needs_geo_join" | "context_only";
+    targetGrain: string;
+    metrics: string[];
+    valueUse: string;
+    limitation: string;
+    tableauUrl: string;
+  }>;
   message: string;
 };
 
@@ -90,6 +100,21 @@ export function DataRefreshControl() {
             ))}
           </section>
           <details className="data-refresh-readiness"><summary>Business-outcome connections</summary><div className="data-refresh-sources">{status.sourceGroups.map((source) => <div key={source.label} data-status={source.status}><strong>{source.label}</strong><span>{source.status}</span><small>{source.detail}</small></div>)}</div></details>
+          <details className="data-refresh-readiness data-refresh-value-exports" open>
+            <summary>First-party exports to connect next</summary>
+            <div className="data-refresh-value-export-list">
+              {status.valueDataRequests.map((source) => (
+                <article key={source.id} data-status={source.status}>
+                  <header><strong>{source.label}</strong><span>{source.status.replaceAll("_", " ")}</span></header>
+                  <p>{source.valueUse}</p>
+                  <small><b>Target grain:</b> {source.targetGrain}</small>
+                  <small><b>Measures:</b> {source.metrics.join(", ")}</small>
+                  <small><b>Limit:</b> {source.limitation}</small>
+                  <a href={source.tableauUrl} target="_blank" rel="noreferrer">Open source in Tableau →</a>
+                </article>
+              ))}
+            </div>
+          </details>
         </> : <p role="status">Loading source status…</p>}
         <ol className="data-refresh-steps"><li>Find approved CSV exports in the secure workspace.</li><li>Check file structure, dates, and geography fields.</li><li>Rebuild the findings and recommendation evidence.</li></ol>
         {notice ? <p className="data-refresh-notice" role="status">{notice}</p> : null}

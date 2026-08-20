@@ -10,6 +10,7 @@ import { selectDiscoveryFindings, type DiscoveryFindingSelectionCounts } from ".
 import { encodeInsightDiscoveryCursor } from "./rerun-contract.ts";
 import { getApprovedWorkspaceSnapshotDataset } from "../perspectives/approved-workspace-snapshot.ts";
 import type { WorkspaceSnapshotDatasetId } from "../perspectives/workspace-snapshot.ts";
+import { assessBusinessValue, type BusinessValueAssessment } from "../business-value/first-party-value-framework.ts";
 
 export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v3" as const;
 
@@ -75,6 +76,7 @@ export type AutonomousInsight = {
     statement: string;
     caveat: string;
   };
+  businessValue: BusinessValueAssessment;
   importance: {
     score: number;
     tier: "priority_now" | "validate_next" | "watch";
@@ -360,6 +362,7 @@ function valueTranslationForGroup(group: LeadOccurrence[], decisionValue: Autono
 function importanceForFinding(
   decisionValue: AutonomousInsight["decisionValue"],
   valueTranslation: AutonomousInsight["valueTranslation"],
+  businessValue: AutonomousInsight["businessValue"],
 ): AutonomousInsight["importance"] {
   const valueAdjustment = valueTranslation.kind === "modeled_scenario"
     ? 8
@@ -368,7 +371,8 @@ function importanceForFinding(
       : valueTranslation.kind === "decision_boundary"
         ? 0
         : -8;
-  const score = Math.max(0, Math.min(100, decisionValue.score + valueAdjustment));
+  const uncappedScore = Math.max(0, Math.min(100, decisionValue.score + valueAdjustment));
+  const score = businessValue.status === "outcome_connected" ? uncappedScore : Math.min(69, uncappedScore);
   const tier = score >= 80 ? "priority_now" : score >= 60 ? "validate_next" : "watch";
   const label = tier === "priority_now" ? "Priority now" : tier === "validate_next" ? "Validate next" : "Watch";
   const reason = tier === "priority_now"
@@ -376,7 +380,9 @@ function importanceForFinding(
       ? "The finding has a substantial quantified proxy and a bounded test that can validate business value."
       : "The finding exposes a large, measurable decision risk with a concrete remediation step."
     : tier === "validate_next"
-      ? "The signal is substantial enough to validate next, but business value or action readiness is incomplete."
+      ? businessValue.status === "export_available"
+        ? "The signal is substantial and the first-party outcome export is known, but it must be connected before opportunity size is validated."
+        : "The signal is substantial enough to validate next, but its value is still a proxy rather than first-party opportunity size."
       : "The signal is interesting but does not yet justify taking focus from higher-value findings.";
   return {
     score,
@@ -404,6 +410,7 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
   const decisionValue = decisionValueForGroup(group);
   const metrics = groupMetrics(group);
   const valueTranslation = valueTranslationForGroup(group, decisionValue);
+  const businessValue = assessBusinessValue(first.hypothesis.department);
   const finding: AutonomousInsight = {
     insightId: `insight:${key.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`,
     department: first.hypothesis.department,
@@ -433,7 +440,8 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
     },
     decisionValue,
     valueTranslation,
-    importance: importanceForFinding(decisionValue, valueTranslation),
+    businessValue,
+    importance: importanceForFinding(decisionValue, valueTranslation, businessValue),
   };
   finding.analystInterpretation = interpretAutonomousFinding({
     finding,

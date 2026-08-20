@@ -20,7 +20,8 @@ function findingBlock(finding: AutonomousInsight, rank: number) {
   const body = [
     `*${escapeSlack(heading)}*`,
     escapeSlack(finding.headline),
-    `*Value:* ${escapeSlack(finding.valueTranslation.statement)}`,
+    `*Opportunity size:* ${escapeSlack(finding.businessValue.headline)}`,
+    `*How value will be calculated:* ${escapeSlack(finding.businessValue.formula)}`,
     `*Do next:* ${escapeSlack(actionFor(finding))}`,
     `*Owner:* ${escapeSlack(finding.applicability.primaryTeamLabel)}`,
   ].join("\n");

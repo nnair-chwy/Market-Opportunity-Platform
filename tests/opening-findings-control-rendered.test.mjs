@@ -22,12 +22,12 @@ test("findings can be filtered by stakeholder team and opened without rerunning 
   assert.doesNotMatch(findings, /Ask about this finding/);
 });
 
-test("the inbox starts with a short value-ranked focus list and can reveal the full inventory", () => {
-  assert.match(findings, /finding\.importance\.score >= 70/);
+test("the inbox starts with the ranked five-item digest and can reveal the full inventory", () => {
+  assert.match(findings, /run\?\.primaryFindings\.filter/);
   assert.match(findings, /Show all \{teamFindings\.length\}/);
   assert.match(findings, /Show focus/);
   assert.match(findings, /data-importance=\{finding\.importance\.tier\}/);
-  assert.match(findings, /finding\.valueTranslation\.statement/);
+  assert.match(findings, /finding\.businessValue\.headline/);
 });
 
 test("help, findings, and saved work share one compact toolbar", () => {

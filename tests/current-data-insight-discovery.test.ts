@@ -61,8 +61,12 @@ test("autonomous findings translate statistical signals into quantified value or
   assert.match(mcAllen?.valueTranslation.statement ?? "", /\$1,000.*259 attributed conversions.*1\.8×.*median/i);
   assert.match(mcAllen?.valueTranslation.caveat ?? "", /not marginal lift.*forecast/i);
   assert.match(mcAllen?.analystInterpretation?.recommendedNextDecisionOrAction ?? "", /pre-register a bounded geo test/i);
-  assert.equal(mcAllen?.importance.tier, "priority_now");
-  assert.equal(mcAllen?.importance.notificationCandidate, true);
+  assert.equal(mcAllen?.businessValue.status, "proxy_only");
+  assert.match(mcAllen?.businessValue.headline ?? "", /cannot yet estimate incremental CCP or sales lift/i);
+  assert.match(mcAllen?.businessValue.formula ?? "", /incremental CCP efficiency/i);
+  assert.equal(mcAllen?.importance.tier, "validate_next");
+  assert.equal(mcAllen?.importance.score, 69);
+  assert.equal(mcAllen?.importance.notificationCandidate, false);
 
   const eaglePass = run.findings.find((finding) => finding.marketName === "Eagle Pass, TX" && finding.department === "pricing");
   assert.match(eaglePass?.headline ?? "", /monitoring is too thin.*local price decision/i);
@@ -75,6 +79,8 @@ test("autonomous findings translate statistical signals into quantified value or
   const phoenix = run.findings.find((finding) => finding.marketName === "Phoenix-Mesa-Chandler, AZ" && finding.department === "cvc");
   assert.match(phoenix?.headline ?? "", /Prioritize.*appointment and capacity validation/i);
   assert.match(phoenix?.valueTranslation.statement ?? "", /2\.9 times the median/i);
+  assert.equal(phoenix?.businessValue.status, "export_available");
+  assert.match(phoenix?.businessValue.headline ?? "", /appointments.*completed visits.*net sales/i);
   assert.equal(phoenix?.importance.tier, "validate_next");
   assert.ok(run.findings.every((finding, index, findings) => index === 0 || findings[index - 1]!.importance.score >= finding.importance.score));
 });

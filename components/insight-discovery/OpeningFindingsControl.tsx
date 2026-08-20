@@ -63,8 +63,10 @@ export function OpeningFindingsControl({
     [run, team],
   );
   const findings = useMemo(
-    () => showAll ? teamFindings : teamFindings.filter((finding) => finding.importance.score >= 70),
-    [showAll, teamFindings],
+    () => showAll
+      ? teamFindings
+      : (run?.primaryFindings.filter((finding) => team === "all" || finding.department === team) ?? []),
+    [run, showAll, team, teamFindings],
   );
   const importanceCounts = useMemo(() => ({
     priority: run?.findings.filter((finding) => finding.importance.tier === "priority_now").length ?? 0,
@@ -125,9 +127,9 @@ export function OpeningFindingsControl({
                   <small>{finding.marketName}</small>
                 </div>
                 <h3>{finding.headline}</h3>
-                <div className="adaptive-finding-value" data-kind={finding.valueTranslation.kind}>
-                  <span>{finding.valueTranslation.label}</span>
-                  <strong>{finding.valueTranslation.statement}</strong>
+                <div className="adaptive-finding-value" data-status={finding.businessValue.status}>
+                  <span>{finding.businessValue.label}</span>
+                  <strong>{finding.businessValue.headline}</strong>
                 </div>
                 <p><b>Next:</b> {finding.analystInterpretation?.recommendedNextDecisionOrAction ?? finding.nextValidation}</p>
                 <button

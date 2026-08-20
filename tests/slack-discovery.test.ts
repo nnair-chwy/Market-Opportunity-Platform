@@ -22,6 +22,7 @@ function finding(index: number): AutonomousInsight {
     applicability: { primaryTeamId: "growth_marketing", primaryTeamLabel: "Growth Marketing", reason: "Reason", partnerTeams: [], approvalBoundary: "Review" },
     decisionValue: { score: 80, reason: "Reason", flags: [] },
     valueTranslation: { kind: "modeled_scenario", label: "Value", statement: `Value ${index}`, caveat: "Caveat" },
+    businessValue: { status: "proxy_only", label: "Not sized", headline: "Opportunity is not yet validated.", formula: "Incremental value / spend", requiredInputs: ["outcomes"], sourceIds: [] },
     importance: { score: index, tier: "validate_next", label: "Validate next", reason: "Reason", notificationCandidate: false },
   };
 }
@@ -34,6 +35,8 @@ test("builds ranked Slack batches containing every discovery finding", () => {
   assert.equal(sections.length, 35);
   assert.match(sections[0].text.text, /Market 35/);
   assert.match(sections.at(-1)!.text.text, /Market 1/);
+  assert.match(sections[0].text.text, /Opportunity size:.*not yet validated/i);
+  assert.match(sections[0].text.text, /How value will be calculated:.*Incremental value \/ spend/i);
 });
 
 test("escapes Slack markup from discovery findings", () => {

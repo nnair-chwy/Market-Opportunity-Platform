@@ -43,6 +43,14 @@ function finding(department: AutonomousInsight["department"], overrides: Partial
       statement: "The reviewed metric differs from its comparison cohort.",
       caveat: "This is descriptive, not causal.",
     },
+    businessValue: {
+      status: "proxy_only",
+      label: "Opportunity size not yet validated",
+      headline: "The current evidence cannot yet size incremental value.",
+      formula: "Incremental value = observed outcome − counterfactual outcome",
+      requiredInputs: ["first-party outcome", "counterfactual"],
+      sourceIds: [],
+    },
     importance: {
       score: 50,
       tier: "watch",

@@ -50,9 +50,10 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
         <>
           <h2>{finding.headline}</h2>
           <div className="discovery-card-decision">
-            <div className="discovery-value-translation" data-kind={finding.valueTranslation.kind}>
-              <span>Value signal</span>
-              <strong>{finding.valueTranslation.statement}</strong>
+            <div className="discovery-business-value" data-status={finding.businessValue.status}>
+              <span>{finding.businessValue.label}</span>
+              <strong>{finding.businessValue.headline}</strong>
+              <small>{finding.businessValue.formula}</small>
             </div>
             <div className="discovery-analyst-action">
               <span>Do next</span>
@@ -72,6 +73,8 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
         <dl>
           <div><dt>What this could change</dt><dd>{interpretation?.whyThisMattersToBusinessOutcome ?? finding.whyInteresting}</dd></div>
           <div><dt>Important caveat</dt><dd>{finding.valueTranslation.caveat}</dd></div>
+          <div><dt>Observed evidence proxy</dt><dd>{finding.valueTranslation.statement}</dd></div>
+          <div><dt>Inputs needed to size value</dt><dd>{finding.businessValue.requiredInputs.join("; ")}</dd></div>
           <div><dt>Why this owner</dt><dd>{finding.applicability.reason}</dd></div>
           <div><dt>Analyst read</dt><dd>{interpretation?.analystConclusion ?? finding.whyInteresting}</dd></div>
           <div><dt>Decision question</dt><dd>{interpretation?.decisionQuestion ?? finding.question}</dd></div>

@@ -11,6 +11,7 @@ const findingSchema = z.object({
   nextValidation: z.string(),
   importance: z.object({ label: z.string(), score: z.number() }).passthrough(),
   valueTranslation: z.object({ statement: z.string() }).passthrough(),
+  businessValue: z.object({ headline: z.string(), formula: z.string() }).passthrough(),
   applicability: z.object({ primaryTeamLabel: z.string() }).passthrough(),
   analystInterpretation: z.object({ recommendedNextDecisionOrAction: z.string() }).passthrough().optional(),
 }).passthrough();
