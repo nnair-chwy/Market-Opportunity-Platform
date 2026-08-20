@@ -229,6 +229,25 @@
 .pricing-geo-test-handoff details ul { margin: 8px 0; padding-left: 20px; }
 .discovery-results-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
 .discovery-results-heading > span { color: #718097; font-size: .74rem; }
+.discovery-executive-summary { display: grid; gap: 15px; padding: 22px; border: 1px solid #a8bfdb; border-left: 6px solid #214f87; border-radius: 16px; background: rgba(255, 255, 255, .9); box-shadow: 0 18px 45px rgba(36, 70, 111, .08); }
+.discovery-executive-summary > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.discovery-executive-summary h2 { margin: 5px 0 3px; color: #17365f; font-size: 1.3rem; }
+.discovery-executive-summary header p { margin: 0; color: #62728a; font-size: .76rem; }
+.discovery-executive-summary header > span { flex: none; padding: 7px 10px; border-radius: 999px; background: #e9f1fb; color: #315f93; font-size: .65rem; font-weight: 850; letter-spacing: .03em; text-transform: uppercase; }
+.discovery-key-takeaways { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid #d9e3ef; }
+.discovery-key-takeaways li { display: grid; grid-template-columns: minmax(155px, .38fr) minmax(0, 1fr); gap: 18px; padding: 13px 0; border-bottom: 1px solid #d9e3ef; }
+.discovery-key-takeaways li > div { display: grid; align-content: start; gap: 3px; }
+.discovery-key-takeaways li span { color: #245384; font-size: .68rem; font-weight: 850; text-transform: uppercase; }
+.discovery-key-takeaways li small { color: #74849a; font-size: .65rem; }
+.discovery-key-takeaways li p { margin: 0; color: #213d63; font-size: .82rem; font-weight: 680; line-height: 1.48; }
+.discovery-inference-boundary { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; border: 1px solid #cbd8e7; border-radius: 12px; background: #f5f8fc; }
+.discovery-inference-boundary > div { display: grid; align-content: start; gap: 4px; padding: 13px 15px; }
+.discovery-inference-boundary > div + div { border-left: 1px solid #cbd8e7; }
+.discovery-inference-boundary span { color: #52708f; font-size: .64rem; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
+.discovery-inference-boundary strong { color: #1d456f; font-size: .78rem; }
+.discovery-inference-boundary p { margin: 0; color: #63748a; font-size: .68rem; line-height: 1.45; }
+.discovery-inference-boundary [data-status="not-tested"] { background: #fff8ec; }
+.discovery-inference-boundary [data-status="not-tested"] span, .discovery-inference-boundary [data-status="not-tested"] strong { color: #865e22; }
 .autonomous-insight-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .autonomous-insight-card { display: grid; gap: 12px; align-content: start; padding: 18px 20px; border: 1px solid #d6e0ed; border-left: 5px solid #4f78ac; border-radius: 13px; background: #fff; box-shadow: 0 7px 22px rgba(28, 54, 90, .055); }
 .autonomous-insight-card[data-selected="true"] { border-color: #4b82c5; box-shadow: 0 0 0 3px rgba(75,130,197,.18), 0 14px 32px rgba(28,54,90,.12); }
@@ -383,6 +402,9 @@
   .discovery-hypothesis-backlog > div { grid-template-columns: 1fr; }
   .adaptive-decision-findings > header { display: grid; }
   .adaptive-decision-metrics { grid-template-columns: 1fr; }
+  .discovery-executive-summary > header, .discovery-key-takeaways li, .discovery-inference-boundary { grid-template-columns: 1fr; }
+  .discovery-executive-summary > header { display: grid; }
+  .discovery-inference-boundary > div + div { border-top: 1px solid #cbd8e7; border-left: 0; }
   .discovery-run-audit-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .autonomous-insight-grid, .discovery-access-request-grid { grid-template-columns: 1fr; }
   .pricing-geo-test-handoff > header { display: grid; }

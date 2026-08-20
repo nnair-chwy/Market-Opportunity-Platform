@@ -310,6 +310,15 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     if (department === "all") return adaptivePortfolioDigest(run.adaptiveDiscovery.findings);
     return run.adaptiveDiscovery.findings.filter((finding) => finding.departments.includes(department)).slice(0, 8);
   }, [department, run]);
+  const keyTakeaways = useMemo(() => primaryFindings.map((finding) => {
+    const presentation = findingPresentation(finding);
+    return {
+      id: finding.insightId,
+      label: `${LABELS[finding.department]} · ${finding.marketName}`,
+      takeaway: presentation.analystRecommendation,
+      evidence: `${presentation.signalConfidence} signal · ${presentation.decisionReadiness}`,
+    };
+  }), [primaryFindings]);
 
   function openInAskAi(finding: AutonomousInsight) {
     setFollowUpFinding(finding);
@@ -424,6 +433,37 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </div>
       </div>
       {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
+
+      <section className="discovery-executive-summary" aria-labelledby="discovery-executive-summary-title">
+        <header>
+          <div>
+            <div className="section-label">Decision summary</div>
+            <h2 id="discovery-executive-summary-title">What this run found</h2>
+            <p>{keyTakeaways.length} priority takeaway{keyTakeaways.length === 1 ? "" : "s"} for {department === "all" ? "Marketing, Pricing, and CVC" : LABELS[department]}.</p>
+          </div>
+          <span>Directional evidence</span>
+        </header>
+        <ul className="discovery-key-takeaways">
+          {keyTakeaways.map((takeaway) => (
+            <li key={takeaway.id}>
+              <div><span>{takeaway.label}</span><small>{takeaway.evidence}</small></div>
+              <p>{takeaway.takeaway}</p>
+            </li>
+          ))}
+        </ul>
+        <div className="discovery-inference-boundary" aria-label="Statistical evidence boundary">
+          <div>
+            <span>Supported by this run</span>
+            <strong>Observed differences and peer-relative patterns</strong>
+            <p>Values, source periods, market comparisons, and descriptive benchmarks remain attached to each finding.</p>
+          </div>
+          <div data-status="not-tested">
+            <span>Statistical significance</span>
+            <strong>Not tested</strong>
+            <p>The current snapshots do not provide the sample sizes, variance, confidence intervals, or experimental design needed for an inferential significance test.</p>
+          </div>
+        </div>
+      </section>
 
       <dl className="discovery-run-metrics">
         <div><dt>Analyses completed</dt><dd>{run.analysesRun}</dd><small>{run.adaptiveDiscovery.testedCount} adaptive · {screenCounts.marketing + screenCounts.pricing + screenCounts.cvc} baseline screens</small></div>
