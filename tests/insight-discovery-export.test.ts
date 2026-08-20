@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   buildDiscoveryCsv,
   buildDiscoveryDocx,
+  buildTeamOpportunityBrief,
   discoveryExportFilename,
   getScopedDiscoveryFindings,
   runCurrentDataInsightDiscovery,
@@ -42,9 +43,18 @@ test("discovery export filenames identify scope, run, and real file type", () =>
 
 test("discovery Word brief is a genuine DOCX for complete and team-specific findings", async () => {
   const all = await buildDiscoveryDocx(run, "all");
+  const marketing = await buildDiscoveryDocx(run, "marketing");
   const pricing = await buildDiscoveryDocx(run, "pricing");
+  const cvc = await buildDiscoveryDocx(run, "cvc");
   assert.equal(Buffer.from(all).subarray(0, 2).toString(), "PK");
+  assert.equal(Buffer.from(marketing).subarray(0, 2).toString(), "PK");
   assert.equal(Buffer.from(pricing).subarray(0, 2).toString(), "PK");
+  assert.equal(Buffer.from(cvc).subarray(0, 2).toString(), "PK");
   assert.ok(all.byteLength > pricing.byteLength);
   assert.ok(pricing.byteLength > 10_000);
+  assert.ok(marketing.byteLength > 10_000);
+  assert.ok(cvc.byteLength > 10_000);
+  assert.match(buildTeamOpportunityBrief(run, "pricing").title, /Pricing opportunities/i);
+  assert.match(buildTeamOpportunityBrief(run, "cvc").title, /CVC opportunities/i);
+  assert.match(buildTeamOpportunityBrief(run, "all").title, /cross-team opportunities/i);
 });

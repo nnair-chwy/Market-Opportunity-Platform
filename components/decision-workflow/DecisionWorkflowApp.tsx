@@ -296,7 +296,7 @@ export function DecisionWorkflowApp() {
     return () => window.removeEventListener("popstate", syncDiscoveryIntentFromUrl);
   }, [applyDiscoveryInvestigationIntent]);
 
-  function openDiscoveryInvestigation(finding: AutonomousInsight, questionOverride?: string) {
+  function openDiscoveryInvestigation(finding: AutonomousInsight, questionOverride?: string, sourceRunId?: string) {
     try {
       const intent = buildDiscoveryInvestigationIntent({
         insightId: finding.insightId,
@@ -304,6 +304,10 @@ export function DecisionWorkflowApp() {
         viewId: finding.viewId,
         marketIds: finding.marketIds,
         question: questionOverride ?? finding.question,
+        sourceRunId,
+        originatingQuestion: finding.question,
+        findingHeadline: finding.analystInterpretation?.analystConclusion ?? finding.headline,
+        sourceIds: finding.sourceIds,
       });
       writeDiscoveryIntentUrl(intent);
       applyDiscoveryInvestigationIntent(intent);

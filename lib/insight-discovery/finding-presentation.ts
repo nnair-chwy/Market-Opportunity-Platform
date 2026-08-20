@@ -6,7 +6,7 @@ export type RecommendationType = "act_now" | "controlled_test" | "investigate" |
 const RECOMMENDATION_LABELS: Record<RecommendationType, string> = {
   act_now: "Act now",
   controlled_test: "Controlled test",
-  investigate: "Validate before acting",
+  investigate: "Needs outcome sizing",
   monitor: "Monitor only",
   data_quality: "Data issue — not an opportunity",
 };

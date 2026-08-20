@@ -28,6 +28,10 @@ export const discoveryInvestigationIntentSchema = z.object({
   selectedCbsaCodes: z.array(z.string().regex(/^\d{5}$/)).min(1).max(MAX_SELECTED_GEOGRAPHIC_CONTEXTS),
   selectedGeographicContexts: z.array(selectedGeographicContextSchema).min(1).max(MAX_SELECTED_GEOGRAPHIC_CONTEXTS),
   marketNames: z.array(z.string().trim().min(1).max(180)).min(1).max(MAX_SELECTED_GEOGRAPHIC_CONTEXTS),
+  sourceRunId: z.string().trim().min(1).max(240).optional(),
+  originatingQuestion: z.string().trim().min(3).max(600).optional(),
+  findingHeadline: z.string().trim().min(3).max(800).optional(),
+  sourceIds: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
 }).strict().superRefine((intent, context) => {
   if (new Set(intent.selectedCbsaCodes).size !== intent.selectedCbsaCodes.length) {
     context.addIssue({ code: "custom", path: ["selectedCbsaCodes"], message: "Selected CBSA codes must be unique." });
@@ -107,6 +111,10 @@ export function buildDiscoveryInvestigationIntent(input: {
   viewId: PerspectiveViewId;
   marketIds: readonly string[];
   question?: string;
+  sourceRunId?: string;
+  originatingQuestion?: string;
+  findingHeadline?: string;
+  sourceIds?: readonly string[];
 }): DiscoveryInvestigationIntent {
   const selectedGeographicContexts = discoveryInvestigationGeographicContexts(input.marketIds);
   const selectedCbsaCodes = selectedGeographicContexts.map((context) => context.cbsaCode);
@@ -124,6 +132,10 @@ export function buildDiscoveryInvestigationIntent(input: {
     selectedCbsaCodes,
     selectedGeographicContexts,
     marketNames,
+    sourceRunId: input.sourceRunId,
+    originatingQuestion: input.originatingQuestion,
+    findingHeadline: input.findingHeadline,
+    sourceIds: input.sourceIds ? [...new Set(input.sourceIds)] : undefined,
   });
 }
 
@@ -134,6 +146,10 @@ export function discoveryInvestigationIntentSearchParams(intent: DiscoveryInvest
   params.set("perspective", parsed.perspectiveId);
   params.set("view", parsed.viewId);
   params.set("question", parsed.question);
+  if (parsed.sourceRunId) params.set("discoveryRun", parsed.sourceRunId);
+  if (parsed.originatingQuestion) params.set("originQuestion", parsed.originatingQuestion);
+  if (parsed.findingHeadline) params.set("findingHeadline", parsed.findingHeadline);
+  parsed.sourceIds?.forEach((sourceId) => params.append("source", sourceId));
   parsed.selectedCbsaCodes.forEach((cbsaCode) => params.append("cbsa", cbsaCode));
   return params;
 }
@@ -150,6 +166,10 @@ export function discoveryInvestigationIntentFromSearchParams(params: URLSearchPa
       viewId: parsedView.data,
       marketIds: params.getAll("cbsa"),
       question: params.get("question") ?? undefined,
+      sourceRunId: params.get("discoveryRun") ?? undefined,
+      originatingQuestion: params.get("originQuestion") ?? undefined,
+      findingHeadline: params.get("findingHeadline") ?? undefined,
+      sourceIds: params.getAll("source").length ? params.getAll("source") : undefined,
     });
   } catch {
     return null;

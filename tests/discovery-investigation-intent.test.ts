@@ -62,12 +62,20 @@ test("URL-backed intent survives reload without trusting display labels", () => 
     viewId: finding.viewId,
     marketIds: finding.marketIds,
     question: finding.question,
+    sourceRunId: run.runId,
+    originatingQuestion: finding.question,
+    findingHeadline: finding.headline,
+    sourceIds: finding.sourceIds,
   });
   const restored = discoveryInvestigationIntentFromSearchParams(
     discoveryInvestigationIntentSearchParams(intent),
   );
   assert.deepEqual(restored, intent);
   assert.equal(restored?.question, finding.question);
+  assert.equal(restored?.sourceRunId, run.runId);
+  assert.equal(restored?.originatingQuestion, finding.question);
+  assert.equal(restored?.findingHeadline, finding.headline);
+  assert.deepEqual(restored?.sourceIds, finding.sourceIds);
 });
 
 test("invalid geography and cross-perspective views fail validation", () => {

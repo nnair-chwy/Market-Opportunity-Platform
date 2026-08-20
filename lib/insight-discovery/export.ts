@@ -14,7 +14,7 @@ import type { PerspectiveId } from "../perspectives/contracts.ts";
 import type { AutonomousInsight, CurrentDataDiscoveryRun } from "./current-data-discovery.ts";
 import { findingPresentation } from "./finding-presentation.ts";
 import { buildFindingDecisionCase } from "./decision-case.ts";
-import { buildMarketingOpportunityBrief } from "./marketing-opportunity-brief.ts";
+import { buildTeamOpportunityBrief } from "./team-opportunity-brief.ts";
 
 export type DiscoveryExportScope = "all" | PerspectiveId;
 export type DiscoveryExportFormat = "csv" | "docx";
@@ -186,25 +186,25 @@ export async function buildDiscoveryDocx(run: CurrentDataDiscoveryRun, scope: Di
   const findings = getScopedDiscoveryFindings(run, scope);
   const scopeLabel = scope === "all" ? "Cross-team portfolio" : `${TEAM_LABELS[scope]} team`;
   const primary = findings.filter((finding) => run.primaryFindings.some((item) => item.insightId === finding.insightId));
-  const marketingBrief = buildMarketingOpportunityBrief(run);
-  const marketingBriefParagraphs: Paragraph[] = scope === "all" || scope === "marketing" ? [
-    new Paragraph({ text: marketingBrief.title, heading: HeadingLevel.HEADING_1 }),
-    bodyParagraph("Relevant teams", `${marketingBrief.primaryTeam} · ${marketingBrief.partnerTeams.join(" · ")}`),
-    bodyParagraph("Portfolio recommendation", marketingBrief.recommendation),
-    bodyParagraph("Why these opportunities matter", marketingBrief.why),
-    ...marketingBrief.opportunityMoves.flatMap((move) => [
+  const teamBrief = buildTeamOpportunityBrief(run, scope);
+  const teamBriefParagraphs: Paragraph[] = [
+    new Paragraph({ text: teamBrief.title, heading: HeadingLevel.HEADING_1 }),
+    bodyParagraph("Relevant teams", `${teamBrief.primaryTeam} · ${teamBrief.partnerTeams.join(" · ")}`),
+    bodyParagraph("Portfolio recommendation", teamBrief.recommendation),
+    bodyParagraph("Why these opportunities matter", teamBrief.why),
+    ...teamBrief.opportunityMoves.flatMap((move) => [
       bodyParagraph(`${move.market} — ${move.decision}`, move.evidence),
       bodyParagraph(`${move.market} — action`, move.action),
     ]),
-    bodyParagraph("Portfolio implications", marketingBrief.portfolioImplications.join(" ")),
-    bodyParagraph("Primary outcomes", marketingBrief.primaryOutcomes.join("; ")),
-    bodyParagraph("Evidence required to scale", marketingBrief.evidenceNeededToScale.join("; ")),
-    bodyParagraph("Scale rule", marketingBrief.decisionRules.scale),
-    bodyParagraph("Protect rule", marketingBrief.decisionRules.protect),
-    bodyParagraph("Split rule", marketingBrief.decisionRules.split),
-    bodyParagraph("Stop rule", marketingBrief.decisionRules.stop),
-    bodyParagraph("Boundary", marketingBrief.evidenceBoundary),
-  ] : [];
+    bodyParagraph("Portfolio implications", teamBrief.portfolioImplications.join(" ") || "No scoped opportunity move was supported by this run."),
+    bodyParagraph("Primary outcomes", teamBrief.primaryOutcomes.join("; ")),
+    bodyParagraph("Evidence required to scale", teamBrief.evidenceNeededToScale.join("; ")),
+    bodyParagraph("Scale rule", teamBrief.decisionRules.scale),
+    bodyParagraph("Protect rule", teamBrief.decisionRules.protect),
+    bodyParagraph("Split rule", teamBrief.decisionRules.split),
+    bodyParagraph("Stop rule", teamBrief.decisionRules.stop),
+    bodyParagraph("Boundary", teamBrief.evidenceBoundary),
+  ];
   const children: Paragraph[] = [
     new Paragraph({
       children: [new TextRun({ text: "AUTONOMOUS FINDINGS BRIEF", bold: true, size: 20, color: "2E67A6", font: "Arial" })],
@@ -226,7 +226,7 @@ export async function buildDiscoveryDocx(run: CurrentDataDiscoveryRun, scope: Di
     }),
     bodyParagraph("Portfolio coverage", `${run.analysesRun} decision screens, ${run.marketUniverse.toLocaleString("en-US")} markets compared, and ${run.measuresExamined} measures checked`),
     bodyParagraph("Primary digest in this scope", primary.length ? primary.map((finding) => finding.headline).join("; ") : "No finding from this team appeared in the five-item primary digest; the complete team review follows."),
-    ...marketingBriefParagraphs,
+    ...teamBriefParagraphs,
     new Paragraph({ text: "Complete opportunity review", heading: HeadingLevel.HEADING_1 }),
     ...findings.flatMap((finding, index) => findingParagraphs(finding, index + 1)),
     new Paragraph({ text: "Shared limitations", heading: HeadingLevel.HEADING_1 }),

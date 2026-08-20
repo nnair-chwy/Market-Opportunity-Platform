@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AutonomousInsight, CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
+import type { AutonomousInsight, CurrentDataDiscoveryRun, HybridDiscoveryRun, HybridInvestigationReceipt } from "@/lib/insight-discovery";
 import { buildFindingDecisionCase } from "@/lib/insight-discovery/decision-case";
 import { findingPresentation } from "@/lib/insight-discovery/finding-presentation";
-import { buildMarketingOpportunityBrief } from "@/lib/insight-discovery/marketing-opportunity-brief";
+import { buildTeamOpportunityBrief } from "@/lib/insight-discovery/team-opportunity-brief";
 import { buildCrossSourceHypothesisBacklog } from "@/lib/insight-discovery/hypothesis-backlog";
 import type { PerspectiveId } from "@/lib/perspectives";
 
@@ -76,6 +76,7 @@ function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false
           </div>
         </div>
       </header>
+      <div className="discovery-origin-question"><span>Question tested</span><p>{finding.question}</p></div>
       {interpretation ? (
         <>
           <section className="discovery-decision-first" aria-label="Recommended decision">
@@ -133,13 +134,16 @@ function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false
 
 export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFindingId = null, initialRun = null }: {
   onBack: () => void;
-  onInvestigate: (finding: AutonomousInsight, question?: string) => void;
+  onInvestigate: (finding: AutonomousInsight, question?: string, sourceRunId?: string) => void;
   initialFindingId?: string | null;
   initialRun?: CurrentDataDiscoveryRun | null;
 }) {
   const [run, setRun] = useState<CurrentDataDiscoveryRun | null>(initialRun);
   const [error, setError] = useState<string | null>(null);
   const [isRerunning, setIsRerunning] = useState(false);
+  const [hybridStatus, setHybridStatus] = useState<"idle" | "running" | "completed" | "fallback">("idle");
+  const [supplementalInvestigations, setSupplementalInvestigations] = useState<HybridInvestigationReceipt[]>([]);
+  const [hybridMessage, setHybridMessage] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
@@ -148,6 +152,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const [slackConfig, setSlackConfig] = useState<{ configured: boolean; destination: string } | null>(null);
   const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
   const followUpRef = useRef<HTMLTextAreaElement | null>(null);
+  const hybridStartedRunRef = useRef<string | null>(null);
   const [department, setDepartment] = useState<"all" | PerspectiveId>("all");
   const [runHistory, setRunHistory] = useState<CurrentDataDiscoveryRun[]>(() => {
     let storedRuns: CurrentDataDiscoveryRun[] = [];
@@ -191,16 +196,47 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     return payload;
   }, []);
 
+  const requestHybridRun = useCallback(async (baselineRun: CurrentDataDiscoveryRun, scope: "all" | PerspectiveId) => {
+    hybridStartedRunRef.current = baselineRun.runId;
+    setHybridStatus("running");
+    setHybridMessage(null);
+    const response = await fetch("/api/insight-discovery/hybrid", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        mode: "hybrid",
+        ...(scope === "all" ? {} : { department: scope }),
+        maxSteps: 5,
+        maxResultRows: 50,
+      }),
+    });
+    const payload = await response.json() as HybridDiscoveryRun | { message?: string };
+    if (!response.ok || !("hybridAudit" in payload)) throw new Error("message" in payload ? payload.message : "AI additional discovery did not complete.");
+    setSupplementalInvestigations(payload.supplementalInvestigations);
+    setHybridStatus(payload.hybridAudit.mode === "hybrid_completed" ? "completed" : "fallback");
+    setHybridMessage(payload.hybridAudit.fallbackReason ?? (payload.hybridAudit.mode === "hybrid_completed"
+      ? `${payload.hybridAudit.stepsAttempted} additional investigation step${payload.hybridAudit.stepsAttempted === 1 ? "" : "s"} completed.`
+      : "The deterministic baseline is complete; no model-led investigation ran."));
+  }, []);
+
+  useEffect(() => {
+    if (!initialRun || hybridStartedRunRef.current === initialRun.runId) return;
+    void requestHybridRun(initialRun, "all").catch((reason: unknown) => {
+      setHybridStatus("fallback");
+      setHybridMessage(reason instanceof Error ? reason.message : "AI additional discovery did not complete.");
+    });
+  }, [initialRun, requestHybridRun]);
+
   useEffect(() => {
     if (initialRun) return;
     let cancelled = false;
     void requestRun()
-      .then((payload) => { if (!cancelled) { setRun(payload); rememberRun(payload); } })
+      .then((payload) => { if (!cancelled) { setRun(payload); rememberRun(payload); void requestHybridRun(payload, "all").catch((reason: unknown) => { if (!cancelled) { setHybridStatus("fallback"); setHybridMessage(reason instanceof Error ? reason.message : "AI additional discovery did not complete."); } }); } })
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof Error ? reason.message : "The insight scan did not complete.");
       });
     return () => { cancelled = true; };
-  }, [initialRun, rememberRun, requestRun]);
+  }, [initialRun, rememberRun, requestHybridRun, requestRun]);
 
   async function runAgain() {
     if (!run || isRerunning) return;
@@ -210,7 +246,8 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       const nextRun = await requestRun(run);
       setRun(nextRun);
       rememberRun(nextRun);
-      setDepartment("all");
+      setSupplementalInvestigations([]);
+      void requestHybridRun(nextRun, department).catch((reason: unknown) => { setHybridStatus("fallback"); setHybridMessage(reason instanceof Error ? reason.message : "AI additional discovery did not complete."); });
       requestAnimationFrame(() => resultsHeadingRef.current?.focus());
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The insight scan did not complete.");
@@ -286,7 +323,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     .sort((left, right) => right.importance.score - left.importance.score) ?? []), [department, run]);
   const additionalOpportunities = useMemo(() => additionalFindings.filter((finding) => findingPresentation(finding).recommendationType !== "data_quality"), [additionalFindings]);
   const dataQualityFindings = useMemo(() => additionalFindings.filter((finding) => findingPresentation(finding).recommendationType === "data_quality"), [additionalFindings]);
-  const followUpTarget = followUpFinding ?? primaryFindings[0] ?? null;
+  const followUpTarget = followUpFinding;
   const followUpSuggestions = findingFollowUps(followUpTarget);
   const selectedFinding = useMemo(
     () => run?.findings.find((finding) => finding.insightId === initialFindingId) ?? null,
@@ -301,14 +338,15 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     pricing: run?.traces.filter((trace) => trace.department === "pricing").length ?? 0,
     cvc: run?.traces.filter((trace) => trace.department === "cvc").length ?? 0,
   }), [run]);
-  const marketingOpportunityBrief = useMemo(() => buildMarketingOpportunityBrief(run ?? undefined), [run]);
+  const teamOpportunityBrief = useMemo(() => run ? buildTeamOpportunityBrief(run, department) : null, [department, run]);
   const emergingHypotheses = useMemo(() => run ? buildCrossSourceHypothesisBacklog(run) : [], [run]);
   const readyHypotheses = useMemo(() => emergingHypotheses.filter((lead) => lead.status === "ready_to_test"), [emergingHypotheses]);
   const incompleteHypotheses = useMemo(() => emergingHypotheses.filter((lead) => lead.status === "waiting_for_join"), [emergingHypotheses]);
   const adaptiveFindings = useMemo(() => {
     if (!run) return [];
-    if (department === "all") return adaptivePortfolioDigest(run.adaptiveDiscovery.findings);
-    return run.adaptiveDiscovery.findings.filter((finding) => finding.departments.includes(department)).slice(0, 8);
+    const crossFunctional = run.adaptiveDiscovery.findings.filter((finding) => finding.departments.length > 1);
+    if (department === "all") return adaptivePortfolioDigest(crossFunctional);
+    return crossFunctional.filter((finding) => finding.departments.includes(department)).slice(0, 8);
   }, [department, run]);
   const keyTakeaways = useMemo(() => primaryFindings.map((finding) => {
     const presentation = findingPresentation(finding);
@@ -332,7 +370,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   function continueInvestigation() {
     const nextQuestion = followUpQuestion.trim();
     if (!nextQuestion || !followUpFinding) return;
-    onInvestigate(followUpFinding, nextQuestion);
+    onInvestigate(followUpFinding, nextQuestion, run?.runId);
   }
 
   useEffect(() => {
@@ -434,6 +472,50 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       </div>
       {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
 
+      <section className="discovery-team-scope" aria-labelledby="discovery-team-scope-title">
+        <div>
+          <div className="section-label">Brief audience</div>
+          <h2 id="discovery-team-scope-title">Choose the team this readout is for</h2>
+          <p>The summary, ranked findings, cross-functional opportunities, and Word brief update together.</p>
+        </div>
+        <label>
+          <span>Team</span>
+          <select value={department} onChange={(event) => setDepartment(event.target.value as "all" | PerspectiveId)}>
+            <option value="all">All teams</option>
+            <option value="marketing">Marketing</option>
+            <option value="pricing">Pricing</option>
+            <option value="cvc">CVC</option>
+          </select>
+        </label>
+        <button type="button" onClick={() => void downloadFindings(department, "docx")} disabled={Boolean(isExporting)}>
+          {isExporting === `${department}:docx` ? "Preparing…" : `Download ${department === "all" ? "portfolio" : LABELS[department]} brief`}
+        </button>
+      </section>
+
+      <section className="discovery-ai-additional" data-status={hybridStatus} aria-labelledby="discovery-ai-additional-title" aria-live="polite">
+        <header>
+          <div>
+            <div className="section-label">AI additional discovery</div>
+            <h2 id="discovery-ai-additional-title">Deeper questions opened by the baseline findings</h2>
+            <p>The fast deterministic results stay visible while the investigator looks for a novel cross-source test. Only successfully executed, traceable analysis appears here.</p>
+          </div>
+          <span>{hybridStatus === "running" ? "Investigating…" : hybridStatus === "completed" ? `${supplementalInvestigations.length} accepted` : hybridStatus === "fallback" ? "Baseline retained" : "Waiting"}</span>
+        </header>
+        {hybridStatus === "running" ? <div className="discovery-ai-progress"><i /><span>Choosing and testing the next bounded analysis…</span></div> : null}
+        {supplementalInvestigations.length ? (
+          <div className="discovery-ai-additional-list">
+            {supplementalInvestigations.map((receipt) => (
+              <article key={receipt.fingerprint}>
+                <div><span>{receipt.kind === "exploratory_query" ? "AI-designed cross-source query" : receipt.kind === "registered_query" ? "Registered cross-source query" : "Focused market screen"}</span><small>{receipt.marketIds.length} market{receipt.marketIds.length === 1 ? "" : "s"} · {receipt.sourceIds.length} source{receipt.sourceIds.length === 1 ? "" : "s"}</small></div>
+                <h3>{receipt.objective}</h3>
+                <p>{receipt.reason}</p>
+                <small>Measures checked: {receipt.measureLabels.join(", ") || "No new measure returned"}</small>
+              </article>
+            ))}
+          </div>
+        ) : hybridStatus !== "running" ? <p className="discovery-ai-empty">{hybridMessage ?? "No additional executed finding has cleared the novelty and decision-value checks yet."}</p> : null}
+      </section>
+
       <section className="discovery-executive-summary" aria-labelledby="discovery-executive-summary-title">
         <header>
           <div>
@@ -472,6 +554,17 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         <div><dt>Evidence-backed analyses</dt><dd>{run.adaptiveDiscovery.testedCount}</dd><small>Cohort, contradiction, channel, SKU, and cross-source tests</small></div>
       </dl>
 
+      <div className="discovery-results-heading" ref={resultsHeadingRef} tabIndex={-1}>
+        <div><div className="section-label">Ranked baseline findings</div><h2>Top findings for {department === "all" ? "the portfolio" : LABELS[department]}</h2><p>The blue cards are the strongest supported findings from the fast, repeatable scan.</p></div>
+        <span>{primaryFindings.length} shown{department === "all" ? " across the portfolio" : ` for ${LABELS[department]}`}</span>
+      </div>
+
+      <div className="autonomous-insight-grid">
+        {primaryFindings.map((finding: AutonomousInsight, index) => (
+          <InsightCard key={finding.insightId} finding={finding} rankLabel={`#${index + 1}`} onOpenInvestigation={openInAskAi} selected={finding.insightId === initialFindingId} />
+        ))}
+      </div>
+
       {readyHypotheses.length ? (
         <section className="discovery-hypothesis-backlog" aria-labelledby="discovery-hypothesis-backlog-title">
           <header>
@@ -496,22 +589,13 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </section>
       ) : null}
 
-      <div className="discovery-department-tabs" role="tablist" aria-label="Insight department">
-        {(["all", "marketing", "pricing", "cvc"] as const).map((item) => (
-          <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>
-            {item === "all" ? "All departments" : LABELS[item]}
-            <span>{item === "all" ? run.findings.length : run.findings.filter((finding) => finding.department === item).length}</span>
-          </button>
-        ))}
-      </div>
-
       {adaptiveFindings.length ? (
         <section className="adaptive-decision-findings" aria-labelledby="adaptive-decision-findings-title">
           <header>
             <div>
-              <div className="section-label">Generated from the evidence</div>
-              <h2 id="adaptive-decision-findings-title">Cross-source signals that change a decision</h2>
-              <p>Each question was opened by a repeatable pattern in the current data and tested with a bounded analytical recipe. The conclusion comes first; calculation and limits stay attached.</p>
+              <div className="section-label">Cross-functional opportunities</div>
+              <h2 id="adaptive-decision-findings-title">Signals that become more useful when teams look together</h2>
+              <p>The green section combines evidence owned by more than one team. It is separate from the blue ranked findings below, which are the strongest team-specific conclusions from the baseline scan.</p>
             </div>
             <span>{adaptiveFindings.length} shown</span>
           </header>
@@ -523,7 +607,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
                   <small>{finding.confidence.level} descriptive confidence</small>
                 </div>
                 <h3>{finding.implication}</h3>
-                <p className="adaptive-decision-question">{finding.question}</p>
+                <div className="adaptive-origin-question"><span>Question tested</span><p>{finding.question}</p></div>
                 <div className="adaptive-decision-metrics">
                   {finding.metrics.slice(0, 3).map((metric) => (
                     <div key={metric.id}><strong>{adaptiveMetricValue(metric.value, metric.unit)}</strong><span>{metric.label}</span>{metric.benchmark !== undefined ? <small>Peer benchmark {adaptiveMetricValue(Number(metric.benchmark), metric.unit)}</small> : null}</div>
@@ -555,46 +639,35 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </details>
       ) : null}
 
-      {department === "all" || department === "marketing" ? (
-        <section className="pricing-geo-test-handoff" aria-labelledby="marketing-opportunity-brief-title">
+      {teamOpportunityBrief ? (
+        <section className="pricing-geo-test-handoff" aria-labelledby="team-opportunity-brief-title">
           <header>
             <div>
-              <div className="section-label">Shareable Marketing opportunity brief</div>
-              <h2 id="marketing-opportunity-brief-title">{marketingOpportunityBrief.title}</h2>
-              <p>Relevant teams: {marketingOpportunityBrief.primaryTeam} · {marketingOpportunityBrief.partnerTeams.join(" · ")}</p>
+              <div className="section-label">Shareable {department === "all" ? "cross-team" : LABELS[department]} opportunity brief</div>
+              <h2 id="team-opportunity-brief-title">{teamOpportunityBrief.title}</h2>
+              <p>Relevant teams: {teamOpportunityBrief.primaryTeam} · {teamOpportunityBrief.partnerTeams.join(" · ")}</p>
             </div>
-            <button type="button" onClick={() => void downloadFindings("marketing", "docx")} disabled={Boolean(isExporting)}>
-              {isExporting === "marketing:docx" ? "Preparing…" : "Download Word brief"}
+            <button type="button" onClick={() => void downloadFindings(department, "docx")} disabled={Boolean(isExporting)}>
+              {isExporting === `${department}:docx` ? "Preparing…" : "Download Word brief"}
             </button>
           </header>
           <div className="pricing-geo-test-recommendation">
             <span>Portfolio recommendation</span>
-            <strong>{marketingOpportunityBrief.recommendation}</strong>
-            <p>{marketingOpportunityBrief.why}</p>
+            <strong>{teamOpportunityBrief.recommendation}</strong>
+            <p>{teamOpportunityBrief.why}</p>
           </div>
           <div className="pricing-geo-test-grid">
-            {marketingOpportunityBrief.opportunityMoves.slice(0, 3).map((move) => <article key={move.market}><span>{move.market}</span><p><strong>{move.decision}.</strong> {move.evidence}</p></article>)}
+            {teamOpportunityBrief.opportunityMoves.slice(0, 3).map((move) => <article key={move.findingId}><span>{move.market}</span><p><strong>{move.decision}.</strong> {move.evidence}</p></article>)}
           </div>
           <details>
             <summary>All opportunity moves, success measures, and limits</summary>
-            {marketingOpportunityBrief.opportunityMoves.map((move) => <div key={move.market}><strong>{move.market}: {move.decision}</strong><p>{move.action}</p></div>)}
-            <p><strong>Measure:</strong> {marketingOpportunityBrief.primaryOutcomes.join("; ")}.</p>
-            <ul>{marketingOpportunityBrief.evidenceNeededToScale.map((input) => <li key={input}>{input}</li>)}</ul>
-            <strong>{marketingOpportunityBrief.evidenceBoundary}</strong>
+            {teamOpportunityBrief.opportunityMoves.map((move) => <div key={move.findingId}><strong>{move.market}: {move.decision}</strong><p>{move.action}</p></div>)}
+            <p><strong>Measure:</strong> {teamOpportunityBrief.primaryOutcomes.join("; ")}.</p>
+            <ul>{teamOpportunityBrief.evidenceNeededToScale.map((input) => <li key={input}>{input}</li>)}</ul>
+            <strong>{teamOpportunityBrief.evidenceBoundary}</strong>
           </details>
         </section>
       ) : null}
-
-      <div className="discovery-results-heading" ref={resultsHeadingRef} tabIndex={-1}>
-        <div><div className="section-label">Primary digest</div><h2>Top findings to review first</h2></div>
-        <span>{primaryFindings.length} shown{department === "all" ? " across the portfolio" : ` for ${LABELS[department]}`}</span>
-      </div>
-
-      <div className="autonomous-insight-grid">
-        {primaryFindings.map((finding: AutonomousInsight, index) => (
-          <InsightCard key={finding.insightId} finding={finding} rankLabel={`#${index + 1}`} onOpenInvestigation={openInAskAi} selected={finding.insightId === initialFindingId} />
-        ))}
-      </div>
 
       {additionalOpportunities.length > 0 ? (
         <details className="discovery-additional-findings" open={Boolean(initialFindingId && additionalFindings.some((finding) => finding.insightId === initialFindingId)) || undefined}>
@@ -624,16 +697,24 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         <div>
           <div className="section-label">Ask AI</div>
           <h2 id="discovery-follow-up-title">Continue the investigation</h2>
-          <p>{followUpTarget ? `Focused on ${followUpTarget.marketName}. Open another finding to change context.` : "Ask a follow-up about the discovery run."}</p>
+          <p>{followUpTarget ? "The exact finding, market, question, and evidence sources stay attached when you continue." : "Choose “Open in Ask AI” on a finding to carry its exact context into a follow-up."}</p>
         </div>
+        {followUpTarget ? (
+          <div className="discovery-follow-up-context" aria-label="Finding context sent to Ask AI">
+            <div><span>{LABELS[followUpTarget.department]} · {followUpTarget.marketName}</span><button type="button" onClick={() => { setFollowUpFinding(null); setFollowUpQuestion(""); }}>Clear</button></div>
+            <strong>{findingPresentation(followUpTarget).analystRecommendation}</strong>
+            <p><b>Question that opened this finding:</b> {followUpTarget.question}</p>
+            <small>{followUpTarget.sourceIds.length} evidence source{followUpTarget.sourceIds.length === 1 ? "" : "s"} · Finding {followUpTarget.insightId}</small>
+          </div>
+        ) : null}
         <div className="discovery-follow-up-suggestions" aria-label="Recommended follow-up questions">
-          {followUpSuggestions.map((suggestion) => <button key={suggestion} type="button" title={suggestion} onClick={() => setFollowUpQuestion(suggestion)}>{suggestion}</button>)}
+          {followUpTarget ? followUpSuggestions.map((suggestion) => <button key={suggestion} type="button" title={suggestion} onClick={() => setFollowUpQuestion(suggestion)}>{suggestion}</button>) : null}
         </div>
         <div className="discovery-follow-up-composer">
           <textarea ref={followUpRef} value={followUpQuestion} onChange={(event) => setFollowUpQuestion(event.target.value)} placeholder="Ask a follow-up, add another factor, or request a different comparison…" aria-label="Ask AI about these findings" rows={2} />
-          <button className="primary-action" type="button" disabled={!followUpQuestion.trim()} onClick={continueInvestigation}>Continue investigation →</button>
+          <button className="primary-action" type="button" disabled={!followUpQuestion.trim() || !followUpFinding} onClick={continueInvestigation}>Continue investigation →</button>
         </div>
-        <small>The question opens the normal analysis plan so you can confirm the evidence and geography before it runs.</small>
+        <small>This opens a new analysis plan without losing the original finding context.</small>
       </section>
 
       <details className="discovery-data-expansion">
