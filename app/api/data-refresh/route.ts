@@ -60,9 +60,11 @@ export async function POST(request: Request) {
     for (const script of scripts) {
       await execFileAsync(process.execPath, ["--experimental-strip-types", path.resolve("scripts", script)], { cwd: process.cwd(), timeout: 120_000, maxBuffer: 2_000_000 });
     }
+    console.info(JSON.stringify({ event: "approved_snapshot_refresh", action: body.action, status: "completed", generatedAt: new Date().toISOString() }));
     return Response.json(await statusPayload(request, body.action === "rebuild" ? "Validated snapshot rebuilt. Restart the local app to load every updated artifact; publish only after review." : "Approved export check completed. The current snapshot was not replaced."));
   } catch (error) {
     const detail = error instanceof Error ? error.message.split("\n")[0] : "Unknown refresh error";
+    console.warn(JSON.stringify({ event: "approved_snapshot_refresh", action: body.action, status: "failed", detail, generatedAt: new Date().toISOString() }));
     return Response.json({ ...(await statusPayload(request, `Refresh stopped safely: ${detail}`)) }, { status: 422 });
   }
 }

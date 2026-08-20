@@ -39,6 +39,7 @@ export async function POST(request: Request) {
       }),
     });
     if (!response.ok) return Response.json({ message: "Slack rejected the recommendation brief." }, { status: 502 });
+    console.info(JSON.stringify({ event: "findings_brief_sent", delivery: "slack", sender: sender ?? "local-developer", planId: packet.planId, generatedAt: new Date().toISOString() }));
     return Response.json({ message: `Recommendation brief sent to ${process.env.SLACK_FINDINGS_DESTINATION?.trim() || "the configured insights channel"}.` });
   } catch {
     return Response.json({ message: "A valid recommendation packet is required." }, { status: 400 });
