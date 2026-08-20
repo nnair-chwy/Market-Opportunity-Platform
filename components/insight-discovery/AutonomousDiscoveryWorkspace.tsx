@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AutonomousInsight, CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
+import { buildFindingDecisionCase } from "@/lib/insight-discovery/decision-case";
 import { findingPresentation } from "@/lib/insight-discovery/finding-presentation";
 import type { PerspectiveId } from "@/lib/perspectives";
 
@@ -17,6 +18,7 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
 }) {
   const interpretation = finding.analystInterpretation;
   const presentation = findingPresentation(finding);
+  const decisionCase = buildFindingDecisionCase(finding);
   return (
     <article
       className="autonomous-insight-card"
@@ -42,7 +44,8 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
           <section className="discovery-decision-first" aria-label="Recommended decision">
             <span>{presentation.recommendationLabel}</span>
             <h2>{presentation.primaryStatement}</h2>
-            <p><strong>Observed or testable result:</strong> {presentation.expectedResult}</p>
+            <p><strong>{decisionCase.scenario.label}:</strong> {decisionCase.scenario.summary}</p>
+            {decisionCase.scenario.range ? <small>{decisionCase.scenario.range}</small> : null}
           </section>
           <div className="discovery-decision-facts" aria-label="Recommendation readiness">
             <div><span>Potential value</span><strong>{presentation.valueStatus}</strong></div>
@@ -50,7 +53,13 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
             <div><span>Decision readiness</span><strong>{presentation.decisionReadiness}</strong></div>
             <div><span>Priority</span><strong>{presentation.urgency}</strong></div>
           </div>
-          <div className="discovery-recommended-move"><span>Recommended move</span><p>{presentation.recommendedMove}</p></div>
+          <div className="discovery-recommended-move"><span>Recommended move</span><p>{decisionCase.proposedAction}</p></div>
+          <section className="discovery-decision-case" aria-label="Decision case">
+            <div><span>How this was calculated</span><p>{decisionCase.calculation.join(" ")}</p></div>
+            <div><span>Why validation changes the decision</span><p>{decisionCase.whyValidationMatters.join(" ")}</p></div>
+            <div><span>Success rule</span><p>{decisionCase.successRule}</p></div>
+            <div><span>Stop or reverse if</span><p>{decisionCase.stopRule}</p></div>
+          </section>
           <div className="discovery-region-rationale"><span>Why this region</span><p>{finding.headline}. {finding.whyInteresting}</p></div>
         </>
       ) : (

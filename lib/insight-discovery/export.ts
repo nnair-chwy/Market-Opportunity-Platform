@@ -13,6 +13,7 @@ import {
 import type { PerspectiveId } from "../perspectives/contracts.ts";
 import type { AutonomousInsight, CurrentDataDiscoveryRun } from "./current-data-discovery.ts";
 import { findingPresentation } from "./finding-presentation.ts";
+import { buildFindingDecisionCase } from "./decision-case.ts";
 
 export type DiscoveryExportScope = "all" | PerspectiveId;
 export type DiscoveryExportFormat = "csv" | "docx";
@@ -32,16 +33,21 @@ const CSV_COLUMNS = [
   "recommendation_headline",
   "observed_opportunity",
   "estimated_or_scenario_value",
+  "scenario_range",
+  "calculation",
   "recommended_next_action",
   "recommendation_type",
   "actionability",
   "potential_value_status",
-  "evidence_confidence",
+  "observed_signal_evidence",
   "urgency",
   "confidence_and_caveat",
   "evidence_detail",
   "inputs_needed_to_size_value",
   "decision_boundary",
+  "success_rule",
+  "stop_rule",
+  "could_reverse_recommendation",
   "source_ids",
   "snapshot_versions",
 ] as const;
@@ -80,10 +86,6 @@ export function getScopedDiscoveryFindings(run: CurrentDataDiscoveryRun, scope: 
   return sortFindings(run, run.findings.filter((finding) => scope === "all" || finding.department === scope));
 }
 
-function businessValueText(finding: AutonomousInsight) {
-  return `${finding.businessValue.headline} Formula or sizing method: ${finding.businessValue.formula}`;
-}
-
 function confidenceText(finding: AutonomousInsight) {
   const actionability = finding.analystInterpretation?.actionabilityLevel.replaceAll("_", " ") ?? "investigation lead";
   return `${finding.importance.label}; ${actionability}. ${finding.valueTranslation.caveat}`;
@@ -92,6 +94,7 @@ function confidenceText(finding: AutonomousInsight) {
 export function buildDiscoveryCsv(run: CurrentDataDiscoveryRun, scope: DiscoveryExportScope) {
   const rows = getScopedDiscoveryFindings(run, scope).map((finding, index) => {
     const presentation = findingPresentation(finding);
+    const decisionCase = buildFindingDecisionCase(finding);
     return [
     index + 1,
     finding.insightId,
@@ -100,8 +103,10 @@ export function buildDiscoveryCsv(run: CurrentDataDiscoveryRun, scope: Discovery
     finding.marketName,
     finding.headline,
     observedOpportunityText(finding),
-    businessValueText(finding),
-    finding.analystInterpretation?.recommendedNextDecisionOrAction ?? finding.nextValidation,
+    `${decisionCase.scenario.label}: ${decisionCase.scenario.summary}`,
+    decisionCase.scenario.range ?? "Not sized from current evidence",
+    decisionCase.calculation.join(" "),
+    decisionCase.proposedAction,
     presentation.recommendationLabel,
     finding.analystInterpretation?.actionabilityLevel ?? "investigation_ready",
     presentation.valueStatus,
@@ -111,6 +116,9 @@ export function buildDiscoveryCsv(run: CurrentDataDiscoveryRun, scope: Discovery
     finding.evidenceDetail,
     finding.businessValue.requiredInputs.join("; "),
     finding.analystInterpretation?.approvalBoundary ?? finding.applicability.approvalBoundary,
+    decisionCase.successRule,
+    decisionCase.stopRule,
+    decisionCase.couldReverseRecommendation.join("; "),
     finding.sourceIds.join("; "),
     finding.snapshotVersions.join("; "),
     ];
@@ -140,6 +148,7 @@ function bodyParagraph(label: string, value: string) {
 function findingParagraphs(finding: AutonomousInsight, rank: number) {
   const interpretation = finding.analystInterpretation;
   const presentation = findingPresentation(finding);
+  const decisionCase = buildFindingDecisionCase(finding);
   return [
     new Paragraph({
       text: `${rank}. ${finding.headline}`,
@@ -148,16 +157,21 @@ function findingParagraphs(finding: AutonomousInsight, rank: number) {
     }),
     new Paragraph({
       children: [new TextRun({
-        text: `${TEAM_LABELS[finding.department]} · ${finding.marketName} · ${presentation.recommendationLabel} · ${presentation.confidence} confidence · ${presentation.urgency}`,
+        text: `${TEAM_LABELS[finding.department]} · ${finding.marketName} · ${presentation.recommendationLabel} · ${presentation.signalConfidence} observed signal · ${presentation.decisionReadiness}`,
         bold: true,
         color: "5F6F82",
       })],
       spacing: { after: 140 },
       keepNext: true,
     }),
-    bodyParagraph("Recommendation", interpretation?.recommendedNextDecisionOrAction ?? finding.nextValidation),
+    bodyParagraph("Recommendation", decisionCase.proposedAction),
     bodyParagraph("Quantified observed opportunity", observedOpportunityText(finding)),
-    bodyParagraph("Estimated or scenario value", businessValueText(finding)),
+    bodyParagraph("Estimated or scenario value", `${decisionCase.scenario.label}: ${decisionCase.scenario.summary}${decisionCase.scenario.range ? ` ${decisionCase.scenario.range}` : ""}`),
+    bodyParagraph("How it was calculated", decisionCase.calculation.join(" ")),
+    bodyParagraph("Why validation changes the decision", decisionCase.whyValidationMatters.join(" ")),
+    bodyParagraph("Success rule", decisionCase.successRule),
+    bodyParagraph("Stop rule", decisionCase.stopRule),
+    bodyParagraph("Could reverse the recommendation", decisionCase.couldReverseRecommendation.join("; ")),
     bodyParagraph("Confidence and caveat", confidenceText(finding)),
     bodyParagraph("Evidence", finding.evidenceDetail),
     bodyParagraph("Inputs needed to size value", finding.businessValue.requiredInputs.join("; ")),

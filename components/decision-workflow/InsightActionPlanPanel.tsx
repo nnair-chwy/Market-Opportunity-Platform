@@ -5,6 +5,13 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00.000Z`));
 }
 
+function decisionEvidenceExplanation(actionPlan: InsightActionPlan) {
+  if (actionPlan.actionReadiness === "ready_for_bounded_test") return "Connected outcomes and bounded-test gates are present";
+  if (actionPlan.actionReadiness === "validation_required") return "The observed pattern is usable; the comparison design or decision threshold is incomplete";
+  if (actionPlan.actionReadiness === "outcome_missing") return "A regional business outcome is still required to estimate incremental value";
+  return "The current sources cannot be combined at a compatible geography, period, or definition";
+}
+
 export function InsightActionPlanPanel({ actionPlan }: { actionPlan: InsightActionPlan }) {
   const boundedAction = boundedActionSummary(actionPlan);
   return (
@@ -13,7 +20,7 @@ export function InsightActionPlanPanel({ actionPlan }: { actionPlan: InsightActi
         <div>
           <div className="section-label">Decision handoff</div>
           <h2 id="insight-action-title">{boundedAction.action}</h2>
-          <p><strong>{actionReadinessLabel(actionPlan.actionReadiness)} · {actionPlan.confidence} confidence</strong></p>
+          <p><strong>{actionReadinessLabel(actionPlan.actionReadiness)}</strong><br /><span>{decisionEvidenceExplanation(actionPlan)}</span></p>
         </div>
         <div className="insight-action-decision-date">
           <span>Decision review</span>

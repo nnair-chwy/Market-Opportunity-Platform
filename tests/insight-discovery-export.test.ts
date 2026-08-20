@@ -18,6 +18,9 @@ test("discovery CSV exports the complete portfolio or one requested team", () =>
   const marketing = buildDiscoveryCsv(run, "marketing");
 
   assert.match(all, /^rank,insight_id,team,owner,market,recommendation_headline,observed_opportunity,estimated_or_scenario_value/);
+  assert.match(all, /scenario_range/);
+  assert.match(all, /success_rule/);
+  assert.match(all, /could_reverse_recommendation/);
   assert.match(all, /Marketing/);
   assert.match(all, /Pricing/);
   assert.match(all, /CVC/);

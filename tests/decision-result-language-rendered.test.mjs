@@ -102,7 +102,8 @@ test("action handoff uses product readiness language and keeps baseline evidence
     baseline: { status: "partial", description: "High click cost with incomplete outcomes.", evidenceIds: ["SRC-ADS", "lead"] }, kpi: "Incremental contribution.", validationThreshold: "Pass the approved test threshold.", stopCondition: "Do not change spend without outcomes.", sensitivityAndContraryEvidence: "Campaign mix may explain the finding.",
   };
   const html = renderToStaticMarkup(createElement(InsightActionPlanPanel, { actionPlan }));
-  assert.match(html, /Business outcome still needed · Low confidence/);
+  assert.match(html, /Business outcome still needed/);
+  assert.match(html, /regional business outcome is still required to estimate incremental value/i);
   assert.match(html, /Expected result/);
   assert.match(html, /Not yet a forecast/);
   assert.match(html, /How this result is calculated/);

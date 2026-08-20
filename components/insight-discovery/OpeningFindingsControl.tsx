@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
+import { buildFindingDecisionCase } from "@/lib/insight-discovery/decision-case";
 import { findingPresentation } from "@/lib/insight-discovery/finding-presentation";
 import type { PerspectiveId } from "@/lib/perspectives";
 
@@ -117,6 +118,7 @@ export function OpeningFindingsControl({
             {error ? <p role="alert">{error}</p> : null}
             {findings.map((finding) => {
               const presentation = findingPresentation(finding);
+              const decisionCase = buildFindingDecisionCase(finding);
               return <article key={finding.insightId} data-importance={finding.importance.tier}>
                 <div className="adaptive-finding-heading-row">
                   <div className="adaptive-finding-heading-tags">
@@ -132,7 +134,8 @@ export function OpeningFindingsControl({
                   <span>{presentation.valueStatus}</span>
                   <strong>{presentation.signalConfidence} signal · {presentation.decisionReadiness}</strong>
                 </div>
-                <p><b>{presentation.recommendationType === "data_quality" ? "Data-owner task:" : "Recommended move:"}</b> {presentation.recommendedMove}</p>
+                <p><b>{presentation.recommendationType === "data_quality" ? "Data-owner task:" : "Recommended move:"}</b> {decisionCase.proposedAction}</p>
+                <p><b>{decisionCase.scenario.label}:</b> {decisionCase.scenario.summary}</p>
                 <button
                   className="adaptive-finding-open"
                   type="button"

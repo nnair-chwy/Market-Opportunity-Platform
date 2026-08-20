@@ -6,3 +6,4 @@ export * from "./export.ts";
 export * from "./cross-source-opportunity.ts";
 export * from "./iterative-discovery-loop.ts";
 export * from "./opportunity-from-findings.ts";
+export * from "./decision-case.ts";
