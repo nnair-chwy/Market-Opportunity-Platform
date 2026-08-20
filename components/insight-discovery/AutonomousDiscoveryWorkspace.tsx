@@ -99,6 +99,9 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const [run, setRun] = useState<CurrentDataDiscoveryRun | null>(initialRun);
   const [error, setError] = useState<string | null>(null);
   const [isRerunning, setIsRerunning] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [slackConfig, setSlackConfig] = useState<{ configured: boolean; destination: string } | null>(null);
   const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
   const [department, setDepartment] = useState<"all" | PerspectiveId>("all");
 
@@ -141,6 +144,31 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       setError(reason instanceof Error ? reason.message : "The insight scan did not complete.");
     } finally {
       setIsRerunning(false);
+    }
+  }
+
+  async function sendAllFindings() {
+    if (!run || isSending) return;
+    setIsSending(true);
+    setShareStatus("Sending every qualified finding…");
+    try {
+      const config = slackConfig ?? await (await fetch("/api/share/slack", { cache: "no-store" })).json() as { configured: boolean; destination: string };
+      setSlackConfig(config);
+      if (!config.configured) {
+        setShareStatus("Slack needs an administrator to connect the destination before findings can be sent.");
+        return;
+      }
+      const response = await fetch("/api/share/slack/discovery", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ run }),
+      });
+      const payload = await response.json() as { message?: string };
+      setShareStatus(payload.message ?? (response.ok ? "Findings sent." : "Slack delivery did not complete."));
+    } catch {
+      setShareStatus("Slack delivery did not complete. The findings remain available here.");
+    } finally {
+      setIsSending(false);
     }
   }
 
@@ -201,11 +229,15 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         <button className="text-action" type="button" onClick={onBack}>← Back to questions</button>
         <div className="discovery-run-controls">
           <span>Run {run.runSequence} complete · {new Date(run.completedAt).toLocaleString()}</span>
+          <button className="discovery-share-all" type="button" onClick={() => void sendAllFindings()} disabled={isSending}>
+            {isSending ? "Sending findings…" : "Send all findings to Slack"}
+          </button>
           <button className="discovery-run-again" type="button" onClick={() => void runAgain()} disabled={isRerunning}>
             {isRerunning ? `Re-running ${run.analysesRun} screens…` : "Find next signals"}
           </button>
         </div>
       </div>
+      {shareStatus ? <div className="discovery-share-status" role="status"><span>{shareStatus}</span><button type="button" aria-label="Dismiss Slack delivery status" onClick={() => setShareStatus(null)}>×</button></div> : null}
       <header className="discovery-hero">
         <div>
           <div className="section-label">Autonomous insight discovery</div>

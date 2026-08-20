@@ -1,6 +1,7 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
+import { readFileSync } from "node:fs";
 import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
 
@@ -73,6 +74,19 @@ export default defineConfig(async ({ command, mode }) => {
       ? { watch: { useFsEvents: false, usePolling: true } }
       : undefined,
     plugins: [
+      {
+        name: "maplibre-worker-asset",
+        apply: "build",
+        generateBundle() {
+          for (const file of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"]) {
+            this.emitFile({
+              type: "asset",
+              fileName: `assets/${file}`,
+              source: readFileSync(resolve("node_modules/maplibre-gl/dist", file), "utf8"),
+            });
+          }
+        },
+      },
       vinext(),
       sites(),
       cloudflare({
