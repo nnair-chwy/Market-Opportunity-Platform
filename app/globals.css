@@ -7424,12 +7424,13 @@ textarea:focus-visible {
 
 .data-refresh-control { position: relative; }
 .data-refresh-trigger { gap: .32rem; }
+.data-refresh-backdrop { position: fixed; z-index: 5000; inset: 0; display: grid; place-items: start center; overflow: auto; padding: clamp(4.8rem, 9vh, 7rem) 1rem 2rem; background: rgba(24, 48, 78, .22); backdrop-filter: blur(3px); }
 .data-refresh-panel {
-  position: absolute;
-  z-index: 35;
-  top: calc(100% + .55rem);
-  left: 0;
-  width: min(460px, calc(100vw - 2rem));
+  position: relative;
+  z-index: 5001;
+  width: min(680px, calc(100vw - 2rem));
+  max-height: calc(100vh - clamp(6.8rem, 12vh, 9rem));
+  overflow: auto;
   padding: 1rem;
   border: 1px solid rgba(104, 139, 190, .3);
   border-radius: 20px;
@@ -7452,6 +7453,28 @@ textarea:focus-visible {
 .data-refresh-sources strong, .data-refresh-sources span { font-size: .72rem; text-transform: capitalize; }
 .data-refresh-sources small { grid-column: 1 / -1; color: #687e98; font-size: .65rem; line-height: 1.35; }
 .data-refresh-steps { margin: .7rem 0; padding-left: 1.2rem; color: #4e6887; font-size: .72rem; line-height: 1.55; }
+.data-refresh-inventory { margin: .72rem 0; border: 1px solid #d6e3f2; border-radius: 14px; overflow: hidden; background: #fff; }
+.data-refresh-inventory-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .62rem .7rem; background: #f0f5fb; }
+.data-refresh-inventory-heading strong { font-size: .76rem; }
+.data-refresh-inventory-heading span { color: #6a809b; font-size: .64rem; }
+.data-refresh-inventory > details { border-top: 1px solid #e0e9f4; }
+.data-refresh-inventory > details:first-of-type { border-top: 0; }
+.data-refresh-inventory > details > summary { display: flex; justify-content: space-between; gap: 1rem; padding: .68rem .72rem; cursor: pointer; list-style-position: inside; }
+.data-refresh-inventory > details > summary > span { display: inline-grid; gap: .12rem; }
+.data-refresh-inventory > details > summary > span:last-child { text-align: right; }
+.data-refresh-inventory summary strong { text-transform: capitalize; color: #24496f; font-size: .75rem; }
+.data-refresh-inventory summary b { color: #2f68ad; font-size: .69rem; }
+.data-refresh-inventory summary small { color: #71849c; font-size: .62rem; }
+.data-refresh-file-list { max-height: 230px; overflow: auto; padding: 0 .65rem .6rem; background: #f8fbff; }
+.data-refresh-file-list > div { display: flex; justify-content: space-between; gap: 1rem; padding: .48rem .15rem; border-top: 1px solid #e4edf7; }
+.data-refresh-file-list > div > span { display: grid; gap: .12rem; min-width: 0; }
+.data-refresh-file-list > div > span:last-child { flex: 0 0 auto; text-align: right; }
+.data-refresh-file-list strong { overflow-wrap: anywhere; color: #395675; font-size: .66rem; }
+.data-refresh-file-list b { color: #27815c; font-size: .62rem; text-transform: capitalize; }
+.data-refresh-file-list [data-status="excluded"] b { color: #a86a22; }
+.data-refresh-file-list small { color: #778aa1; font-size: .58rem; }
+.data-refresh-readiness { margin: .65rem 0; padding: .62rem .7rem; border: 1px solid #dce6f2; border-radius: 12px; }
+.data-refresh-readiness > summary { color: #315d94; font-size: .71rem; font-weight: 800; cursor: pointer; }
 .data-refresh-panel footer { display: flex; justify-content: flex-end; gap: .45rem; }
 .data-refresh-panel footer button { min-height: 36px; padding: .5rem .72rem; font-size: .72rem; }
 .data-refresh-notice, .data-refresh-hosted-note { display: block; padding: .55rem; border-radius: 9px; background: #fff7df; color: #765b1d !important; }
@@ -7478,7 +7501,8 @@ textarea:focus-visible {
 .email-brief-form > div { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: .5rem; }
 
 @media (max-width: 720px) {
-  .data-refresh-panel { position: fixed; inset: 5.5rem 1rem auto; width: auto; max-height: calc(100vh - 7rem); overflow: auto; }
+  .data-refresh-backdrop { place-items: start stretch; padding: 4.5rem .65rem 1rem; }
+  .data-refresh-panel { width: auto; max-height: calc(100vh - 5.5rem); }
   .email-brief-control, .email-brief-form { grid-template-columns: 1fr; }
   .email-brief-control > button, .email-brief-form > * { grid-column: 1; }
 }

@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import { compactSourceReadiness, loadFirstPartyOutcomeReadiness } from "@/lib/data-discovery/readiness-service";
+import approvedInventory from "@/data/contracts/local-approved-source-inventory.json";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,11 +31,45 @@ async function statusPayload(request: Request, message: string) {
   const report = compactSourceReadiness(await loadFirstPartyOutcomeReadiness());
   const ready = report.outcomes.filter((outcome) => outcome.status !== "gap").length;
   const gaps = report.outcomes.length - ready;
+  const inventory = approvedInventory as {
+    generatedAt: string;
+    packages: Array<{
+      id: string;
+      sensitivity: string;
+      allowedUse: string;
+      fileCount: number;
+      totalBytes: number;
+      files: Array<{ file: string; bytes: number; agentUse: string }>;
+    }>;
+  };
+  const sourcePackages = inventory.packages.map((sourcePackage) => {
+    const csvFiles = sourcePackage.files.filter((file) => file.file.toLowerCase().endsWith(".csv"));
+    const dateMatches = sourcePackage.id.match(/20\d{2}-\d{2}-\d{2}/g) ?? [];
+    return {
+      id: sourcePackage.id,
+      label: sourcePackage.id.split("-20")[0].replaceAll("-", " "),
+      snapshotDate: dateMatches.at(-1) ?? null,
+      lastConnectedAt: inventory.generatedAt,
+      sensitivity: sourcePackage.sensitivity,
+      allowedUse: sourcePackage.allowedUse,
+      totalBytes: sourcePackage.totalBytes,
+      csvFileCount: csvFiles.length,
+      files: csvFiles.map((file) => ({
+        name: path.basename(file.file),
+        bytes: file.bytes,
+        status: file.agentUse === "approved_local_source_file" ? "available" as const : "excluded" as const,
+        statusDetail: file.agentUse.replaceAll("_", " "),
+      })),
+    };
+  });
   return {
     mode: isLocal(request) ? "local" as const : "hosted" as const,
     generatedAt: report.generatedAt,
     ready,
     gaps,
+    inventoryGeneratedAt: inventory.generatedAt,
+    csvFileCount: sourcePackages.reduce((total, sourcePackage) => total + sourcePackage.csvFileCount, 0),
+    sourcePackages,
     sourceGroups: [
       { label: "Business outcomes", status: ready ? "partial" as const : "manual" as const, detail: `${ready} of ${report.outcomes.length} outcome families have connected evidence.` },
       { label: "Paid media & search", status: "connected" as const, detail: "Google Ads and approved search snapshots are checked before publication." },
