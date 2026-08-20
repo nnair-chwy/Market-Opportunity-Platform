@@ -22,7 +22,7 @@ const PAIR_TEMPLATES: Record<string, Omit<CrossSourceHypothesisLead, "hypothesis
   "marketing+pricing": {
     headline: "Test whether local price position helps explain acquisition efficiency",
     hypothesis: "The market's paid-media response may be partly explained by local matched-SKU price position or competitor availability, not media execution alone.",
-    nextTest: "Join same-period query and campaign performance to current PetSmart/Petco/Walmart matched-SKU price index, availability, Dog Food orders, new customers, and contribution; compare with matched markets while controlling for channel mix.",
+    nextTest: "Join same-period query and campaign performance to the current matched-SKU retailer price index, availability, Dog Food orders, new customers, and contribution; compare with matched markets while controlling for channel mix.",
     falsificationRule: "Reject the hypothesis when acquisition efficiency does not change with price position after matched-market and customer-outcome controls, or when the apparent relationship disappears after freshness and coverage checks.",
     requiredInputs: ["same-period paid-media performance", "current matched-SKU competitor price and availability", "Dog Food orders and new customers", "contribution after media cost"],
   },

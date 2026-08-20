@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AutonomousInsight, CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
 import { buildFindingDecisionCase } from "@/lib/insight-discovery/decision-case";
 import { findingPresentation } from "@/lib/insight-discovery/finding-presentation";
-import { buildPricingGeoTestHandoff } from "@/lib/insight-discovery/pricing-geo-test-handoff";
+import { buildMarketingOpportunityBrief } from "@/lib/insight-discovery/marketing-opportunity-brief";
 import { buildCrossSourceHypothesisBacklog } from "@/lib/insight-discovery/hypothesis-backlog";
 import type { PerspectiveId } from "@/lib/perspectives";
 
@@ -299,7 +299,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     pricing: run?.traces.filter((trace) => trace.department === "pricing").length ?? 0,
     cvc: run?.traces.filter((trace) => trace.department === "cvc").length ?? 0,
   }), [run]);
-  const pricingGeoTestHandoff = useMemo(() => buildPricingGeoTestHandoff(run ?? undefined), [run]);
+  const marketingOpportunityBrief = useMemo(() => buildMarketingOpportunityBrief(run ?? undefined), [run]);
   const emergingHypotheses = useMemo(() => run ? buildCrossSourceHypothesisBacklog(run) : [], [run]);
   const adaptiveFindings = useMemo(() => {
     if (!run) return [];
@@ -493,33 +493,32 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </section>
       ) : null}
 
-      {department === "all" || department === "pricing" ? (
-        <section className="pricing-geo-test-handoff" aria-labelledby="pricing-geo-test-handoff-title">
+      {department === "all" || department === "marketing" ? (
+        <section className="pricing-geo-test-handoff" aria-labelledby="marketing-opportunity-brief-title">
           <header>
             <div>
-              <div className="section-label">Shareable pricing insight</div>
-              <h2 id="pricing-geo-test-handoff-title">{pricingGeoTestHandoff.title}</h2>
-              <p>Prepared for {pricingGeoTestHandoff.preparedFor} · {pricingGeoTestHandoff.recipientRole}</p>
+              <div className="section-label">Shareable Marketing opportunity brief</div>
+              <h2 id="marketing-opportunity-brief-title">{marketingOpportunityBrief.title}</h2>
+              <p>Prepared for {marketingOpportunityBrief.preparedFor} · {marketingOpportunityBrief.recipientRole}</p>
             </div>
-            <button type="button" onClick={() => void downloadFindings("pricing", "docx")} disabled={Boolean(isExporting)}>
-              {isExporting === "pricing:docx" ? "Preparing…" : "Download Word brief"}
+            <button type="button" onClick={() => void downloadFindings("marketing", "docx")} disabled={Boolean(isExporting)}>
+              {isExporting === "marketing:docx" ? "Preparing…" : "Download Word brief"}
             </button>
           </header>
           <div className="pricing-geo-test-recommendation">
-            <span>Conclusion for the test</span>
-            <strong>{pricingGeoTestHandoff.recommendation}</strong>
-            <p>{pricingGeoTestHandoff.why}</p>
+            <span>Portfolio recommendation</span>
+            <strong>{marketingOpportunityBrief.recommendation}</strong>
+            <p>{marketingOpportunityBrief.why}</p>
           </div>
           <div className="pricing-geo-test-grid">
-            <article><span>What the evidence rules out</span><p>Do not rank PetSmart markets from the current retailer extracts, and do not mix a Chewy price change into the first demand test.</p></article>
-            <article><span>How pricing still helps</span><p>{pricingGeoTestHandoff.testDesign.pricingRole}</p></article>
-            <article><span>What proves value</span><p>{pricingGeoTestHandoff.primaryOutcomes.join("; ")}.</p></article>
+            {marketingOpportunityBrief.opportunityMoves.slice(0, 3).map((move) => <article key={move.market}><span>{move.market}</span><p><strong>{move.decision}.</strong> {move.evidence}</p></article>)}
           </div>
           <details>
-            <summary>Supporting evidence and what would change this conclusion</summary>
-            <p>{pricingGeoTestHandoff.currentEvidence.join(" ")}</p>
-            <ul>{pricingGeoTestHandoff.pricingInputsRequired.map((input) => <li key={input}>{input}</li>)}</ul>
-            <strong>{pricingGeoTestHandoff.evidenceBoundary}</strong>
+            <summary>All opportunity moves, success measures, and limits</summary>
+            {marketingOpportunityBrief.opportunityMoves.map((move) => <div key={move.market}><strong>{move.market}: {move.decision}</strong><p>{move.action}</p></div>)}
+            <p><strong>Measure:</strong> {marketingOpportunityBrief.primaryOutcomes.join("; ")}.</p>
+            <ul>{marketingOpportunityBrief.evidenceNeededToScale.map((input) => <li key={input}>{input}</li>)}</ul>
+            <strong>{marketingOpportunityBrief.evidenceBoundary}</strong>
           </details>
         </section>
       ) : null}

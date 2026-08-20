@@ -14,7 +14,7 @@ import type { PerspectiveId } from "../perspectives/contracts.ts";
 import type { AutonomousInsight, CurrentDataDiscoveryRun } from "./current-data-discovery.ts";
 import { findingPresentation } from "./finding-presentation.ts";
 import { buildFindingDecisionCase } from "./decision-case.ts";
-import { buildPricingGeoTestHandoff } from "./pricing-geo-test-handoff.ts";
+import { buildMarketingOpportunityBrief } from "./marketing-opportunity-brief.ts";
 
 export type DiscoveryExportScope = "all" | PerspectiveId;
 export type DiscoveryExportFormat = "csv" | "docx";
@@ -186,26 +186,24 @@ export async function buildDiscoveryDocx(run: CurrentDataDiscoveryRun, scope: Di
   const findings = getScopedDiscoveryFindings(run, scope);
   const scopeLabel = scope === "all" ? "Cross-team portfolio" : `${TEAM_LABELS[scope]} team`;
   const primary = findings.filter((finding) => run.primaryFindings.some((item) => item.insightId === finding.insightId));
-  const pricingHandoff = buildPricingGeoTestHandoff(run);
-  const pricingHandoffParagraphs: Paragraph[] = scope === "all" || scope === "pricing" ? [
-    new Paragraph({ text: pricingHandoff.title, heading: HeadingLevel.HEADING_1 }),
-    bodyParagraph("Prepared for", `${pricingHandoff.preparedFor} · ${pricingHandoff.recipientRole}`),
-    bodyParagraph("Recommendation", pricingHandoff.recommendation),
-    bodyParagraph("Why this is the right decision", pricingHandoff.why),
-    bodyParagraph("What the current data actually supports", pricingHandoff.currentEvidence.join(" ")),
-    bodyParagraph("Candidate-market screen", pricingHandoff.testDesign.candidateMarkets),
-    bodyParagraph("Treatment and control", pricingHandoff.testDesign.treatmentAndControl),
-    bodyParagraph("Treatment", pricingHandoff.testDesign.treatment),
-    bodyParagraph("What Pricing contributes", pricingHandoff.testDesign.pricingRole),
-    bodyParagraph("Do not confound the test", pricingHandoff.testDesign.confoundRule),
-    bodyParagraph("Primary outcomes", pricingHandoff.primaryOutcomes.join("; ")),
-    bodyParagraph("Secondary outcomes", pricingHandoff.secondaryOutcomes.join("; ")),
-    bodyParagraph("Data required before market ranking", pricingHandoff.pricingInputsRequired.join("; ")),
-    bodyParagraph("Scale rule", pricingHandoff.decisionRules.scale),
-    bodyParagraph("Iterate rule", pricingHandoff.decisionRules.iterate),
-    bodyParagraph("Pause rule", pricingHandoff.decisionRules.pause),
-    bodyParagraph("Owners", pricingHandoff.owners.map((item) => `${item.workstream}: ${item.owner}`).join("; ")),
-    bodyParagraph("Boundary", pricingHandoff.evidenceBoundary),
+  const marketingBrief = buildMarketingOpportunityBrief(run);
+  const marketingBriefParagraphs: Paragraph[] = scope === "all" || scope === "marketing" ? [
+    new Paragraph({ text: marketingBrief.title, heading: HeadingLevel.HEADING_1 }),
+    bodyParagraph("Prepared for", `${marketingBrief.preparedFor} · ${marketingBrief.recipientRole}`),
+    bodyParagraph("Portfolio recommendation", marketingBrief.recommendation),
+    bodyParagraph("Why these opportunities matter", marketingBrief.why),
+    ...marketingBrief.opportunityMoves.flatMap((move) => [
+      bodyParagraph(`${move.market} — ${move.decision}`, move.evidence),
+      bodyParagraph(`${move.market} — action`, move.action),
+    ]),
+    bodyParagraph("Portfolio implications", marketingBrief.portfolioImplications.join(" ")),
+    bodyParagraph("Primary outcomes", marketingBrief.primaryOutcomes.join("; ")),
+    bodyParagraph("Evidence required to scale", marketingBrief.evidenceNeededToScale.join("; ")),
+    bodyParagraph("Scale rule", marketingBrief.decisionRules.scale),
+    bodyParagraph("Protect rule", marketingBrief.decisionRules.protect),
+    bodyParagraph("Split rule", marketingBrief.decisionRules.split),
+    bodyParagraph("Stop rule", marketingBrief.decisionRules.stop),
+    bodyParagraph("Boundary", marketingBrief.evidenceBoundary),
   ] : [];
   const children: Paragraph[] = [
     new Paragraph({
@@ -228,7 +226,7 @@ export async function buildDiscoveryDocx(run: CurrentDataDiscoveryRun, scope: Di
     }),
     bodyParagraph("Portfolio coverage", `${run.analysesRun} decision screens, ${run.marketUniverse.toLocaleString("en-US")} markets compared, and ${run.measuresExamined} measures checked`),
     bodyParagraph("Primary digest in this scope", primary.length ? primary.map((finding) => finding.headline).join("; ") : "No finding from this team appeared in the five-item primary digest; the complete team review follows."),
-    ...pricingHandoffParagraphs,
+    ...marketingBriefParagraphs,
     new Paragraph({ text: "Complete opportunity review", heading: HeadingLevel.HEADING_1 }),
     ...findings.flatMap((finding, index) => findingParagraphs(finding, index + 1)),
     new Paragraph({ text: "Shared limitations", heading: HeadingLevel.HEADING_1 }),
