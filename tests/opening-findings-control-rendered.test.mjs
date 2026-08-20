@@ -18,7 +18,8 @@ test("findings can be filtered by stakeholder team and moved into the question c
   assert.match(findings, /\["all", "marketing", "pricing", "cvc"\]/);
   assert.match(findings, /finding\.department === team/);
   assert.match(findings, /Ask about this finding/);
-  assert.match(evaluation, /onInvestigate=\{onQuestionChange\}/);
+  assert.match(findings, /onInvestigate\(finding\)/);
+  assert.match(evaluation, /onInvestigate=\{onInvestigateFinding\}/);
 });
 
 test("help, findings, and saved work share one compact toolbar", () => {

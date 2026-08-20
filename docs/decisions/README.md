@@ -53,3 +53,4 @@ Current records:
 - [ADR-034: Keep clinic-location interpretation aligned with the executable query contract](ADR-034-query-aware-clinic-location-interpretation.md)
 - [ADR-035: Define the final-answer contract before investigation](ADR-035-pre-investigation-answer-contract.md)
 - [ADR-036: Enforce answer-contract coverage before composition](ADR-036-contract-coverage-and-answer-composition.md)
+- [ADR-037: Preserve finding intent through location-scoped investigation](ADR-037-location-scoped-finding-investigation.md)

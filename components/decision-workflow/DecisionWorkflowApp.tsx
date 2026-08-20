@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
 import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
 import { AnswerEvidenceTrail } from "@/components/decision-workflow/AnswerEvidenceTrail";
@@ -16,6 +16,13 @@ import { SisterGeographiesSection } from "@/components/decision-workflow/SisterG
 import { ValidationWorkplanPanel } from "@/components/decision-workflow/ValidationWorkplanPanel";
 import { EvidenceBundlePanel } from "@/components/evidence/EvidenceBundlePanel";
 import { AutonomousDiscoveryWorkspace } from "@/components/insight-discovery/AutonomousDiscoveryWorkspace";
+import {
+  buildDiscoveryInvestigationIntent,
+  discoveryInvestigationIntentFromSearchParams,
+  discoveryInvestigationIntentSearchParams,
+  type DiscoveryInvestigationIntent,
+} from "@/lib/insight-discovery/investigation-intent";
+import type { AutonomousInsight } from "@/lib/insight-discovery/current-data-discovery";
 import { evidenceExecutionResponseSchema, type EvidenceExecutionResponse } from "@/lib/evidence-snapshot/contracts";
 import type { CompactSourceReadiness } from "@/lib/data-discovery/readiness-service";
 import { publicMarkets } from "@/lib/data/public-market-ui";
@@ -78,6 +85,24 @@ import {
 } from "@/lib/phoenix-retrieval/contracts";
 
 type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error" | "discovery";
+
+const DISCOVERY_INTENT_QUERY_KEYS = ["finding", "perspective", "view", "cbsa"] as const;
+
+function writeDiscoveryIntentUrl(intent: DiscoveryInvestigationIntent, mode: "push" | "replace" = "push") {
+  const url = new URL(window.location.href);
+  DISCOVERY_INTENT_QUERY_KEYS.forEach((key) => url.searchParams.delete(key));
+  const params = discoveryInvestigationIntentSearchParams(intent);
+  params.forEach((value, key) => url.searchParams.append(key, value));
+  window.history[mode === "push" ? "pushState" : "replaceState"](null, "", url);
+}
+
+function clearDiscoveryIntentUrl() {
+  const url = new URL(window.location.href);
+  const hadIntent = DISCOVERY_INTENT_QUERY_KEYS.some((key) => url.searchParams.has(key));
+  if (!hadIntent) return;
+  DISCOVERY_INTENT_QUERY_KEYS.forEach((key) => url.searchParams.delete(key));
+  window.history.replaceState(null, "", url);
+}
 
 type SavedPacket = {
   schemaVersion?: "saved-action-packet-v2";
@@ -172,6 +197,10 @@ function questionMapMetric(plan: EvaluationPlan): CbsaAcsMetricKey {
 }
 
 function defaultLeadForQuestion(plan: EvaluationPlan, investigation: MarketInvestigation) {
+  const requestedCodes = new Set(plan.geographyResolution.selectedCbsaCodes);
+  const eligibleLeads = requestedCodes.size
+    ? investigation.leads.filter((lead) => lead.marketIds.some((marketId) => requestedCodes.has(marketId)))
+    : investigation.leads;
   const patternByMeasure: Partial<Record<EvaluationPlan["intent"]["requestedMeasure"], RegExp>> = {
     total_population: /\bpopulation\b/i,
     household_count: /\bhouseholds?\b/i,
@@ -180,9 +209,9 @@ function defaultLeadForQuestion(plan: EvaluationPlan, investigation: MarketInves
     population_density: /\bdens(?:ity|e)\b/i,
   };
   const pattern = patternByMeasure[plan.intent.requestedMeasure];
-  if (!pattern) return investigation.leads[0] ?? null;
-  return investigation.leads.find((lead) => pattern.test(`${lead.title} ${lead.observation} ${lead.businessMeaning}`))
-    ?? investigation.leads[0]
+  if (!pattern) return eligibleLeads[0] ?? null;
+  return eligibleLeads.find((lead) => pattern.test(`${lead.title} ${lead.observation} ${lead.businessMeaning}`))
+    ?? eligibleLeads[0]
     ?? null;
 }
 
@@ -215,6 +244,7 @@ export function DecisionWorkflowApp() {
   const [recommendationDrafts, setRecommendationDrafts] = useState<RecommendationDraft[]>([]);
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [sourceReadiness, setSourceReadiness] = useState<CompactSourceReadiness | null>(null);
+  const [discoveryInvestigationIntent, setDiscoveryInvestigationIntent] = useState<DiscoveryInvestigationIntent | null>(null);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
   const showsActionPackage = plan ? presentsActionPackage(plan) : false;
@@ -222,6 +252,69 @@ export function DecisionWorkflowApp() {
     () => (plan ? effectivePlanForSourceAdaptation(plan, evidenceExecution?.sourceAdaptation) : null),
     [evidenceExecution?.sourceAdaptation, plan],
   );
+
+  const applyDiscoveryInvestigationIntent = useCallback((intent: DiscoveryInvestigationIntent) => {
+    setDiscoveryInvestigationIntent(intent);
+    setQuestion(intent.question);
+    setSelectedGeographicContexts(intent.selectedGeographicContexts);
+    setGeographicContextNotice(null);
+    setSisterFollowUpNotice(null);
+    setActiveView("workflow");
+    setPhase("question");
+  }, []);
+
+  useEffect(() => {
+    function syncDiscoveryIntentFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const hasIntentMarker = DISCOVERY_INTENT_QUERY_KEYS.some((key) => params.has(key));
+      const intent = discoveryInvestigationIntentFromSearchParams(params);
+      if (intent) {
+        applyDiscoveryInvestigationIntent(intent);
+        return;
+      }
+      setDiscoveryInvestigationIntent(null);
+      if (hasIntentMarker) {
+        setQuestion("");
+        setSelectedGeographicContexts([]);
+        setGeographicContextNotice("This finding link is invalid or references an unsupported geography. Open the finding again from the current evidence inbox.");
+        return;
+      }
+      setQuestion("");
+      setSelectedGeographicContexts([]);
+      setGeographicContextNotice(null);
+      setSisterFollowUpNotice(null);
+      setActiveView("workflow");
+      setPhase("question");
+    }
+    syncDiscoveryIntentFromUrl();
+    window.addEventListener("popstate", syncDiscoveryIntentFromUrl);
+    return () => window.removeEventListener("popstate", syncDiscoveryIntentFromUrl);
+  }, [applyDiscoveryInvestigationIntent]);
+
+  function openDiscoveryInvestigation(finding: AutonomousInsight) {
+    try {
+      const intent = buildDiscoveryInvestigationIntent({
+        insightId: finding.insightId,
+        department: finding.department,
+        viewId: finding.viewId,
+        marketIds: finding.marketIds,
+      });
+      writeDiscoveryIntentUrl(intent);
+      applyDiscoveryInvestigationIntent(intent);
+    } catch {
+      setDiscoveryInvestigationIntent(null);
+      setQuestion("");
+      setSelectedGeographicContexts([]);
+      setGeographicContextNotice("This finding could not be opened because its perspective, view, or geography is not supported by the current workspace.");
+      setActiveView("workflow");
+      setPhase("question");
+    }
+  }
+
+  function detachDiscoveryInvestigationIntent() {
+    setDiscoveryInvestigationIntent(null);
+    clearDiscoveryIntentUrl();
+  }
 
   const selectedAction = useMemo(
     () => actionOptions.find((action) => action.id === selectedActionId) ?? (plan ? proposedActionFromPlan(plan) : undefined),
@@ -607,7 +700,9 @@ export function DecisionWorkflowApp() {
   }
 
   function restart() {
+    detachDiscoveryInvestigationIntent();
     setQuestion("");
+    setSelectedGeographicContexts([]);
     setPlan(null);
     setClinicWorkflow(null);
     setActiveStep(-1);
@@ -668,6 +763,7 @@ export function DecisionWorkflowApp() {
   }
 
   function openSavedPacket(packet: SavedPacket) {
+    detachDiscoveryInvestigationIntent();
     const restoredGeographicContexts = packet.selectedGeographicContexts ?? [];
     const savedPlan = packet.plan ? evaluationPlanSchema.safeParse(packet.plan) : null;
     const restoredPlan = savedPlan?.success ? savedPlan.data : planEvaluation(packet.question, packet.perspectiveId, restoredGeographicContexts);
@@ -756,6 +852,7 @@ export function DecisionWorkflowApp() {
     const retained = currentPhase === "saved"
       || savedPackets.some((packet) => packet.question === currentQuestion);
     // Leave saved packets untouched. Do not auto-save or overwrite the current packet.
+    detachDiscoveryInvestigationIntent();
     setPlan(null);
     setInvestigation(null);
     setSelectedLeadId(null);
@@ -905,7 +1002,7 @@ export function DecisionWorkflowApp() {
 
         {activeView === "saved" ? (
           <section className="decision-content">
-            <SavedPacketsView packets={savedPackets} onOpen={openSavedPacket} onStart={() => { setActiveView("workflow"); setPhase("question"); setQuestion(""); setSelectedGeographicContexts([]); setGeographicContextNotice(null); setSisterFollowUpNotice(null); }} />
+            <SavedPacketsView packets={savedPackets} onOpen={openSavedPacket} onStart={() => { detachDiscoveryInvestigationIntent(); setActiveView("workflow"); setPhase("question"); setQuestion(""); setSelectedGeographicContexts([]); setGeographicContextNotice(null); setSisterFollowUpNotice(null); }} />
           </section>
         ) : null}
 
@@ -925,16 +1022,24 @@ export function DecisionWorkflowApp() {
                 title: packet.title,
                 savedAt: packet.savedAt,
                 perspectiveId: packet.perspectiveId,
-                viewId: packet.plan?.evidenceSelection.viewId,
+                viewId: packet.plan?.evidenceSelection?.viewId,
                 selectedGeographicContexts: packet.selectedGeographicContexts,
               }))}
               onQuestionChange={(value) => {
+                if (discoveryInvestigationIntent && value !== discoveryInvestigationIntent.question) {
+                  detachDiscoveryInvestigationIntent();
+                }
                 setQuestion(value);
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
               }}
-              onSubmit={(nextPerspectiveId, activeViewId) => void startWorkflow(question, nextPerspectiveId, activeViewId)}
+              onSubmit={(nextPerspectiveId, activeViewId) => void startWorkflow(
+                question,
+                discoveryInvestigationIntent?.perspectiveId ?? nextPerspectiveId,
+                discoveryInvestigationIntent?.viewId ?? activeViewId,
+              )}
               onDiscoverInsights={() => setPhase("discovery")}
               onPerspectiveChange={() => {
+                detachDiscoveryInvestigationIntent();
                 setQuestion("");
                 setSisterFollowUpNotice(null);
               }}
@@ -944,7 +1049,10 @@ export function DecisionWorkflowApp() {
                 if (packet) openSavedPacket(packet);
               }}
               selectedGeographicContexts={selectedGeographicContexts}
+              discoveryInvestigationIntent={discoveryInvestigationIntent}
+              onInvestigateFinding={openDiscoveryInvestigation}
               onGeographicContextSelect={(context) => {
+                detachDiscoveryInvestigationIntent();
                 setGeographicContextNotice(null);
                 setSelectedGeographicContexts((current) => {
                   if (current.some((item) => item.cbsaCode === context.cbsaCode)) return current;
@@ -956,6 +1064,7 @@ export function DecisionWorkflowApp() {
                 });
               }}
               onGeographicContextRemove={(cbsaCode) => {
+                detachDiscoveryInvestigationIntent();
                 setSelectedGeographicContexts((current) => current.filter((context) => context.cbsaCode !== cbsaCode));
                 setGeographicContextNotice(null);
               }}
@@ -968,7 +1077,7 @@ export function DecisionWorkflowApp() {
           <section className="decision-content">
             <AutonomousDiscoveryWorkspace
               onBack={() => setPhase("question")}
-              onInvestigate={(nextQuestion) => { setQuestion(nextQuestion); setPhase("question"); }}
+              onInvestigate={openDiscoveryInvestigation}
             />
           </section>
         ) : null}

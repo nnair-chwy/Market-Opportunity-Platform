@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
+import type { AutonomousInsight, CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
 import type { PerspectiveId } from "@/lib/perspectives";
 
 const TEAM_LABELS: Record<PerspectiveId, string> = {
@@ -15,7 +15,7 @@ export function OpeningFindingsControl({
   onInvestigate,
 }: {
   onOpenDiscovery: () => void;
-  onInvestigate: (question: string) => void;
+  onInvestigate: (finding: AutonomousInsight) => void;
 }) {
   const [run, setRun] = useState<CurrentDataDiscoveryRun | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -118,7 +118,7 @@ export function OpeningFindingsControl({
                 <button
                   type="button"
                   onClick={() => {
-                    onInvestigate(finding.question);
+                    onInvestigate(finding);
                     setOpen(false);
                   }}
                 >

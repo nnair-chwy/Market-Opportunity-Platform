@@ -5,7 +5,11 @@ import type {
 import type { EvaluationPlan } from "./contracts.ts";
 import { reconcileEvidenceCompatibility } from "./evidence-compatibility.ts";
 import { goldenMarketInvestigationFromEvidence } from "./golden-market-investigation.ts";
-import type { InvestigationLead, MarketInvestigation } from "./market-investigation.ts";
+import {
+  restrictInvestigationToRequestedGeography,
+  type InvestigationLead,
+  type MarketInvestigation,
+} from "./market-investigation.ts";
 
 function unique(values: string[]) {
   return [...new Set(values.filter((value) => value.trim()))];
@@ -83,10 +87,14 @@ export function marketInvestigationFromEvidence(
     throw new Error("The evidence execution does not belong to this evaluation plan.");
   }
   const golden = goldenMarketInvestigationFromEvidence(plan, response);
-  if (golden) return golden;
+  if (golden) return restrictInvestigationToRequestedGeography(plan, golden);
   if (["blocked", "failed"].includes(response.status) || !response.evidenceBundle.length || !response.sourceIds.length) return null;
 
-  const groups = geographyGroups(response);
+  const requestedCodes = new Set(plan.geographyResolution.selectedCbsaCodes);
+  const groups = geographyGroups(response).filter(([key]) =>
+    requestedCodes.size === 0 || requestedCodes.has(key.replace(/^cbsa:/, "")),
+  );
+  if (requestedCodes.size && !groups.length) return null;
   const leads = groups.map(([key, items], index) => leadForEvidenceGroup(plan, response, key, items, index));
   const reconciliation = reconcileEvidenceCompatibility(response.evidenceBundle, {
     operation: plan.intent.sourceFamilies.length > 1 ? "join" : "compare",
@@ -108,7 +116,7 @@ export function marketInvestigationFromEvidence(
   const hasUnmetEvidence = evidenceNeeded.length > 0 || response.status !== "complete";
   const querySteps = response.componentQueries.length ? response.componentQueries : [response.query];
 
-  return {
+  return restrictInvestigationToRequestedGeography(plan, {
     version: "1.0.0",
     planId: plan.planId,
     originalQuestion: plan.originalQuestion,
@@ -192,5 +200,5 @@ export function marketInvestigationFromEvidence(
         result: hasUnmetEvidence ? `${evidenceNeeded.length} evidence, compatibility, or approval gap(s) remain.` : "No execution-level evidence gap was reported; accountable review remains required.",
       },
     ],
-  };
+  });
 }

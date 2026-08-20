@@ -16,7 +16,7 @@ const ACTIONABILITY_LABELS = {
 function InsightCard({ finding, rankLabel, onInvestigate }: {
   finding: AutonomousInsight;
   rankLabel: string;
-  onInvestigate: (question: string) => void;
+  onInvestigate: (finding: AutonomousInsight) => void;
 }) {
   const interpretation = finding.analystInterpretation;
   return (
@@ -61,14 +61,14 @@ function InsightCard({ finding, rankLabel, onInvestigate }: {
           <div><dt>Decision boundary</dt><dd>{interpretation?.approvalBoundary ?? finding.applicability.approvalBoundary}</dd></div>
         </dl>
       </details>
-      <button className="secondary-action" type="button" onClick={() => onInvestigate(finding.question)}>Investigate this finding →</button>
+      <button className="secondary-action" type="button" onClick={() => onInvestigate(finding)}>Investigate this finding →</button>
     </article>
   );
 }
 
 export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate }: {
   onBack: () => void;
-  onInvestigate: (question: string) => void;
+  onInvestigate: (finding: AutonomousInsight) => void;
 }) {
   const [run, setRun] = useState<CurrentDataDiscoveryRun | null>(null);
   const [error, setError] = useState<string | null>(null);

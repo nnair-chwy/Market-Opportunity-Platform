@@ -19,6 +19,7 @@ import {
 } from "@/lib/perspectives";
 import type { WorkflowCategory } from "@/lib/workflow/market-workflow";
 import type { SelectedGeographicContext } from "@/lib/planning/geographic-context";
+import type { AutonomousInsight, DiscoveryInvestigationIntent } from "@/lib/insight-discovery";
 import { listStarterQuestions, type PreviousInvestigationQuestion } from "@/lib/questions";
 
 type SavedPacketPreview = PreviousInvestigationQuestion & {
@@ -40,6 +41,8 @@ type AdaptiveEvaluationWorkspaceProps = {
   onGeographicContextSelect: (context: SelectedGeographicContext) => void;
   onGeographicContextRemove: (cbsaCode: string) => void;
   geographicContextNotice?: string | null;
+  discoveryInvestigationIntent?: DiscoveryInvestigationIntent | null;
+  onInvestigateFinding: (finding: AutonomousInsight) => void;
 };
 
 export function AdaptiveEvaluationWorkspace({
@@ -55,6 +58,8 @@ export function AdaptiveEvaluationWorkspace({
   onGeographicContextSelect,
   onGeographicContextRemove,
   geographicContextNotice,
+  discoveryInvestigationIntent,
+  onInvestigateFinding,
 }: AdaptiveEvaluationWorkspaceProps) {
   const [perspectiveId, setPerspectiveId] = useState<PerspectiveId>("cvc");
   const [perspectiveExplicitlySelected, setPerspectiveExplicitlySelected] = useState(false);
@@ -91,6 +96,22 @@ export function AdaptiveEvaluationWorkspace({
   const comparisonView = comparisonViewId
     ? compatibleComparisonViews.find((view) => view.viewId === comparisonViewId) ?? null
     : null;
+
+  useEffect(() => {
+    if (!discoveryInvestigationIntent) return;
+    // The validated URL intent is an external navigation state that must hydrate the coordinated local controls together.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPerspectiveId(discoveryInvestigationIntent.perspectiveId);
+    setPerspectiveExplicitlySelected(true);
+    setActiveViews((current) => ({
+      ...current,
+      [discoveryInvestigationIntent.perspectiveId]: discoveryInvestigationIntent.viewId,
+    }));
+    setPerspectiveOpen(false);
+    setComparisonViewId(null);
+    setLayerManagerOpen(false);
+    setMapMode("single");
+  }, [discoveryInvestigationIntent]);
 
   useEffect(() => {
     if (!perspectiveOpen) return;
@@ -422,7 +443,7 @@ export function AdaptiveEvaluationWorkspace({
           <>
             <OpeningFindingsControl
               onOpenDiscovery={onDiscoverInsights}
-              onInvestigate={onQuestionChange}
+              onInvestigate={onInvestigateFinding}
             />
             {savedPackets.length > 0 ? (
               <button

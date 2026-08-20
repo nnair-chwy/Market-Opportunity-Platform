@@ -100,6 +100,17 @@ function mentionsResolvedMarket(plan: EvaluationPlan, rewrittenQuestion: string)
   return aliases.some((alias) => normalizedQuestion.includes(alias));
 }
 
+function scopeRewrittenQuestionToResolvedMarkets(plan: EvaluationPlan, rewrittenQuestion: string) {
+  if (!plan.geographyResolution.selectedCbsaCodes.length || mentionsResolvedMarket(plan, rewrittenQuestion)) {
+    return rewrittenQuestion;
+  }
+  const marketLabel = plan.geographyResolution.places
+    .filter((place) => place.status === "resolved")
+    .map((place) => place.cbsaName ?? place.requestedName)
+    .join(" and ");
+  return marketLabel ? `${rewrittenQuestion.trim()} Focus the analysis on ${marketLabel}.` : rewrittenQuestion;
+}
+
 export function validateAnalysisBriefConsistency(plan: EvaluationPlan, brief: AnalysisBrief): string[] {
   const issues: string[] = [];
   if (brief.planId !== plan.planId || brief.originalQuestion !== plan.originalQuestion) issues.push("The analysis brief does not belong to the validated plan.");
@@ -192,7 +203,7 @@ function normalizedQuestionBrief(plan: EvaluationPlan, investigation: MarketInve
   const placeLabel = placeNames.length ? placeNames.join(" and ") : "the complete eligible normalized-market cohort";
   const sourceLabels = plan.intent.sourceFamilies.map((family) => family === "google_ads" ? "Google Ads matched-location aggregates" : family === "clinic" ? "aggregate clinic activity" : family === "regional" ? "regional customer and demand aggregates" : family === "consumer_insights" ? "Brand Health Tracker consumer-insights aggregates" : "public Census context");
 
-  const rewrittenQuestion = plan.intent.topic === "clinic_context"
+  const baseRewrittenQuestion = plan.intent.topic === "clinic_context"
     ? `Report ${metricLabels.join(", ")} for ${placeLabel}, with source, period, quality, and missingness visible.`
     : plan.intent.topic === "regional_context"
       ? `Report ${metricLabels.join(", ")} for ${placeLabel}, keeping the market-context as-of date separate from calendar-year regional sales.`
@@ -207,6 +218,7 @@ function normalizedQuestionBrief(plan: EvaluationPlan, investigation: MarketInve
               : screening
                 ? "Rank complete-evidence regional growth-test candidates with the fixed registered hypothesis score, show every contribution and exclusion, and stop before test or spend approval."
                 : plan.intent.conciseInterpretation;
+  const rewrittenQuestion = scopeRewrittenQuestionToResolvedMarkets(plan, baseRewrittenQuestion);
 
   const timeframe = plan.intent.topic === "clinic_context" || plan.intent.topic === "multi_market_comparison"
     ? "Clinic activity timeframe: Pre-PH in the supplied aggregate snapshot"
@@ -335,7 +347,10 @@ export function buildAnalysisBrief(plan: EvaluationPlan, investigation: MarketIn
     planId: plan.planId,
     status: "proposed",
     originalQuestion: plan.originalQuestion,
-    rewrittenQuestion: plan.perspectiveId === "cvc" ? cvcExplorationQuestion(plan) : plan.intent.conciseInterpretation,
+    rewrittenQuestion: scopeRewrittenQuestionToResolvedMarkets(
+      plan,
+      plan.perspectiveId === "cvc" ? cvcExplorationQuestion(plan) : plan.intent.conciseInterpretation,
+    ),
     perspectiveId: plan.perspectiveId,
     geography: plan.geographyResolution.mode === "national" ? "U.S. metropolitan CBSAs" : plan.geographyResolution.message,
     timeframe: investigation.period,

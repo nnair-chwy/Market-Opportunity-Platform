@@ -7,6 +7,7 @@ import { getReceivingTeam, routeAutonomousGeoFinding, type FindingTeamRoute } fr
 import { assessGovernedSnowflakeEscalationFromLocalEvidence, type GovernedSnowflakeEscalationAssessment } from "../snowflake-escalation/index.ts";
 import { interpretAutonomousFinding, type AutonomousAnalystInterpretation } from "./analyst-interpretation.ts";
 import { selectDiscoveryFindings, type DiscoveryFindingSelectionCounts } from "./finding-selection.ts";
+import { buildDiscoveryInvestigationQuestion } from "./investigation-intent.ts";
 import { encodeInsightDiscoveryCursor } from "./rerun-contract.ts";
 
 export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v2" as const;
@@ -43,6 +44,7 @@ type LeadOccurrence = {
 export type AutonomousInsight = {
   insightId: string;
   department: PerspectiveId;
+  viewId: PerspectiveViewId;
   marketIds: string[];
   marketName: string;
   headline: string;
@@ -223,17 +225,20 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
   const validations = unique(group.map((item) => item.lead.nextEvidence));
   const hypotheses = unique(group.map((item) => item.hypothesis));
   const name = marketName(first.lead);
+  const marketIds = unique(group.flatMap((item) => item.lead.marketIds));
   const signalCount = hypotheses.length;
   const cvcCapacitySignal = first.hypothesis.department === "cvc" && first.lead.id === "cvc-footprint-intensity-proxy";
+  const viewId = first.hypothesis.viewId;
   const route = routeAutonomousGeoFinding({
     perspectiveId: first.hypothesis.department,
-    viewId: cvcCapacitySignal ? "clinic_performance_context" : first.hypothesis.viewId,
+    viewId: cvcCapacitySignal ? "clinic_performance_context" : viewId,
     topic: cvcCapacitySignal ? "clinic_performance" : first.topic,
   });
   const finding: AutonomousInsight = {
     insightId: `insight:${key.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`,
     department: first.hypothesis.department,
-    marketIds: unique(group.flatMap((item) => item.lead.marketIds)),
+    viewId,
+    marketIds,
     marketName: name,
     headline: signalCount > 1
       ? `${name} appears in ${signalCount} registered ${first.hypothesis.department.toUpperCase()} regional screens`
@@ -248,7 +253,11 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
     hypothesisIds: hypotheses.map((item) => item.id),
     signalCount,
     priority: signalCount > 1 ? "multi-signal lead" : "single-signal lead",
-    question: hypotheses.map((item) => item.question).join(" "),
+    question: buildDiscoveryInvestigationQuestion({
+      perspectiveId: first.hypothesis.department,
+      viewId,
+      marketNames: marketIds.map((cbsaCode) => publicMarkets.find((market) => market.cbsa_code === cbsaCode)?.cbsa_name ?? cbsaCode),
+    }),
     applicability: {
       primaryTeamId: route.primaryTeam.teamId,
       primaryTeamLabel: getReceivingTeam(route.primaryTeam.teamId).label,
