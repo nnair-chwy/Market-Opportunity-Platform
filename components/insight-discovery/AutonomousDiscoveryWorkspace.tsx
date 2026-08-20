@@ -133,7 +133,7 @@ function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false
 
 export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFindingId = null, initialRun = null }: {
   onBack: () => void;
-  onInvestigate: (question: string) => void;
+  onInvestigate: (finding: AutonomousInsight, question?: string) => void;
   initialFindingId?: string | null;
   initialRun?: CurrentDataDiscoveryRun | null;
 }) {
@@ -322,8 +322,8 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
 
   function continueInvestigation() {
     const nextQuestion = followUpQuestion.trim();
-    if (!nextQuestion) return;
-    onInvestigate(nextQuestion);
+    if (!nextQuestion || !followUpFinding) return;
+    onInvestigate(followUpFinding, nextQuestion);
   }
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import type { PerspectiveId } from "../perspectives/contracts.ts";
+import { publicMarkets } from "../data/public-market-ui.ts";
 import type { AutonomousInsight } from "./current-data-discovery.ts";
 import {
   runIterativeCrossSourceDiscovery,
@@ -36,6 +37,7 @@ export function buildOpportunityRunFromFindings(input: {
   for (const finding of input.findings) {
     const definition = DEFINITION[finding.department];
     const regionId = finding.marketIds[0] ?? finding.insightId;
+    const regionName = publicMarkets.find((market) => market.cbsa_code === regionId)?.cbsa_name ?? finding.marketName;
     finding.sourceIds.forEach((sourceId, index) => {
       const qualityRisk = finding.decisionValue.flags.includes("coverage_risk");
       const role = sourceRole(finding, sourceId);
@@ -43,7 +45,7 @@ export function buildOpportunityRunFromFindings(input: {
         evidenceId: `${finding.insightId}:source:${index}`,
         hypothesisId: definition.hypothesisId,
         regionId,
-        regionName: finding.marketName,
+        regionName,
         sourceId,
         sourceFamily: family(sourceId),
         metricId: finding.hypothesisIds[index] ?? finding.hypothesisIds[0] ?? "regional_signal",
@@ -69,7 +71,7 @@ export function buildOpportunityRunFromFindings(input: {
         evidenceId: `${finding.insightId}:cross-measure-pattern`,
         hypothesisId: definition.hypothesisId,
         regionId,
-        regionName: finding.marketName,
+        regionName,
         sourceId: deliverySourceId,
         sourceFamily: family(deliverySourceId),
         metricId: "within_source_cross_measure_pattern",
@@ -91,7 +93,7 @@ export function buildOpportunityRunFromFindings(input: {
         evidenceId: `${finding.insightId}:derived-footprint-load`,
         hypothesisId: definition.hypothesisId,
         regionId,
-        regionName: finding.marketName,
+        regionName,
         sourceId: footprintSourceId,
         sourceFamily: family(footprintSourceId),
         metricId: "derived_households_per_published_clinic",
@@ -112,7 +114,7 @@ export function buildOpportunityRunFromFindings(input: {
         evidenceId: `${finding.insightId}:business-outcome`,
         hypothesisId: definition.hypothesisId,
         regionId,
-        regionName: finding.marketName,
+        regionName,
         sourceId: finding.businessValue.sourceIds[0] ?? finding.sourceIds[0] ?? "connected-outcome",
         sourceFamily: family(finding.businessValue.sourceIds[0] ?? finding.sourceIds[0] ?? "connected-outcome"),
         metricId: "connected_business_outcome",

@@ -1010,21 +1010,57 @@ function contextOnlyInvestigation(plan: EvaluationPlan, rows: MarketRow[]): Mark
   };
 }
 
+export function restrictInvestigationToRequestedGeography(
+  plan: EvaluationPlan,
+  investigation: MarketInvestigation,
+): MarketInvestigation {
+  const requestedCodes = new Set(plan.geographyResolution.selectedCbsaCodes);
+  if (!requestedCodes.size) return investigation;
+  const leads = investigation.leads.filter((lead) =>
+    lead.marketIds.some((marketId) => requestedCodes.has(marketId)),
+  );
+  if (leads.length === investigation.leads.length) return investigation;
+  const requestedMarketNames = plan.geographyResolution.selectedCbsaCodes
+    .map((code) => publicMarkets.find((market) => market.cbsa_code === code)?.cbsa_name ?? code)
+    .join(", ");
+  return {
+    ...investigation,
+    readiness: leads.length
+      ? investigation.readiness
+      : {
+          label: "Context only",
+          summary: `No compatible investigation lead was returned for ${requestedMarketNames}. The workspace did not substitute a national or unrelated market result.`,
+          missing: [...new Set([
+            `Question-compatible evidence for ${requestedMarketNames}`,
+            ...investigation.readiness.missing,
+          ])],
+        },
+    screeningScope: {
+      ...investigation.screeningScope,
+      eligibleComparisons: leads.length,
+      selectionRule: leads.length
+        ? "Return only investigation leads that include at least one explicitly selected CBSA."
+        : "Return an explicit evidence gap when the selected CBSA has no compatible lead; never substitute another market.",
+    },
+    leads,
+  };
+}
+
 export function runMarketInvestigation(plan: EvaluationPlan): MarketInvestigation {
   const rows = marketRows();
+  let investigation: MarketInvestigation;
   if (plan.evidenceSelection.datasetId === "marketing_paid_search_cpc") {
-    return marketingEfficiencyInvestigation(plan, rows);
+    investigation = marketingEfficiencyInvestigation(plan, rows);
+  } else if (plan.evidenceSelection.datasetId) {
+    investigation = workspaceSnapshotInvestigation(plan, rows);
+  } else if (plan.perspectiveId === "cvc") {
+    investigation = cvcInvestigation(plan, rows);
+  } else if (plan.perspectiveId === "marketing") {
+    investigation = marketingInvestigation(plan, rows);
+  } else {
+    investigation = contextOnlyInvestigation(plan, rows);
   }
-  if (plan.evidenceSelection.datasetId) {
-    return workspaceSnapshotInvestigation(plan, rows);
-  }
-  if (plan.perspectiveId === "cvc") {
-    return cvcInvestigation(plan, rows);
-  }
-  if (plan.perspectiveId === "marketing") {
-    return marketingInvestigation(plan, rows);
-  }
-  return contextOnlyInvestigation(plan, rows);
+  return restrictInvestigationToRequestedGeography(plan, investigation);
 }
 
 export function runConfirmedMarketInvestigation(plan: EvaluationPlan, brief: AnalysisBrief): MarketInvestigation {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { publicMarkets } from "../lib/data/public-market-ui.ts";
 import {
   CURRENT_DATA_HYPOTHESES,
   decodeInsightDiscoveryCursor,
@@ -54,6 +55,11 @@ test("repeated market appearances become higher-priority multi-signal leads with
   assert.ok(marketing.some((finding) => finding.signalCount >= 2 && finding.priority === "multi-signal lead"));
   assert.ok(marketing.every((finding) => finding.sourceIds.length && finding.snapshotVersions.length));
   assert.ok(run.findings.every((finding) => finding.nextValidation && finding.evidenceDetail));
+  assert.ok(run.findings.every((finding) => finding.viewId && finding.marketIds.length));
+  assert.ok(run.findings.every((finding) => finding.marketIds.every((marketId) => {
+    const marketName = publicMarkets.find((market) => market.cbsa_code === marketId)?.cbsa_name ?? marketId;
+    return finding.question.includes(marketName);
+  })));
   assert.ok(run.findings.every((finding) => finding.applicability.primaryTeamLabel && finding.applicability.approvalBoundary));
   assert.ok(run.findings.every((finding) => finding.analystInterpretation?.actionabilityLevel === "investigation_ready"));
   assert.ok(run.findings.every((finding) => finding.analystInterpretation?.exactMissingEvidence.length));

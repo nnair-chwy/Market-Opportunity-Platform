@@ -10,3 +10,4 @@ export * from "./decision-case.ts";
 export * from "./marketing-opportunity-brief.ts";
 export * from "./hypothesis-backlog.ts";
 export * from "./adaptive-decision-insights.ts";
+export * from "./investigation-intent.ts";

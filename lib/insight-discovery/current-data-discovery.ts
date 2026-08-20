@@ -7,6 +7,7 @@ import { getReceivingTeam, routeAutonomousGeoFinding, type FindingTeamRoute } fr
 import { assessGovernedSnowflakeEscalationFromLocalEvidence, type GovernedSnowflakeEscalationAssessment } from "../snowflake-escalation/index.ts";
 import { interpretAutonomousFinding, type AutonomousAnalystInterpretation } from "./analyst-interpretation.ts";
 import { selectDiscoveryFindings, type DiscoveryFindingSelectionCounts } from "./finding-selection.ts";
+import { buildDiscoveryInvestigationQuestion } from "./investigation-intent.ts";
 import { encodeInsightDiscoveryCursor } from "./rerun-contract.ts";
 import { getApprovedWorkspaceSnapshotDataset } from "../perspectives/approved-workspace-snapshot.ts";
 import type { WorkspaceSnapshotDatasetId } from "../perspectives/workspace-snapshot.ts";
@@ -19,6 +20,13 @@ import { getAdaptiveDiscoveryAudit, type AdaptiveDecisionFinding } from "./adapt
 
 export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v3" as const;
 const TABLEAU_CVC_OUTCOME_ANALYSES = ["cvc-completed-appointments-per-spend", "cvc-net-sales-per-spend", "cvc-new-to-chewy-appointment-mix"] as const;
+const TABLEAU_CVC_CBSA_BY_METRO: Record<string, string> = {
+  Austin: "12420",
+  "Fort Lauderdale": "33100",
+  Atlanta: "12060",
+  Denver: "19740",
+  Houston: "26420",
+};
 
 export type DiscoveryHypothesis = {
   id: string;
@@ -52,6 +60,7 @@ type LeadOccurrence = {
 export type AutonomousInsight = {
   insightId: string;
   department: PerspectiveId;
+  viewId: PerspectiveViewId;
   marketIds: string[];
   marketName: string;
   headline: string;
@@ -417,11 +426,13 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
   const validations = unique(group.map((item) => item.lead.nextEvidence));
   const hypotheses = unique(group.map((item) => item.hypothesis));
   const name = marketName(first.lead);
+  const marketIds = unique(group.flatMap((item) => item.lead.marketIds));
   const signalCount = hypotheses.length;
   const cvcCapacitySignal = first.hypothesis.department === "cvc" && first.lead.id === "cvc-footprint-intensity-proxy";
+  const viewId = first.hypothesis.viewId;
   const route = routeAutonomousGeoFinding({
     perspectiveId: first.hypothesis.department,
-    viewId: cvcCapacitySignal ? "clinic_performance_context" : first.hypothesis.viewId,
+    viewId: cvcCapacitySignal ? "clinic_performance_context" : viewId,
     topic: cvcCapacitySignal ? "clinic_performance" : first.topic,
   });
   const decisionValue = decisionValueForGroup(group);
@@ -431,7 +442,8 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
   const finding: AutonomousInsight = {
     insightId: `insight:${key.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`,
     department: first.hypothesis.department,
-    marketIds: unique(group.flatMap((item) => item.lead.marketIds)),
+    viewId,
+    marketIds,
     marketName: name,
     headline: synthesizedHeadline(name, first.hypothesis.department, decisionValue, metrics, first.lead.title),
     whyInteresting: signalCount > 1
@@ -444,7 +456,11 @@ function insightFromGroup(key: string, group: LeadOccurrence[]): AutonomousInsig
     hypothesisIds: hypotheses.map((item) => item.id),
     signalCount,
     priority: signalCount > 1 ? "multi-signal lead" : "single-signal lead",
-    question: hypotheses.map((item) => item.question).join(" "),
+    question: buildDiscoveryInvestigationQuestion({
+      perspectiveId: first.hypothesis.department,
+      viewId,
+      marketNames: marketIds.map((cbsaCode) => publicMarkets.find((market) => market.cbsa_code === cbsaCode)?.cbsa_name ?? cbsaCode),
+    }),
     applicability: {
       primaryTeamId: route.primaryTeam.teamId,
       primaryTeamLabel: getReceivingTeam(route.primaryTeam.teamId).label,
@@ -487,14 +503,18 @@ function tableauCvcOutcomeFindings(): AutonomousInsight[] {
   const medianCompletedPerThousand = median(summaries.map((item) => item.completedAppointmentsPerThousandSpend));
   const medianSalesPerThousand = median(summaries.map((item) => item.netSalesPerThousandSpend));
   return summaries.map((summary) => {
-    const marketId = `tableau-metro:${summary.metro.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    const marketId = TABLEAU_CVC_CBSA_BY_METRO[summary.metro];
+    if (!marketId) throw new Error(`No approved CBSA crosswalk is registered for Tableau CVC metro ${summary.metro}.`);
+    const canonicalMarketName = publicMarkets.find((market) => market.cbsa_code === marketId)?.cbsa_name;
+    if (!canonicalMarketName) throw new Error(`The approved CBSA ${marketId} is not present in the public market registry.`);
     const route = routeAutonomousGeoFinding({ perspectiveId: "cvc", viewId: "clinic_performance_context", topic: "clinic_performance" });
     const completedRatio = medianCompletedPerThousand > 0 ? summary.completedAppointmentsPerThousandSpend / medianCompletedPerThousand : 0;
     const salesRatio = medianSalesPerThousand > 0 ? summary.netSalesPerThousandSpend / medianSalesPerThousand : 0;
     const evidenceDetail = `${summary.metro} recorded ${summary.completedAppointments.toLocaleString("en-US")} completed appointments, ${summary.newToChewyAppointments.toLocaleString("en-US")} new-to-Chewy appointments, ${summary.netSales.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} net sales, and ${summary.spend.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} tracked media spend from ${summary.periodStart} through ${summary.periodEnd}. That equals ${summary.completedAppointmentsPerThousandSpend.toFixed(2)} completed appointments and ${summary.netSalesPerThousandSpend.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} net sales per $1,000 of observed spend.`;
     const finding: AutonomousInsight = {
-      insightId: `insight:cvc-tableau-outcomes-${marketId.split(":")[1]}`,
+      insightId: `insight:cvc-tableau-outcomes-${summary.metro.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
       department: "cvc",
+      viewId: "clinic_performance_context",
       marketIds: [marketId],
       marketName: summary.metro,
       headline: `Validate ${summary.metro}'s observed clinic-acquisition economics before changing CVC media or capacity`,
@@ -506,7 +526,7 @@ function tableauCvcOutcomeFindings(): AutonomousInsight[] {
       hypothesisIds: [...TABLEAU_CVC_OUTCOME_ANALYSES],
       signalCount: TABLEAU_CVC_OUTCOME_ANALYSES.length,
       priority: "multi-signal lead",
-      question: `Which CVC metros combine observed media efficiency, completed appointments, new-to-Chewy appointment mix, and net sales strongly enough to justify current-period validation?`,
+      question: `Do ${canonicalMarketName}'s observed media efficiency, completed appointments, new-to-Chewy appointment mix, and net sales support a specific CVC media or capacity decision?`,
       applicability: {
         primaryTeamId: route.primaryTeam.teamId,
         primaryTeamLabel: getReceivingTeam(route.primaryTeam.teamId).label,

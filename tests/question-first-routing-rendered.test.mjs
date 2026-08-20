@@ -18,6 +18,7 @@ const sister = fs.readFileSync(new URL("../components/decision-workflow/SisterGe
 const sisterLib = fs.readFileSync(new URL("../lib/planning/sister-geographies.ts", import.meta.url), "utf8");
 const discoveryWorkspace = fs.readFileSync(new URL("../components/insight-discovery/AutonomousDiscoveryWorkspace.tsx", import.meta.url), "utf8");
 const openingFindings = fs.readFileSync(new URL("../components/insight-discovery/OpeningFindingsControl.tsx", import.meta.url), "utf8");
+const investigationIntent = fs.readFileSync(new URL("../lib/insight-discovery/investigation-intent.ts", import.meta.url), "utf8");
 
 test("question results do not hard-code Seattle or fixed findings", () => {
   assert.doesNotMatch(market, /useState\("42660"\)/);
@@ -83,6 +84,13 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
   assert.match(discoveryWorkspace, /no data refresh is claimed/i);
   assert.match(discoveryWorkspace, /generated hypotheses ·.*evidence-backed/i);
+  assert.match(discoveryWorkspace, /onInvestigate\(followUpFinding, nextQuestion\)/);
+  assert.match(workflow, /buildDiscoveryInvestigationIntent/);
+  assert.match(workflow, /discoveryInvestigationIntentFromSearchParams/);
+  assert.match(workflow, /setSelectedGeographicContexts\(intent\.selectedGeographicContexts\)/);
+  assert.match(investigationIntent, /selectedCbsaCodes/);
+  assert.match(investigationIntent, /perspectiveId/);
+  assert.match(investigationIntent, /viewId/);
 });
 
 test("request state is transparent before a plan is treated as final", () => {
