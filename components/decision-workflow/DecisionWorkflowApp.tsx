@@ -1147,7 +1147,13 @@ export function DecisionWorkflowApp() {
                     <div className="answer-ai-synthesis" data-origin={packetSummary.origin}>
                       <strong>{packetSummary.origin === "ai" ? "AI synthesis" : "Evidence-grounded synthesis"}</strong>
                       <p>{packetSummary.summary}</p>
-                      <small>{packetSummary.origin === "ai" ? `${packetSummary.modelVersion ?? "configured model"} · grounded to the validated packet` : `AI ${packetSummary.state.replaceAll("_", " ")} · deterministic fallback shown`}</small>
+                      <small>{packetSummary.origin === "ai"
+                        ? `${packetSummary.modelVersion ?? "configured model"} · grounded to the validated packet`
+                        : packetSummary.state === "validation_rejected"
+                          ? "AI draft did not pass evidence checks · verified synthesis shown"
+                          : packetSummary.state === "not_configured"
+                            ? "AI synthesis is not configured here · verified synthesis shown"
+                            : "AI synthesis was unavailable · verified synthesis shown"}</small>
                     </div>
                   ) : null}
                 </section>

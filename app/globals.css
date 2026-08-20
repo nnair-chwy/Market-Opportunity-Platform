@@ -100,6 +100,7 @@
 .discovery-page-nav, .discovery-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .discovery-hero { display: grid; gap: 12px; }
 .discovery-page-nav { align-items: center; justify-content: space-between; }
+.discovery-back { align-self: flex-start; width: auto; text-align: left; }
 .discovery-page-nav > span { color: #6d7c91; font-size: .74rem; }
 .discovery-run-history { padding: 10px 12px; border: 1px solid #d7e1ed; border-radius: 11px; background: #f8faff; }
 .discovery-run-history > summary { color: #315d94; cursor: pointer; font-size: .74rem; font-weight: 800; }
@@ -945,7 +946,7 @@
 }
 .decision-layout.discovery-rail-collapsed { grid-template-columns: minmax(0, 1fr); }
 .discovery-rail-collapsed > .decision-rail { display: none; }
-.discovery-rail-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin: -16px 0 26px; }
+.discovery-rail-actions { position: sticky; z-index: 20; top: 16px; display: flex; align-items: center; justify-content: flex-start; width: max-content; gap: 12px; margin: -16px 0 26px; }
 .discovery-rail-actions .text-action { padding: 0; font-size: 12px; white-space: nowrap; }
 .discovery-rail-close { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid #cdd9e8; border-radius: 50%; background: #fff; color: #526984; cursor: pointer; font: inherit; font-size: 18px; line-height: 1; }
 .discovery-rail-open { position: fixed; z-index: 30; top: 18px; left: 18px; display: flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid #b8c9df; border-radius: 999px; background: rgba(255,255,255,.94); box-shadow: 0 7px 22px rgba(28,54,90,.12); color: #315d91; cursor: pointer; font: inherit; font-size: .72rem; font-weight: 800; }
