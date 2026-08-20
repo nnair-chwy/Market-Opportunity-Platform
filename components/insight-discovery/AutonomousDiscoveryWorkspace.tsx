@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AutonomousInsight, CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
 import { buildFindingDecisionCase } from "@/lib/insight-discovery/decision-case";
 import { findingPresentation } from "@/lib/insight-discovery/finding-presentation";
+import { buildPricingGeoTestHandoff } from "@/lib/insight-discovery/pricing-geo-test-handoff";
+import { buildCrossSourceHypothesisBacklog } from "@/lib/insight-discovery/hypothesis-backlog";
 import type { PerspectiveId } from "@/lib/perspectives";
 
 const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing: "Pricing", cvc: "CVC" };
@@ -280,6 +282,8 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     pricing: run?.traces.filter((trace) => trace.department === "pricing").length ?? 0,
     cvc: run?.traces.filter((trace) => trace.department === "cvc").length ?? 0,
   }), [run]);
+  const pricingGeoTestHandoff = useMemo(() => buildPricingGeoTestHandoff(run ?? undefined), [run]);
+  const emergingHypotheses = useMemo(() => run ? buildCrossSourceHypothesisBacklog(run) : [], [run]);
 
   function openInAskAi(finding: AutonomousInsight) {
     setFollowUpFinding(finding);
@@ -402,6 +406,30 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         <div><dt>Qualified leads</dt><dd>{run.findings.length}</dd><small>Evidence-backed leads, not approved actions</small></div>
       </dl>
 
+      {emergingHypotheses.length ? (
+        <section className="discovery-hypothesis-backlog" aria-labelledby="discovery-hypothesis-backlog-title">
+          <header>
+            <div>
+              <div className="section-label">Emerging cross-source questions</div>
+              <h2 id="discovery-hypothesis-backlog-title">New hypotheses opened by this run</h2>
+              <p>These appeared because independent team signals surfaced in the same market. They are queued research ideas, not recommendations.</p>
+            </div>
+            <span>{emergingHypotheses.length} in backlog</span>
+          </header>
+          <div>
+            {emergingHypotheses.map((lead) => (
+              <article key={lead.hypothesisId}>
+                <div><span>{lead.departments.map((item) => LABELS[item]).join(" + ")}</span><small>{lead.status === "ready_to_test" ? "Ready to test" : "Waiting for joined outcomes"}</small></div>
+                <h3>{lead.marketName}: {lead.headline}</h3>
+                <p>{lead.hypothesis}</p>
+                <strong>Next test</strong><p>{lead.nextTest}</p>
+                <details><summary>Why it emerged and how to disprove it</summary><p>{lead.whyItEmerged}</p><p><b>Reject if:</b> {lead.falsificationRule}</p></details>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <div className="discovery-department-tabs" role="tablist" aria-label="Insight department">
         {(["all", "marketing", "pricing", "cvc"] as const).map((item) => (
           <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>
@@ -410,6 +438,37 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
           </button>
         ))}
       </div>
+
+      {department === "all" || department === "pricing" ? (
+        <section className="pricing-geo-test-handoff" aria-labelledby="pricing-geo-test-handoff-title">
+          <header>
+            <div>
+              <div className="section-label">Cross-team decision handoff</div>
+              <h2 id="pricing-geo-test-handoff-title">{pricingGeoTestHandoff.title}</h2>
+              <p>Prepared for {pricingGeoTestHandoff.preparedFor} · {pricingGeoTestHandoff.recipientRole}</p>
+            </div>
+            <button type="button" onClick={() => void downloadFindings("pricing", "docx")} disabled={Boolean(isExporting)}>
+              {isExporting === "pricing:docx" ? "Preparing…" : "Download Word brief"}
+            </button>
+          </header>
+          <div className="pricing-geo-test-recommendation">
+            <span>Recommendation</span>
+            <strong>{pricingGeoTestHandoff.recommendation}</strong>
+            <p>{pricingGeoTestHandoff.why}</p>
+          </div>
+          <div className="pricing-geo-test-grid">
+            <article><span>Market and control design</span><p>{pricingGeoTestHandoff.testDesign.candidateMarkets} {pricingGeoTestHandoff.testDesign.treatmentAndControl}</p></article>
+            <article><span>What Pricing contributes</span><p>{pricingGeoTestHandoff.testDesign.pricingRole}</p></article>
+            <article><span>How value is judged</span><p>{pricingGeoTestHandoff.primaryOutcomes.join("; ")}.</p></article>
+          </div>
+          <details>
+            <summary>Evidence boundary and exact data needed</summary>
+            <p>{pricingGeoTestHandoff.currentEvidence.join(" ")}</p>
+            <ul>{pricingGeoTestHandoff.pricingInputsRequired.map((input) => <li key={input}>{input}</li>)}</ul>
+            <strong>{pricingGeoTestHandoff.evidenceBoundary}</strong>
+          </details>
+        </section>
+      ) : null}
 
       <div className="discovery-results-heading" ref={resultsHeadingRef} tabIndex={-1}>
         <div><div className="section-label">Primary digest</div><h2>Top findings to review first</h2></div>

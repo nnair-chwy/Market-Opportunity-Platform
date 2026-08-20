@@ -148,6 +148,21 @@
 .discovery-run-metrics dt { color: #6b7b92; font-size: .69rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 .discovery-run-metrics dd { margin: 0; color: #183b6b; font-size: 1.65rem; font-weight: 800; }
 .discovery-run-metrics small { color: #6b7b92; font-size: .64rem; line-height: 1.35; }
+.discovery-hypothesis-backlog { display: grid; gap: 12px; padding: 17px 19px; border: 1px solid #c8dbee; border-radius: 14px; background: linear-gradient(135deg, #f8fbff, #eef6ff); }
+.discovery-hypothesis-backlog > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.discovery-hypothesis-backlog h2 { margin: 5px 0; color: #17365f; font-size: 1.08rem; }
+.discovery-hypothesis-backlog header p { max-width: 760px; margin: 0; color: #607188; font-size: .75rem; line-height: 1.45; }
+.discovery-hypothesis-backlog header > span { flex: none; padding: 7px 10px; border-radius: 999px; background: #dfeeff; color: #285b95; font-size: .67rem; font-weight: 800; }
+.discovery-hypothesis-backlog > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.discovery-hypothesis-backlog article { display: grid; gap: 7px; padding: 13px 14px; border: 1px solid #d3e0ee; border-radius: 11px; background: #fff; }
+.discovery-hypothesis-backlog article > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.discovery-hypothesis-backlog article > div span { color: #315d94; font-size: .65rem; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
+.discovery-hypothesis-backlog article > div small { color: #80612b; font-size: .62rem; font-weight: 750; }
+.discovery-hypothesis-backlog h3 { margin: 0; color: #243f66; font-size: .84rem; line-height: 1.4; }
+.discovery-hypothesis-backlog article p { margin: 0; color: #596b83; font-size: .71rem; line-height: 1.48; }
+.discovery-hypothesis-backlog article > strong { margin-top: 3px; color: #315d94; font-size: .64rem; text-transform: uppercase; }
+.discovery-hypothesis-backlog details { color: #52657f; font-size: .69rem; }
+.discovery-hypothesis-backlog details summary { color: #315d94; cursor: pointer; font-weight: 750; }
 .discovery-data-expansion { padding: 0; border: 1px solid #cddcec; border-radius: 15px; background: linear-gradient(135deg, #f8fbff, #eef6ff); }
 .discovery-data-expansion > summary { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 18px 20px; cursor: pointer; list-style: none; }
 .discovery-data-expansion > summary::-webkit-details-marker { display: none; }
@@ -170,6 +185,21 @@
 .discovery-department-tabs button { display: flex; align-items: center; gap: 8px; border: 1px solid #cfdbea; border-radius: 999px; background: #fff; color: #4a5e7a; cursor: pointer; font: inherit; font-size: .78rem; font-weight: 700; padding: 8px 12px; }
 .discovery-department-tabs button[aria-selected="true"] { border-color: #3569a9; background: #eaf2ff; color: #214f89; }
 .discovery-department-tabs span { display: grid; place-items: center; min-width: 20px; height: 20px; border-radius: 999px; background: rgba(50, 91, 148, .1); font-size: .68rem; }
+.pricing-geo-test-handoff { display: grid; gap: 13px; padding: 18px 20px; border: 1px solid #cfc2e3; border-left: 5px solid #7758a6; border-radius: 14px; background: linear-gradient(135deg, #fbf9ff, #f3effb); }
+.pricing-geo-test-handoff > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.pricing-geo-test-handoff h2 { margin: 5px 0 3px; color: #31234f; font-size: 1.16rem; }
+.pricing-geo-test-handoff header p { margin: 0; color: #6c5d83; font-size: .72rem; }
+.pricing-geo-test-handoff header button { flex: none; min-height: 40px; padding: 8px 12px; border: 1px solid #7758a6; border-radius: 9px; background: #fff; color: #65458f; cursor: pointer; font: inherit; font-size: .72rem; font-weight: 800; }
+.pricing-geo-test-handoff header button:disabled { cursor: wait; opacity: .6; }
+.pricing-geo-test-recommendation { display: grid; gap: 6px; padding: 14px 15px; border-radius: 11px; background: #fff; }
+.pricing-geo-test-recommendation span, .pricing-geo-test-grid span { color: #73559e; font-size: .65rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.pricing-geo-test-recommendation strong { color: #263b5d; font-size: .91rem; line-height: 1.5; }
+.pricing-geo-test-recommendation p, .pricing-geo-test-grid p { margin: 0; color: #56677f; font-size: .76rem; line-height: 1.5; }
+.pricing-geo-test-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.pricing-geo-test-grid article { display: grid; gap: 7px; padding: 12px; border: 1px solid #ded4ed; border-radius: 10px; background: rgba(255,255,255,.78); }
+.pricing-geo-test-handoff details { color: #53647d; font-size: .74rem; line-height: 1.5; }
+.pricing-geo-test-handoff details summary { color: #65458f; cursor: pointer; font-weight: 800; }
+.pricing-geo-test-handoff details ul { margin: 8px 0; padding-left: 20px; }
 .discovery-results-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
 .discovery-results-heading > span { color: #718097; font-size: .74rem; }
 .autonomous-insight-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
@@ -322,8 +352,12 @@
   .discovery-run-controls > button, .discovery-run-controls > details > summary { height: 100%; text-align: center; }
   .discovery-export-menu > div { right: auto; left: 0; }
   .discovery-run-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .discovery-hypothesis-backlog > header { display: grid; }
+  .discovery-hypothesis-backlog > div { grid-template-columns: 1fr; }
   .discovery-run-audit-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .autonomous-insight-grid, .discovery-access-request-grid { grid-template-columns: 1fr; }
+  .pricing-geo-test-handoff > header { display: grid; }
+  .pricing-geo-test-grid { grid-template-columns: 1fr; }
   .discovery-decision-case { grid-template-columns: 1fr; }
   .discovery-decision-case > div, .discovery-decision-case > div:nth-child(odd), .discovery-decision-case > div:nth-last-child(-n + 2) { border-right: 0; border-bottom: 1px solid #e5ebf2; }
   .discovery-decision-case > div:last-child { border-bottom: 0; }
