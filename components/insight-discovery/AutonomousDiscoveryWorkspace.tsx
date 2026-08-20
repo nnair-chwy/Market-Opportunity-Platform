@@ -60,7 +60,7 @@ function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false
       {interpretation ? (
         <>
           <section className="discovery-decision-first" aria-label="Recommended decision">
-            <span>Analyst recommendation</span>
+            <span>Recommended decision</span>
             <h2>{presentation.analystRecommendation}</h2>
           </section>
           <div className="discovery-region-rationale"><span>Why this market</span><p>{presentation.analystRead}</p></div>

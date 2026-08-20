@@ -29,8 +29,8 @@ test("marketing presentation distinguishes a performance signal from comparison 
   assert.ok(finding);
   const presentation = findingPresentation(finding!);
 
-  assert.match(presentation.analystRecommendation, /incremental paid-search test candidate/i);
-  assert.match(presentation.analystRecommendation, /keep live spend unchanged/i);
+  assert.match(presentation.analystRecommendation, /^Growth Marketing should build a bounded paid-search geo test/i);
+  assert.match(presentation.analystRecommendation, /Keep total national spend flat.*matched control.*launch only after/i);
   assert.match(presentation.analystRead, /CTR 1\.2%.*attributed conversion rate 20\.0%.*attributed CPA \$3\.86/i);
   assert.match(presentation.evidenceSummary, /Google Ads regional performance.*Census CBSA market context/i);
   assert.match(presentation.evidenceSummary, /not an independent outcome/i);

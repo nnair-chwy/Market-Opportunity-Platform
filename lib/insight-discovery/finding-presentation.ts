@@ -46,9 +46,9 @@ function analystRecommendation(finding: AutonomousInsight, recommendationType: R
   if (finding.department === "marketing") {
     const conversionRate = Number(finding.evidenceDetail.match(/attributed conversion rate [\d.]+% \(P(\d+)\)/i)?.[1] ?? NaN);
     const cpa = Number(finding.evidenceDetail.match(/cost per attributed conversion \$[\d,.]+ \(P(\d+)\)/i)?.[1] ?? NaN);
-    if (cpa <= 20 && conversionRate >= 80) return `Prioritize ${finding.marketName} for an incremental paid-search test candidate—but keep live spend unchanged until new-customer and contribution outcomes confirm the attributed efficiency.`;
-    if (cpa >= 80 || conversionRate <= 20) return `Do not add paid-search budget in ${finding.marketName}; diagnose query, audience, creative, and conversion quality before reconsidering spend.`;
-    return `Keep ${finding.marketName} spend stable and validate whether the observed paid-search pattern persists in first-party customer and contribution outcomes.`;
+    if (cpa <= 20 && conversionRate >= 80) return `Growth Marketing should build a bounded paid-search geo test for ${finding.marketName} in the next planning cycle. Keep total national spend flat, select a matched control, and launch only after same-period new-customer and contribution data confirm the observed advantage.`;
+    if (cpa >= 80 || conversionRate <= 20) return `Growth Marketing should remove ${finding.marketName} from budget-expansion consideration this cycle and diagnose query, audience, creative, and conversion quality before any increase.`;
+    return `Growth Marketing should hold ${finding.marketName} paid-search spend at its current level this cycle and attach same-period new-customer and contribution outcomes before reconsidering a geo test.`;
   }
   if (finding.department === "cvc") return finding.businessValue.status === "outcome_connected"
     ? `Keep ${finding.marketName} on the CVC intervention shortlist; confirm current staffed capacity and contribution before increasing media or changing clinic capacity.`
