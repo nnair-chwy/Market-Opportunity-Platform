@@ -7,11 +7,14 @@ const evaluation = fs.readFileSync(new URL("../components/decision-workflow/Adap
 const market = fs.readFileSync(new URL("../components/decision-workflow/AdaptiveMarketWorkspace.tsx", import.meta.url), "utf8");
 const map = fs.readFileSync(new URL("../components/UnifiedEvaluatorMap.tsx", import.meta.url), "utf8");
 
-test("the opening findings inbox loads current findings and exposes a numeric badge", () => {
+test("the opening findings inbox loads current findings without an opaque opportunity score", () => {
   assert.match(findings, /fetch\("\/api\/insight-discovery"/);
   assert.match(findings, /run\?\.findings\.length/);
   assert.match(findings, /aria-controls="adaptive-findings-panel"/);
   assert.match(findings, /aria-expanded=\{open\}/);
+  assert.match(findings, /presentation\.recommendationLabel/);
+  assert.match(findings, /presentation\.confidence/);
+  assert.doesNotMatch(findings, /finding\.importance\.score/);
 });
 
 test("findings can be filtered by stakeholder team and opened without rerunning question analysis", () => {
@@ -27,7 +30,7 @@ test("the inbox starts with the ranked five-item digest and can reveal the full 
   assert.match(findings, /Show all \{teamFindings\.length\}/);
   assert.match(findings, /Show focus/);
   assert.match(findings, /data-importance=\{finding\.importance\.tier\}/);
-  assert.match(findings, /finding\.businessValue\.headline/);
+  assert.match(findings, /presentation\.valueStatus/);
 });
 
 test("help, findings, and saved work share one compact toolbar", () => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
+import { findingPresentation } from "@/lib/insight-discovery/finding-presentation";
 import type { PerspectiveId } from "@/lib/perspectives";
 
 const TEAM_LABELS: Record<PerspectiveId, string> = {
@@ -114,22 +115,22 @@ export function OpeningFindingsControl({
           <div className="adaptive-findings-list" aria-live="polite">
             {!run && !error ? <p role="status">Reviewing the current approved data…</p> : null}
             {error ? <p role="alert">{error}</p> : null}
-            {findings.map((finding) => (
-              <article key={finding.insightId} data-importance={finding.importance.tier}>
+            {findings.map((finding) => {
+              const presentation = findingPresentation(finding);
+              return <article key={finding.insightId} data-importance={finding.importance.tier}>
                 <div className="adaptive-finding-heading-row">
                   <div className="adaptive-finding-heading-tags">
                     <span className="adaptive-finding-team">{TEAM_LABELS[finding.department]}</span>
                     <span className="adaptive-finding-importance" data-tier={finding.importance.tier}>
-                      <strong>{finding.importance.label}</strong>
-                      <span>{finding.importance.score}</span>
+                      <strong>{presentation.recommendationLabel}</strong>
                     </span>
                   </div>
                   <small>{finding.marketName}</small>
                 </div>
                 <h3>{finding.headline}</h3>
                 <div className="adaptive-finding-value" data-status={finding.businessValue.status}>
-                  <span>{finding.businessValue.label}</span>
-                  <strong>{finding.businessValue.headline}</strong>
+                  <span>{presentation.valueStatus}</span>
+                  <strong>{presentation.confidence} confidence · {presentation.urgency}</strong>
                 </div>
                 <p><b>Next:</b> {finding.analystInterpretation?.recommendedNextDecisionOrAction ?? finding.nextValidation}</p>
                 <button
@@ -143,8 +144,8 @@ export function OpeningFindingsControl({
                 >
                   View <span aria-hidden="true">→</span>
                 </button>
-              </article>
-            ))}
+              </article>;
+            })}
           </div>
 
           <footer>

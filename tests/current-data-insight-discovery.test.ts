@@ -31,6 +31,14 @@ test("autonomous discovery runs every reviewed hypothesis and returns a five-ite
   assert.ok(run.snowflakeEscalations.every((assessment) => assessment.accessRequest?.executionPolicy.credentialsRequested === false));
 });
 
+test("the discovery run challenges regional hypotheses and assigns explicit recommendation types", () => {
+  const run = runCurrentDataInsightDiscovery({ now: () => "2026-08-20T00:00:00.000Z", runId: "opportunity-loop" });
+  assert.deepEqual(run.opportunityRun.iterations.map((item) => item.stage), ["generate_hypotheses", "challenge_with_evidence", "classify_recommendations"]);
+  assert.ok(run.opportunityRun.opportunities.length > 0);
+  assert.ok(run.findings.every((finding) => finding.opportunity));
+  assert.ok(run.opportunityRun.opportunities.every((opportunity) => ["act_now", "controlled_test", "investigate", "monitor", "data_quality"].includes(opportunity.recommendation.type)));
+});
+
 test("repeated market appearances become higher-priority multi-signal leads without a blended opportunity score", () => {
   const run = runCurrentDataInsightDiscovery(fixed);
   const marketing = run.findings.filter((finding) => finding.department === "marketing");

@@ -59,6 +59,7 @@ next-env.d.ts
 /data/approved/seo/
 /data/approved/zeus-ui/
 /data/approved/tableau-cvc/
+/data/approved/tableau-new-customer/
 /reports/snowflake-*/
 
 # local DuckDB evidence layer

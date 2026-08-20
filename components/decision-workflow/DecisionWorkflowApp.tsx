@@ -1185,7 +1185,9 @@ export function DecisionWorkflowApp() {
                 </div>
               ) : null}
 
-              {showsActionPackage && packetAction ? (
+              {showsActionPackage && insightActionPlan ? (
+                <InsightActionPlanPanel actionPlan={insightActionPlan} />
+              ) : showsActionPackage && packetAction ? (
                 <section className="owned-action-plan" aria-labelledby="owned-action-plan-title">
                   <div className="section-label">Owned next step</div>
                   <h2 id="owned-action-plan-title">{insightActionPlan?.recommendation ?? packetAction.title}</h2>
@@ -1290,7 +1292,7 @@ export function DecisionWorkflowApp() {
                         </section>
                       </>
                     ) : insightActionPlan ? (
-                      <InsightActionPlanPanel actionPlan={insightActionPlan} />
+                      null
                     ) : (
                       <>
                         <div className="section-label">Action packet</div>

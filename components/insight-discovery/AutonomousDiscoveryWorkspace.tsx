@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AutonomousInsight, CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
+import { findingPresentation } from "@/lib/insight-discovery/finding-presentation";
 import type { PerspectiveId } from "@/lib/perspectives";
 
 const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing: "Pricing", cvc: "CVC" };
@@ -22,6 +23,7 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
   selected?: boolean;
 }) {
   const interpretation = finding.analystInterpretation;
+  const presentation = findingPresentation(finding);
   return (
     <article
       className="autonomous-insight-card"
@@ -37,31 +39,25 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
           <small>{finding.marketName}</small>
         </div>
         <div className="discovery-card-status">
-          <div className="discovery-importance" data-tier={finding.importance.tier}>
-            <strong>{finding.importance.label}</strong>
-            <span>{finding.importance.score}/100</span>
+          <div className="discovery-recommendation-type" data-type={presentation.recommendationType}>
+            {presentation.recommendationLabel}
           </div>
-          {interpretation ? (
-            <div className="discovery-actionability" data-level={interpretation.actionabilityLevel}>
-              {ACTIONABILITY_LABELS[interpretation.actionabilityLevel]}
-            </div>
-          ) : null}
         </div>
       </header>
       {interpretation ? (
         <>
-          <h2>{finding.headline}</h2>
-          <div className="discovery-card-decision">
-            <div className="discovery-business-value" data-status={finding.businessValue.status}>
-              <span>{finding.businessValue.label}</span>
-              <strong>{finding.businessValue.headline}</strong>
-              <small>{finding.businessValue.formula}</small>
-            </div>
-            <div className="discovery-analyst-action">
-              <span>Do next</span>
-              <strong>{interpretation.recommendedNextDecisionOrAction}</strong>
-            </div>
+          <section className="discovery-decision-first" aria-label="Recommended decision">
+            <span>{presentation.recommendationLabel}</span>
+            <h2>{interpretation.recommendedNextDecisionOrAction}</h2>
+            <p><strong>Expected business result:</strong> {finding.businessValue.headline}</p>
+          </section>
+          <div className="discovery-decision-facts" aria-label="Recommendation readiness">
+            <div><span>Potential value</span><strong>{presentation.valueStatus}</strong></div>
+            <div><span>Evidence confidence</span><strong>{presentation.confidence}</strong></div>
+            <div><span>Urgency</span><strong>{presentation.urgency}</strong></div>
+            <div><span>Readiness</span><strong>{ACTIONABILITY_LABELS[interpretation.actionabilityLevel]}</strong></div>
           </div>
+          <div className="discovery-region-rationale"><span>Why this region</span><p>{finding.headline}. {finding.whyInteresting}</p></div>
         </>
       ) : (
         <><h2>{finding.headline}</h2><p>{finding.whyInteresting}</p></>
@@ -83,7 +79,7 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
           <div><dt>Observed signal</dt><dd>{finding.headline}. {finding.whyInteresting}</dd></div>
           <div><dt>Evidence detail</dt><dd>{finding.evidenceDetail}</dd></div>
           <div><dt>Why it ranked here</dt><dd>{finding.decisionValue?.reason ?? "This earlier run did not record a decision-value explanation."}</dd></div>
-          <div><dt>Importance</dt><dd>{finding.importance.reason}</dd></div>
+          <div><dt>Why it is in this action tier</dt><dd>{finding.importance.reason}</dd></div>
           <div><dt>Screens combined</dt><dd>{finding.signalCount} screen{finding.signalCount === 1 ? "" : "s"}: {finding.hypothesisIds.join(", ")}</dd></div>
           <div><dt>Sources</dt><dd>{finding.sourceIds.join(", ")}</dd></div>
           <div><dt>Exact evidence still needed</dt><dd>{interpretation?.exactMissingEvidence.join(" ") ?? finding.nextValidation}</dd></div>
@@ -105,11 +101,24 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const [error, setError] = useState<string | null>(null);
   const [isRerunning, setIsRerunning] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isExporting, setIsExporting] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [slackConfig, setSlackConfig] = useState<{ configured: boolean; destination: string } | null>(null);
   const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
   const [department, setDepartment] = useState<"all" | PerspectiveId>("all");
-  const [runHistory, setRunHistory] = useState<CurrentDataDiscoveryRun[]>([]);
+  const [runHistory, setRunHistory] = useState<CurrentDataDiscoveryRun[]>(() => {
+    let storedRuns: CurrentDataDiscoveryRun[] = [];
+    try {
+      if (typeof window === "undefined") return initialRun ? [initialRun] : [];
+      const stored = JSON.parse(window.localStorage.getItem(DISCOVERY_HISTORY_KEY) ?? "[]") as unknown;
+      if (Array.isArray(stored)) {
+        storedRuns = stored.filter((item): item is CurrentDataDiscoveryRun => Boolean(item) && typeof item === "object" && "runId" in item && "findings" in item);
+      }
+    } catch { /* Start with the current run when saved history is unavailable. */ }
+    return initialRun
+      ? [initialRun, ...storedRuns.filter((item) => item.runId !== initialRun.runId)].slice(0, DISCOVERY_HISTORY_LIMIT)
+      : storedRuns.slice(0, DISCOVERY_HISTORY_LIMIT);
+  });
 
   const rememberRun = useCallback((completedRun: CurrentDataDiscoveryRun) => {
     setRunHistory((history) => {
@@ -120,13 +129,9 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   }, []);
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(window.localStorage.getItem(DISCOVERY_HISTORY_KEY) ?? "[]") as unknown;
-      if (Array.isArray(stored)) setRunHistory(stored.filter((item): item is CurrentDataDiscoveryRun => Boolean(item) && typeof item === "object" && "runId" in item && "findings" in item).slice(0, DISCOVERY_HISTORY_LIMIT));
-    } catch { setRunHistory([]); }
-  }, []);
-
-  useEffect(() => { if (initialRun) rememberRun(initialRun); }, [initialRun, rememberRun]);
+    if (!initialRun) return;
+    try { window.localStorage.setItem(DISCOVERY_HISTORY_KEY, JSON.stringify(runHistory)); } catch { /* The run remains available in memory. */ }
+  }, [initialRun, runHistory]);
 
   const requestRun = useCallback(async (previousRun?: CurrentDataDiscoveryRun) => {
     const response = await fetch("/api/insight-discovery", {
@@ -196,6 +201,40 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     }
   }
 
+  async function downloadFindings(scope: "all" | PerspectiveId, format: "csv" | "docx") {
+    if (!run || isExporting) return;
+    const exportKey = `${scope}:${format}`;
+    setIsExporting(exportKey);
+    setShareStatus(null);
+    try {
+      const response = await fetch("/api/insight-discovery/export", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ run, scope, format }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({})) as { message?: string };
+        throw new Error(payload.message ?? "The findings export did not complete.");
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get("content-disposition") ?? "";
+      const filename = disposition.match(/filename="([^"]+)"/)?.[1]
+        ?? `market-opportunity-findings-${scope}.${format}`;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (reason) {
+      setShareStatus(reason instanceof Error ? reason.message : "The findings export did not complete.");
+    } finally {
+      setIsExporting(null);
+    }
+  }
+
   const primaryFindings = useMemo(() => (run?.primaryFindings
     .filter((finding) => department === "all" || finding.department === department)
     .sort((left, right) => right.importance.score - left.importance.score) ?? []), [department, run]);
@@ -256,6 +295,18 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
           <button className="discovery-share-all" type="button" onClick={() => void sendAllFindings()} disabled={isSending}>
             {isSending ? "Sending findings…" : "Send all findings to Slack"}
           </button>
+          <details className="discovery-export-menu">
+            <summary>{isExporting ? "Preparing download…" : "Download findings"}</summary>
+            <div>
+              {(["all", "marketing", "pricing", "cvc"] as const).map((scope) => (
+                <section key={scope} aria-label={`${scope === "all" ? "All teams" : LABELS[scope]} exports`}>
+                  <strong>{scope === "all" ? "All teams" : LABELS[scope]}</strong>
+                  <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(scope, "csv")}>CSV</button>
+                  <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(scope, "docx")}>Word brief</button>
+                </section>
+              ))}
+            </div>
+          </details>
           <button className="discovery-run-again" type="button" onClick={() => void runAgain()} disabled={isRerunning}>
             {isRerunning ? `Re-running ${run.analysesRun} screens…` : "Find next signals"}
           </button>

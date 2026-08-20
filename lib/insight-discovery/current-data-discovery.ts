@@ -12,6 +12,9 @@ import { getApprovedWorkspaceSnapshotDataset } from "../perspectives/approved-wo
 import type { WorkspaceSnapshotDatasetId } from "../perspectives/workspace-snapshot.ts";
 import { assessBusinessValue, type BusinessValueAssessment } from "../business-value/first-party-value-framework.ts";
 import { getTableauCvcMetroSummaries, median, TABLEAU_CVC_OUTCOME_SNAPSHOT_VERSION, TABLEAU_CVC_OUTCOME_SOURCE_ID } from "../business-value/tableau-cvc-metro-summary.ts";
+import { buildOpportunityRunFromFindings, opportunityForFinding } from "./opportunity-from-findings.ts";
+import type { CrossSourceRegionalOpportunity } from "./cross-source-opportunity.ts";
+import type { IterativeDiscoveryRun } from "./iterative-discovery-loop.ts";
 
 export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v3" as const;
 const TABLEAU_CVC_OUTCOME_ANALYSES = ["cvc-completed-appointments-per-spend", "cvc-net-sales-per-spend", "cvc-new-to-chewy-appointment-mix"] as const;
@@ -87,6 +90,7 @@ export type AutonomousInsight = {
     notificationCandidate: boolean;
   };
   analystInterpretation?: AutonomousAnalystInterpretation;
+  opportunity?: CrossSourceRegionalOpportunity;
 };
 
 export type CurrentDataDiscoveryRun = {
@@ -147,6 +151,7 @@ export type CurrentDataDiscoveryRun = {
     readiness: string;
   }>;
   limitations: string[];
+  opportunityRun: IterativeDiscoveryRun;
 };
 
 function unique<T>(values: T[]) {
@@ -593,6 +598,10 @@ export function runCurrentDataInsightDiscovery(input: {
     readiness: "Approved historical aggregate connected; current-period refresh, geography crosswalk, capacity, contribution, and counterfactual remain required.",
   })));
   const allFindings = [...groupOccurrences(occurrences).map(([key, group]) => insightFromGroup(key, group)), ...outcomeFindings];
+  const opportunityRun = buildOpportunityRunFromFindings({ runId, generatedAt: startedAt, findings: allFindings });
+  allFindings.forEach((finding) => {
+    finding.opportunity = opportunityForFinding(opportunityRun, finding) ?? undefined;
+  });
   const excludedPreviousPrimaryFindingIds = unique([
     ...(input.previouslyExcludedPrimaryFindingIds ?? []),
     ...(input.previousPrimaryFindingIds ?? []),
@@ -676,5 +685,6 @@ export function runCurrentDataInsightDiscovery(input: {
         ? "This rerun used the same approved snapshot set and reprioritized the next qualified findings; it did not refresh source data."
         : "A scheduled production run still needs durable persistence, refresh-event orchestration, receiving-team notifications, and feedback on whether prior findings produced value.",
     ],
+    opportunityRun,
   };
 }

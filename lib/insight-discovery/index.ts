@@ -2,3 +2,7 @@ export * from "./current-data-discovery.ts";
 export * from "./finding-selection.ts";
 export * from "./analyst-interpretation.ts";
 export * from "./rerun-contract.ts";
+export * from "./export.ts";
+export * from "./cross-source-opportunity.ts";
+export * from "./iterative-discovery-loop.ts";
+export * from "./opportunity-from-findings.ts";

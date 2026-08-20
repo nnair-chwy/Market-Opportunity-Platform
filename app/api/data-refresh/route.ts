@@ -70,6 +70,11 @@ async function statusPayload(message: string) {
       { label: "Clinics & market context", status: "connected" as const, detail: "CVC appointments and net sales are connected at Tableau metro × week × channel grain; capacity, maturity and the production crosswalk remain open." },
     ],
     valueDataRequests: TABLEAU_FIRST_PARTY_EXPORTS,
+    connectionWorkflow: {
+      browserAuthentication: "supported" as const,
+      browserSessionDownload: "secure_workspace_only" as const,
+      publishedSnapshotPolicy: "preserve_until_validated" as const,
+    },
     message,
   };
 }
@@ -84,7 +89,7 @@ export async function POST(request: Request) {
   if (body?.action !== "check" && body?.action !== "rebuild") return Response.json({ message: "Choose check or rebuild." }, { status: 400 });
   const localEvidenceService = localEvidenceServiceUrl(process.env.LOCAL_EVIDENCE_SERVICE_URL);
   if (!localEvidenceService) {
-    return Response.json(await statusPayload("Refresh is available only from the secure data workspace. This shared site can show the latest published data but cannot access private exports."), { status: 409 });
+    return Response.json(await statusPayload("Refresh is available only from the secure data workspace. This shared site cannot reuse a private Tableau browser session or download the export. The validated published snapshot remains unchanged."), { status: 409 });
   }
   try {
     const refreshResponse = await fetch(`${localEvidenceService}/refresh`, {

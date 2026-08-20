@@ -14,6 +14,7 @@ const CHECK_SCRIPTS = [
 ] as const;
 const REBUILD_SCRIPTS = [
   "build-tableau-cvc-outcomes.ts",
+  "build-tableau-new-customer-acquisition.ts",
   ...CHECK_SCRIPTS,
   "build-perspective-map-signals.ts",
   "build-pricing-economics-snapshot.ts",

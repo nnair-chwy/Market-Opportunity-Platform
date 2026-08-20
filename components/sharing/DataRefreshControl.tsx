@@ -31,7 +31,13 @@ type RefreshStatus = {
     valueUse: string;
     limitation: string;
     tableauUrl: string;
+    connectionState?: "connected" | "context_connected" | "request_required";
   }>;
+  connectionWorkflow: {
+    browserAuthentication: "supported";
+    browserSessionDownload: "secure_workspace_only";
+    publishedSnapshotPolicy: "preserve_until_validated";
+  };
   message: string;
 };
 
@@ -40,6 +46,7 @@ export function DataRefreshControl() {
   const [status, setStatus] = useState<RefreshStatus | null>(null);
   const [busy, setBusy] = useState<"check" | "rebuild" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [authenticationOpenedFor, setAuthenticationOpenedFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -81,6 +88,13 @@ export function DataRefreshControl() {
     }
   }
 
+  function recordAuthenticationHandoff(sourceLabel: string, sourceId: string) {
+    setAuthenticationOpenedFor(sourceId);
+    setNotice(status?.mode === "hosted"
+      ? `Tableau opened for ${sourceLabel}. Complete sign-in in that tab. This shared site cannot detect or reuse your private Tableau session; the secure data workspace completes the approved export, validation, and publication handoff. The current validated snapshot remains live.`
+      : `Tableau opened for ${sourceLabel}. Complete sign-in in that tab; the secure local data agent can then retrieve and validate the approved aggregate without a manual file download.`);
+  }
+
   const panel = open ? (
     <div className="data-refresh-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
       <section id="data-refresh-panel" className="data-refresh-panel" role="dialog" aria-modal="true" aria-labelledby="data-refresh-title">
@@ -102,7 +116,7 @@ export function DataRefreshControl() {
           <details className="data-refresh-readiness"><summary>Business-outcome connections</summary><div className="data-refresh-sources">{status.sourceGroups.map((source) => <div key={source.label} data-status={source.status}><strong>{source.label}</strong><span>{source.status}</span><small>{source.detail}</small></div>)}</div></details>
           <details className="data-refresh-readiness data-refresh-value-exports" open>
             <summary>Data connections and requests</summary>
-            <p className="data-refresh-connection-guidance">Your only manual step is authentication. After access is available, the data agent downloads the approved aggregate, validates its geography and measures, registers it, and rebuilds the insight snapshot.</p>
+            <p className="data-refresh-connection-guidance">Authenticate in Tableau—no manual CSV download or upload is requested. {status.mode === "hosted" ? "The shared site then hands the request to the secure data workspace because a hosted browser cannot read or reuse your private Tableau session." : "The secure local data agent can then retrieve and validate the approved aggregate."}</p>
             <div className="data-refresh-value-export-list">
               {status.valueDataRequests.map((source) => (
                 <article key={source.id} data-status={source.status}>
@@ -111,18 +125,36 @@ export function DataRefreshControl() {
                   <small><b>Target grain:</b> {source.targetGrain}</small>
                   <small><b>Measures:</b> {source.metrics.join(", ")}</small>
                   <small><b>Limit:</b> {source.limitation}</small>
-                  <a href={source.tableauUrl} target="_blank" rel="noreferrer">{source.status === "available_now" ? "Review authenticated source →" : "Authenticate in Tableau →"}</a>
+                  <a
+                    href={source.tableauUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => source.connectionState === "context_connected" ? setNotice(`${source.label} is already connected as national context. This Tableau workbook does not expose an approved regional key, so regional use requires a governed DMA or CBSA extract.`) : recordAuthenticationHandoff(source.label, source.id)}
+                  >
+                    {source.connectionState === "context_connected"
+                      ? "Review connected national source ↗"
+                      : authenticationOpenedFor === source.id
+                      ? "Tableau opened — complete sign-in ↗"
+                      : source.status === "available_now"
+                        ? "Open current Tableau source ↗"
+                        : "Open Tableau to authenticate ↗"}
+                  </a>
+                  {authenticationOpenedFor === source.id ? <small className="data-refresh-auth-handoff" role="status">Authentication happens in Tableau. Return here only to review status; no browser download will start from this shared site.</small> : null}
                 </article>
               ))}
             </div>
           </details>
         </> : <p role="status">Loading source status…</p>}
-        <ol className="data-refresh-steps"><li>Authenticate to the approved source.</li><li>The agent downloads and validates the aggregate export.</li><li>The prior snapshot stays live until the new findings pass checks.</li></ol>
+        <ol className="data-refresh-steps">
+          <li>Open Tableau and authenticate to the approved source.</li>
+          <li>{status?.mode === "hosted" ? "The secure data workspace—not this hosted browser—retrieves and validates the approved aggregate." : "The secure local data agent retrieves and validates the approved aggregate."}</li>
+          <li>The prior validated snapshot stays live until replacement data and findings pass checks.</li>
+        </ol>
         {notice ? <p className="data-refresh-notice" role="status">{notice}</p> : null}
-        <footer>
-          <button type="button" className="primary-action" disabled={Boolean(busy) || status?.mode !== "local"} onClick={() => void run("rebuild")}>{busy === "rebuild" ? "Refreshing insights…" : "Refresh insights"}</button>
-        </footer>
-        {status?.mode === "hosted" ? <small className="data-refresh-hosted-note">The shared site can show connected data and open the authentication page, but it cannot borrow your private Tableau session. Once authenticated, run the secure data agent to complete download, validation, and publication.</small> : <small className="data-refresh-hosted-note">This usually takes a few minutes. Keep this window open until the refresh finishes.</small>}
+        {status?.mode === "local" ? <footer>
+          <button type="button" className="primary-action" disabled={Boolean(busy)} onClick={() => void run("rebuild")}>{busy === "rebuild" ? "Refreshing insights…" : "Run secure refresh"}</button>
+        </footer> : null}
+        {status?.mode === "hosted" ? <small className="data-refresh-hosted-note"><b>Supported handoff:</b> authenticate in Tableau, then the secure data workspace retrieves the governed aggregate and publishes it only after validation. This site intentionally has no automatic-download or refresh button because it cannot borrow your browser account. The current validated snapshot is preserved throughout.</small> : <small className="data-refresh-hosted-note">No manual export is needed. The prior validated snapshot remains published until the refresh passes its checks.</small>}
       </section>
     </div>
   ) : null;
