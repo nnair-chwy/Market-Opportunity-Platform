@@ -10,6 +10,22 @@ const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing:
 const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v1";
 const DISCOVERY_HISTORY_LIMIT = 5;
 
+function findingFollowUps(finding: AutonomousInsight | null) {
+  if (!finding) return ["Which finding has the strongest business case after accounting for evidence quality?", "Which missing outcome would most change the current recommendation?"];
+  if (finding.department === "marketing") return [
+    `Does ${finding.marketName}'s attributed efficiency remain after joining new-customer and contribution outcomes?`,
+    `Why do ${finding.marketName}'s click-through rate, attributed conversion rate, and cost per conversion point in different directions?`,
+  ];
+  if (finding.department === "pricing") return [
+    `Would matched-SKU margin and expected unit response support a regional price test in ${finding.marketName}?`,
+    `Which products, retailers, and coverage gaps drive the ${finding.marketName} pricing signal?`,
+  ];
+  return [
+    `Does ${finding.marketName} have enough current demand and staffed capacity to justify a clinic intervention?`,
+    `How do ${finding.marketName}'s appointments, new-to-Chewy mix, and sales compare with mature clinics?`,
+  ];
+}
+
 function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false }: {
   finding: AutonomousInsight;
   rankLabel: string;
@@ -42,25 +58,25 @@ function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false
       {interpretation ? (
         <>
           <section className="discovery-decision-first" aria-label="Recommended decision">
-            <span>{presentation.recommendationLabel}</span>
-            <h2>{presentation.primaryStatement}</h2>
-            <p><strong>{decisionCase.scenario.label}:</strong> {decisionCase.scenario.summary}</p>
-            {decisionCase.scenario.range ? <small>{decisionCase.scenario.range}</small> : null}
+            <span>Analyst recommendation</span>
+            <h2>{presentation.analystRecommendation}</h2>
           </section>
-          <div className="discovery-decision-facts" aria-label="Recommendation readiness">
-            <div><span>Potential value</span><strong>{presentation.valueStatus}</strong></div>
-            <div><span>Observed signal</span><strong>{presentation.signalConfidence}</strong></div>
-            <div><span>Decision readiness</span><strong>{presentation.decisionReadiness}</strong></div>
-            <div><span>Priority</span><strong>{presentation.urgency}</strong></div>
+          <div className="discovery-region-rationale"><span>Why this market</span><p>{presentation.analystRead}</p></div>
+          <div className="discovery-analyst-brief" aria-label="Analyst evidence summary">
+            <div className="discovery-impact"><span>Business implication</span><strong>{presentation.valueStatus}</strong></div>
+            <div><span>Evidence used</span><strong>{presentation.evidenceSummary}</strong></div>
+            <div><span>Confidence and limit</span><strong>{presentation.confidenceStatement}</strong></div>
           </div>
-          <div className="discovery-recommended-move"><span>Recommended move</span><p>{decisionCase.proposedAction}</p></div>
-          <section className="discovery-decision-case" aria-label="Decision case">
-            <div><span>How this was calculated</span><p>{decisionCase.calculation.join(" ")}</p></div>
-            <div><span>Why validation changes the decision</span><p>{decisionCase.whyValidationMatters.join(" ")}</p></div>
-            <div><span>Success rule</span><p>{decisionCase.successRule}</p></div>
-            <div><span>Stop or reverse if</span><p>{decisionCase.stopRule}</p></div>
-          </section>
-          <div className="discovery-region-rationale"><span>Why this region</span><p>{finding.headline}. {finding.whyInteresting}</p></div>
+          <div className="discovery-recommended-move"><span>Recommended next action</span><p>{presentation.nextAction}</p><small><strong>What could change this view:</strong> {presentation.reversalCondition}</small></div>
+          <details className="discovery-method-detail">
+            <summary>Calculation, assumptions, and decision rules</summary>
+            <section className="discovery-decision-case" aria-label="Decision case">
+              <div><span>Observed scenario</span><p>{decisionCase.scenario.summary} {decisionCase.scenario.range ?? ""}</p></div>
+              <div><span>How this was calculated</span><p>{decisionCase.calculation.join(" ")}</p></div>
+              <div><span>Why validation changes the decision</span><p>{decisionCase.whyValidationMatters.join(" ")}</p></div>
+              <div><span>Success and stop rules</span><p>{decisionCase.successRule} {decisionCase.stopRule}</p></div>
+            </section>
+          </details>
         </>
       ) : (
         <><h2>{finding.headline}</h2><p>{finding.whyInteresting}</p></>
@@ -94,7 +110,8 @@ function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false
   );
 }
 
-export function AutonomousDiscoveryWorkspace({ onInvestigate, initialFindingId = null, initialRun = null }: {
+export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFindingId = null, initialRun = null }: {
+  onBack: () => void;
   onInvestigate: (question: string) => void;
   initialFindingId?: string | null;
   initialRun?: CurrentDataDiscoveryRun | null;
@@ -248,6 +265,8 @@ export function AutonomousDiscoveryWorkspace({ onInvestigate, initialFindingId =
     .sort((left, right) => right.importance.score - left.importance.score) ?? []), [department, run]);
   const additionalOpportunities = useMemo(() => additionalFindings.filter((finding) => findingPresentation(finding).recommendationType !== "data_quality"), [additionalFindings]);
   const dataQualityFindings = useMemo(() => additionalFindings.filter((finding) => findingPresentation(finding).recommendationType === "data_quality"), [additionalFindings]);
+  const followUpTarget = followUpFinding ?? primaryFindings[0] ?? null;
+  const followUpSuggestions = findingFollowUps(followUpTarget);
   const selectedFinding = useMemo(
     () => run?.findings.find((finding) => finding.insightId === initialFindingId) ?? null,
     [initialFindingId, run],
@@ -266,7 +285,6 @@ export function AutonomousDiscoveryWorkspace({ onInvestigate, initialFindingId =
     setFollowUpFinding(finding);
     setFollowUpQuestion(finding.question);
     requestAnimationFrame(() => {
-      followUpRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       followUpRef.current?.focus({ preventScroll: true });
       followUpRef.current?.select();
     });
@@ -289,12 +307,14 @@ export function AutonomousDiscoveryWorkspace({ onInvestigate, initialFindingId =
 
   if (error && !run) return (
     <section className="autonomous-discovery-page" aria-labelledby="autonomous-discovery-title">
+      <button className="text-action discovery-back" type="button" onClick={onBack}>← Back to questions</button>
       <div className="discovery-error" role="alert"><h1 id="autonomous-discovery-title">The current-data scan could not complete</h1><p>{error}</p><button className="primary-action" type="button" onClick={() => window.location.reload()}>Retry</button></div>
     </section>
   );
 
   if (!run) return (
     <section className="autonomous-discovery-page discovery-running" aria-labelledby="autonomous-discovery-title">
+      <button className="text-action discovery-back" type="button" onClick={onBack}>← Back to questions</button>
       <div className="section-label">Autonomous insight discovery</div>
       <h1 id="autonomous-discovery-title">Investigating the current data without waiting for a question</h1>
       <p>The agent is running the reviewed departmental hypothesis registry, screening regional contrasts, combining repeated market signals, challenging interpretations, and ranking the strongest leads.</p>
@@ -310,10 +330,11 @@ export function AutonomousDiscoveryWorkspace({ onInvestigate, initialFindingId =
   return (
     <section className="autonomous-discovery-page" aria-labelledby="autonomous-discovery-title" aria-busy={isRerunning}>
       <div className="discovery-page-nav">
+        <button className="text-action discovery-back" type="button" onClick={onBack}>← Back to questions</button>
         <div className="discovery-run-controls">
           <span>Run {run.runSequence} complete · {new Date(run.completedAt).toLocaleString()}</span>
           <button className="discovery-share-all" type="button" onClick={() => void sendAllFindings()} disabled={isSending}>
-            {isSending ? "Sending findings…" : "Send all findings to Slack"}
+            {isSending ? "Sending…" : "Send all to Slack"}
           </button>
           <details className="discovery-export-menu">
             <summary>{isExporting ? "Preparing download…" : "Download findings"}</summary>
@@ -349,10 +370,10 @@ export function AutonomousDiscoveryWorkspace({ onInvestigate, initialFindingId =
       <header className="discovery-hero">
         <div>
           <div className="section-label">Autonomous insight discovery</div>
-          <h1 id="autonomous-discovery-title">The strongest regional signals in the current data</h1>
-          <p>The system tested {run.analysesRun} predefined regional questions, ranked the qualified signals by decision value, and translated the strongest ones into a measurable next action.</p>
+          <h1 id="autonomous-discovery-title">The decisions worth investigating first</h1>
+          <p>The system screened {run.analysesRun} registered analyses across Marketing, Pricing, and CVC, then separated observed evidence, business implications, and the next decision each team can responsibly make.</p>
         </div>
-        <span className="discovery-method">Reviewed query registry · deterministic evidence checks</span>
+        <span className="discovery-method">Registered analyses · observed evidence only</span>
       </header>
 
       <div className="discovery-run-sequence" data-run-mode={run.runAudit.mode} role="status" aria-live="polite">
@@ -375,7 +396,7 @@ export function AutonomousDiscoveryWorkspace({ onInvestigate, initialFindingId =
       {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
 
       <dl className="discovery-run-metrics">
-        <div><dt>Decision screens tested</dt><dd>{run.analysesRun}</dd><small>{screenCounts.marketing} Marketing · {screenCounts.pricing} Pricing · {screenCounts.cvc} CVC</small></div>
+        <div><dt>Analyses completed</dt><dd>{run.analysesRun}</dd><small>{screenCounts.marketing} Marketing · {screenCounts.pricing} Pricing · {screenCounts.cvc} CVC</small></div>
         <div><dt>Markets compared</dt><dd>{run.marketUniverse}</dd><small>National CBSA comparison universe</small></div>
         <div><dt>Measures checked</dt><dd>{run.measuresExamined}</dd><small>Unique measures in approved snapshots</small></div>
         <div><dt>Qualified leads</dt><dd>{run.findings.length}</dd><small>Evidence-backed leads, not approved actions</small></div>
@@ -429,14 +450,13 @@ export function AutonomousDiscoveryWorkspace({ onInvestigate, initialFindingId =
         <div>
           <div className="section-label">Ask AI</div>
           <h2 id="discovery-follow-up-title">Continue the investigation</h2>
-          <p>{followUpFinding ? `Using the ${followUpFinding.marketName} finding as context. Edit the question or ask the analyst to explain or test another factor.` : "Open any finding above or ask a new follow-up about the discovery run."}</p>
+          <p>{followUpTarget ? `Focused on ${followUpTarget.marketName}. Open another finding to change context.` : "Ask a follow-up about the discovery run."}</p>
         </div>
         <div className="discovery-follow-up-suggestions" aria-label="Recommended follow-up questions">
-          <button type="button" onClick={() => setFollowUpQuestion(`Investigate whether ${followUpFinding?.marketName ?? "the strongest market"}'s signal remains after joining first-party outcomes and comparing similar markets.`)}>Investigate more deeply</button>
-          <button type="button" onClick={() => setFollowUpQuestion(`Explain how the ${followUpFinding?.marketName ?? "top"} finding was calculated, what is observed versus assumed, and what evidence could change it.`)}>Explain this finding</button>
+          {followUpSuggestions.map((suggestion) => <button key={suggestion} type="button" title={suggestion} onClick={() => setFollowUpQuestion(suggestion)}>{suggestion}</button>)}
         </div>
         <div className="discovery-follow-up-composer">
-          <textarea ref={followUpRef} value={followUpQuestion} onChange={(event) => setFollowUpQuestion(event.target.value)} placeholder="Ask a follow-up, add another factor, or request a different comparison…" aria-label="Ask AI about these findings" />
+          <textarea ref={followUpRef} value={followUpQuestion} onChange={(event) => setFollowUpQuestion(event.target.value)} placeholder="Ask a follow-up, add another factor, or request a different comparison…" aria-label="Ask AI about these findings" rows={2} />
           <button className="primary-action" type="button" disabled={!followUpQuestion.trim()} onClick={continueInvestigation}>Continue investigation →</button>
         </div>
         <small>The question opens the normal analysis plan so you can confirm the evidence and geography before it runs.</small>

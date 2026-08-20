@@ -192,7 +192,7 @@ function recommendationFor(input: {
   const noMaterialContrary = contrary.length === 0;
   let type: OpportunityRecommendationType;
   if (!corroborating.length && excluded.length) type = "data_quality";
-  else if (!corroborating.length || (!enoughSources && !outcomeReady)) type = "monitor";
+  else if (!corroborating.length || (!enoughSources && !outcomeReady && corroborating.length < 2)) type = "monitor";
   else if (material && outcomeReady && guardrailReady && causalReady && actionApproval && enoughSources && noMaterialContrary) type = "act_now";
   else if (material && outcomeReady && guardrailReady && testApproval && enoughSources && contrary.length < corroborating.length) type = "controlled_test";
   else type = "investigate";
@@ -237,13 +237,14 @@ export function buildCrossSourceRegionalOpportunity(input: {
   const context = usable.filter((item) => item.stance === "context");
   const sourceIds = [...new Set(usable.map((item) => item.sourceId))].sort();
   const sourceFamilies = [...new Set(usable.map((item) => item.sourceFamily))].sort();
-  const recommendation = recommendationFor({ definition, corroborating, contrary, context, excluded, sourceFamilies });
+  const corroboratingSourceFamilies = [...new Set(corroborating.map((item) => item.sourceFamily))].sort();
+  const recommendation = recommendationFor({ definition, corroborating, contrary, context, excluded, sourceFamilies: corroboratingSourceFamilies });
   const supportedRoles = new Set(corroborating.map((item) => item.role));
   const requiredRoles: OpportunityEvidenceRole[] = definition.materialLever === "none"
     ? ["signal"]
     : ["business_outcome", "guardrail", "causal_validity", "approval"];
   const missingEvidence = requiredRoles.filter((role) => !supportedRoles.has(role)).map((role) => missingRole(role, definition));
-  if (sourceFamilies.length < definition.minimumSourceFamilies) missingEvidence.push(`At least ${definition.minimumSourceFamilies} compatible source families; ${sourceFamilies.length} currently corroborate the hypothesis.`);
+  if (corroboratingSourceFamilies.length < definition.minimumSourceFamilies) missingEvidence.push(`At least ${definition.minimumSourceFamilies} compatible source families; ${corroboratingSourceFamilies.length} currently corroborate the hypothesis.`);
   if (contrary.length) missingEvidence.push("Disposition the retained contrary evidence before increasing action readiness.");
   if (excluded.length) missingEvidence.push("Resolve rejected, incompatible, or data-quality evidence before treating it as corroboration.");
   const opportunityId = `opportunity:${definition.hypothesisId}:${input.regionId}`.toLowerCase().replace(/[^a-z0-9:_-]+/g, "-");
@@ -285,7 +286,7 @@ export function buildCrossSourceRegionalOpportunity(input: {
     receivingTeamId: definition.receivingTeamId,
     materialLever: definition.materialLever,
     recommendation,
-    confidence: recommendation.type === "act_now" ? "high" : recommendation.type === "controlled_test" || (recommendation.type === "investigate" && sourceFamilies.length >= 2) ? "medium" : "low",
+    confidence: recommendation.type === "act_now" ? "high" : recommendation.type === "controlled_test" || (recommendation.type === "investigate" && (corroboratingSourceFamilies.length >= 2 || supportedRoles.has("business_outcome"))) ? "medium" : "low",
     evidence: {
       corroborating: corroborating.map(evidenceReference),
       contrary: contrary.map(evidenceReference),

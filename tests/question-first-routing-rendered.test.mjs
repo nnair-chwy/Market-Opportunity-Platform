@@ -61,21 +61,21 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(workflow, /phase === "discovery"/);
   assert.match(workflow, /AutonomousDiscoveryWorkspace/);
   assert.match(discoveryWorkspace, /\/api\/insight-discovery/);
-  assert.match(discoveryWorkspace, /predefined regional questions/);
+  assert.match(discoveryWorkspace, /registered analyses across Marketing, Pricing, and CVC/);
   assert.match(discoveryWorkspace, /five-item portfolio digest plus every additional qualified finding/i);
   assert.match(discoveryWorkspace, /Evidence needed next/);
-  assert.match(discoveryWorkspace, /Decision screens tested/);
+  assert.match(discoveryWorkspace, /Analyses completed/);
   assert.match(discoveryWorkspace, /Open in Ask AI/);
   assert.match(discoveryWorkspace, /Continue the investigation/);
-  assert.match(discoveryWorkspace, /Investigate more deeply/);
-  assert.match(discoveryWorkspace, /Explain this finding/);
+  assert.match(discoveryWorkspace, /attributed efficiency remain after joining new-customer and contribution outcomes/);
+  assert.match(discoveryWorkspace, /click-through rate, attributed conversion rate, and cost per conversion/);
   assert.match(discoveryWorkspace, /setFollowUpQuestion\(finding\.question\)/);
-  assert.match(workflow, /Close autonomous workflow panel/);
+  assert.match(workflow, /Hide autonomous workflow panel/);
   assert.match(workflow, /Show workflow/);
   assert.match(discoveryWorkspace, /Find next signals/);
   assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
   assert.match(discoveryWorkspace, /no data refresh is claimed/i);
-  assert.match(discoveryWorkspace, /reviewed query registry · deterministic evidence checks/i);
+  assert.match(discoveryWorkspace, /registered analyses · observed evidence only/i);
 });
 
 test("request state is transparent before a plan is treated as final", () => {

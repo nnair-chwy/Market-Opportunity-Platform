@@ -886,8 +886,7 @@ export function DecisionWorkflowApp() {
           {isDiscoveryPage ? (
             <>
               <div className="discovery-rail-actions">
-                <button className="text-action" type="button" onClick={() => { setSelectedDiscoveryFindingId(null); setSelectedDiscoveryRun(null); setPhase("question"); }}>← Back to questions</button>
-                <button className="discovery-rail-close" type="button" aria-label="Close autonomous workflow panel" onClick={() => setDiscoveryRailClosed(true)}>×</button>
+                <button className="discovery-rail-close" type="button" aria-label="Hide autonomous workflow panel" onClick={() => setDiscoveryRailClosed(true)}><span className="panel-toggle-icon" aria-hidden="true" /></button>
               </div>
               <div className="rail-kicker">Autonomous workflow</div>
               <h2>From data to insight</h2>
@@ -916,7 +915,7 @@ export function DecisionWorkflowApp() {
           )}
         </aside>
 
-        {isDiscoveryPage && discoveryRailClosed ? <button className="discovery-rail-open" type="button" onClick={() => setDiscoveryRailClosed(false)}>Show workflow</button> : null}
+        {isDiscoveryPage && discoveryRailClosed ? <button className="discovery-rail-open" type="button" aria-label="Show autonomous workflow panel" onClick={() => setDiscoveryRailClosed(false)}><span className="panel-toggle-icon" aria-hidden="true" /> Show workflow</button> : null}
 
         {activeView === "saved" ? (
           <section className="decision-content">
@@ -988,6 +987,7 @@ export function DecisionWorkflowApp() {
             <AutonomousDiscoveryWorkspace
               initialFindingId={selectedDiscoveryFindingId}
               initialRun={selectedDiscoveryRun}
+              onBack={() => { setSelectedDiscoveryFindingId(null); setSelectedDiscoveryRun(null); setPhase("question"); }}
               onInvestigate={(nextQuestion) => { setQuestion(nextQuestion); setPhase("question"); }}
             />
           </section>

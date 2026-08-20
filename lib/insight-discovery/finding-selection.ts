@@ -128,9 +128,8 @@ function isPrimaryOpportunityCandidate(finding: AutonomousInsight) {
   const recommendationType = finding.opportunity?.recommendation.type;
   if (recommendationType === "data_quality" || recommendationType === "monitor") return false;
   if (finding.decisionValue.flags.includes("coverage_risk")) return false;
-  // A coverage boundary can be useful in the evidence inbox, but it is not a
-  // stakeholder opportunity until product economics or customer response are attached.
-  if (finding.department === "pricing" && finding.valueTranslation.kind === "decision_boundary") return false;
+  // A non-quality pricing boundary can still be a stakeholder decision: hold
+  // the current price and investigate matched economics before changing it.
   return true;
 }
 

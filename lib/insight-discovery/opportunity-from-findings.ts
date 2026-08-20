@@ -13,11 +13,17 @@ const DEFINITION: Record<PerspectiveId, CrossSourceHypothesisDefinition> = {
 };
 
 function family(sourceId: string) {
-  if (/census|acs|esri|public/i.test(sourceId)) return "market_context";
+  if (/SRC-0(?:14|15|16|17)|census|acs|esri|public|AVMA|PDS/i.test(sourceId)) return "market_context";
+  if (/SRC-009|clinic.*footprint/i.test(sourceId)) return "clinic_footprint";
+  if (/SRC-018|google|paid|marketing/i.test(sourceId)) return "marketing_delivery";
+  if (/SRC-02(?:5|6|7|8|9)|SRC-030|pricing|zeus|competitor/i.test(sourceId)) return "competitive_pricing";
   if (/tableau.*cvc|cvc.*outcome/i.test(sourceId)) return "clinic_outcomes";
-  if (/google|paid|marketing/i.test(sourceId)) return "marketing_delivery";
-  if (/pricing|zeus|competitor/i.test(sourceId)) return "competitive_pricing";
   return sourceId;
+}
+
+function sourceRole(finding: AutonomousInsight, sourceId: string) {
+  if (family(sourceId) === "market_context") return "context" as const;
+  return finding.decisionValue.flags.includes("coverage_risk") ? "data_quality" as const : "signal" as const;
 }
 
 export function buildOpportunityRunFromFindings(input: {
@@ -32,6 +38,7 @@ export function buildOpportunityRunFromFindings(input: {
     const regionId = finding.marketIds[0] ?? finding.insightId;
     finding.sourceIds.forEach((sourceId, index) => {
       const qualityRisk = finding.decisionValue.flags.includes("coverage_risk");
+      const role = sourceRole(finding, sourceId);
       evidence.push({
         evidenceId: `${finding.insightId}:source:${index}`,
         hypothesisId: definition.hypothesisId,
@@ -40,9 +47,13 @@ export function buildOpportunityRunFromFindings(input: {
         sourceId,
         sourceFamily: family(sourceId),
         metricId: finding.hypothesisIds[index] ?? finding.hypothesisIds[0] ?? "regional_signal",
-        role: qualityRisk ? "data_quality" : "signal",
-        stance: qualityRisk ? "context" : "supports",
-        statement: qualityRisk ? finding.headline : finding.evidenceDetail,
+        role,
+        stance: qualityRisk || role === "context" ? "context" : "supports",
+        statement: qualityRisk
+          ? finding.headline
+          : role === "context"
+            ? `${finding.marketName} public market context was used only to define the comparable regional peer set.`
+            : finding.evidenceDetail,
         qualityStatus: qualityRisk ? "rejected" : "accepted",
         compatibilityStatus: "compatible",
         observationStart: null,
@@ -52,6 +63,50 @@ export function buildOpportunityRunFromFindings(input: {
         authorizationScope: null,
       });
     });
+    if (finding.department === "marketing" && finding.decisionValue.flags.includes("cross_measure_contradiction")) {
+      const deliverySourceId = finding.sourceIds.find((sourceId) => family(sourceId) === "marketing_delivery");
+      if (deliverySourceId) evidence.push({
+        evidenceId: `${finding.insightId}:cross-measure-pattern`,
+        hypothesisId: definition.hypothesisId,
+        regionId,
+        regionName: finding.marketName,
+        sourceId: deliverySourceId,
+        sourceFamily: family(deliverySourceId),
+        metricId: "within_source_cross_measure_pattern",
+        role: "signal",
+        stance: "supports",
+        statement: `${finding.marketName} has a decision-relevant contrast across multiple Google Ads funnel measures in the same source. This is corroboration across measures, not across independent sources.`,
+        qualityStatus: "accepted",
+        compatibilityStatus: "compatible",
+        observationStart: null,
+        observationEnd: null,
+        value: null,
+        unit: null,
+        authorizationScope: null,
+      });
+    }
+    if (finding.department === "cvc" && finding.decisionValue.flags.includes("capacity_validation")) {
+      const footprintSourceId = finding.sourceIds.find((sourceId) => family(sourceId) === "clinic_footprint");
+      if (footprintSourceId) evidence.push({
+        evidenceId: `${finding.insightId}:derived-footprint-load`,
+        hypothesisId: definition.hypothesisId,
+        regionId,
+        regionName: finding.marketName,
+        sourceId: footprintSourceId,
+        sourceFamily: family(footprintSourceId),
+        metricId: "derived_households_per_published_clinic",
+        role: "signal",
+        stance: "supports",
+        statement: `${finding.marketName}'s households-per-published-clinic contrast is derived from published clinic footprint and Census households. It is a demand-pressure screen, not capacity or clinic economics.`,
+        qualityStatus: "accepted",
+        compatibilityStatus: "compatible",
+        observationStart: null,
+        observationEnd: null,
+        value: null,
+        unit: null,
+        authorizationScope: null,
+      });
+    }
     if (finding.businessValue.status === "outcome_connected") {
       evidence.push({
         evidenceId: `${finding.insightId}:business-outcome`,
@@ -59,7 +114,7 @@ export function buildOpportunityRunFromFindings(input: {
         regionId,
         regionName: finding.marketName,
         sourceId: finding.businessValue.sourceIds[0] ?? finding.sourceIds[0] ?? "connected-outcome",
-        sourceFamily: "first_party_outcomes",
+        sourceFamily: family(finding.businessValue.sourceIds[0] ?? finding.sourceIds[0] ?? "connected-outcome"),
         metricId: "connected_business_outcome",
         role: "business_outcome",
         stance: "supports",

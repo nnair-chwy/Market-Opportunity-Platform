@@ -23,11 +23,11 @@ test("autonomous discovery runs every reviewed hypothesis and returns a five-ite
   assert.ok(run.additionalFindings.length > 0);
   assert.equal(run.findings.length, run.findingSelection.counts.global.qualified);
   assert.equal(run.findings.length, run.primaryFindings.length + run.additionalFindings.length);
-  assert.deepEqual(new Set(run.primaryFindings.map((finding) => finding.department)), new Set(["marketing", "cvc"]));
+  assert.deepEqual(new Set(run.primaryFindings.map((finding) => finding.department)), new Set(["marketing", "pricing", "cvc"]));
   assert.ok(run.primaryFindings.every((finding) => finding.opportunity?.recommendation.type !== "data_quality"));
   assert.ok(run.additionalFindings.some((finding) => finding.department === "pricing" && finding.opportunity?.recommendation.type === "data_quality"));
-  assert.ok(["marketing", "cvc"].every((department) => run.primaryFindings.filter((finding) => finding.department === department).length >= 2));
-  assert.ok(["marketing", "cvc"].every((department) => run.primaryFindings.filter((finding) => finding.department === department).length <= 3));
+  assert.ok(["marketing", "pricing", "cvc"].every((department) => run.primaryFindings.some((finding) => finding.department === department)));
+  assert.ok(["marketing", "pricing", "cvc"].every((department) => run.primaryFindings.filter((finding) => finding.department === department).length <= 3));
   assert.ok(run.findingSelection.counts.global.investigated >= 30);
   assert.equal(run.dataAccessSummary.status, "additional_access_recommended");
   assert.ok(run.dataAccessSummary.uniqueTemplateCount >= 3);
@@ -80,6 +80,9 @@ test("autonomous findings translate statistical signals into quantified value or
   assert.equal(mcAllen?.importance.tier, "validate_next");
   assert.equal(mcAllen?.importance.score, 69);
   assert.equal(mcAllen?.importance.notificationCandidate, false);
+  assert.deepEqual([...new Set(mcAllen?.opportunity?.evidence.corroborating.map((item) => item.sourceFamily))], ["marketing_delivery"]);
+  assert.ok(mcAllen?.opportunity?.evidence.context.some((item) => item.sourceFamily === "market_context"));
+  assert.ok(mcAllen?.opportunity?.evidence.corroborating.some((item) => /not across independent sources/i.test(item.statement)));
 
   const eaglePass = run.findings.find((finding) => finding.marketName === "Eagle Pass, TX" && finding.department === "pricing");
   assert.match(eaglePass?.headline ?? "", /monitoring is too thin.*local price decision/i);
@@ -93,6 +96,7 @@ test("autonomous findings translate statistical signals into quantified value or
   assert.match(phoenix?.headline ?? "", /Prioritize.*appointment and capacity validation/i);
   assert.match(phoenix?.valueTranslation.statement ?? "", /2\.9 times the median/i);
   assert.equal(phoenix?.businessValue.status, "export_available");
+  assert.ok(phoenix?.opportunity?.evidence.corroborating.some((item) => item.metricId === "derived_households_per_published_clinic"));
   assert.match(phoenix?.businessValue.headline ?? "", /appointments.*completed visits.*net sales/i);
   assert.equal(phoenix?.importance.tier, "validate_next");
   assert.ok(run.findings.every((finding, index, findings) => index === 0 || findings[index - 1]!.importance.score >= finding.importance.score));
