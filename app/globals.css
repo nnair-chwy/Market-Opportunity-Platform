@@ -163,6 +163,27 @@
 .discovery-hypothesis-backlog article > strong { margin-top: 3px; color: #315d94; font-size: .64rem; text-transform: uppercase; }
 .discovery-hypothesis-backlog details { color: #52657f; font-size: .69rem; }
 .discovery-hypothesis-backlog details summary { color: #315d94; cursor: pointer; font-weight: 750; }
+.adaptive-decision-findings { display: grid; gap: 14px; padding: 20px; border: 1px solid #9fc7bb; border-left: 5px solid #17745f; border-radius: 14px; background: linear-gradient(135deg, #f7fcfa, #edf8f4); }
+.adaptive-decision-findings > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.adaptive-decision-findings h2 { margin: 5px 0; color: #123f37; font-size: 1.16rem; }
+.adaptive-decision-findings header p { max-width: 780px; margin: 0; color: #536e68; font-size: .75rem; line-height: 1.5; }
+.adaptive-decision-findings header > span { flex: none; padding: 7px 10px; border-radius: 999px; background: #d7eee7; color: #17604f; font-size: .66rem; font-weight: 850; }
+.adaptive-decision-list { display: grid; gap: 11px; }
+.adaptive-decision-list > article { display: grid; gap: 10px; padding: 16px; border: 1px solid #c8ded8; border-radius: 12px; background: #fff; }
+.adaptive-decision-list > article[data-kind="contradiction"], .adaptive-decision-list > article[data-kind="competitive_risk"] { border-left: 4px solid #bf6a3f; }
+.adaptive-decision-meta { display: flex; justify-content: space-between; gap: 12px; color: #17604f; font-size: .65rem; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
+.adaptive-decision-meta small { color: #657b76; font-size: .62rem; letter-spacing: 0; text-transform: none; }
+.adaptive-decision-list h3 { margin: 0; color: #173d37; font-size: 1rem; line-height: 1.4; }
+.adaptive-decision-question { margin: 0; color: #60716d; font-size: .72rem; line-height: 1.45; }
+.adaptive-decision-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.adaptive-decision-metrics > div { display: grid; gap: 2px; padding: 10px; border-radius: 9px; background: #eef7f4; }
+.adaptive-decision-metrics strong { color: #173d37; font-size: 1rem; }
+.adaptive-decision-metrics span, .adaptive-decision-metrics small { color: #5c716b; font-size: .63rem; line-height: 1.35; }
+.adaptive-decision-action { padding: 11px 12px; border-left: 3px solid #247e69; background: #edf7f4; }
+.adaptive-decision-action span { color: #24705f; font-size: .62rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.adaptive-decision-action p { margin: 4px 0 0; color: #24483f; font-size: .75rem; font-weight: 720; line-height: 1.48; }
+.adaptive-decision-list details { color: #5a6d68; font-size: .7rem; line-height: 1.5; }
+.adaptive-decision-list details summary { color: #17604f; cursor: pointer; font-weight: 780; }
 .discovery-data-expansion { padding: 0; border: 1px solid #cddcec; border-radius: 15px; background: linear-gradient(135deg, #f8fbff, #eef6ff); }
 .discovery-data-expansion > summary { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 18px 20px; cursor: pointer; list-style: none; }
 .discovery-data-expansion > summary::-webkit-details-marker { display: none; }
@@ -354,6 +375,8 @@
   .discovery-run-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .discovery-hypothesis-backlog > header { display: grid; }
   .discovery-hypothesis-backlog > div { grid-template-columns: 1fr; }
+  .adaptive-decision-findings > header { display: grid; }
+  .adaptive-decision-metrics { grid-template-columns: 1fr; }
   .discovery-run-audit-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .autonomous-insight-grid, .discovery-access-request-grid { grid-template-columns: 1fr; }
   .pricing-geo-test-handoff > header { display: grid; }

@@ -11,8 +11,13 @@ const fixed = { runId: "discovery:test", now: () => "2026-08-19T12:00:00.000Z" }
 test("autonomous discovery runs every reviewed hypothesis and returns a five-item digest plus every additional qualified finding", () => {
   const run = runCurrentDataInsightDiscovery(fixed);
   assert.equal(run.status, "completed");
-  assert.equal(run.generationMethod, "reviewed_hypothesis_registry");
-  assert.equal(run.analysesRun, CURRENT_DATA_HYPOTHESES.length + 3);
+  assert.equal(run.generationMethod, "adaptive_decision_hypotheses");
+  assert.equal(run.analysesRun, CURRENT_DATA_HYPOTHESES.length + 3 + run.adaptiveDiscovery.testedCount);
+  assert.equal(run.adaptiveDiscovery.method, "data_generated_decision_hypotheses");
+  assert.ok(run.adaptiveDiscovery.generatedCount >= 6);
+  assert.ok(run.adaptiveDiscovery.findings.some((finding) => finding.id.includes("louisville")));
+  assert.ok(run.adaptiveDiscovery.findings.some((finding) => finding.id.includes("channel-mix")));
+  assert.ok(run.adaptiveDiscovery.findings.some((finding) => finding.findingKind === "price_test"));
   assert.equal(run.traces.length, CURRENT_DATA_HYPOTHESES.length + 3);
   assert.equal(run.marketUniverse, 383);
   assert.ok(run.measuresExamined >= 15);
@@ -123,9 +128,9 @@ test("a rerun executes every hypothesis and surfaces the next qualified same-sna
 
   assert.notEqual(second.runId, first.runId);
   assert.equal(second.runSequence, 2);
-  assert.equal(second.analysesRun, CURRENT_DATA_HYPOTHESES.length + 3);
+  assert.equal(second.analysesRun, CURRENT_DATA_HYPOTHESES.length + 3 + second.adaptiveDiscovery.testedCount);
   assert.equal(second.traces.length, CURRENT_DATA_HYPOTHESES.length + 3);
-  assert.equal(second.runAudit.reranHypothesisCount, CURRENT_DATA_HYPOTHESES.length + 3);
+  assert.equal(second.runAudit.reranHypothesisCount, CURRENT_DATA_HYPOTHESES.length + 3 + second.adaptiveDiscovery.testedCount);
   assert.equal(second.runAudit.mode, "same_snapshot_reprioritization");
   assert.equal(second.runAudit.snapshotFingerprint, first.runAudit.snapshotFingerprint);
   assert.deepEqual(second.runAudit.repeatedPrimaryFindingIds, []);

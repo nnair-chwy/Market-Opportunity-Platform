@@ -12,6 +12,23 @@ const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing:
 const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v1";
 const DISCOVERY_HISTORY_LIMIT = 5;
 
+function adaptiveMetricValue(value: number, unit: string) {
+  if (["ratio", "percentage_point_ratio"].includes(unit)) return `${(value * 100).toLocaleString("en-US", { maximumFractionDigits: 1 })}%`;
+  if (unit === "USD") return `$${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
+}
+
+function adaptivePortfolioDigest(findings: CurrentDataDiscoveryRun["adaptiveDiscovery"]["findings"]) {
+  const take = (kind: (typeof findings)[number]["findingKind"], count: number) => findings.filter((finding) => finding.findingKind === kind).slice(0, count);
+  return [
+    ...take("opportunity", 2),
+    ...take("contradiction", 1),
+    ...take("cross_functional", 2),
+    ...take("price_test", 2),
+    ...take("competitive_risk", 1),
+  ];
+}
+
 function findingFollowUps(finding: AutonomousInsight | null) {
   if (!finding) return ["Which finding has the strongest business case after accounting for evidence quality?", "Which missing outcome would most change the current recommendation?"];
   if (finding.department === "marketing") return [
@@ -284,6 +301,11 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   }), [run]);
   const pricingGeoTestHandoff = useMemo(() => buildPricingGeoTestHandoff(run ?? undefined), [run]);
   const emergingHypotheses = useMemo(() => run ? buildCrossSourceHypothesisBacklog(run) : [], [run]);
+  const adaptiveFindings = useMemo(() => {
+    if (!run) return [];
+    if (department === "all") return adaptivePortfolioDigest(run.adaptiveDiscovery.findings);
+    return run.adaptiveDiscovery.findings.filter((finding) => finding.departments.includes(department)).slice(0, 8);
+  }, [department, run]);
 
   function openInAskAi(finding: AutonomousInsight) {
     setFollowUpFinding(finding);
@@ -321,12 +343,12 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       <button className="text-action discovery-back" type="button" onClick={onBack}>← Back to questions</button>
       <div className="section-label">Autonomous insight discovery</div>
       <h1 id="autonomous-discovery-title">Investigating the current data without waiting for a question</h1>
-      <p>The agent is running the reviewed departmental hypothesis registry, screening regional contrasts, combining repeated market signals, challenging interpretations, and ranking the strongest leads.</p>
+      <p>The agent is profiling approved sources, generating decision hypotheses from observed patterns, and testing them with cohort, contradiction, channel-mix, quality, and matched-SKU analyses.</p>
       <ol className="discovery-running-steps">
-        <li><span />Generate Marketing, Pricing, and CVC hypotheses</li>
-        <li><span />Run bounded queries across approved snapshots</li>
-        <li><span />Deduplicate and cross-check repeated regional signals</li>
-        <li><span />Return a five-item portfolio digest plus every additional qualified finding</li>
+        <li><span />Profile native source grain, measures, and quality</li>
+        <li><span />Generate cross-team decision hypotheses from anomalies and contradictions</li>
+        <li><span />Run bounded cohort, decomposition, and matched-SKU recipes</li>
+        <li><span />Return the supported decision, benchmark, confidence, and limit</li>
       </ol>
     </section>
   );
@@ -353,7 +375,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
             </div>
           </details>
           <button className="discovery-run-again" type="button" onClick={() => void runAgain()} disabled={isRerunning}>
-            {isRerunning ? `Re-running ${run.analysesRun} screens…` : "Find next signals"}
+            {isRerunning ? `Testing ${run.analysesRun} analyses…` : "Find next signals"}
           </button>
         </div>
       </div>
@@ -375,9 +397,9 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         <div>
           <div className="section-label">Autonomous insight discovery</div>
           <h1 id="autonomous-discovery-title">The decisions worth investigating first</h1>
-          <p>The system screened {run.analysesRun} registered analyses across Marketing, Pricing, and CVC, then separated observed evidence, business implications, and the next decision each team can responsibly make.</p>
+          <p>The system generated decision hypotheses from the data, tested them with cohort, contradiction, channel-mix, quality, and matched-SKU operators, then separated observed evidence from the next decision.</p>
         </div>
-        <span className="discovery-method">Registered analyses · observed evidence only</span>
+        <span className="discovery-method">{run.adaptiveDiscovery.generatedCount} generated hypotheses · {run.adaptiveDiscovery.testedCount} evidence-backed</span>
       </header>
 
       <div className="discovery-run-sequence" data-run-mode={run.runAudit.mode} role="status" aria-live="polite">
@@ -400,10 +422,10 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
 
       <dl className="discovery-run-metrics">
-        <div><dt>Analyses completed</dt><dd>{run.analysesRun}</dd><small>{screenCounts.marketing} Marketing · {screenCounts.pricing} Pricing · {screenCounts.cvc} CVC</small></div>
+        <div><dt>Analyses completed</dt><dd>{run.analysesRun}</dd><small>{run.adaptiveDiscovery.testedCount} adaptive · {screenCounts.marketing + screenCounts.pricing + screenCounts.cvc} baseline screens</small></div>
         <div><dt>Markets compared</dt><dd>{run.marketUniverse}</dd><small>National CBSA comparison universe</small></div>
         <div><dt>Measures checked</dt><dd>{run.measuresExamined}</dd><small>Unique measures in approved snapshots</small></div>
-        <div><dt>Qualified leads</dt><dd>{run.findings.length}</dd><small>Evidence-backed leads, not approved actions</small></div>
+        <div><dt>Data-generated decisions</dt><dd>{run.adaptiveDiscovery.testedCount}</dd><small>Cohort, contradiction, channel, SKU, and cross-source tests</small></div>
       </dl>
 
       {emergingHypotheses.length ? (
@@ -439,11 +461,43 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         ))}
       </div>
 
+      {adaptiveFindings.length ? (
+        <section className="adaptive-decision-findings" aria-labelledby="adaptive-decision-findings-title">
+          <header>
+            <div>
+              <div className="section-label">Generated from the evidence</div>
+              <h2 id="adaptive-decision-findings-title">Decisions the fixed question list did not ask</h2>
+              <p>Each question was opened by a repeatable pattern in the current data and tested with a bounded analytical recipe. The conclusion comes first; calculation and limits stay attached.</p>
+            </div>
+            <span>{adaptiveFindings.length} shown</span>
+          </header>
+          <div className="adaptive-decision-list">
+            {adaptiveFindings.map((finding) => (
+              <article key={finding.id} data-kind={finding.findingKind}>
+                <div className="adaptive-decision-meta">
+                  <span>{finding.departments.map((item) => LABELS[item]).join(" + ")}</span>
+                  <small>{finding.confidence.level} descriptive confidence</small>
+                </div>
+                <h3>{finding.implication}</h3>
+                <p className="adaptive-decision-question">{finding.question}</p>
+                <div className="adaptive-decision-metrics">
+                  {finding.metrics.slice(0, 3).map((metric) => (
+                    <div key={metric.id}><strong>{adaptiveMetricValue(metric.value, metric.unit)}</strong><span>{metric.label}</span>{metric.benchmark !== undefined ? <small>Peer benchmark {adaptiveMetricValue(Number(metric.benchmark), metric.unit)}</small> : null}</div>
+                  ))}
+                </div>
+                <div className="adaptive-decision-action"><span>Decision supported</span><p>{finding.proposedAction}</p></div>
+                <details><summary>Evidence, calculation, and limits</summary><p>{finding.evidence.join(" ")}</p><p><strong>Confidence:</strong> {finding.confidence.reason}</p><p><strong>Boundary:</strong> {finding.decisionBoundary}</p><p><strong>Limits:</strong> {finding.limits.join(" ")}</p></details>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {department === "all" || department === "pricing" ? (
         <section className="pricing-geo-test-handoff" aria-labelledby="pricing-geo-test-handoff-title">
           <header>
             <div>
-              <div className="section-label">Cross-team decision handoff</div>
+              <div className="section-label">Shareable pricing insight</div>
               <h2 id="pricing-geo-test-handoff-title">{pricingGeoTestHandoff.title}</h2>
               <p>Prepared for {pricingGeoTestHandoff.preparedFor} · {pricingGeoTestHandoff.recipientRole}</p>
             </div>
@@ -452,17 +506,17 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
             </button>
           </header>
           <div className="pricing-geo-test-recommendation">
-            <span>Recommendation</span>
+            <span>Conclusion for the test</span>
             <strong>{pricingGeoTestHandoff.recommendation}</strong>
             <p>{pricingGeoTestHandoff.why}</p>
           </div>
           <div className="pricing-geo-test-grid">
-            <article><span>Market and control design</span><p>{pricingGeoTestHandoff.testDesign.candidateMarkets} {pricingGeoTestHandoff.testDesign.treatmentAndControl}</p></article>
-            <article><span>What Pricing contributes</span><p>{pricingGeoTestHandoff.testDesign.pricingRole}</p></article>
-            <article><span>How value is judged</span><p>{pricingGeoTestHandoff.primaryOutcomes.join("; ")}.</p></article>
+            <article><span>What the evidence rules out</span><p>Do not rank PetSmart markets from the current retailer extracts, and do not mix a Chewy price change into the first demand test.</p></article>
+            <article><span>How pricing still helps</span><p>{pricingGeoTestHandoff.testDesign.pricingRole}</p></article>
+            <article><span>What proves value</span><p>{pricingGeoTestHandoff.primaryOutcomes.join("; ")}.</p></article>
           </div>
           <details>
-            <summary>Evidence boundary and exact data needed</summary>
+            <summary>Supporting evidence and what would change this conclusion</summary>
             <p>{pricingGeoTestHandoff.currentEvidence.join(" ")}</p>
             <ul>{pricingGeoTestHandoff.pricingInputsRequired.map((input) => <li key={input}>{input}</li>)}</ul>
             <strong>{pricingGeoTestHandoff.evidenceBoundary}</strong>

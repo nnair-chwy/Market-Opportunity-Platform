@@ -61,8 +61,9 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(workflow, /phase === "discovery"/);
   assert.match(workflow, /AutonomousDiscoveryWorkspace/);
   assert.match(discoveryWorkspace, /\/api\/insight-discovery/);
-  assert.match(discoveryWorkspace, /registered analyses across Marketing, Pricing, and CVC/);
-  assert.match(discoveryWorkspace, /five-item portfolio digest plus every additional qualified finding/i);
+  assert.match(discoveryWorkspace, /generated decision hypotheses from the data/i);
+  assert.match(discoveryWorkspace, /cohort, contradiction, channel-mix, quality, and matched-SKU operators/i);
+  assert.match(discoveryWorkspace, /Decisions the fixed question list did not ask/);
   assert.match(discoveryWorkspace, /Evidence needed next/);
   assert.match(discoveryWorkspace, /Analyses completed/);
   assert.match(discoveryWorkspace, /Open in Ask AI/);
@@ -75,7 +76,7 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(discoveryWorkspace, /Find next signals/);
   assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
   assert.match(discoveryWorkspace, /no data refresh is claimed/i);
-  assert.match(discoveryWorkspace, /registered analyses · observed evidence only/i);
+  assert.match(discoveryWorkspace, /generated hypotheses ·.*evidence-backed/i);
 });
 
 test("request state is transparent before a plan is treated as final", () => {

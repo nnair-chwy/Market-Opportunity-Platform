@@ -15,6 +15,7 @@ import { getTableauCvcMetroSummaries, median, TABLEAU_CVC_OUTCOME_SNAPSHOT_VERSI
 import { buildOpportunityRunFromFindings, opportunityForFinding } from "./opportunity-from-findings.ts";
 import type { CrossSourceRegionalOpportunity } from "./cross-source-opportunity.ts";
 import type { IterativeDiscoveryRun } from "./iterative-discovery-loop.ts";
+import { getAdaptiveDiscoveryAudit, type AdaptiveDecisionFinding } from "./adaptive-decision-insights.ts";
 
 export const CURRENT_DATA_DISCOVERY_VERSION = "current-data-insight-discovery-v3" as const;
 const TABLEAU_CVC_OUTCOME_ANALYSES = ["cvc-completed-appointments-per-spend", "cvc-net-sales-per-spend", "cvc-new-to-chewy-appointment-mix"] as const;
@@ -100,7 +101,7 @@ export type CurrentDataDiscoveryRun = {
   status: "completed";
   startedAt: string;
   completedAt: string;
-  generationMethod: "reviewed_hypothesis_registry";
+  generationMethod: "adaptive_decision_hypotheses";
   analysesRun: number;
   departmentsScanned: PerspectiveId[];
   marketUniverse: number;
@@ -150,6 +151,15 @@ export type CurrentDataDiscoveryRun = {
     snapshotVersion: string;
     readiness: string;
   }>;
+  adaptiveDiscovery: {
+    version: string;
+    generatedAt: string;
+    method: "data_generated_decision_hypotheses";
+    sourceCount: number;
+    generatedCount: number;
+    testedCount: number;
+    findings: AdaptiveDecisionFinding[];
+  };
   limitations: string[];
   opportunityRun: IterativeDiscoveryRun;
 };
@@ -539,6 +549,7 @@ export function runCurrentDataInsightDiscovery(input: {
   const measures = new Set<string>();
   const sources = new Set<string>();
   let marketUniverse = 0;
+  const adaptiveDiscovery = getAdaptiveDiscoveryAudit();
 
   for (const hypothesis of CURRENT_DATA_HYPOTHESES) {
     const plan = planEvaluation(hypothesis.question, hypothesis.department, [], hypothesis.viewId);
@@ -636,8 +647,8 @@ export function runCurrentDataInsightDiscovery(input: {
     status: "completed",
     startedAt,
     completedAt: now(),
-    generationMethod: "reviewed_hypothesis_registry",
-    analysesRun: CURRENT_DATA_HYPOTHESES.length + TABLEAU_CVC_OUTCOME_ANALYSES.length,
+    generationMethod: "adaptive_decision_hypotheses",
+    analysesRun: CURRENT_DATA_HYPOTHESES.length + TABLEAU_CVC_OUTCOME_ANALYSES.length + adaptiveDiscovery.testedCount,
     departmentsScanned: ["marketing", "pricing", "cvc"],
     marketUniverse,
     measuresExamined: measures.size,
@@ -671,14 +682,15 @@ export function runCurrentDataInsightDiscovery(input: {
       mode,
       snapshotFingerprint,
       previousSnapshotFingerprint: input.previousSnapshotFingerprint ?? null,
-      reranHypothesisCount: CURRENT_DATA_HYPOTHESES.length + TABLEAU_CVC_OUTCOME_ANALYSES.length,
+      reranHypothesisCount: CURRENT_DATA_HYPOTHESES.length + TABLEAU_CVC_OUTCOME_ANALYSES.length + adaptiveDiscovery.testedCount,
       excludedPreviousPrimaryFindingIds,
       newPrimaryFindingIds: primaryFindingIds.filter((findingId) => !previousPrimaryIds.has(findingId)),
       repeatedPrimaryFindingIds: primaryFindingIds.filter((findingId) => previousPrimaryIds.has(findingId)),
     },
     traces,
+    adaptiveDiscovery,
     limitations: [
-      "The autonomous run uses the reviewed local hypothesis registry; it does not yet ask an external model to invent arbitrary SQL.",
+      "The run generates decision hypotheses from cohort, contradiction, channel-decomposition, quality, and matched-SKU operators. It still executes governed analytical recipes rather than arbitrary model-written SQL.",
       "Findings are descriptive investigation leads from currently approved snapshots, not causal conclusions or authority for price, spend, clinic, lease, or other material action.",
       "Cross-department findings remain separate when geography, period, definitions, or approved crosswalks are incompatible.",
       mode === "same_snapshot_reprioritization"

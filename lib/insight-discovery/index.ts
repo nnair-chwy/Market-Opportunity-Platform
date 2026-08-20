@@ -9,3 +9,4 @@ export * from "./opportunity-from-findings.ts";
 export * from "./decision-case.ts";
 export * from "./pricing-geo-test-handoff.ts";
 export * from "./hypothesis-backlog.ts";
+export * from "./adaptive-decision-insights.ts";

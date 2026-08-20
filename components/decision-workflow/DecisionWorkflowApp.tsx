@@ -892,12 +892,12 @@ export function DecisionWorkflowApp() {
               <h2>From data to insight</h2>
               <p>Scan approved evidence without waiting for a stakeholder question.</p>
               <ol className="rail-steps">
-                <li className="complete"><span>1</span><div><strong>Generate</strong><small>Run reviewed hypotheses</small></div></li>
+                <li className="complete"><span>1</span><div><strong>Generate</strong><small>Open hypotheses from the evidence</small></div></li>
                 <li className="complete"><span>2</span><div><strong>Investigate</strong><small>Screen every compatible market</small></div></li>
                 <li className="complete"><span>3</span><div><strong>Challenge</strong><small>Retain limits and alternatives</small></div></li>
                 <li className="current"><span>4</span><div><strong>Discover</strong><small>Review the strongest leads</small></div></li>
               </ol>
-              <div className="rail-note"><strong>Current method</strong><p>Nine reviewed queries run locally. Findings do not authorize material action.</p></div>
+              <div className="rail-note"><strong>Current method</strong><p>Data-generated hypotheses are tested with reusable cohort, contradiction, channel-mix, and matched-SKU analyses. Findings do not authorize material action.</p></div>
             </>
           ) : (
             <>

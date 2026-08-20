@@ -31,6 +31,7 @@
     "data:build:clinic-market-snapshot": "node --experimental-strip-types scripts/build-clinic-market-evidence-snapshot.ts",
     "data:build:tableau-cvc-outcomes": "node --experimental-strip-types scripts/build-tableau-cvc-outcomes.ts",
     "data:build:tableau-new-customer": "node --experimental-strip-types scripts/build-tableau-new-customer-acquisition.ts",
+    "data:build:adaptive-discovery": "node --experimental-strip-types scripts/build-adaptive-discovery.ts",
     "data:build:normalized-market": "node --experimental-strip-types scripts/build-normalized-market-data.ts",
     "data:query:clinic-market-readiness": "node --experimental-strip-types scripts/query-clinic-market-readiness.ts",
     "data:ingest:evidence-snapshot": "node --experimental-strip-types scripts/ingest-evidence-snapshot.ts",
