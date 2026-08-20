@@ -16,6 +16,7 @@ import { SisterGeographiesSection } from "@/components/decision-workflow/SisterG
 import { ValidationWorkplanPanel } from "@/components/decision-workflow/ValidationWorkplanPanel";
 import { EvidenceBundlePanel } from "@/components/evidence/EvidenceBundlePanel";
 import { AutonomousDiscoveryWorkspace } from "@/components/insight-discovery/AutonomousDiscoveryWorkspace";
+import { EmailBriefControl } from "@/components/sharing/EmailBriefControl";
 import type { CurrentDataDiscoveryRun } from "@/lib/insight-discovery";
 import { evidenceExecutionResponseSchema, type EvidenceExecutionResponse } from "@/lib/evidence-snapshot/contracts";
 import type { CompactSourceReadiness } from "@/lib/data-discovery/readiness-service";
@@ -1420,6 +1421,7 @@ export function DecisionWorkflowApp() {
               ) : null}
 
               {reviewablePacket ? <ResultOutputBuilder packet={reviewablePacket} /> : null}
+              {reviewablePacket ? <EmailBriefControl packet={reviewablePacket} /> : null}
 
               <SisterGeographiesSection
                 suggestions={sisterGeographies}

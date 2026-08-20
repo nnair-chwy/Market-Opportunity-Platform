@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AdaptiveMarketWorkspace } from "@/components/decision-workflow/AdaptiveMarketWorkspace";
 import { RecommendedQuestionTypeahead } from "@/components/decision-workflow/RecommendedQuestionTypeahead";
 import { OpeningFindingsControl } from "@/components/insight-discovery/OpeningFindingsControl";
+import { DataRefreshControl } from "@/components/sharing/DataRefreshControl";
 import {
   coerceSupportedMapMode,
   createDefaultActiveViews,
@@ -424,6 +425,7 @@ export function AdaptiveEvaluationWorkspace({
             <OpeningFindingsControl
               onOpenDiscovery={onDiscoverInsights}
             />
+            <DataRefreshControl />
             {savedPackets.length > 0 ? (
               <button
                 className="adaptive-opening-tool adaptive-saved-trigger"
