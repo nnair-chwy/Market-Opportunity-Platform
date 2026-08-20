@@ -26,17 +26,19 @@ export function findingPresentation(finding: AutonomousInsight) {
   const dataQuality = recommendationType === "data_quality";
   const corroboration = finding.signalCount >= 2 || finding.sourceIds.length >= 2;
   const connectedOutcome = finding.businessValue.status === "outcome_connected";
+  const screenEvidence = `${finding.signalCount} reviewed screen${finding.signalCount === 1 ? "" : "s"}`;
+  const sourceEvidence = `${finding.sourceIds.length} source${finding.sourceIds.length === 1 ? "" : "s"}`;
   const signalConfidence = dataQuality
     ? "Not scored — source issue"
     : connectedOutcome && corroboration
-      ? "Connected outcomes + repeated signal"
+      ? `${screenEvidence} · ${sourceEvidence} · first-party outcome`
       : connectedOutcome
-        ? "Connected first-party outcome"
+        ? `${screenEvidence} · first-party outcome connected`
         : corroboration
-          ? "Repeated across screens or sources"
+          ? `${screenEvidence} · ${sourceEvidence}`
           : finding.valueTranslation.kind === "modeled_scenario"
-            ? "One observed snapshot + proxy model"
-            : "Single-source directional signal";
+            ? `${screenEvidence} · proxy scenario`
+            : `${screenEvidence} · ${sourceEvidence}`;
   const decisionReadiness = recommendationType === "act_now"
     ? "Authorized decision review"
     : recommendationType === "controlled_test"

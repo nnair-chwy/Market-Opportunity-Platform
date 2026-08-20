@@ -10,10 +10,10 @@ const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing:
 const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v1";
 const DISCOVERY_HISTORY_LIMIT = 5;
 
-function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
+function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false }: {
   finding: AutonomousInsight;
   rankLabel: string;
-  onInvestigate: (question: string) => void;
+  onOpenInvestigation: (finding: AutonomousInsight) => void;
   selected?: boolean;
 }) {
   const interpretation = finding.analystInterpretation;
@@ -67,7 +67,7 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
       )}
       <div className="discovery-card-footer">
         <p><span>Owner</span><strong>{finding.applicability.primaryTeamLabel}</strong></p>
-        <button className="secondary-action" type="button" onClick={() => onInvestigate(finding.question)}>Open investigation →</button>
+        <button className="secondary-action" type="button" onClick={() => onOpenInvestigation(finding)}>Open in Ask AI →</button>
       </div>
       <details>
         <summary>Evidence, caveats, and decision rules</summary>
@@ -94,8 +94,7 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
   );
 }
 
-export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFindingId = null, initialRun = null }: {
-  onBack: () => void;
+export function AutonomousDiscoveryWorkspace({ onInvestigate, initialFindingId = null, initialRun = null }: {
   onInvestigate: (question: string) => void;
   initialFindingId?: string | null;
   initialRun?: CurrentDataDiscoveryRun | null;
@@ -106,8 +105,11 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const [isSending, setIsSending] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [followUpFinding, setFollowUpFinding] = useState<AutonomousInsight | null>(null);
+  const [followUpQuestion, setFollowUpQuestion] = useState("");
   const [slackConfig, setSlackConfig] = useState<{ configured: boolean; destination: string } | null>(null);
   const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
+  const followUpRef = useRef<HTMLTextAreaElement | null>(null);
   const [department, setDepartment] = useState<"all" | PerspectiveId>("all");
   const [runHistory, setRunHistory] = useState<CurrentDataDiscoveryRun[]>(() => {
     let storedRuns: CurrentDataDiscoveryRun[] = [];
@@ -260,6 +262,22 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     cvc: run?.traces.filter((trace) => trace.department === "cvc").length ?? 0,
   }), [run]);
 
+  function openInAskAi(finding: AutonomousInsight) {
+    setFollowUpFinding(finding);
+    setFollowUpQuestion(finding.question);
+    requestAnimationFrame(() => {
+      followUpRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      followUpRef.current?.focus({ preventScroll: true });
+      followUpRef.current?.select();
+    });
+  }
+
+  function continueInvestigation() {
+    const nextQuestion = followUpQuestion.trim();
+    if (!nextQuestion) return;
+    onInvestigate(nextQuestion);
+  }
+
   useEffect(() => {
     if (!selectedFinding) return;
     requestAnimationFrame(() => {
@@ -271,14 +289,12 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
 
   if (error && !run) return (
     <section className="autonomous-discovery-page" aria-labelledby="autonomous-discovery-title">
-      <button className="text-action" type="button" onClick={onBack}>← Back to questions</button>
       <div className="discovery-error" role="alert"><h1 id="autonomous-discovery-title">The current-data scan could not complete</h1><p>{error}</p><button className="primary-action" type="button" onClick={() => window.location.reload()}>Retry</button></div>
     </section>
   );
 
   if (!run) return (
     <section className="autonomous-discovery-page discovery-running" aria-labelledby="autonomous-discovery-title">
-      <button className="text-action" type="button" onClick={onBack}>← Back to questions</button>
       <div className="section-label">Autonomous insight discovery</div>
       <h1 id="autonomous-discovery-title">Investigating the current data without waiting for a question</h1>
       <p>The agent is running the reviewed departmental hypothesis registry, screening regional contrasts, combining repeated market signals, challenging interpretations, and ranking the strongest leads.</p>
@@ -294,7 +310,6 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   return (
     <section className="autonomous-discovery-page" aria-labelledby="autonomous-discovery-title" aria-busy={isRerunning}>
       <div className="discovery-page-nav">
-        <button className="text-action" type="button" onClick={onBack}>← Back to questions</button>
         <div className="discovery-run-controls">
           <span>Run {run.runSequence} complete · {new Date(run.completedAt).toLocaleString()}</span>
           <button className="discovery-share-all" type="button" onClick={() => void sendAllFindings()} disabled={isSending}>
@@ -382,7 +397,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
 
       <div className="autonomous-insight-grid">
         {primaryFindings.map((finding: AutonomousInsight, index) => (
-          <InsightCard key={finding.insightId} finding={finding} rankLabel={`#${index + 1}`} onInvestigate={onInvestigate} selected={finding.insightId === initialFindingId} />
+          <InsightCard key={finding.insightId} finding={finding} rankLabel={`#${index + 1}`} onOpenInvestigation={openInAskAi} selected={finding.insightId === initialFindingId} />
         ))}
       </div>
 
@@ -392,7 +407,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
           <p>These have traceable evidence and a next validation step, but rank below the primary digest on present decision value.</p>
           <div className="autonomous-insight-grid">
             {additionalOpportunities.map((finding: AutonomousInsight, index) => (
-              <InsightCard key={finding.insightId} finding={finding} rankLabel={`Additional #${index + 1}`} onInvestigate={onInvestigate} selected={finding.insightId === initialFindingId} />
+              <InsightCard key={finding.insightId} finding={finding} rankLabel={`Additional #${index + 1}`} onOpenInvestigation={openInAskAi} selected={finding.insightId === initialFindingId} />
             ))}
           </div>
         </details>
@@ -404,11 +419,28 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
           <p>These are pipeline repair items, not recommendations. They remain available for data owners without taking space in the primary opportunity digest.</p>
           <div className="autonomous-insight-grid">
             {dataQualityFindings.map((finding: AutonomousInsight, index) => (
-              <InsightCard key={finding.insightId} finding={finding} rankLabel={`Data issue #${index + 1}`} onInvestigate={onInvestigate} selected={finding.insightId === initialFindingId} />
+              <InsightCard key={finding.insightId} finding={finding} rankLabel={`Data issue #${index + 1}`} onOpenInvestigation={openInAskAi} selected={finding.insightId === initialFindingId} />
             ))}
           </div>
         </details>
       ) : null}
+
+      <section className="discovery-follow-up" aria-labelledby="discovery-follow-up-title">
+        <div>
+          <div className="section-label">Ask AI</div>
+          <h2 id="discovery-follow-up-title">Continue the investigation</h2>
+          <p>{followUpFinding ? `Using the ${followUpFinding.marketName} finding as context. Edit the question or ask the analyst to explain or test another factor.` : "Open any finding above or ask a new follow-up about the discovery run."}</p>
+        </div>
+        <div className="discovery-follow-up-suggestions" aria-label="Recommended follow-up questions">
+          <button type="button" onClick={() => setFollowUpQuestion(`Investigate whether ${followUpFinding?.marketName ?? "the strongest market"}'s signal remains after joining first-party outcomes and comparing similar markets.`)}>Investigate more deeply</button>
+          <button type="button" onClick={() => setFollowUpQuestion(`Explain how the ${followUpFinding?.marketName ?? "top"} finding was calculated, what is observed versus assumed, and what evidence could change it.`)}>Explain this finding</button>
+        </div>
+        <div className="discovery-follow-up-composer">
+          <textarea ref={followUpRef} value={followUpQuestion} onChange={(event) => setFollowUpQuestion(event.target.value)} placeholder="Ask a follow-up, add another factor, or request a different comparison…" aria-label="Ask AI about these findings" />
+          <button className="primary-action" type="button" disabled={!followUpQuestion.trim()} onClick={continueInvestigation}>Continue investigation →</button>
+        </div>
+        <small>The question opens the normal analysis plan so you can confirm the evidence and geography before it runs.</small>
+      </section>
 
       <details className="discovery-data-expansion">
         <summary>

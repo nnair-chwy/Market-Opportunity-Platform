@@ -65,7 +65,13 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(discoveryWorkspace, /five-item portfolio digest plus every additional qualified finding/i);
   assert.match(discoveryWorkspace, /Evidence needed next/);
   assert.match(discoveryWorkspace, /Decision screens tested/);
-  assert.match(discoveryWorkspace, /Open investigation/);
+  assert.match(discoveryWorkspace, /Open in Ask AI/);
+  assert.match(discoveryWorkspace, /Continue the investigation/);
+  assert.match(discoveryWorkspace, /Investigate more deeply/);
+  assert.match(discoveryWorkspace, /Explain this finding/);
+  assert.match(discoveryWorkspace, /setFollowUpQuestion\(finding\.question\)/);
+  assert.match(workflow, /Close autonomous workflow panel/);
+  assert.match(workflow, /Show workflow/);
   assert.match(discoveryWorkspace, /Find next signals/);
   assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
   assert.match(discoveryWorkspace, /no data refresh is claimed/i);

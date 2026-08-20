@@ -220,6 +220,7 @@ export function DecisionWorkflowApp() {
   const [sourceReadiness, setSourceReadiness] = useState<CompactSourceReadiness | null>(null);
   const [selectedDiscoveryFindingId, setSelectedDiscoveryFindingId] = useState<string | null>(null);
   const [selectedDiscoveryRun, setSelectedDiscoveryRun] = useState<CurrentDataDiscoveryRun | null>(null);
+  const [discoveryRailClosed, setDiscoveryRailClosed] = useState(false);
   const graphSteps = useMemo(() => plan?.steps ?? [], [plan]);
   const actionOptions = useMemo(() => plan?.actions ?? [], [plan]);
   const showsActionPackage = plan ? presentsActionPackage(plan) : false;
@@ -880,10 +881,14 @@ export function DecisionWorkflowApp() {
       className={`decision-app ${isQuestionPage ? "question-page" : "workspace-mode"} page-phase-${pagePhase}`}
       data-page-phase={pagePhase}
     >
-      <div className={`decision-layout ${workspaceLayoutClass}`} id="start">
+      <div className={`decision-layout ${workspaceLayoutClass} ${isDiscoveryPage && discoveryRailClosed ? "discovery-rail-collapsed" : ""}`} id="start">
         <aside className="decision-rail" aria-label={isDiscoveryPage ? "Autonomous discovery progress" : "Workflow progress"}>
           {isDiscoveryPage ? (
             <>
+              <div className="discovery-rail-actions">
+                <button className="text-action" type="button" onClick={() => { setSelectedDiscoveryFindingId(null); setSelectedDiscoveryRun(null); setPhase("question"); }}>← Back to questions</button>
+                <button className="discovery-rail-close" type="button" aria-label="Close autonomous workflow panel" onClick={() => setDiscoveryRailClosed(true)}>×</button>
+              </div>
               <div className="rail-kicker">Autonomous workflow</div>
               <h2>From data to insight</h2>
               <p>Scan approved evidence without waiting for a stakeholder question.</p>
@@ -910,6 +915,8 @@ export function DecisionWorkflowApp() {
             </>
           )}
         </aside>
+
+        {isDiscoveryPage && discoveryRailClosed ? <button className="discovery-rail-open" type="button" onClick={() => setDiscoveryRailClosed(false)}>Show workflow</button> : null}
 
         {activeView === "saved" ? (
           <section className="decision-content">
@@ -981,7 +988,6 @@ export function DecisionWorkflowApp() {
             <AutonomousDiscoveryWorkspace
               initialFindingId={selectedDiscoveryFindingId}
               initialRun={selectedDiscoveryRun}
-              onBack={() => { setSelectedDiscoveryFindingId(null); setSelectedDiscoveryRun(null); setPhase("question"); }}
               onInvestigate={(nextQuestion) => { setQuestion(nextQuestion); setPhase("question"); }}
             />
           </section>
