@@ -5,6 +5,7 @@ export const DISCOVERY_FINDING_SELECTION_VERSION = "discovery-finding-selection-
 export const PRIMARY_DISCOVERY_DIGEST_LIMIT = 5 as const;
 
 const DEPARTMENT_ORDER: readonly PerspectiveId[] = ["marketing", "pricing", "cvc"];
+const PRIMARY_DEPARTMENT_CAP = 3;
 
 export type DiscoveryFindingSuppressionReason =
   | "missing_identity"
@@ -123,6 +124,16 @@ function duplicateKeys(finding: AutonomousInsight) {
   ];
 }
 
+function isPrimaryOpportunityCandidate(finding: AutonomousInsight) {
+  const recommendationType = finding.opportunity?.recommendation.type;
+  if (recommendationType === "data_quality" || recommendationType === "monitor") return false;
+  if (finding.decisionValue.flags.includes("coverage_risk")) return false;
+  // A coverage boundary can be useful in the evidence inbox, but it is not a
+  // stakeholder opportunity until product economics or customer response are attached.
+  if (finding.department === "pricing" && finding.valueTranslation.kind === "decision_boundary") return false;
+  return true;
+}
+
 function emptyCounts(): DiscoveryFindingSelectionCounts {
   return { investigated: 0, qualified: 0, primary: 0, additional: 0, suppressed: 0 };
 }
@@ -185,10 +196,11 @@ export function selectDiscoveryFindings(
   const primaryDigest: AutonomousInsight[] = [];
   const selectedIds = new Set<string>();
   const excludedPrimaryFindingIds = new Set(options.excludedPrimaryFindingIds ?? []);
-  const primaryCandidates = qualified.filter((finding) => !excludedPrimaryFindingIds.has(finding.insightId));
-  // Preserve an overall portfolio view: take the strongest qualified finding
-  // from each investigated department before filling the remaining digest
-  // slots by global evidence strength.
+  const primaryCandidates = qualified.filter((finding) =>
+    !excludedPrimaryFindingIds.has(finding.insightId) && isPrimaryOpportunityCandidate(finding));
+  // Preserve an overall portfolio view only when a department has an actual
+  // opportunity. Never fill a stakeholder slot with a data repair task merely
+  // to guarantee department representation.
   for (const department of DEPARTMENT_ORDER) {
     const strongest = primaryCandidates.find((finding) => finding.department === department);
     if (strongest && primaryDigest.length < PRIMARY_DISCOVERY_DIGEST_LIMIT) {
@@ -198,7 +210,8 @@ export function selectDiscoveryFindings(
   }
   for (const finding of primaryCandidates) {
     if (primaryDigest.length >= PRIMARY_DISCOVERY_DIGEST_LIMIT) break;
-    if (!selectedIds.has(finding.insightId)) {
+    const departmentCount = primaryDigest.filter((selected) => selected.department === finding.department).length;
+    if (!selectedIds.has(finding.insightId) && departmentCount < PRIMARY_DEPARTMENT_CAP) {
       primaryDigest.push(finding);
       selectedIds.add(finding.insightId);
     }

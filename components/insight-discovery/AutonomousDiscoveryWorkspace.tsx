@@ -9,13 +9,6 @@ const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing:
 const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v1";
 const DISCOVERY_HISTORY_LIMIT = 5;
 
-const ACTIONABILITY_LABELS = {
-  decision_ready: "Ready for accountable review",
-  test_ready: "Ready to design a controlled test",
-  investigation_ready: "Worth investigating",
-  descriptive_only: "Context only",
-} as const;
-
 function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
   finding: AutonomousInsight;
   rankLabel: string;
@@ -48,15 +41,16 @@ function InsightCard({ finding, rankLabel, onInvestigate, selected = false }: {
         <>
           <section className="discovery-decision-first" aria-label="Recommended decision">
             <span>{presentation.recommendationLabel}</span>
-            <h2>{interpretation.recommendedNextDecisionOrAction}</h2>
-            <p><strong>Expected business result:</strong> {finding.businessValue.headline}</p>
+            <h2>{presentation.primaryStatement}</h2>
+            <p><strong>Observed or testable result:</strong> {presentation.expectedResult}</p>
           </section>
           <div className="discovery-decision-facts" aria-label="Recommendation readiness">
             <div><span>Potential value</span><strong>{presentation.valueStatus}</strong></div>
-            <div><span>Evidence confidence</span><strong>{presentation.confidence}</strong></div>
-            <div><span>Urgency</span><strong>{presentation.urgency}</strong></div>
-            <div><span>Readiness</span><strong>{ACTIONABILITY_LABELS[interpretation.actionabilityLevel]}</strong></div>
+            <div><span>Observed signal</span><strong>{presentation.signalConfidence}</strong></div>
+            <div><span>Decision readiness</span><strong>{presentation.decisionReadiness}</strong></div>
+            <div><span>Priority</span><strong>{presentation.urgency}</strong></div>
           </div>
+          <div className="discovery-recommended-move"><span>Recommended move</span><p>{presentation.recommendedMove}</p></div>
           <div className="discovery-region-rationale"><span>Why this region</span><p>{finding.headline}. {finding.whyInteresting}</p></div>
         </>
       ) : (
@@ -241,6 +235,8 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const additionalFindings = useMemo(() => (run?.additionalFindings
     .filter((finding) => department === "all" || finding.department === department)
     .sort((left, right) => right.importance.score - left.importance.score) ?? []), [department, run]);
+  const additionalOpportunities = useMemo(() => additionalFindings.filter((finding) => findingPresentation(finding).recommendationType !== "data_quality"), [additionalFindings]);
+  const dataQualityFindings = useMemo(() => additionalFindings.filter((finding) => findingPresentation(finding).recommendationType === "data_quality"), [additionalFindings]);
   const selectedFinding = useMemo(
     () => run?.findings.find((finding) => finding.insightId === initialFindingId) ?? null,
     [initialFindingId, run],
@@ -381,13 +377,25 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         ))}
       </div>
 
-      {additionalFindings.length > 0 ? (
+      {additionalOpportunities.length > 0 ? (
         <details className="discovery-additional-findings" open={Boolean(initialFindingId && additionalFindings.some((finding) => finding.insightId === initialFindingId)) || undefined}>
-          <summary>Show {additionalFindings.length} additional reviewable lead{additionalFindings.length === 1 ? "" : "s"}</summary>
+          <summary>Show {additionalOpportunities.length} additional reviewable lead{additionalOpportunities.length === 1 ? "" : "s"}</summary>
           <p>These have traceable evidence and a next validation step, but rank below the primary digest on present decision value.</p>
           <div className="autonomous-insight-grid">
-            {additionalFindings.map((finding: AutonomousInsight, index) => (
+            {additionalOpportunities.map((finding: AutonomousInsight, index) => (
               <InsightCard key={finding.insightId} finding={finding} rankLabel={`Additional #${index + 1}`} onInvestigate={onInvestigate} selected={finding.insightId === initialFindingId} />
+            ))}
+          </div>
+        </details>
+      ) : null}
+
+      {dataQualityFindings.length > 0 ? (
+        <details className="discovery-additional-findings discovery-data-quality-findings">
+          <summary>{dataQualityFindings.length} source issue{dataQualityFindings.length === 1 ? "" : "s"} excluded from opportunity ranking</summary>
+          <p>These are pipeline repair items, not recommendations. They remain available for data owners without taking space in the primary opportunity digest.</p>
+          <div className="autonomous-insight-grid">
+            {dataQualityFindings.map((finding: AutonomousInsight, index) => (
+              <InsightCard key={finding.insightId} finding={finding} rankLabel={`Data issue #${index + 1}`} onInvestigate={onInvestigate} selected={finding.insightId === initialFindingId} />
             ))}
           </div>
         </details>

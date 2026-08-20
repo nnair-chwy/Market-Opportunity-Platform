@@ -130,9 +130,9 @@ export function OpeningFindingsControl({
                 <h3>{finding.headline}</h3>
                 <div className="adaptive-finding-value" data-status={finding.businessValue.status}>
                   <span>{presentation.valueStatus}</span>
-                  <strong>{presentation.confidence} confidence · {presentation.urgency}</strong>
+                  <strong>{presentation.signalConfidence} signal · {presentation.decisionReadiness}</strong>
                 </div>
-                <p><b>Next:</b> {finding.analystInterpretation?.recommendedNextDecisionOrAction ?? finding.nextValidation}</p>
+                <p><b>{presentation.recommendationType === "data_quality" ? "Data-owner task:" : "Recommended move:"}</b> {presentation.recommendedMove}</p>
                 <button
                   className="adaptive-finding-open"
                   type="button"

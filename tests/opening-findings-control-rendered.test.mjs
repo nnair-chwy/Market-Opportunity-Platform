@@ -13,7 +13,8 @@ test("the opening findings inbox loads current findings without an opaque opport
   assert.match(findings, /aria-controls="adaptive-findings-panel"/);
   assert.match(findings, /aria-expanded=\{open\}/);
   assert.match(findings, /presentation\.recommendationLabel/);
-  assert.match(findings, /presentation\.confidence/);
+  assert.match(findings, /presentation\.signalConfidence/);
+  assert.match(findings, /presentation\.decisionReadiness/);
   assert.doesNotMatch(findings, /finding\.importance\.score/);
 });
 

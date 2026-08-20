@@ -9,7 +9,10 @@ test("stakeholder presentation separates recommendation type, confidence, value,
   const presentation = findingPresentation(finding);
 
   assert.ok(["act_now", "controlled_test", "investigate", "monitor", "data_quality"].includes(presentation.recommendationType));
-  assert.ok(["High", "Medium", "Low"].includes(presentation.confidence));
+  assert.ok(["Strong", "Moderate", "Preliminary", "Not scored"].includes(presentation.signalConfidence));
+  assert.ok(presentation.decisionReadiness.length > 0);
+  assert.ok(presentation.recommendedMove.length > 0);
+  assert.ok(presentation.expectedResult.length > 0);
   assert.ok(presentation.valueStatus.length > 0);
   assert.ok(presentation.urgency.length > 0);
   assert.equal(recommendationTypeForFinding(finding), presentation.recommendationType);

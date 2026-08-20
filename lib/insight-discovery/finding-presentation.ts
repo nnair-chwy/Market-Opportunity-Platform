@@ -5,9 +5,9 @@ export type RecommendationType = "act_now" | "controlled_test" | "investigate" |
 const RECOMMENDATION_LABELS: Record<RecommendationType, string> = {
   act_now: "Act now",
   controlled_test: "Controlled test",
-  investigate: "Investigate",
+  investigate: "Opportunity to validate",
   monitor: "Monitor",
-  data_quality: "Data quality",
+  data_quality: "Data issue — not an opportunity",
 };
 
 export function recommendationTypeForFinding(finding: AutonomousInsight): RecommendationType {
@@ -23,15 +23,27 @@ export function recommendationTypeForFinding(finding: AutonomousInsight): Recomm
 
 export function findingPresentation(finding: AutonomousInsight) {
   const recommendationType = recommendationTypeForFinding(finding);
-  const corroboration = finding.signalCount >= 3 && finding.sourceIds.length >= 2;
+  const dataQuality = recommendationType === "data_quality";
+  const corroboration = finding.signalCount >= 2 || finding.sourceIds.length >= 2;
   const connectedOutcome = finding.businessValue.status === "outcome_connected";
-  const confidence = finding.opportunity
-    ? finding.opportunity.confidence === "high" ? "High" : finding.opportunity.confidence === "medium" ? "Medium" : "Low"
+  const signalConfidence = dataQuality
+    ? "Not scored"
     : connectedOutcome && corroboration
-    ? "High"
-    : connectedOutcome || finding.signalCount >= 2
-      ? "Medium"
-      : "Low";
+      ? "Strong"
+      : connectedOutcome || corroboration || finding.valueTranslation.kind === "modeled_scenario"
+        ? "Moderate"
+        : "Preliminary";
+  const decisionReadiness = recommendationType === "act_now"
+    ? "Authorized decision review"
+    : recommendationType === "controlled_test"
+      ? "Approved test ready"
+      : recommendationType === "investigate" && connectedOutcome
+        ? "Ready to design validation"
+        : recommendationType === "investigate"
+          ? "Needs outcome sizing"
+          : recommendationType === "data_quality"
+            ? "Excluded from opportunity ranking"
+            : "Watch next refresh";
   const valueStatus = connectedOutcome
     ? "Business outcome connected"
     : finding.businessValue.status === "export_available"
@@ -44,12 +56,27 @@ export function findingPresentation(finding: AutonomousInsight) {
       : recommendationType === "investigate" || recommendationType === "data_quality"
         ? "Validate next"
         : "Monitor";
+  const recommendedMove = recommendationType === "data_quality"
+    ? "Keep this record out of business recommendations until its source coverage and joins pass validation."
+    : finding.department === "marketing"
+      ? `Use the observed ${finding.marketName} pattern to design a capped geo test; size incremental customers and contribution before changing live spend.`
+      : finding.department === "pricing"
+        ? `Compare matched Chewy and competitor SKU economics in ${finding.marketName}, then decide whether a bounded price, promotion, or match test is warranted.`
+        : `Build a current appointment-demand and staffed-capacity case for ${finding.marketName}, then decide whether media, capacity, or footprint should change.`;
 
   return {
     recommendationType,
     recommendationLabel: RECOMMENDATION_LABELS[recommendationType],
-    confidence,
+    confidence: signalConfidence,
+    signalConfidence,
+    decisionReadiness,
     valueStatus,
     urgency,
+    primaryStatement: finding.headline,
+    expectedResult: finding.valueTranslation.kind === "modeled_scenario" || finding.valueTranslation.kind === "observed_value"
+      ? finding.valueTranslation.statement
+      : finding.businessValue.headline,
+    recommendedMove,
+    validationStep: finding.analystInterpretation?.recommendedNextDecisionOrAction ?? finding.nextValidation,
   };
 }
