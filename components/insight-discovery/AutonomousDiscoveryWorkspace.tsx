@@ -255,6 +255,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const requestHybridRun = useCallback(async (baselineRun: CurrentDataDiscoveryRun, scope: "all" | PerspectiveId) => {
     hybridStartedRunRef.current = baselineRun.runId;
     setHybridStatus("running");
+    setSupplementalInvestigations([]);
     setHybridMessage(null);
     const response = await fetch("/api/insight-discovery/hybrid", {
       method: "POST",
@@ -393,6 +394,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     pricing: run?.findings.filter((finding) => finding.department === "pricing").length ?? 0,
     cvc: run?.findings.filter((finding) => finding.department === "cvc").length ?? 0,
   }), [run]);
+  const allFindingCount = run?.findings.length ?? 0;
   const teamOpportunityBrief = useMemo(() => run ? buildTeamOpportunityBrief(run, department) : null, [department, run]);
   const emergingHypotheses = useMemo(() => run ? buildCrossSourceHypothesisBacklog(run) : [], [run]);
   const readyHypotheses = useMemo(() => emergingHypotheses.filter((lead) => lead.status === "ready_to_test"), [emergingHypotheses]);
@@ -408,10 +410,18 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     return {
       id: finding.insightId,
       label: `${LABELS[finding.department]} · ${finding.marketName}`,
-      takeaway: presentation.analystRecommendation,
-      evidence: `${presentation.signalConfidence} signal · ${presentation.decisionReadiness}`,
+      finding: finding.headline,
+      decision: presentation.analystRecommendation,
+      evidence: presentation.analystRead,
     };
   }), [primaryFindings]);
+
+  function openAiAttemptRecord() {
+    const target = document.getElementById("discovery-ai-attempts") as HTMLDetailsElement | null;
+    if (!target) return;
+    target.open = true;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 
   function openInAskAi(finding: AutonomousInsight) {
     setFollowUpFinding(finding);
@@ -498,7 +508,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
             : `Showing the strongest ${LABELS[department]} findings and the cross-source evidence that could change this team's decision.`}</p>
         </div>
         <div className="discovery-department-tabs" role="tablist" aria-label="Filter findings by department">
-          <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments <span>{adaptiveFindings.length}</span></button>
+          <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments <span>{allFindingCount}</span></button>
           {(["marketing", "pricing", "cvc"] as const).map((item) => (
             <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>{LABELS[item]} <span>{departmentFindingCounts[item]}</span></button>
           ))}
@@ -528,6 +538,21 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       </div>
       {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
 
+      <div className="discovery-ai-result-status" data-status={hybridStatus} role="status" aria-live="polite">
+        <div>
+          <span>AI expansion</span>
+          <strong>{hybridStatus === "running"
+            ? "Testing additional cross-source analyses"
+            : supplementalInvestigations.length
+              ? `${supplementalInvestigations.length} additional analysis attempt${supplementalInvestigations.length === 1 ? "" : "s"} executed; none has been promoted into a finding yet`
+              : "No additional AI finding was produced in this run"}</strong>
+          <small>{hybridStatus === "running"
+            ? "The ranked evidence-backed findings remain available while this runs."
+            : hybridMessage ?? "The evidence-backed findings below remain the complete stakeholder result."}</small>
+        </div>
+        {hybridStatus !== "running" ? <button type="button" onClick={openAiAttemptRecord}>Review analysis record ↓</button> : null}
+      </div>
+
       <section className="discovery-executive-summary" aria-labelledby="discovery-executive-summary-title">
         <header>
           <div>
@@ -541,7 +566,10 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
           {keyTakeaways.map((takeaway) => (
             <li key={takeaway.id}>
               <div><span>{takeaway.label}</span><small>{takeaway.evidence}</small></div>
-              <p>{takeaway.takeaway}</p>
+              <div className="discovery-takeaway-decision">
+                <strong>{takeaway.finding}</strong>
+                <p><b>Decision:</b> {takeaway.decision}</p>
+              </div>
             </li>
           ))}
         </ul>
@@ -595,7 +623,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
 
       {department !== "all" ? <CrossSourceFindings findings={adaptiveFindings} /> : null}
 
-      <details className="discovery-ai-additional" data-status={hybridStatus}>
+      <details id="discovery-ai-attempts" className="discovery-ai-additional" data-status={hybridStatus}>
         <summary>
           <div>
             <div className="section-label">Analysis expansion</div>

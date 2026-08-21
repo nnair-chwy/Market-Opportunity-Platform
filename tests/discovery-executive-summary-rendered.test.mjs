@@ -8,11 +8,21 @@ const styles = fs.readFileSync(new URL("../app/globals.css", import.meta.url), "
 test("discovery results lead with every priority takeaway and an explicit inference boundary", () => {
   assert.ok(workspace.indexOf("Decision takeaways") < workspace.indexOf("Analyses completed"));
   assert.match(workspace, /primaryFindings\.map\(\(finding\)/);
+  assert.match(workspace, /finding: finding\.headline/);
+  assert.match(workspace, /<b>Decision:<\/b>/);
   assert.match(workspace, /presentation\.analystRecommendation/);
   assert.match(workspace, /Observed differences and peer-relative patterns/);
   assert.match(workspace, /Statistical significance/);
   assert.match(workspace, /Not tested/);
   assert.match(workspace, /sample sizes, variance, confidence intervals, or experimental design/);
+});
+
+test("the portfolio count and AI result status use honest comparable definitions", () => {
+  assert.match(workspace, /const allFindingCount = run\?\.findings\.length \?\? 0/);
+  assert.match(workspace, /All departments <span>\{allFindingCount\}<\/span>/);
+  assert.match(workspace, /No additional AI finding was produced in this run/);
+  assert.match(workspace, /none has been promoted into a finding yet/);
+  assert.match(workspace, /Review analysis record/);
 });
 
 test("the decision summary remains readable on narrow screens", () => {
