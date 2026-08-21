@@ -657,43 +657,49 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </div>
       </header>
 
-      <div className="discovery-run-sequence" data-run-mode={run.runAudit.mode} role="status" aria-live="polite">
-        <span>Run {run.runSequence}</span>
-        <div>
-          <strong>{run.runAudit.mode === "same_snapshot_reprioritization"
-            ? "Same snapshots · next qualified findings"
-            : run.runAudit.mode === "refreshed_data"
-              ? "Source snapshots changed · refreshed ranking"
-              : run.runAudit.mode === "snapshot_comparison_unavailable"
-                ? "Next qualified findings · snapshot comparison unavailable"
-                : "Initial approved-snapshot scan"}</strong>
-          <small>{run.runAudit.mode === "same_snapshot_reprioritization"
-            ? `All ${run.runAudit.reranHypothesisCount} investigations ran again. ${run.runAudit.excludedPreviousPrimaryFindingIds.length} prior digest finding(s) were held out so the next strongest qualified signals could surface; no data refresh is claimed.`
-            : run.runAudit.mode === "refreshed_data"
-              ? `All ${run.runAudit.reranHypothesisCount} investigations ran again against a different source-snapshot fingerprint.`
-              : `All ${run.runAudit.reranHypothesisCount} reviewed investigations ran against the approved evidence available to this run.`}</small>
-        </div>
-      </div>
       {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
+      <details className="discovery-run-details">
+        <summary>
+          <span>Run details</span>
+          <small>{run.runAudit.reranHypothesisCount} baseline analyses · {hybridStatus === "running" ? "AI investigating" : `${hybridReceipts.length} AI step${hybridReceipts.length === 1 ? "" : "s"}`}</small>
+        </summary>
+        <div className="discovery-run-details-body">
+          <div className="discovery-run-sequence" data-run-mode={run.runAudit.mode} role="status" aria-live="polite">
+            <span>Run {run.runSequence}</span>
+            <div>
+              <strong>{run.runAudit.mode === "same_snapshot_reprioritization"
+                ? "Same snapshots · next qualified findings"
+                : run.runAudit.mode === "refreshed_data"
+                  ? "Source snapshots changed · refreshed ranking"
+                  : run.runAudit.mode === "snapshot_comparison_unavailable"
+                    ? "Next qualified findings · snapshot comparison unavailable"
+                    : "Initial approved-snapshot scan"}</strong>
+              <small>{run.runAudit.mode === "same_snapshot_reprioritization"
+                ? `All ${run.runAudit.reranHypothesisCount} investigations ran again. ${run.runAudit.excludedPreviousPrimaryFindingIds.length} prior digest finding(s) were held out so the next strongest qualified signals could surface; no data refresh is claimed.`
+                : run.runAudit.mode === "refreshed_data"
+                  ? `All ${run.runAudit.reranHypothesisCount} investigations ran again against a different source-snapshot fingerprint.`
+                  : `All ${run.runAudit.reranHypothesisCount} reviewed investigations ran against the approved evidence available to this run.`}</small>
+            </div>
+          </div>
 
-      <div className="discovery-ai-result-status" data-status={hybridStatus} role="status" aria-live="polite">
-        <div>
-          <span>AI expansion</span>
-          <strong>{hybridStatus === "running"
-            ? "Testing additional cross-source analyses"
-            : promotedAiFindings.length
-              ? `${promotedAiFindings.length} new AI finding${promotedAiFindings.length === 1 ? "" : "s"} cleared the evidence bar`
-              : supplementalInvestigations.length
-                ? `${supplementalInvestigations.length} additional analysis attempt${supplementalInvestigations.length === 1 ? "" : "s"} executed; none cleared the finding bar`
-              : "No additional AI finding was produced in this run"}</strong>
-          <small>{hybridStatus === "running"
-            ? "The ranked evidence-backed findings remain available while this runs."
-            : hybridMessage ?? "The evidence-backed findings below remain the complete stakeholder result."}</small>
-        </div>
-        {hybridStatus !== "running" ? <button type="button" onClick={openAiAttemptRecord}>Review analysis record ↓</button> : null}
-      </div>
+          <div className="discovery-ai-result-status" data-status={hybridStatus} role="status" aria-live="polite">
+            <div>
+              <span>AI expansion</span>
+              <strong>{hybridStatus === "running"
+                ? "Testing additional cross-source analyses"
+                : promotedAiFindings.length
+                  ? `${promotedAiFindings.length} new AI finding${promotedAiFindings.length === 1 ? "" : "s"} cleared the evidence bar`
+                  : supplementalInvestigations.length
+                    ? `${supplementalInvestigations.length} additional analysis attempt${supplementalInvestigations.length === 1 ? "" : "s"} executed; none cleared the finding bar`
+                    : "No additional AI finding was produced in this run"}</strong>
+              <small>{hybridStatus === "running"
+                ? "The ranked evidence-backed findings remain available while this runs."
+                : hybridMessage ?? "The evidence-backed findings below remain the complete stakeholder result."}</small>
+            </div>
+            {hybridStatus !== "running" ? <button type="button" onClick={openAiAttemptRecord}>Review analysis record ↓</button> : null}
+          </div>
 
-      <section className="discovery-ai-loop" aria-labelledby="discovery-ai-loop-title">
+          <section className="discovery-ai-loop" aria-labelledby="discovery-ai-loop-title">
           <header>
             <div><div className="section-label">AI investigation loop</div><h2 id="discovery-ai-loop-title">What the agent tried beyond the baseline scan</h2></div>
             <span>{hybridStatus === "running" ? "Running" : `${hybridReceipts.length} step${hybridReceipts.length === 1 ? "" : "s"}`}</span>
@@ -709,7 +715,9 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
             {hybridStatus === "running" ? <li data-status="running"><b>{hybridReceipts.length + 1}</b><div><strong>Choosing and testing the next non-duplicate analysis</strong><small>The ranked baseline remains available while this runs.</small></div><span>Running</span></li> : null}
             {hybridStatus !== "running" && hybridReceipts.length === 0 ? <li data-status="fallback"><b>—</b><div><strong>No additional AI analysis has completed</strong><small>{hybridMessage ?? "The repeatable baseline findings remain available while the AI investigator is idle."}</small></div><span>Not run</span></li> : null}
           </ol>
-        </section>
+          </section>
+        </div>
+      </details>
 
       {department !== "cross" ? <AiSupplementalFindings findings={promotedAiFindings} /> : null}
 

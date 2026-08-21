@@ -34,6 +34,16 @@ test("the AI expansion exposes its iterative execution trail even when no extra 
   assert.match(workspace, /normalizedSnapshotVersion: NORMALIZED_DISCOVERY_SNAPSHOT/);
 });
 
+test("baseline and AI execution details are collapsed below the portfolio filters by default", () => {
+  assert.match(workspace, /<details className="discovery-run-details">/);
+  assert.doesNotMatch(workspace, /<details className="discovery-run-details" open/);
+  assert.match(workspace, /<span>Run details<\/span>/);
+  const filters = workspace.indexOf("discovery-hero-meta");
+  const runDetails = workspace.indexOf('<details className="discovery-run-details">');
+  const findings = workspace.indexOf('<section className="discovery-executive-summary"');
+  assert.ok(filters < runDetails && runDetails < findings);
+});
+
 test("the portfolio count and AI result status use honest comparable definitions", () => {
   assert.match(workspace, /const allFindingCount = run\?\.findings\.length \?\? 0/);
   assert.match(workspace, /All departments <span>\{allFindingCount\}<\/span>/);
