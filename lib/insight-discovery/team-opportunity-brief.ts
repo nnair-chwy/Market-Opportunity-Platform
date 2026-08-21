@@ -77,14 +77,31 @@ function unique(values: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
+function diverseAdaptiveFindings(findings: AdaptiveDecisionFinding[], limit: number) {
+  const selected: AdaptiveDecisionFinding[] = [];
+  const seenKinds = new Set<AdaptiveDecisionFinding["findingKind"]>();
+  for (const finding of findings) {
+    if (seenKinds.has(finding.findingKind)) continue;
+    selected.push(finding);
+    seenKinds.add(finding.findingKind);
+    if (selected.length === limit) return selected;
+  }
+  for (const finding of findings) {
+    if (selected.some((candidate) => candidate.id === finding.id)) continue;
+    selected.push(finding);
+    if (selected.length === limit) break;
+  }
+  return selected;
+}
+
 function adaptiveCandidates(run: CurrentDataDiscoveryRun, scope: TeamOpportunityBriefScope) {
-  if (scope !== "all") return run.adaptiveDiscovery.findings.filter((finding) => finding.departments.includes(scope)).slice(0, 6);
+  if (scope !== "all") return diverseAdaptiveFindings(run.adaptiveDiscovery.findings.filter((finding) => finding.departments.includes(scope)), 6);
   const crossFunctional = run.adaptiveDiscovery.findings.filter((finding) => finding.departments.length > 1);
   const strongestByTeam = (["marketing", "pricing", "cvc"] as const).flatMap((department) => {
     const finding = run.adaptiveDiscovery.findings.find((candidate) => candidate.departments.includes(department));
     return finding ? [finding] : [];
   });
-  return [...new Map([...crossFunctional, ...strongestByTeam].map((finding) => [finding.id, finding])).values()].slice(0, 6);
+  return diverseAdaptiveFindings([...new Map([...crossFunctional, ...strongestByTeam].map((finding) => [finding.id, finding])).values()], 6);
 }
 
 function adaptiveMove(finding: AdaptiveDecisionFinding): TeamOpportunityMove {
@@ -136,11 +153,17 @@ export function buildTeamOpportunityBrief(run: CurrentDataDiscoveryRun, scope: T
     ...selectedStandard.flatMap((finding) => finding.businessValue.requiredInputs),
   ]).slice(0, 8);
   const recommendation = moves.length
-    ? moves.slice(0, 2).map((move) => move.action).join(" ")
+    ? moves.slice(0, 3).map((move) => `${move.market}: ${move.evidence}`).join(" ")
     : `No ${scope === "all" ? "cross-team" : scope} opportunity in this run has enough evidence for a reviewable move.`;
   const portfolioImplications = moves.map((move) => `${move.market}: ${move.decision}.`).slice(0, 4);
   const why = moves.length
-    ? `${moves.length} evidence-derived move${moves.length === 1 ? "" : "s"} in this run passed the registered analytical checks for this scope. Each move retains its observed evidence, limits, and approval boundary.`
+    ? scope === "marketing"
+      ? "These patterns help Marketing distinguish markets worth protecting or testing from markets that only look efficient in platform attribution, so the next regional review can focus on incremental customers and contribution."
+      : scope === "pricing"
+        ? "These patterns show where regional competitor position may affect a pricing decision and where assortment, coverage, or matched-SKU quality makes the apparent gap unreliable."
+        : scope === "cvc"
+          ? "These patterns connect regional demand and acquisition signals to clinic capacity and appointment outcomes, helping CVC separate a media opportunity from a footprint or operating constraint."
+          : "Together, these patterns show where teams should protect an observed advantage, separate conflicting decisions, or combine evidence before treating every region the same."
     : "The run did not produce an evidence-derived move for this scope; the brief does not substitute a saved market claim or fallback recommendation.";
 
   return {

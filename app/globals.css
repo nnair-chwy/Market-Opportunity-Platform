@@ -99,7 +99,7 @@
 .autonomous-discovery-page { display: grid; gap: 22px; width: min(100%, 1060px); margin: 0 auto; padding: 28px clamp(20px, 3vw, 38px) 54px; }
 .discovery-page-nav, .discovery-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .discovery-hero { display: grid; gap: 12px; }
-.discovery-page-nav { align-items: center; justify-content: space-between; }
+.discovery-page-nav { position: sticky; top: 10px; z-index: 28; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid rgba(184, 205, 230, .82); border-radius: 14px; background: rgba(239, 247, 255, .92); box-shadow: 0 10px 24px rgba(42, 79, 123, .1); backdrop-filter: blur(12px); }
 .discovery-back { align-self: flex-start; width: auto; text-align: left; }
 .discovery-page-nav > span { color: #6d7c91; font-size: .74rem; }
 .discovery-run-history { padding: 10px 12px; border: 1px solid #d7e1ed; border-radius: 11px; background: #f8faff; }

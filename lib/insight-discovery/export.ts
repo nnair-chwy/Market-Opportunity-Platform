@@ -146,72 +146,60 @@ function bodyParagraph(label: string, value: string) {
   });
 }
 
-function findingParagraphs(finding: AutonomousInsight, rank: number) {
-  const interpretation = finding.analystInterpretation;
-  const presentation = findingPresentation(finding);
-  const decisionCase = buildFindingDecisionCase(finding);
+function conciseEvidence(value: string, sentenceLimit = 2) {
+  const normalized = normalize(value);
+  const sentences = normalized.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+  return sentences.slice(0, sentenceLimit).join(" ");
+}
+
+function stakeholderInsightParagraphs(move: ReturnType<typeof buildTeamOpportunityBrief>["opportunityMoves"][number], rank: number) {
   return [
     new Paragraph({
-      text: `${rank}. ${finding.headline}`,
+      text: `${rank}. ${move.market}: ${move.decision}`,
       heading: HeadingLevel.HEADING_2,
       keepNext: true,
     }),
-    new Paragraph({
-      children: [new TextRun({
-        text: `${TEAM_LABELS[finding.department]} · ${finding.marketName} · ${presentation.recommendationLabel} · ${presentation.signalConfidence} observed signal · ${presentation.decisionReadiness}`,
-        bold: true,
-        color: "5F6F82",
-      })],
-      spacing: { after: 140 },
-      keepNext: true,
-    }),
-    bodyParagraph("Recommendation", decisionCase.proposedAction),
-    bodyParagraph("Quantified observed opportunity", observedOpportunityText(finding)),
-    bodyParagraph("Estimated or scenario value", `${decisionCase.scenario.label}: ${decisionCase.scenario.summary}${decisionCase.scenario.range ? ` ${decisionCase.scenario.range}` : ""}`),
-    bodyParagraph("How it was calculated", decisionCase.calculation.join(" ")),
-    bodyParagraph("Why validation changes the decision", decisionCase.whyValidationMatters.join(" ")),
-    bodyParagraph("Success rule", decisionCase.successRule),
-    bodyParagraph("Stop rule", decisionCase.stopRule),
-    bodyParagraph("Could reverse the recommendation", decisionCase.couldReverseRecommendation.join("; ")),
-    bodyParagraph("Confidence and caveat", confidenceText(finding)),
-    bodyParagraph("Evidence", finding.evidenceDetail),
-    bodyParagraph("Inputs needed to size value", finding.businessValue.requiredInputs.join("; ")),
-    bodyParagraph("Owner", `${finding.applicability.primaryTeamLabel}. ${finding.applicability.reason}`),
-    bodyParagraph("Decision boundary", interpretation?.approvalBoundary ?? finding.applicability.approvalBoundary),
-    bodyParagraph("Sources", `${finding.sourceIds.join(", ")} · ${finding.snapshotVersions.join(", ")}`),
+    bodyParagraph("What we learned", conciseEvidence(move.evidence)),
+    bodyParagraph("Decision this can inform", conciseEvidence(move.action, 1)),
+    bodyParagraph("Evidence trail", move.sourceIds.join(", ")),
   ];
 }
 
 export async function buildDiscoveryDocx(run: CurrentDataDiscoveryRun, scope: DiscoveryExportScope): Promise<Uint8Array> {
   const findings = getScopedDiscoveryFindings(run, scope);
   const scopeLabel = scope === "all" ? "Cross-team portfolio" : `${TEAM_LABELS[scope]} team`;
-  const primary = findings.filter((finding) => run.primaryFindings.some((item) => item.insightId === finding.insightId));
   const teamBrief = buildTeamOpportunityBrief(run, scope);
+  const stakeholderMoves = teamBrief.opportunityMoves.slice(0, 3);
   const teamBriefParagraphs: Paragraph[] = [
-    new Paragraph({ text: teamBrief.title, heading: HeadingLevel.HEADING_1 }),
+    new Paragraph({ text: "What the data says", heading: HeadingLevel.HEADING_1 }),
     bodyParagraph("Relevant teams", `${teamBrief.primaryTeam} · ${teamBrief.partnerTeams.join(" · ")}`),
-    bodyParagraph("Portfolio recommendation", teamBrief.recommendation),
-    bodyParagraph("Why these opportunities matter", teamBrief.why),
-    ...teamBrief.opportunityMoves.flatMap((move) => [
-      bodyParagraph(`${move.market} — ${move.decision}`, move.evidence),
-      bodyParagraph(`${move.market} — action`, move.action),
-    ]),
-    bodyParagraph("Portfolio implications", teamBrief.portfolioImplications.join(" ") || "No scoped opportunity move was supported by this run."),
-    bodyParagraph("Primary outcomes", teamBrief.primaryOutcomes.join("; ")),
-    bodyParagraph("Evidence required to scale", teamBrief.evidenceNeededToScale.join("; ")),
-    bodyParagraph("Scale rule", teamBrief.decisionRules.scale),
-    bodyParagraph("Protect rule", teamBrief.decisionRules.protect),
-    bodyParagraph("Split rule", teamBrief.decisionRules.split),
-    bodyParagraph("Stop rule", teamBrief.decisionRules.stop),
-    bodyParagraph("Boundary", teamBrief.evidenceBoundary),
+    bodyParagraph("Why this matters", teamBrief.why),
+    new Paragraph({ text: "Top takeaways", heading: HeadingLevel.HEADING_2 }),
+    ...stakeholderMoves.map((move) => new Paragraph({
+      children: [
+        new TextRun({ text: `${move.market}: `, bold: true, color: "1F4D78" }),
+        new TextRun(conciseEvidence(move.evidence, 1)),
+      ],
+      numbering: { reference: "discovery-report-bullets", level: 0 },
+      spacing: { after: 120, line: 280 },
+    })),
+    ...stakeholderMoves.flatMap((move, index) => stakeholderInsightParagraphs(move, index + 1)),
+    new Paragraph({ text: "How to use these insights", heading: HeadingLevel.HEADING_1 }),
+    bodyParagraph("Decisions informed", stakeholderMoves.map((move) => `${move.market}: ${move.decision}.`).join(" ") || "No scoped opportunity was supported by this run."),
+    bodyParagraph("Measure impact with", teamBrief.primaryOutcomes.join("; ")),
+    bodyParagraph("Important boundary", teamBrief.evidenceBoundary),
+    new Paragraph({
+      text: "Supporting detail: the CSV export contains every ranked finding, calculation field, caveat, and source identifier.",
+      spacing: { before: 160, after: 120, line: 264 },
+    }),
   ];
   const children: Paragraph[] = [
     new Paragraph({
-      children: [new TextRun({ text: "AUTONOMOUS FINDINGS BRIEF", bold: true, size: 20, color: "2E67A6", font: "Arial" })],
+      children: [new TextRun({ text: "MARKET OPPORTUNITY INSIGHT BRIEF", bold: true, size: 20, color: "2E67A6", font: "Arial" })],
       spacing: { after: 80 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: `${scopeLabel} opportunities`, bold: true, size: 40, color: "13284D", font: "Arial" })],
+      children: [new TextRun({ text: `${scopeLabel} insights`, bold: true, size: 40, color: "13284D", font: "Arial" })],
       spacing: { after: 100 },
     }),
     new Paragraph({
@@ -219,18 +207,13 @@ export async function buildDiscoveryDocx(run: CurrentDataDiscoveryRun, scope: Di
       border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: "C9D8EA" } },
       spacing: { after: 260 },
     }),
-    new Paragraph({ text: "Executive readout", heading: HeadingLevel.HEADING_1 }),
+    new Paragraph({ text: "Executive takeaway", heading: HeadingLevel.HEADING_1 }),
     new Paragraph({
-      text: `This brief translates the reviewed autonomous discovery run into ${scope === "all" ? "cross-team" : TEAM_LABELS[scope]} opportunities. Findings are ordered by current decision value. They are investigation or accountable-review inputs; they do not authorize an automatic spend, price, clinic, lease, staffing, or other material change.`,
+      text: `This brief highlights the ${scope === "all" ? "cross-team" : TEAM_LABELS[scope]} patterns most likely to change a business decision. It leads with what the data shows and why it matters; methodology and the full sortable finding set remain in the CSV export.`,
       spacing: { after: 160, line: 264 },
     }),
     bodyParagraph("Portfolio coverage", `${run.analysesRun} decision screens, ${run.marketUniverse.toLocaleString("en-US")} markets compared, and ${run.measuresExamined} measures checked`),
-    bodyParagraph("Primary digest in this scope", primary.length ? primary.map((finding) => finding.headline).join("; ") : "No finding from this team appeared in the five-item primary digest; the complete team review follows."),
     ...teamBriefParagraphs,
-    new Paragraph({ text: "Complete opportunity review", heading: HeadingLevel.HEADING_1 }),
-    ...findings.flatMap((finding, index) => findingParagraphs(finding, index + 1)),
-    new Paragraph({ text: "Shared limitations", heading: HeadingLevel.HEADING_1 }),
-    ...run.limitations.map((limitation) => new Paragraph({ text: limitation, bullet: { level: 0 }, spacing: { after: 120, line: 280 } })),
   ];
 
   const document = new Document({

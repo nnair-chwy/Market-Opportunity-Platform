@@ -64,7 +64,7 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(discoveryWorkspace, /\/api\/insight-discovery/);
   assert.match(discoveryWorkspace, /generated decision hypotheses from the data/i);
   assert.match(discoveryWorkspace, /cohort, contradiction, channel-mix, quality, and matched-SKU operators/i);
-  assert.match(discoveryWorkspace, /Cross-source signals that change a decision/);
+  assert.match(discoveryWorkspace, /Signals that become more useful when teams look together/);
   assert.match(discoveryWorkspace, /Incomplete cross-source questions/);
   assert.match(discoveryWorkspace, /These are not findings/);
   assert.match(discoveryWorkspace, /Evidence needed next/);
@@ -79,12 +79,13 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(globalStyles, /\.discovery-rail-actions\s*\{[^}]*justify-content:\s*flex-start/s);
   assert.match(globalStyles, /\.discovery-rail-actions\s*\{[^}]*position:\s*sticky;[^}]*top:\s*16px/s);
   assert.match(globalStyles, /\.discovery-back\s*\{[^}]*align-self:\s*flex-start;[^}]*width:\s*auto;[^}]*text-align:\s*left/s);
+  assert.match(globalStyles, /\.discovery-page-nav\s*\{[^}]*position:\s*sticky;[^}]*top:\s*10px/s);
   assert.match(workflow, /AI draft did not pass evidence checks · verified synthesis shown/);
   assert.match(discoveryWorkspace, /Find next signals/);
   assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
   assert.match(discoveryWorkspace, /no data refresh is claimed/i);
   assert.match(discoveryWorkspace, /generated hypotheses ·.*evidence-backed/i);
-  assert.match(discoveryWorkspace, /onInvestigate\(followUpFinding, nextQuestion\)/);
+  assert.match(discoveryWorkspace, /onInvestigate\(followUpFinding, nextQuestion, run\?\.runId\)/);
   assert.match(workflow, /buildDiscoveryInvestigationIntent/);
   assert.match(workflow, /discoveryInvestigationIntentFromSearchParams/);
   assert.match(workflow, /setSelectedGeographicContexts\(intent\.selectedGeographicContexts\)/);

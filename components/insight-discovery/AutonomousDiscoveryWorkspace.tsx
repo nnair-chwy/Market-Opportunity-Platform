@@ -419,8 +419,8 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
               {(["all", "marketing", "pricing", "cvc"] as const).map((scope) => (
                 <section key={scope} aria-label={`${scope === "all" ? "All teams" : LABELS[scope]} exports`}>
                   <strong>{scope === "all" ? "All teams" : LABELS[scope]}</strong>
-                  <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(scope, "csv")}>CSV</button>
-                  <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(scope, "docx")}>Word brief</button>
+                  <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(scope, "csv")}>Full data (CSV)</button>
+                  <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(scope, "docx")}>Stakeholder brief (Word)</button>
                 </section>
               ))}
             </div>
