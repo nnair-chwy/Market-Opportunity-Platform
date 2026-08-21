@@ -35,6 +35,7 @@ import {
   EXPLORATORY_TABLE_CATALOG,
   executeExploratoryQuery,
   exploratoryQuerySpecSchema,
+  normalizeModelExploratoryQuerySpec,
   type ExploratoryQueryResponse,
   type ExploratoryQuerySpec,
 } from "./exploratory-query.ts";
@@ -75,6 +76,7 @@ export type HybridDiscoveryRun = CurrentDataDiscoveryRun & {
 const SYSTEM_INSTRUCTIONS = `You select the next bounded analysis for a geographic insight-discovery run.
 Return only the supplied structured action. Never write SQL, invent a table, source, metric, CBSA code, result, or business fact.
 Choose only from permittedMarketScreens, permittedRegisteredQueries, and permittedExploratoryTables. Use exploratory_query only when a new cross-source aggregate can add value. Never return SQL: select tables, columns, filters, aggregates, ordering, and CBSA joins through the supplied specification.
+For exploratory_query, exploratorySpecJson must encode exactly this object shape: {"version":"normalized-exploratory-query-v1","tables":[approved tableId],"joins":[{"leftTableId":approved tableId,"rightTableId":approved tableId,"on":"cbsaCode"}],"groupBy":["cbsaCode","cbsaName"],"measures":[{"tableId":approved tableId,"column":approved column,"aggregation":"sum|avg|min|max|count|count_distinct"}],"filters":[],"orderBy":[{"kind":"measure","measureIndex":0,"direction":"desc"}],"limit":25}. Use the short tableId values supplied in permittedExploratoryTables, not physical normalized table names. Every selected table after the first requires one connected cbsaCode join.
 Avoid repeating an invocation already represented in priorReceipts. Prefer an analysis likely to add a new market, source, measure, contradiction, or downstream business outcome.
 Use the run as an iterative investigation, not a one-shot selector. A registered or exploratory aggregate may identify a promising market; on the next step, use its returned marketIds in a focused approved market_screen when that can produce a quantified stakeholder finding. Prefer cross-source queries first when compatible tables are available, then challenge the strongest result with a focused market analysis. Do not finish immediately after an accepted aggregate when a non-duplicate focused screen can test its decision value.
 The application executes and evaluates every proposal. Choose finish when no permitted invocation is likely to add decision value.`;
@@ -131,10 +133,16 @@ async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInv
           query: parsed.registeredQuery ?? (() => { throw new Error("A registered query name is required."); })(),
           ...(parsed.registeredCbsaCode ? { cbsaCode: parsed.registeredCbsaCode } : {}),
         }
-      : {
-          kind: "exploratory_query",
-          spec: exploratoryQuerySpecSchema.parse(JSON.parse(parsed.exploratorySpecJson ?? "null")),
-        };
+      : (() => {
+          try {
+            return {
+              kind: "exploratory_query" as const,
+              spec: exploratoryQuerySpecSchema.parse(normalizeModelExploratoryQuerySpec(JSON.parse(parsed.exploratorySpecJson ?? "null"))),
+            };
+          } catch {
+            throw new Error("The AI proposed an exploratory analysis that did not match the approved table, column, and CBSA-join contract.");
+          }
+        })();
   return hybridInvestigatorActionSchema.parse({
     action: "execute",
     objective: parsed.objective,

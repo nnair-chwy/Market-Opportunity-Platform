@@ -52,6 +52,42 @@ export const EXPLORATORY_TABLE_CATALOG = {
 } as const satisfies Record<string, TableDefinition>;
 
 const tableIdSchema = z.enum(["census", "market", "demand", "clinic_profile", "clinic_activity", "ads"]);
+const TABLE_ID_BY_NAME = new Map(Object.entries(EXPLORATORY_TABLE_CATALOG).map(([tableId, table]) => [table.tableName, tableId]));
+
+function approvedTableId(value: unknown) {
+  if (typeof value !== "string") return value;
+  return value in EXPLORATORY_TABLE_CATALOG ? value : TABLE_ID_BY_NAME.get(value) ?? value;
+}
+
+/**
+ * Canonicalizes only application-owned contract fields in a model proposal.
+ * It never repairs an unknown table, column, filter, join, or aggregation;
+ * those still fail the strict approved-query schema before execution.
+ */
+export function normalizeModelExploratoryQuerySpec(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const value = raw as Record<string, unknown>;
+  const tableReference = (item: unknown) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return item;
+    const record = item as Record<string, unknown>;
+    return { ...record, tableId: approvedTableId(record.tableId) };
+  };
+  const joinReference = (item: unknown) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return item;
+    const record = item as Record<string, unknown>;
+    return { ...record, leftTableId: approvedTableId(record.leftTableId), rightTableId: approvedTableId(record.rightTableId) };
+  };
+  return {
+    version: EXPLORATORY_QUERY_VERSION,
+    tables: Array.isArray(value.tables) ? value.tables.map(approvedTableId) : value.tables,
+    joins: Array.isArray(value.joins) ? value.joins.map(joinReference) : [],
+    groupBy: Array.isArray(value.groupBy) ? value.groupBy : value.groupBy,
+    measures: Array.isArray(value.measures) ? value.measures.map(tableReference) : value.measures,
+    filters: Array.isArray(value.filters) ? value.filters.map(tableReference) : [],
+    orderBy: Array.isArray(value.orderBy) ? value.orderBy : [],
+    limit: value.limit,
+  };
+}
 const filterSchema = z.object({
   tableId: tableIdSchema,
   column: z.string().regex(/^[A-Za-z][A-Za-z0-9]*$/),

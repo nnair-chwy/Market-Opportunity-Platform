@@ -9,6 +9,7 @@ import {
   compileExploratoryQuery,
   executeExploratoryQuery,
   exploratoryQuerySpecSchema,
+  normalizeModelExploratoryQuerySpec,
 } from "../lib/insight-discovery/exploratory-query.ts";
 import { closeDuckDb, openDuckDb } from "../lib/evidence-snapshot/duckdb.ts";
 import {
@@ -35,6 +36,22 @@ const usefulJoin = {
   orderBy: [{ kind: "measure", measureIndex: 0, direction: "desc" }],
   limit: 20,
 } as const;
+
+test("model exploratory specs receive app-owned version and table aliases without relaxing query safety", () => {
+  const normalized = normalizeModelExploratoryQuerySpec({
+    ...usefulJoin,
+    version: "invented-version",
+    tables: ["normalized_regional_demand_by_cbsa_year", "normalized_google_ads_by_cbsa"],
+    joins: [{ leftTableId: "normalized_regional_demand_by_cbsa_year", rightTableId: "normalized_google_ads_by_cbsa", on: "cbsaCode" }],
+    measures: usefulJoin.measures.map((measure) => ({ ...measure, tableId: measure.tableId === "demand" ? "normalized_regional_demand_by_cbsa_year" : "normalized_google_ads_by_cbsa" })),
+    filters: usefulJoin.filters.map((filter) => ({ ...filter, tableId: filter.tableId === "demand" ? "normalized_regional_demand_by_cbsa_year" : "normalized_google_ads_by_cbsa" })),
+  });
+  const parsed = exploratoryQuerySpecSchema.parse(normalized);
+  assert.equal(parsed.version, EXPLORATORY_QUERY_VERSION);
+  assert.deepEqual(parsed.tables, ["demand", "ads"]);
+  assert.deepEqual(parsed.joins, [{ leftTableId: "demand", rightTableId: "ads", on: "cbsaCode" }]);
+  assert.equal(exploratoryQuerySpecSchema.safeParse(normalizeModelExploratoryQuerySpec({ ...usefulJoin, measures: [{ tableId: "ads", column: "customerEmail", aggregation: "count_distinct" }] })).success, false);
+});
 
 test("the app compiles a useful cross-source aggregate with parameterized values and CBSA equality only", () => {
   const compiled = compileExploratoryQuery(usefulJoin);
