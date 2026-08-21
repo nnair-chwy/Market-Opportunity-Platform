@@ -17,14 +17,15 @@ const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v2";
 const DISCOVERY_HISTORY_LIMIT = 5;
 const NORMALIZED_DISCOVERY_SNAPSHOT = "normalized-market-data-2026-08-17-v1";
 
-function departmentDecisionQuestion(department: PerspectiveId) {
-  if (department === "marketing") return "Where should Marketing optimize or test regional media first, and what should change?";
-  if (department === "pricing") return "Where could regional pricing differ, and which product or competitor signal supports a test?";
-  return "Where should CVC prioritize a demand, capacity, media, or footprint intervention?";
+function departmentDecisionQuestion(department: PerspectiveId, marketName?: string) {
+  const location = marketName ? ` in ${marketName}` : " across regions";
+  if (department === "marketing") return `Should Marketing change media allocation${location}, and which channel or tactic should move first?`;
+  if (department === "pricing") return `Should Pricing change price or promotion${location}, and which products support that decision?`;
+  return `Should CVC change demand generation, capacity, or footprint${location}, and which lever should move first?`;
 }
 
 function findingDecisionQuestion(finding: AutonomousInsight) {
-  return finding.analystInterpretation?.decisionQuestion || departmentDecisionQuestion(finding.department);
+  return departmentDecisionQuestion(finding.department, finding.marketName);
 }
 
 function crossDepartmentDecisionQuestion(departments: PerspectiveId[]) {
@@ -90,7 +91,7 @@ function AiSupplementalFindings({ findings }: { findings: HybridSupplementalFind
         {findings.map((finding) => (
           <article key={finding.id}>
             <div className="discovery-card-identity"><span>{LABELS[finding.department]}</span><small>{finding.marketIds.join(", ") || "National"}</small></div>
-            <div className="discovery-origin-question"><span>Decision question</span><p>{departmentDecisionQuestion(finding.department)}</p></div>
+            <div className="discovery-origin-question"><span>Decision question</span><p>{departmentDecisionQuestion(finding.department, finding.marketIds.join(", ") || "the national portfolio")}</p></div>
             <section className="discovery-decision-first"><span>Recommended decision</span><h2>{finding.recommendation}</h2></section>
             <div className="discovery-region-rationale"><span>What the analysis found</span><p>{finding.quantifiedEvidence} {finding.comparison}</p></div>
             <div className="discovery-recommended-move"><span>Why it matters</span><p>{finding.businessImplication}</p><small><strong>Next action:</strong> {finding.nextAction}</small></div>
