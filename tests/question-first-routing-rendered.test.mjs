@@ -62,8 +62,8 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(workflow, /phase === "discovery"/);
   assert.match(workflow, /AutonomousDiscoveryWorkspace/);
   assert.match(discoveryWorkspace, /\/api\/insight-discovery/);
-  assert.match(discoveryWorkspace, /generated decision hypotheses from the data/i);
-  assert.match(discoveryWorkspace, /cohort, contradiction, channel-mix, quality, and matched-SKU operators/i);
+  assert.match(discoveryWorkspace, /Regional opportunity portfolio/i);
+  assert.match(discoveryWorkspace, /cohort, contradiction, channel-mix, quality, and matched-SKU analyses/i);
   assert.match(discoveryWorkspace, /Signals that become more useful when teams look together/);
   assert.match(discoveryWorkspace, /Incomplete cross-source questions/);
   assert.match(discoveryWorkspace, /These are not findings/);
@@ -84,7 +84,7 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(discoveryWorkspace, /Find next signal/);
   assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
   assert.match(discoveryWorkspace, /no data refresh is claimed/i);
-  assert.match(discoveryWorkspace, /generated hypotheses ·.*evidence-backed/i);
+  assert.match(discoveryWorkspace, /hypotheses tested ·.*evidence-backed analyses/i);
   assert.match(discoveryWorkspace, /onInvestigate\(followUpFinding, nextQuestion, run\?\.runId\)/);
   assert.match(workflow, /buildDiscoveryInvestigationIntent/);
   assert.match(workflow, /discoveryInvestigationIntentFromSearchParams/);

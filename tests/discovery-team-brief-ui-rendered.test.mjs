@@ -17,12 +17,13 @@ test("department toggles change which findings lead the readout and scope its br
 });
 
 test("baseline, cross-functional, and AI-led discovery are visibly distinct", () => {
-  assert.match(workspace, /Ranked baseline findings/);
+  assert.match(workspace, /Ranked team findings/);
   assert.doesNotMatch(workspace, /The blue cards are the strongest supported findings/);
   assert.match(workspace, /Cross-functional opportunities/);
   assert.match(workspace, /The green section combines evidence owned by more than one team/);
-  assert.match(workspace, /AI additional discovery/);
-  assert.match(workspace, /Only successfully executed, traceable analysis appears here/);
+  assert.match(workspace, /AI analysis attempts/);
+  assert.match(workspace, /not stakeholder recommendations/i);
+  assert.match(workspace, /promoted into the findings above only when it returns a traceable result/);
 });
 
 test("Ask AI exposes exact finding context and no longer defaults to the first result", () => {

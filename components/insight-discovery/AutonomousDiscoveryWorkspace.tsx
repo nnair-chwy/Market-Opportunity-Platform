@@ -489,13 +489,24 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </details>
       ) : null}
       {shareStatus ? <div className="discovery-share-status" role="status"><span>{shareStatus}</span><button type="button" aria-label="Dismiss delivery status" onClick={() => setShareStatus(null)}>×</button></div> : null}
-      <header className="discovery-hero">
+      <header className="discovery-hero" ref={resultsHeadingRef} tabIndex={-1}>
         <div>
-          <div className="section-label">Autonomous insight discovery</div>
-          <h1 id="autonomous-discovery-title">The decisions worth investigating first</h1>
-          <p>The system generated decision hypotheses from the data, tested them with cohort, contradiction, channel-mix, quality, and matched-SKU operators, then separated observed evidence from the next decision.</p>
+          <div className="section-label">Regional opportunity portfolio</div>
+          <h1 id="autonomous-discovery-title">{department === "all" ? "Top opportunities across the portfolio" : `${LABELS[department]} opportunities to review`}</h1>
+          <p>{department === "all"
+            ? "Start with the strongest cross-functional signals, then review the best evidence-backed opportunities for each team."
+            : `Showing the strongest ${LABELS[department]} findings and the cross-source evidence that could change this team's decision.`}</p>
         </div>
-        <span className="discovery-method">{run.adaptiveDiscovery.generatedCount} generated hypotheses · {run.adaptiveDiscovery.testedCount} evidence-backed</span>
+        <div className="discovery-department-tabs" role="tablist" aria-label="Filter findings by department">
+          <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments <span>{adaptiveFindings.length}</span></button>
+          {(["marketing", "pricing", "cvc"] as const).map((item) => (
+            <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>{LABELS[item]} <span>{departmentFindingCounts[item]}</span></button>
+          ))}
+        </div>
+        <div className="discovery-hero-meta">
+          <span className="discovery-method">{run.adaptiveDiscovery.generatedCount} hypotheses tested · {run.adaptiveDiscovery.testedCount} evidence-backed analyses</span>
+          <span>{primaryFindings.length} top finding{primaryFindings.length === 1 ? "" : "s"} shown</span>
+        </div>
       </header>
 
       <div className="discovery-run-sequence" data-run-mode={run.runAudit.mode} role="status" aria-live="polite">
@@ -517,38 +528,12 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       </div>
       {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
 
-      {department === "all" ? <CrossSourceFindings findings={adaptiveFindings} /> : null}
-
-      <section className="discovery-ai-additional" data-status={hybridStatus} aria-labelledby="discovery-ai-additional-title" aria-live="polite">
-        <header>
-          <div>
-            <div className="section-label">AI additional discovery</div>
-            <h2 id="discovery-ai-additional-title">Deeper questions opened by the baseline findings</h2>
-            <p>The fast deterministic results stay visible while the investigator looks for a novel cross-source test. Only successfully executed, traceable analysis appears here.</p>
-          </div>
-          <span>{hybridStatus === "running" ? "Investigating…" : hybridStatus === "completed" ? `${supplementalInvestigations.length} accepted` : hybridStatus === "fallback" ? "Baseline retained" : "Waiting"}</span>
-        </header>
-        {hybridStatus === "running" ? <div className="discovery-ai-progress"><i /><span>Choosing and testing the next bounded analysis…</span></div> : null}
-        {supplementalInvestigations.length ? (
-          <div className="discovery-ai-additional-list">
-            {supplementalInvestigations.map((receipt) => (
-              <article key={receipt.fingerprint}>
-                <div><span>{receipt.kind === "exploratory_query" ? "AI-designed cross-source query" : receipt.kind === "registered_query" ? "Registered cross-source query" : "Focused market screen"}</span><small>{receipt.marketIds.length} market{receipt.marketIds.length === 1 ? "" : "s"} · {receipt.sourceIds.length} source{receipt.sourceIds.length === 1 ? "" : "s"}</small></div>
-                <h3>{receipt.objective}</h3>
-                <p>{receipt.reason}</p>
-                <small>Measures checked: {receipt.measureLabels.join(", ") || "No new measure returned"}</small>
-              </article>
-            ))}
-          </div>
-        ) : hybridStatus !== "running" ? <p className="discovery-ai-empty">{hybridMessage ?? "No additional executed finding has cleared the novelty and decision-value checks yet."}</p> : null}
-      </section>
-
       <section className="discovery-executive-summary" aria-labelledby="discovery-executive-summary-title">
         <header>
           <div>
-            <div className="section-label">Decision summary</div>
-            <h2 id="discovery-executive-summary-title">What this run found</h2>
-            <p>{keyTakeaways.length} priority takeaway{keyTakeaways.length === 1 ? "" : "s"} for {department === "all" ? "Marketing, Pricing, and CVC" : LABELS[department]}.</p>
+            <div className="section-label">Read this first</div>
+            <h2 id="discovery-executive-summary-title">Decision takeaways</h2>
+            <p>{keyTakeaways.length} takeaway{keyTakeaways.length === 1 ? "" : "s"} with the benchmark and evidence boundary attached.</p>
           </div>
           <span>Directional evidence</span>
         </header>
@@ -574,26 +559,9 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </div>
       </section>
 
-      <dl className="discovery-run-metrics">
-        <div><dt>Analyses completed</dt><dd>{run.analysesRun}</dd><small>{run.adaptiveDiscovery.testedCount} adaptive · {screenCounts.marketing + screenCounts.pricing + screenCounts.cvc} baseline screens</small></div>
-        <div><dt>Markets compared</dt><dd>{run.marketUniverse}</dd><small>National CBSA comparison universe</small></div>
-        <div><dt>Measures checked</dt><dd>{run.measuresExamined}</dd><small>Unique measures in approved snapshots</small></div>
-        <div><dt>Evidence-backed analyses</dt><dd>{run.adaptiveDiscovery.testedCount}</dd><small>Cohort, contradiction, channel, SKU, and cross-source tests</small></div>
-      </dl>
+      {department === "all" ? <CrossSourceFindings findings={adaptiveFindings} /> : null}
 
-      <div className="discovery-results-heading" ref={resultsHeadingRef} tabIndex={-1}>
-        <div>
-          <div className="section-label">Ranked baseline findings</div>
-          <h2>Top findings for {department === "all" ? "the portfolio" : LABELS[department]}</h2>
-          <div className="discovery-department-tabs" role="tablist" aria-label="Filter findings by department">
-            <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments <span>{adaptiveFindings.length}</span></button>
-            {(["marketing", "pricing", "cvc"] as const).map((item) => (
-              <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>{LABELS[item]} <span>{departmentFindingCounts[item]}</span></button>
-            ))}
-          </div>
-        </div>
-        <span>{primaryFindings.length} shown{department === "all" ? " across the portfolio" : ` for ${LABELS[department]}`}</span>
-      </div>
+      <div className="discovery-findings-divider"><span>{department === "all" ? "Ranked team findings" : `Ranked ${LABELS[department]} findings`}</span><small>{primaryFindings.length} shown</small></div>
 
       <div className="autonomous-insight-grid">
         {primaryFindings.map((finding: AutonomousInsight, index) => (
@@ -626,6 +594,43 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       ) : null}
 
       {department !== "all" ? <CrossSourceFindings findings={adaptiveFindings} /> : null}
+
+      <details className="discovery-ai-additional" data-status={hybridStatus}>
+        <summary>
+          <div>
+            <div className="section-label">Analysis expansion</div>
+            <strong>AI analysis attempts</strong>
+            <small>Methods and executed queries—not stakeholder recommendations.</small>
+          </div>
+          <span>{hybridStatus === "running" ? "Investigating…" : hybridStatus === "completed" ? `${supplementalInvestigations.length} executed` : hybridStatus === "fallback" ? "No new finding" : "Waiting"}</span>
+        </summary>
+        <div className="discovery-ai-additional-body" aria-live="polite">
+          <p className="discovery-ai-boundary">An analysis is promoted into the findings above only when it returns a traceable result with a benchmark and a decision implication. Requests to add context remain here as investigation records.</p>
+          {hybridStatus === "running" ? <div className="discovery-ai-progress"><i /><span>Choosing and testing the next bounded analysis…</span></div> : null}
+          {supplementalInvestigations.length ? (
+            <div className="discovery-ai-additional-list">
+              {supplementalInvestigations.map((receipt) => (
+                <article key={receipt.fingerprint}>
+                  <div><span>{receipt.kind === "exploratory_query" ? "AI-designed query" : receipt.kind === "registered_query" ? "Registered query" : "Focused market screen"}</span><small>{receipt.marketIds.length} market{receipt.marketIds.length === 1 ? "" : "s"} · {receipt.sourceIds.length} source{receipt.sourceIds.length === 1 ? "" : "s"}</small></div>
+                  <h3>{receipt.objective}</h3>
+                  <p>{receipt.reason}</p>
+                  <small>Measures checked: {receipt.measureLabels.join(", ") || "No new measure returned"}</small>
+                </article>
+              ))}
+            </div>
+          ) : hybridStatus !== "running" ? <p className="discovery-ai-empty">{hybridMessage ?? "No additional analysis produced a result strong enough to add to the stakeholder findings."}</p> : null}
+        </div>
+      </details>
+
+      <details className="discovery-coverage-details">
+        <summary>Coverage and method · {run.analysesRun} analyses · {run.marketUniverse} markets · {run.measuresExamined} measures</summary>
+        <dl className="discovery-run-metrics">
+          <div><dt>Analyses completed</dt><dd>{run.analysesRun}</dd><small>{run.adaptiveDiscovery.testedCount} adaptive · {screenCounts.marketing + screenCounts.pricing + screenCounts.cvc} baseline screens</small></div>
+          <div><dt>Markets compared</dt><dd>{run.marketUniverse}</dd><small>National CBSA comparison universe</small></div>
+          <div><dt>Measures checked</dt><dd>{run.measuresExamined}</dd><small>Unique measures in approved snapshots</small></div>
+          <div><dt>Evidence-backed analyses</dt><dd>{run.adaptiveDiscovery.testedCount}</dd><small>Cohort, contradiction, channel, SKU, and cross-source tests</small></div>
+        </dl>
+      </details>
 
       {incompleteHypotheses.length ? (
         <details className="discovery-hypothesis-backlog discovery-hypothesis-backlog-pending">

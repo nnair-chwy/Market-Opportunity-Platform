@@ -6,7 +6,7 @@ const workspace = fs.readFileSync(new URL("../components/insight-discovery/Auton
 const styles = fs.readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
 
 test("discovery results lead with every priority takeaway and an explicit inference boundary", () => {
-  assert.ok(workspace.indexOf("What this run found") < workspace.indexOf("Analyses completed"));
+  assert.ok(workspace.indexOf("Decision takeaways") < workspace.indexOf("Analyses completed"));
   assert.match(workspace, /primaryFindings\.map\(\(finding\)/);
   assert.match(workspace, /presentation\.analystRecommendation/);
   assert.match(workspace, /Observed differences and peer-relative patterns/);
