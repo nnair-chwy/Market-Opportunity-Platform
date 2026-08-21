@@ -55,9 +55,9 @@ function leadFor(row: GoldenRow): InvestigationLead {
     return {
       id: `golden-marketing-${row.rank}`,
       marketIds: [place.id],
-      title: `${place.label} shows configured paid-search response worth first-party validation`,
+      title: `${place.label} is the first paid-search spend-test candidate in the current screen`,
       observation: `${place.label} recorded ${integer(row.metrics.clicks)} clicks and ${integer(row.metrics.configuredConversions)} account-configured conversions from ${row.observationWindow}. Its configured conversion rate was ${decimal(conversionRate)}%, ${decimal(conversionRate - cohortRate)} percentage points above the eligible-cohort median, while CPC was $${decimal(cpc)} versus the $${decimal(cohortCpc)} median.`,
-      businessMeaning: "The combination clears the frozen response-and-cost screen, so this geography is a bounded lead for connecting orders, new customers, contribution, and attribution—not evidence of incremental demand or permission to change spend.",
+      businessMeaning: `Among 198 eligible markets, ${place.label} ranked first by configured conversions after clearing the response-and-cost screen. That makes it the first market to validate with orders, new customers, contribution, and an incremental test—not permission to raise live spend yet.`,
       method: row.cohort,
       sampleSize: 198,
       strength: `#${row.rank} by configured conversions after the registered eligibility screen`,

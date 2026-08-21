@@ -76,7 +76,7 @@ export function boundedActionSummary(actionPlan: InsightActionPlan): BoundedActi
     const isIncrease = /increase/i.test(actionPlan.recommendation);
     return {
       label: "Proposed controlled test",
-      action: `${isIncrease ? "Increase" : "Reallocate"} paid-search budget by 10% in ${actionPlan.marketName} against a stable matched control. Do not make the change permanent before the test is read out.`,
+      action: `If the evidence and approval gates pass, run a reversible 10% paid-search ${isIncrease ? "increase" : "reallocation"} test in ${actionPlan.marketName} against a stable matched control. Keep live spend unchanged until then, and do not make the treatment permanent before the test is read out.`,
       testWindow: "14 days after outcome tracking, control assignment, and approval are confirmed",
       resultStatus: "not_estimable",
       expectedResult: "A sales-growth or contribution-profit (CCP) gain cannot yet be forecast from the connected regional data. The measurable target is at least a 10% improvement in incremental new-customer contribution per dollar versus control, with no material sales, CPA, or substitution guardrail failure.",
