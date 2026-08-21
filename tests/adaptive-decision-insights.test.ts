@@ -15,6 +15,7 @@ test("adaptive discovery generates evidence-backed questions beyond the fixed re
   assert.ok(findings.some((finding) => finding.findingKind === "price_test"));
   assert.ok(findings.some((finding) => finding.findingKind === "competitive_risk"));
   assert.ok(findings.some((finding) => finding.departments.length > 1));
+  assert.ok(findings.some((finding) => finding.departments.length === 3));
   assert.ok(findings.every((finding) => finding.metrics.length && finding.proposedAction && finding.decisionBoundary));
 });
 
@@ -29,4 +30,19 @@ test("adaptive findings preserve quantified benchmarks and explicit scope", () =
   assert.ok(cvcMix);
   assert.ok((pricing?.sourceIds.length ?? 0) >= 2);
   assert.ok(findings.every((finding) => finding.confidence.reason && finding.limits.length));
+});
+
+test("adaptive discovery synthesizes repeated cross-functional trends and the missing all-data join", () => {
+  const findings = getAdaptiveDecisionFindings();
+  const allData = findings.find((finding) => finding.id === "portfolio:all-data:regional-join-readiness");
+  const paidSearch = findings.find((finding) => finding.id.includes("chewy-paid-search:over-indexed"));
+  const social = findings.find((finding) => finding.id.includes("social:under-indexed"));
+
+  assert.deepEqual(allData?.departments, ["marketing", "pricing", "cvc"]);
+  assert.equal(allData?.metrics.find((metric) => metric.id === "shared_regional_joins")?.value, 0);
+  assert.match(allData?.implication ?? "", /zero approved regional joins/i);
+  assert.ok((paidSearch?.metrics.find((metric) => metric.id === "markets_with_pattern")?.value ?? 0) >= 3);
+  assert.match(paidSearch?.implication ?? "", /repeated pattern/i);
+  assert.ok((social?.metrics.find((metric) => metric.id === "markets_with_pattern")?.value ?? 0) >= 3);
+  assert.match(social?.implication ?? "", /repeated allocation warning/i);
 });

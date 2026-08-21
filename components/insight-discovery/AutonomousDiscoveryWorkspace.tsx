@@ -100,6 +100,7 @@ function adaptiveInvestigationContext(finding: CurrentDataDiscoveryRun["adaptive
 function adaptiveMetricValue(value: number, unit: string) {
   if (["ratio", "percentage_point_ratio"].includes(unit)) return `${(value * 100).toLocaleString("en-US", { maximumFractionDigits: 1 })}%`;
   if (unit === "USD") return `$${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  if (unit === "multiple") return `${value.toLocaleString("en-US", { maximumFractionDigits: 1 })}×`;
   return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
