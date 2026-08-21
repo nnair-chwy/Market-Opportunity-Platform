@@ -316,6 +316,10 @@ function percentileMeaning(percentile: number) {
   return "Lower range (1st–20th percentile)";
 }
 
+function percentileComparison(percentile: number, cohort = "measured regions") {
+  return `higher than about ${Math.round(percentile)}% of ${cohort}`;
+}
+
 function readableSnapshotPeriod(snapshotId: string) {
   const googleAds = /^google-ads-(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})$/.exec(snapshotId);
   const format = (value: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
@@ -715,7 +719,7 @@ function marketingEfficiencyInvestigation(plan: EvaluationPlan, rows: MarketRow[
         { id: "households", label: "Households", formattedValue: formatNumber(item.market.households), percentile: householdPercentile, rangeMeaning: percentileMeaning(householdPercentile), role: "market_context" },
         { id: "density", label: "Population density", formattedValue: item.market.density.toLocaleString("en-US", { maximumFractionDigits: 1 }), percentile: densityPercentile, rangeMeaning: percentileMeaning(densityPercentile), role: "market_context" },
         { id: "income", label: "Median household income", formattedValue: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(item.market.income), percentile: incomePercentile, rangeMeaning: percentileMeaning(incomePercentile), role: "market_context" },
-        ...(singleStateOwnership ? [{ id: "state_dog_ownership", label: "State dog-owning households (2016 survey)", formattedValue: `${singleStateOwnership.householdRate!.toFixed(1)}%`, percentile: singleStateOwnership.relativePercentile!, rangeMeaning: `State-level context · P${singleStateOwnership.relativePercentile} among reported states`, role: "market_context" as const }] : []),
+        ...(singleStateOwnership ? [{ id: "state_dog_ownership", label: "State dog-owning households (2016 survey)", formattedValue: `${singleStateOwnership.householdRate!.toFixed(1)}%`, percentile: singleStateOwnership.relativePercentile!, rangeMeaning: `State-level context · ${percentileComparison(singleStateOwnership.relativePercentile!, "reported states")}`, role: "market_context" as const }] : []),
       ],
     };
   });
@@ -841,7 +845,7 @@ function workspaceSnapshotInvestigation(plan: EvaluationPlan, rows: MarketRow[])
     ];
     const crossCheckSummary = connectedMeasures
       .filter((measure) => measure.id !== datasetId)
-      .map((measure) => `${measure.label} ${measure.formattedValue} (P${measure.percentile})`)
+      .map((measure) => `${measure.label} ${measure.formattedValue} (${percentileComparison(measure.percentile)})`)
       .join("; ");
     return {
       id: `${datasetId}-${item.cbsaCode}`,

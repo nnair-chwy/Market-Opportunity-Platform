@@ -5,7 +5,7 @@ import { exploratoryQuerySpecSchema } from "./exploratory-query.ts";
 
 export const HYBRID_DISCOVERY_VERSION = "hybrid-insight-discovery-v1" as const;
 export const HYBRID_DISCOVERY_PROMPT_VERSION = "hybrid-discovery-investigator-v1" as const;
-export const HYBRID_DISCOVERY_MAX_STEPS = 5;
+export const HYBRID_DISCOVERY_MAX_STEPS = 8;
 export const HYBRID_DISCOVERY_MAX_RESULT_ROWS = 50;
 
 export const hybridDiscoveryRequestSchema = z.object({
@@ -91,6 +91,32 @@ export const hybridSupplementalFindingSchema = z.object({
 }).strict();
 export type HybridSupplementalFinding = z.infer<typeof hybridSupplementalFindingSchema>;
 
+export const hybridFindingReviewSchema = z.object({
+  findingId: z.string().trim().min(1).max(240),
+  interpretation: z.string().trim().min(3).max(420),
+  stakeholderValue: z.string().trim().min(3).max(420),
+  nextInvestigation: z.string().trim().min(3).max(420),
+  evidenceBoundary: z.string().trim().min(3).max(420),
+}).strict();
+export type HybridFindingReview = z.infer<typeof hybridFindingReviewSchema>;
+
+export const hybridPortfolioPatternSchema = z.object({
+  id: z.string().trim().min(1).max(240),
+  headline: z.string().trim().min(3).max(240),
+  findingIds: z.array(z.string().trim().min(1).max(240)).min(2).max(10),
+  observation: z.string().trim().min(3).max(520),
+  whyInteresting: z.string().trim().min(3).max(420),
+  nextInvestigation: z.string().trim().min(3).max(420),
+  evidenceBoundary: z.string().trim().min(3).max(420),
+}).strict();
+export type HybridPortfolioPattern = z.infer<typeof hybridPortfolioPatternSchema>;
+
+export const hybridPortfolioReviewResponseSchema = z.object({
+  findingReviews: z.array(hybridFindingReviewSchema).max(10),
+  portfolioPatterns: z.array(hybridPortfolioPatternSchema).max(3),
+}).strict();
+export type HybridPortfolioReview = z.infer<typeof hybridPortfolioReviewResponseSchema>;
+
 const investigationReceiptSchema = z.object({
   kind: z.enum(["market_screen", "registered_query", "exploratory_query"]),
   fingerprint: z.string(),
@@ -133,3 +159,11 @@ export const hybridDiscoveryAuditSchema = z.object({
   guarantees: z.array(z.string()),
 }).strict();
 export type HybridDiscoveryAudit = z.infer<typeof hybridDiscoveryAuditSchema>;
+
+export type HybridDiscoveryProgressEvent =
+  | { type: "baseline_ready"; findingCount: number }
+  | { type: "finding_review"; review: HybridFindingReview; completed: number; total: number }
+  | { type: "portfolio_pattern"; pattern: HybridPortfolioPattern }
+  | { type: "investigation_receipt"; receipt: HybridInvestigationReceipt }
+  | { type: "complete"; run: unknown }
+  | { type: "error"; message: string };

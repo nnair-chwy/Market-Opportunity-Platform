@@ -47,15 +47,28 @@ test("Ask AI exposes exact finding context and no longer defaults to the first r
   assert.match(workspace, /This does not rerun the investigation/);
 });
 
+test("explanation and new-analysis modes use different finding-specific questions", () => {
+  assert.match(workspace, /function defaultExplanationQuestion/);
+  assert.match(workspace, /function defaultInvestigationQuestion/);
+  assert.match(workspace, /setFollowUpQuestion\(defaultExplanationQuestion\(followUpTarget\)\)/);
+  assert.match(workspace, /setFollowUpQuestion\(defaultInvestigationQuestion\(followUpTarget\)\)/);
+});
+
+test("AI review shows only its new contribution and next analysis question", () => {
+  assert.match(workspace, /What AI added/);
+  assert.match(workspace, /New analysis question/);
+  assert.doesNotMatch(workspace, /Why this may matter:<\/b> \{plainPercentileLanguage\(aiReview\.stakeholderValue\)\}/);
+});
+
 test("AI supplemental discoveries can open an evidence-bound explanation", () => {
   assert.match(workspace, /function supplementalInvestigationContext/);
   assert.match(workspace, /Ask AI about this finding →/);
   assert.match(workspace, /onOpenInvestigation\(supplementalInvestigationContext\(finding\)\)/);
 });
 
-test("percentile notation is explained without implying significance", () => {
-  assert.match(workspace, /How to read P81, P1, and other percentiles/);
-  assert.match(workspace, /relative position, not statistical significance or certainty/);
+test("percentiles are written in plain language instead of shorthand", () => {
+  assert.match(workspace, /higher than about.*% of measured regions/i);
+  assert.doesNotMatch(workspace, /How to read P81, P1, and other percentiles/);
 });
 
 test("every cross-functional finding can carry its exact evidence into Ask AI", () => {

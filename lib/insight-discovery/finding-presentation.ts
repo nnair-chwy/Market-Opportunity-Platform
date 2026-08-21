@@ -36,8 +36,8 @@ function marketingRead(finding: AutonomousInsight) {
   if (!ctr && !conversionRate && !cpa) return finding.whyInteresting;
   return [
     ctr ? `CTR ${ctr[1]}% (${ctr[2]} ${ctr[3]}% of measured regions)` : null,
-    conversionRate ? `attributed conversion rate ${conversionRate[1]}% (P${conversionRate[2]})` : null,
-    cpa ? `attributed CPA $${cpa[1]} (P${cpa[2]})` : null,
+    conversionRate ? `attributed conversion rate ${conversionRate[1]}% (higher than about ${conversionRate[2]}% of measured regions)` : null,
+    cpa ? `attributed CPA $${cpa[1]} (higher than about ${cpa[2]}% of measured regions)` : null,
   ].filter(Boolean).join("; ") + ".";
 }
 

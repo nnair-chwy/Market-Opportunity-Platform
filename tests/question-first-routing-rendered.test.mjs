@@ -73,7 +73,8 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(discoveryWorkspace, /Ask about this finding/);
   assert.match(discoveryWorkspace, /attributed efficiency remain after joining new-customer and contribution outcomes/);
   assert.match(discoveryWorkspace, /click-through rate, attributed conversion rate, and cost per conversion/);
-  assert.match(discoveryWorkspace, /Explain this finding in plain language/);
+  assert.match(discoveryWorkspace, /defaultExplanationQuestion/);
+  assert.match(discoveryWorkspace, /defaultInvestigationQuestion/);
   assert.match(discoveryWorkspace, /originatingQuestion: finding\.question/);
   assert.match(workflow, /Hide autonomous workflow panel/);
   assert.match(workflow, /Show workflow/);

@@ -21,5 +21,6 @@ test("portfolio and cross-department findings are separate, consistently counted
   assert.match(component, /Cross-department <span>\{run\.adaptiveDiscovery\.findings\.filter/);
   assert.match(component, /department === "cross" \? crossFunctional : \[\]/);
   assert.doesNotMatch(component, /adaptivePortfolioDigest/);
-  assert.match(component, /New findings that cleared the evidence bar/);
+  assert.match(component, /AI portfolio interpretation/);
+  assert.match(component, /What the findings suggest together/);
 });

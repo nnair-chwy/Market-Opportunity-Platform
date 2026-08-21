@@ -231,6 +231,27 @@ test("a novel AI-selected market screen is promoted only with a complete stakeho
   assert.ok(promoted.limitations.length > 0);
 });
 
+test("extreme pricing coverage percentiles are presented as monitoring anomalies, not pricing opportunities", async () => {
+  const run = await runHybridInsightDiscovery({ mode: "hybrid", maxSteps: 2 }, {
+    ...fixed,
+    callModel: actions([
+      {
+        action: "execute",
+        objective: "Review Orlando's extreme pricing snapshot values.",
+        decisionValueHypothesis: "The extreme values may be caused by monitoring concentration rather than a local pricing opportunity.",
+        invocation: { kind: "market_screen", perspectiveId: "pricing", viewId: "observed_equalized_price", cbsaCodes: ["36740"] },
+      },
+      { action: "finish", summary: "The pricing screen identified a coverage anomaly requiring audit." },
+    ]),
+  });
+  const promoted = run.supplementalInvestigations[0]?.supplementalFinding;
+  assert.ok(promoted);
+  assert.match(promoted.recommendation, /do not treat .* as a pricing opportunity/i);
+  assert.match(promoted.businessImplication, /descriptive rank|source concentration|monitored snapshot/i);
+  assert.match(promoted.nextAction, /deduplicate/i);
+  assert.match(promoted.limitations.join(" "), /not statistical significance/i);
+});
+
 test("department scope rejects an unrelated registered query and stops after the hard failure limit", async () => {
   let modelCalls = 0;
   const run = await runHybridInsightDiscovery({
@@ -265,7 +286,41 @@ test("the action contract rejects arbitrary SQL and the request enforces hard li
     decisionValueHypothesis: "An unrestricted query could find something.",
     invocation: { kind: "sql", sql: "DELETE FROM findings" },
   }).success, false);
-  assert.equal(HYBRID_DISCOVERY_MAX_STEPS, 5);
+  assert.equal(HYBRID_DISCOVERY_MAX_STEPS, 8);
+});
+
+test("the AI portfolio review interprets every baseline finding, identifies shared patterns, and publishes progress before follow-up investigation", async () => {
+  const progress: string[] = [];
+  const run = await runHybridInsightDiscovery({ mode: "hybrid", maxSteps: 1 }, {
+    ...fixed,
+    portfolioReviewer: async (baseline) => ({
+      findingReviews: baseline.primaryFindings.map((finding) => ({
+        findingId: finding.id,
+        interpretation: `Interpretation for ${finding.marketName}.`,
+        stakeholderValue: `Why ${finding.marketName} matters to the owning team.`,
+        nextInvestigation: `Test the strongest unresolved explanation for ${finding.marketName}.`,
+        evidenceBoundary: "This remains directional until the connected business outcome is measured.",
+      })),
+      portfolioPatterns: [{
+        id: "shared-pattern-1",
+        headline: "Two leading markets share a decision-relevant pattern",
+        findingIds: baseline.primaryFindings.slice(0, 2).map((finding) => finding.id),
+        observation: "The same directional signal appears in two independently ranked findings.",
+        whyInteresting: "The repetition makes a shared follow-up more valuable than isolated market review.",
+        nextInvestigation: "Compare the markets with one matched cohort and the same-period business outcome.",
+        evidenceBoundary: "The shared pattern is observational, not incremental lift.",
+      }],
+    }),
+    callModel: async () => ({ action: "finish", summary: "The portfolio review identified the useful next investigation." }),
+    onProgress: async (event) => { progress.push(event.type); },
+  });
+
+  assert.equal(run.findingReviews.length, run.primaryFindings.length);
+  assert.equal(run.portfolioPatterns.length, 1);
+  assert.equal(progress[0], "baseline_ready");
+  assert.equal(progress.filter((type) => type === "finding_review").length, run.primaryFindings.length);
+  assert.ok(progress.includes("portfolio_pattern"));
+  assert.equal(run.hybridAudit.terminationReason, "model_finished");
 });
 
 test("the model response contract compiles to a required object-root schema", () => {

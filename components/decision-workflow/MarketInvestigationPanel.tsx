@@ -185,7 +185,7 @@ export function MarketInvestigationPanel({
                   <article key={item.id} data-role={item.role}>
                     <span>{item.label}</span>
                     <strong>{item.formattedValue}</strong>
-                    <small>P{item.percentile} · {item.rangeMeaning}</small>
+                    <small>Higher than about {Math.round(item.percentile)}% of measured regions · {item.rangeMeaning}</small>
                   </article>
                 ))}
               </div>

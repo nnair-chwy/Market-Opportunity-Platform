@@ -16,17 +16,23 @@ import {
   runCurrentDataInsightDiscovery,
   type CurrentDataDiscoveryRun,
 } from "./current-data-discovery.ts";
+import { findingPresentation } from "./finding-presentation.ts";
 import {
   HYBRID_DISCOVERY_PROMPT_VERSION,
   HYBRID_DISCOVERY_VERSION,
   hybridDiscoveryAuditSchema,
   hybridDiscoveryRequestSchema,
+  hybridPortfolioReviewResponseSchema,
   hybridInvestigatorActionSchema,
   hybridInvestigatorResponseSchema,
   hybridInvestigatorInvocationSchema,
   type HybridDiscoveryAudit,
   type HybridDiscoveryRequest,
   type HybridInvestigationReceipt,
+  type HybridFindingReview,
+  type HybridPortfolioPattern,
+  type HybridPortfolioReview,
+  type HybridDiscoveryProgressEvent,
   type HybridSupplementalFinding,
   type HybridInvestigatorAction,
   type HybridInvestigatorInvocation,
@@ -61,18 +67,23 @@ export type HybridInvestigatorContext = {
   permittedRegisteredQueries: string[];
   permittedExploratoryTables: Array<{ tableId: string; grain: string; columns: string[] }>;
   candidateMarketIds: string[];
+  findingReviews: HybridFindingReview[];
+  portfolioPatterns: HybridPortfolioPattern[];
   priorReceipts: HybridInvestigationReceipt[];
   lastFailure: string | null;
   remainingSteps: number;
 };
 
 export type HybridInvestigatorCaller = (context: HybridInvestigatorContext) => Promise<HybridInvestigatorAction>;
+export type HybridPortfolioReviewer = (baseline: CurrentDataDiscoveryRun) => Promise<HybridPortfolioReview>;
 export type RegisteredQueryExecutor = (request: NormalizedQueryRequest) => Promise<NormalizedQueryResponse>;
 export type ExploratoryQueryExecutor = (spec: ExploratoryQuerySpec, options: { snapshotVersion: string }) => Promise<ExploratoryQueryResponse>;
 
 export type HybridDiscoveryRun = CurrentDataDiscoveryRun & {
   hybridAudit: HybridDiscoveryAudit;
   supplementalInvestigations: HybridInvestigationReceipt[];
+  findingReviews: HybridFindingReview[];
+  portfolioPatterns: HybridPortfolioPattern[];
 };
 
 const SYSTEM_INSTRUCTIONS = `You select the next bounded analysis for a geographic insight-discovery run.
@@ -84,6 +95,24 @@ When a registered query requires a CBSA code, select one from candidateMarketIds
 If lastFailure is present, correct that specific issue in the next action instead of repeating the failed proposal.
 Use the run as an iterative investigation, not a one-shot selector. A registered or exploratory aggregate may identify a promising market; on the next step, use its returned marketIds in a focused approved market_screen when that can produce a quantified stakeholder finding. Prefer cross-source queries first when compatible tables are available, then challenge the strongest result with a focused market analysis. Do not finish immediately after an accepted aggregate when a non-duplicate focused screen can test its decision value.
 The application executes and evaluates every proposal. Choose finish when no permitted invocation is likely to add decision value.`;
+
+const PORTFOLIO_REVIEW_INSTRUCTIONS = `You are the interpretation stage of a geographic opportunity investigation.
+Review every supplied primary finding exactly once. The finding already displays its recommendation, observed evidence, business implication, next action, and evidence boundary. Do not repeat or paraphrase those fields.
+For interpretation, add exactly one genuinely new analytical contribution: an alternative explanation, contradiction, useful connection, or decision distinction that is supported by the supplied evidence. If no new contribution is supported, say that the AI review did not add a separate interpretation.
+For stakeholderValue, record the specific new decision consequence of that contribution for audit purposes; do not restate the current recommendation.
+Write nextInvestigation as one concrete question that a new analysis can execute. It must name what should be compared, joined, segmented, or tested and must not be a generic request to validate, add context, or explain the finding.
+Preserve the evidence boundary without expanding it.
+Then inspect the findings together. Return only portfolio patterns supported by at least two supplied finding IDs. A pattern may connect markets, departments, funnel stages, or evidence gaps, but it must not invent causality or an unmeasured business outcome.
+Return at most three materially different patterns. Do not repeat the same connected finding set or the same capacity, outcome, or evidence-gap theme in different wording.
+The next investigation must say what to compare, join, segment, or test next. Do not hand the stakeholder generic data-cleaning work.
+Return the supplied structured object only.`;
+
+function portfolioReviewTargets(baseline: CurrentDataDiscoveryRun) {
+  return [...baseline.findings]
+    .filter((finding) => findingPresentation(finding).recommendationType !== "data_quality")
+    .sort((left, right) => right.importance.score - left.importance.score)
+    .slice(0, 5);
+}
 
 async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInvestigatorAction> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, maxRetries: 1, timeout: 20_000 });
@@ -98,7 +127,7 @@ async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInv
         baseline: {
           runId: context.baseline.runId,
           departments: context.baseline.departmentsScanned,
-          primaryFindings: context.baseline.primaryFindings.map((finding) => ({
+          primaryFindings: portfolioReviewTargets(context.baseline).map((finding) => ({
             insightId: finding.insightId,
             department: finding.department,
             marketIds: finding.marketIds,
@@ -113,6 +142,8 @@ async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInv
         permittedRegisteredQueries: context.permittedRegisteredQueries,
         permittedExploratoryTables: context.permittedExploratoryTables,
         candidateMarketIds: context.candidateMarketIds,
+        findingReviews: context.findingReviews,
+        portfolioPatterns: context.portfolioPatterns,
         priorReceipts: context.priorReceipts,
         lastFailure: context.lastFailure,
         remainingSteps: context.remainingSteps,
@@ -158,6 +189,42 @@ async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInv
     decisionValueHypothesis: parsed.decisionValueHypothesis,
     invocation,
   });
+}
+
+async function callOpenAiPortfolioReview(baseline: CurrentDataDiscoveryRun): Promise<HybridPortfolioReview> {
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, maxRetries: 1, timeout: 30_000 });
+  const findings = portfolioReviewTargets(baseline).map((finding) => ({
+    findingId: finding.insightId,
+    department: finding.department,
+    marketName: finding.marketName,
+    headline: finding.headline,
+    evidence: finding.evidenceDetail,
+    whyInteresting: finding.whyInteresting,
+    currentNextValidation: finding.nextValidation,
+    sourceIds: finding.sourceIds,
+    businessValueStatus: finding.businessValue.status,
+    decisionBoundary: finding.applicability.approvalBoundary,
+  }));
+  const response = await client.responses.parse({
+    model: process.env.OPENAI_HYBRID_DISCOVERY_MODEL?.trim() || ASK_AI_MODEL,
+    reasoning: { effort: "medium" },
+    store: false,
+    input: [
+      { role: "developer", content: PORTFOLIO_REVIEW_INSTRUCTIONS },
+      { role: "user", content: JSON.stringify({ task: "Interpret every finding and identify supported cross-finding patterns.", findings }) },
+    ],
+    text: { format: zodTextFormat(hybridPortfolioReviewResponseSchema, "hybrid_portfolio_review") },
+  });
+  if (!response.output_parsed) throw new Error("OpenAI returned no structured portfolio review.");
+  const parsed = hybridPortfolioReviewResponseSchema.parse(response.output_parsed);
+  const expectedIds = new Set(findings.map((finding) => finding.findingId));
+  const findingReviews = parsed.findingReviews.filter((review) => expectedIds.has(review.findingId));
+  const reviewedIds = new Set(findingReviews.map((review) => review.findingId));
+  if ([...expectedIds].some((findingId) => !reviewedIds.has(findingId))) {
+    throw new Error("The AI portfolio review did not interpret every primary finding.");
+  }
+  const portfolioPatterns = parsed.portfolioPatterns.filter((pattern) => pattern.findingIds.every((findingId) => expectedIds.has(findingId)));
+  return { findingReviews, portfolioPatterns };
 }
 
 function invocationFingerprint(invocation: HybridInvestigatorInvocation) {
@@ -277,13 +344,20 @@ function marketScreenFinding(input: {
   const lead = input.investigation.leads.find((candidate) => candidate.measureValue || candidate.supportingMeasures?.length);
   if (!lead || !input.investigation.sourceIds.length) return null;
   const quantifiedEvidence = lead.measureValue
-    ? `${lead.measureValue.label}: ${lead.measureValue.formattedValue} (${lead.measureValue.rangeMeaning}; percentile ${lead.measureValue.percentile.toFixed(1)}).`
-    : (lead.supportingMeasures ?? []).slice(0, 3).map((measure) => `${measure.label}: ${measure.formattedValue} (${measure.rangeMeaning}; percentile ${measure.percentile.toFixed(1)})`).join(" ");
+    ? `${lead.measureValue.label}: ${lead.measureValue.formattedValue} (${lead.measureValue.rangeMeaning}; higher than about ${Math.round(lead.measureValue.percentile)}% of measured regions).`
+    : (lead.supportingMeasures ?? []).slice(0, 3).map((measure) => `${measure.label}: ${measure.formattedValue} (${measure.rangeMeaning}; higher than about ${Math.round(measure.percentile)}% of measured regions)`).join(" ");
   const marketName = lead.marketIds.map((marketId) => publicMarkets.find((market) => market.cbsa_code === marketId)?.cbsa_name).filter(Boolean).join(", ") || lead.title.split(":")[0] || "This market";
+  const pricingCoverageMeasures = [lead.measureValue, ...(lead.supportingMeasures ?? [])]
+    .filter((measure): measure is NonNullable<typeof measure> => Boolean(measure))
+    .filter((measure) => /offer volume|offer rows|assortment breadth/i.test(measure.label));
+  const pricingCoverageAnomaly = input.investigation.perspectiveId === "pricing"
+    && pricingCoverageMeasures.filter((measure) => measure.percentile >= 99).length >= 2;
   const recommendation = input.investigation.perspectiveId === "marketing"
     ? `Put ${marketName} first in the next campaign-and-outcome review; keep live spend unchanged until the observed response is joined to new-customer, sales, and contribution outcomes.`
     : input.investigation.perspectiveId === "pricing"
-      ? `Put ${marketName} first in the next matched-SKU pricing review; keep live price unchanged until coverage, margin, and expected unit response are verified.`
+      ? pricingCoverageAnomaly
+        ? `Do not treat ${marketName} as a pricing opportunity yet. Its monitoring volume and summed assortment measures are higher than all other measured regions, indicating source concentration; audit retailer, ZIP, category, SKU, and crawl duplication before comparing price.`
+        : `Put ${marketName} first in the next matched-SKU pricing review; keep live price unchanged until coverage, margin, and expected unit response are verified.`
       : `Put ${marketName} first in the next clinic demand-and-capacity review; do not change footprint or media until appointments, staffed capacity, and mature-clinic economics are joined.`;
   return {
     id: `ai:${input.fingerprint}`,
@@ -293,11 +367,19 @@ function marketScreenFinding(input: {
     recommendation,
     quantifiedEvidence,
     comparison: lead.observation,
-    businessImplication: lead.businessMeaning,
-    nextAction: lead.nextEvidence,
+    businessImplication: pricingCoverageAnomaly
+      ? "The extreme percentile means this market is at the top of the monitored snapshot, not that its prices or business opportunity are statistically exceptional. The observed offer mix is too concentrated to support a pricing conclusion."
+      : lead.businessMeaning,
+    nextAction: pricingCoverageAnomaly
+      ? "Deduplicate repeated offer observations, calculate unique matched SKUs by retailer and ZIP, require representative multi-ZIP coverage, then recompute a matched-basket price index before joining Chewy units, sales, margin, and response."
+      : lead.nextEvidence,
     marketIds: lead.marketIds,
     sourceIds: input.investigation.sourceIds,
-    limitations: [lead.challenge, ...input.investigation.limitations].filter(Boolean).slice(0, 5),
+    limitations: [
+      ...(pricingCoverageAnomaly ? ["Higher than all other measured regions is a descriptive rank caused by the maximum observed value; it is not statistical significance or proof of opportunity."] : []),
+      lead.challenge,
+      ...input.investigation.limitations,
+    ].filter(Boolean).slice(0, 5),
   };
 }
 
@@ -427,8 +509,10 @@ export async function runHybridInsightDiscovery(
   rawRequest: unknown = {},
   options: {
     callModel?: HybridInvestigatorCaller;
+    portfolioReviewer?: HybridPortfolioReviewer;
     queryExecutor?: RegisteredQueryExecutor;
     exploratoryQueryExecutor?: ExploratoryQueryExecutor;
+    onProgress?: (event: HybridDiscoveryProgressEvent) => void | Promise<void>;
     now?: () => string;
     runId?: string;
   } = {},
@@ -440,12 +524,27 @@ export async function runHybridInsightDiscovery(
     previousRunId: request.previousRunId,
     previousPrimaryFindingIds: request.previousPrimaryFindingIds,
   });
+  await options.onProgress?.({ type: "baseline_ready", findingCount: baseline.primaryFindings.length });
   if (request.mode === "deterministic") {
-    return { ...baseline, hybridAudit: deterministicAudit(request, "deterministic_requested"), supplementalInvestigations: [] };
+    return { ...baseline, hybridAudit: deterministicAudit(request, "deterministic_requested"), supplementalInvestigations: [], findingReviews: [], portfolioPatterns: [] };
   }
   const callModel = options.callModel ?? (process.env.OPENAI_API_KEY?.trim() ? callOpenAi : null);
   if (!callModel) {
-    return { ...baseline, hybridAudit: deterministicAudit(request, "model_not_configured"), supplementalInvestigations: [] };
+    return { ...baseline, hybridAudit: deterministicAudit(request, "model_not_configured"), supplementalInvestigations: [], findingReviews: [], portfolioPatterns: [] };
+  }
+
+  let findingReviews: HybridFindingReview[] = [];
+  let portfolioPatterns: HybridPortfolioPattern[] = [];
+  try {
+    const review = await (options.portfolioReviewer ?? callOpenAiPortfolioReview)(baseline);
+    findingReviews = review.findingReviews;
+    portfolioPatterns = review.portfolioPatterns;
+    for (let index = 0; index < findingReviews.length; index += 1) {
+      await options.onProgress?.({ type: "finding_review", review: findingReviews[index]!, completed: index + 1, total: findingReviews.length });
+    }
+    for (const pattern of portfolioPatterns) await options.onProgress?.({ type: "portfolio_pattern", pattern });
+  } catch {
+    // Query execution remains available when the optional interpretation pass fails.
   }
 
   const receipts: HybridInvestigationReceipt[] = [];
@@ -475,6 +574,8 @@ export async function runHybridInsightDiscovery(
         permittedRegisteredQueries: registeredQueries,
         permittedExploratoryTables: request.normalizedSnapshotVersion ? Object.entries(EXPLORATORY_TABLE_CATALOG).map(([tableId, table]) => ({ tableId, grain: table.grain, columns: Object.keys(table.columns) })) : [],
         candidateMarketIds,
+        findingReviews,
+        portfolioPatterns,
         priorReceipts: receipts,
         lastFailure,
         remainingSteps: request.maxSteps - step + 1,
@@ -506,6 +607,7 @@ export async function runHybridInsightDiscovery(
         step,
       });
       receipts.push(receipt);
+      await options.onProgress?.({ type: "investigation_receipt", receipt });
       priorFingerprints.add(receipt.fingerprint);
       if (receipt.status === "failed") {
         failures += 1;
@@ -518,6 +620,7 @@ export async function runHybridInsightDiscovery(
       const receipt = rejectedReceipt(action.invocation, action.objective, reason);
       receipt.status = "failed";
       receipts.push(receipt);
+      await options.onProgress?.({ type: "investigation_receipt", receipt });
       failures += 1;
       lastFailure = reason;
     }
@@ -543,7 +646,7 @@ export async function runHybridInsightDiscovery(
     receipts,
     guarantees: [...GUARANTEES],
   });
-  return { ...baseline, hybridAudit, supplementalInvestigations: accepted };
+  return { ...baseline, hybridAudit, supplementalInvestigations: accepted, findingReviews, portfolioPatterns };
 }
 
 export { DEFAULT_NORMALIZED_SNAPSHOT_VERSION };
