@@ -5,9 +5,12 @@ import test from "node:test";
 const workspace = await readFile(new URL("../components/insight-discovery/AutonomousDiscoveryWorkspace.tsx", import.meta.url), "utf8");
 const presentation = await readFile(new URL("../lib/insight-discovery/finding-presentation.ts", import.meta.url), "utf8");
 
-test("discovery chooses one team before generating its scoped brief", () => {
-  assert.match(workspace, /Choose the team this readout is for/);
-  assert.match(workspace, /<select value=\{department\}/);
+test("department toggles change which findings lead the readout and scope its brief", () => {
+  assert.match(workspace, /Choose which opportunities lead the readout/);
+  assert.match(workspace, /role="tablist" aria-label="Filter findings by department"/);
+  assert.match(workspace, /All departments/);
+  assert.match(workspace, /department === "all" \? <CrossSourceFindings findings=\{adaptiveFindings\}/);
+  assert.match(workspace, /department !== "all" \? <CrossSourceFindings findings=\{adaptiveFindings\}/);
   assert.match(workspace, /buildTeamOpportunityBrief\(run, department\)/);
   assert.match(workspace, /Download \$\{department === "all" \? "portfolio" : LABELS\[department\]\} brief/);
 });

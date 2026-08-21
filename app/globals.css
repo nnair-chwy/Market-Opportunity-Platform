@@ -215,11 +215,11 @@
 .discovery-department-tabs button { display: flex; align-items: center; gap: 8px; border: 1px solid #cfdbea; border-radius: 999px; background: #fff; color: #4a5e7a; cursor: pointer; font: inherit; font-size: .78rem; font-weight: 700; padding: 8px 12px; }
 .discovery-department-tabs button[aria-selected="true"] { border-color: #3569a9; background: #eaf2ff; color: #214f89; }
 .discovery-department-tabs span { display: grid; place-items: center; min-width: 20px; height: 20px; border-radius: 999px; background: rgba(50, 91, 148, .1); font-size: .68rem; }
-.discovery-team-scope { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, 220px) auto; align-items: end; gap: 16px; padding: 17px 19px; border: 1px solid #bed0e5; border-radius: 14px; background: rgba(247, 251, 255, .92); }
+.discovery-team-scope { display: grid; grid-template-columns: minmax(230px, .8fr) minmax(0, 1.35fr) auto; align-items: end; gap: 16px; padding: 17px 19px; border: 1px solid #bed0e5; border-radius: 14px; background: rgba(247, 251, 255, .92); }
 .discovery-team-scope h2 { margin: 4px 0 3px; color: #17365f; font-size: 1.05rem; }
 .discovery-team-scope p { margin: 0; color: #60728a; font-size: .73rem; line-height: 1.45; }
-.discovery-team-scope label { display: grid; gap: 5px; color: #536983; font-size: .66rem; font-weight: 800; }
-.discovery-team-scope select { min-height: 42px; border: 1px solid #aebfd5; border-radius: 9px; background: #fff; color: #203d63; padding: 7px 34px 7px 10px; font: 750 .78rem inherit; }
+.discovery-team-scope .discovery-department-tabs { align-self: center; }
+.discovery-team-scope .discovery-department-tabs button { min-height: 38px; padding: 7px 10px; font-size: .7rem; }
 .discovery-team-scope > button { min-height: 42px; border: 1px solid #3569a9; border-radius: 9px; background: #edf5ff; color: #235992; padding: 8px 12px; font: 800 .72rem inherit; cursor: pointer; }
 .discovery-team-scope > button:disabled { cursor: wait; opacity: .62; }
 .discovery-ai-additional { display: grid; gap: 12px; padding: 19px 20px; border: 1px solid #b8c7df; border-left: 6px solid #5848a6; border-radius: 15px; background: linear-gradient(135deg, #fbfaff, #f1f2ff); box-shadow: 0 16px 38px rgba(55, 49, 118, .07); }
@@ -7290,6 +7290,9 @@ button {
 .adaptive-opening .adaptive-composer-input label { padding-left: .25rem; }
 .adaptive-opening .adaptive-composer-input label strong { color: #536b89; font: 800 .55rem monospace; letter-spacing: .12em; text-transform: uppercase; }
 .adaptive-opening .adaptive-composer-row { display: grid; grid-template-columns: 1fr auto; gap: .55rem; align-items: stretch; }
+.adaptive-opening .adaptive-composer-row > .recommended-question-typeahead,
+.adaptive-opening .adaptive-composer-row > .recommended-question-typeahead > textarea,
+.adaptive-opening .adaptive-composer-row > .primary-action { box-sizing: border-box; height: 52px; min-height: 52px; }
 .adaptive-opening .adaptive-composer-row textarea { min-height: 52px; height: 52px; resize: none; border-color: #c5d6ec; border-radius: .8rem; padding: .85rem 1rem; font-size: .78rem; font-weight: 600; }
 .adaptive-opening .adaptive-composer-row button { min-width: 126px; border-radius: .85rem; background: #86afea; border-color: #86afea; }
 .adaptive-opening .adaptive-composer-row button:disabled { background: #b9cdea; border-color: #b9cdea; box-shadow: none; color: rgba(255,255,255,.78); opacity: 1; }

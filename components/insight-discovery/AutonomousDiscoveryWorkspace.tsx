@@ -31,6 +31,41 @@ function adaptivePortfolioDigest(findings: CurrentDataDiscoveryRun["adaptiveDisc
   ];
 }
 
+function CrossSourceFindings({ findings }: { findings: CurrentDataDiscoveryRun["adaptiveDiscovery"]["findings"] }) {
+  if (!findings.length) return null;
+  return (
+    <section className="adaptive-decision-findings" aria-labelledby="adaptive-decision-findings-title">
+      <header>
+        <div>
+          <div className="section-label">Cross-functional opportunities</div>
+          <h2 id="adaptive-decision-findings-title">Signals that become more useful when teams look together</h2>
+          <p>The green section combines evidence owned by more than one team. Each team toggle keeps only the cross-source signals relevant to that team.</p>
+        </div>
+        <span>{findings.length} shown</span>
+      </header>
+      <div className="adaptive-decision-list">
+        {findings.map((finding) => (
+          <article key={finding.id} data-kind={finding.findingKind}>
+            <div className="adaptive-decision-meta">
+              <span>{finding.departments.map((item) => LABELS[item]).join(" + ")}</span>
+              <small>{finding.confidence.level} descriptive confidence</small>
+            </div>
+            <h3>{finding.implication}</h3>
+            <div className="adaptive-origin-question"><span>Question tested</span><p>{finding.question}</p></div>
+            <div className="adaptive-decision-metrics">
+              {finding.metrics.slice(0, 3).map((metric) => (
+                <div key={metric.id}><strong>{adaptiveMetricValue(metric.value, metric.unit)}</strong><span>{metric.label}</span>{metric.benchmark !== undefined ? <small>Peer benchmark {adaptiveMetricValue(Number(metric.benchmark), metric.unit)}</small> : null}</div>
+              ))}
+            </div>
+            <div className="adaptive-decision-action"><span>What this changes now</span><p>{finding.proposedAction}</p></div>
+            <details><summary>Evidence, calculation, and limits</summary><p>{finding.evidence.join(" ")}</p><p><strong>Confidence:</strong> {finding.confidence.reason}</p><p><strong>Boundary:</strong> {finding.decisionBoundary}</p><p><strong>Limits:</strong> {finding.limits.join(" ")}</p></details>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function findingFollowUps(finding: AutonomousInsight | null) {
   if (!finding) return ["Which finding has the strongest business case after accounting for evidence quality?", "Which missing outcome would most change the current recommendation?"];
   if (finding.department === "marketing") return [
@@ -338,6 +373,11 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     pricing: run?.traces.filter((trace) => trace.department === "pricing").length ?? 0,
     cvc: run?.traces.filter((trace) => trace.department === "cvc").length ?? 0,
   }), [run]);
+  const departmentFindingCounts = useMemo(() => ({
+    marketing: run?.findings.filter((finding) => finding.department === "marketing").length ?? 0,
+    pricing: run?.findings.filter((finding) => finding.department === "pricing").length ?? 0,
+    cvc: run?.findings.filter((finding) => finding.department === "cvc").length ?? 0,
+  }), [run]);
   const teamOpportunityBrief = useMemo(() => run ? buildTeamOpportunityBrief(run, department) : null, [department, run]);
   const emergingHypotheses = useMemo(() => run ? buildCrossSourceHypothesisBacklog(run) : [], [run]);
   const readyHypotheses = useMemo(() => emergingHypotheses.filter((lead) => lead.status === "ready_to_test"), [emergingHypotheses]);
@@ -475,22 +515,21 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       <section className="discovery-team-scope" aria-labelledby="discovery-team-scope-title">
         <div>
           <div className="section-label">Brief audience</div>
-          <h2 id="discovery-team-scope-title">Choose the team this readout is for</h2>
-          <p>The summary, ranked findings, cross-functional opportunities, and Word brief update together.</p>
+          <h2 id="discovery-team-scope-title">Choose which opportunities lead the readout</h2>
+          <p>All departments leads with cross-source signals. A team selection leads with that team’s strongest findings.</p>
         </div>
-        <label>
-          <span>Team</span>
-          <select value={department} onChange={(event) => setDepartment(event.target.value as "all" | PerspectiveId)}>
-            <option value="all">All teams</option>
-            <option value="marketing">Marketing</option>
-            <option value="pricing">Pricing</option>
-            <option value="cvc">CVC</option>
-          </select>
-        </label>
+        <div className="discovery-department-tabs" role="tablist" aria-label="Filter findings by department">
+          <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments <span>{adaptiveFindings.length}</span></button>
+          {(["marketing", "pricing", "cvc"] as const).map((item) => (
+            <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>{LABELS[item]} <span>{departmentFindingCounts[item]}</span></button>
+          ))}
+        </div>
         <button type="button" onClick={() => void downloadFindings(department, "docx")} disabled={Boolean(isExporting)}>
           {isExporting === `${department}:docx` ? "Preparing…" : `Download ${department === "all" ? "portfolio" : LABELS[department]} brief`}
         </button>
       </section>
+
+      {department === "all" ? <CrossSourceFindings findings={adaptiveFindings} /> : null}
 
       <section className="discovery-ai-additional" data-status={hybridStatus} aria-labelledby="discovery-ai-additional-title" aria-live="polite">
         <header>
@@ -589,37 +628,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </section>
       ) : null}
 
-      {adaptiveFindings.length ? (
-        <section className="adaptive-decision-findings" aria-labelledby="adaptive-decision-findings-title">
-          <header>
-            <div>
-              <div className="section-label">Cross-functional opportunities</div>
-              <h2 id="adaptive-decision-findings-title">Signals that become more useful when teams look together</h2>
-              <p>The green section combines evidence owned by more than one team. It is separate from the blue ranked findings below, which are the strongest team-specific conclusions from the baseline scan.</p>
-            </div>
-            <span>{adaptiveFindings.length} shown</span>
-          </header>
-          <div className="adaptive-decision-list">
-            {adaptiveFindings.map((finding) => (
-              <article key={finding.id} data-kind={finding.findingKind}>
-                <div className="adaptive-decision-meta">
-                  <span>{finding.departments.map((item) => LABELS[item]).join(" + ")}</span>
-                  <small>{finding.confidence.level} descriptive confidence</small>
-                </div>
-                <h3>{finding.implication}</h3>
-                <div className="adaptive-origin-question"><span>Question tested</span><p>{finding.question}</p></div>
-                <div className="adaptive-decision-metrics">
-                  {finding.metrics.slice(0, 3).map((metric) => (
-                    <div key={metric.id}><strong>{adaptiveMetricValue(metric.value, metric.unit)}</strong><span>{metric.label}</span>{metric.benchmark !== undefined ? <small>Peer benchmark {adaptiveMetricValue(Number(metric.benchmark), metric.unit)}</small> : null}</div>
-                  ))}
-                </div>
-                <div className="adaptive-decision-action"><span>What this changes now</span><p>{finding.proposedAction}</p></div>
-                <details><summary>Evidence, calculation, and limits</summary><p>{finding.evidence.join(" ")}</p><p><strong>Confidence:</strong> {finding.confidence.reason}</p><p><strong>Boundary:</strong> {finding.decisionBoundary}</p><p><strong>Limits:</strong> {finding.limits.join(" ")}</p></details>
-              </article>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      {department !== "all" ? <CrossSourceFindings findings={adaptiveFindings} /> : null}
 
       {incompleteHypotheses.length ? (
         <details className="discovery-hypothesis-backlog discovery-hypothesis-backlog-pending">
