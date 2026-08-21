@@ -167,6 +167,14 @@
 .discovery-ai-findings article { display: grid; gap: 12px; padding: 18px; border: 1px solid #cbd6f4; border-radius: 12px; background: #fff; box-shadow: 0 8px 20px rgba(40, 73, 145, .06); }
 .discovery-ai-findings article details { color: #52617d; font-size: .72rem; line-height: 1.5; }
 .discovery-ai-findings article details summary { color: #3156a0; cursor: pointer; font-weight: 800; }
+.discovery-ai-findings-empty { border-style: dashed; }
+.discovery-ai-empty-actions { display: flex !important; grid-template-columns: none !important; flex-wrap: wrap; gap: 9px !important; }
+.discovery-ai-empty-actions button { min-height: 38px; padding: 8px 13px; border: 1px solid #8fa8df; border-radius: 9px; background: #fff; color: #244f9d; cursor: pointer; font: inherit; font-size: .72rem; font-weight: 800; }
+.discovery-ai-empty-actions button:last-child { background: #244f9d; color: #fff; }
+.discovery-ai-empty-actions button:disabled { cursor: wait; opacity: .58; }
+.discovery-percentile-help { padding: 8px 10px; border: 1px solid #d8e3f0; border-radius: 9px; background: #f7faff; color: #526984; font-size: .68rem; line-height: 1.45; }
+.discovery-percentile-help summary { color: #315d91; cursor: pointer; font-weight: 800; }
+.discovery-percentile-help p { margin: 7px 0 0; }
 .discovery-run-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
 .discovery-run-metrics > div { display: grid; gap: 4px; padding: 15px 17px; border: 1px solid #d8e2ef; border-radius: 13px; background: #fff; }
 .discovery-run-metrics dt { color: #6b7b92; font-size: .69rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
@@ -416,12 +424,20 @@
 .discovery-follow-up-context p { overflow: hidden; color: #526983; font-size: .66rem; text-overflow: ellipsis; white-space: nowrap; }
 .discovery-follow-up-context small { color: #75869a; font-size: .58rem; }
 .discovery-follow-up-suggestions { display: flex; min-width: 0; flex-wrap: wrap; gap: 7px; overflow: hidden; }
+.discovery-follow-up-mode { display: flex; align-items: center; gap: 5px; width: max-content; padding: 3px; border: 1px solid #c4d4e7; border-radius: 999px; background: #eaf1f9; }
+.discovery-follow-up-mode button { padding: 5px 9px; border: 0; border-radius: 999px; background: transparent; color: #5c6f88; cursor: pointer; font: inherit; font-size: .64rem; font-weight: 800; }
+.discovery-follow-up-mode button[aria-selected="true"] { background: #fff; color: #245a98; box-shadow: 0 1px 4px rgba(39, 77, 120, .14); }
 .discovery-follow-up-suggestions button { flex: 1 1 240px; min-width: 0; max-width: 100%; overflow: hidden; padding: 6px 9px; border: 1px solid #bfd0e5; border-radius: 999px; background: #fff; color: #315d91; cursor: pointer; font: inherit; font-size: .66rem; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 .discovery-follow-up-composer { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; align-items: stretch; }
 .discovery-follow-up-composer textarea { min-width: 0; min-height: 50px; max-height: 90px; padding: 9px 11px; border: 1px solid #b9cae0; border-radius: 10px; background: #fff; color: #203b60; font: inherit; font-size: .78rem; line-height: 1.35; resize: vertical; }
 .discovery-follow-up-composer textarea:focus { outline: 3px solid rgba(45, 103, 232, .18); border-color: #4c7fc0; }
 .discovery-follow-up-composer .primary-action { align-self: stretch; max-width: 180px; white-space: normal; }
 .discovery-follow-up > small { display: none; color: #6b7c92; font-size: .68rem; }
+.discovery-follow-up-answer { display: grid; max-height: 150px; gap: 5px; padding: 10px 12px; overflow-y: auto; border: 1px solid #a9d9ce; border-radius: 10px; background: #effaf7; }
+.discovery-follow-up-answer > span { color: #08766f; font-size: .62rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.discovery-follow-up-answer p { color: #173e4d; font-size: .72rem; }
+.discovery-follow-up-answer small { color: #56717a; font-size: .62rem; }
+.discovery-follow-up-error { padding: 8px 10px; border: 1px solid #e4b5b5; border-radius: 8px; background: #fff4f4; color: #934545; font-size: .7rem; }
 .autonomous-discovery-page { padding-bottom: 220px; }
 .discovery-rail-collapsed .discovery-follow-up { right: 0; left: 0; width: min(880px, calc(100vw - 36px)); max-width: calc(100vw - 36px); }
 .discovery-additional-findings { padding: 17px 19px; border: 1px solid #d7e1ed; border-radius: 13px; background: #f8faff; }

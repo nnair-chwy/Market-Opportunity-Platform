@@ -70,10 +70,10 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(discoveryWorkspace, /Evidence needed next/);
   assert.match(discoveryWorkspace, /Analyses completed/);
   assert.match(discoveryWorkspace, /Open in Ask AI/);
-  assert.match(discoveryWorkspace, /Continue the investigation/);
+  assert.match(discoveryWorkspace, /Ask about this finding/);
   assert.match(discoveryWorkspace, /attributed efficiency remain after joining new-customer and contribution outcomes/);
   assert.match(discoveryWorkspace, /click-through rate, attributed conversion rate, and cost per conversion/);
-  assert.match(discoveryWorkspace, /setFollowUpQuestion\(context\.question\)/);
+  assert.match(discoveryWorkspace, /Explain this finding in plain language/);
   assert.match(discoveryWorkspace, /originatingQuestion: finding\.question/);
   assert.match(workflow, /Hide autonomous workflow panel/);
   assert.match(workflow, /Show workflow/);

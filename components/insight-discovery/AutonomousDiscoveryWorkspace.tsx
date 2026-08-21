@@ -9,9 +9,10 @@ import { buildTeamOpportunityBrief } from "@/lib/insight-discovery/team-opportun
 import { buildCrossSourceHypothesisBacklog } from "@/lib/insight-discovery/hypothesis-backlog";
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { PerspectiveId, PerspectiveViewId } from "@/lib/perspectives";
+import type { AskAiContext, AskAiResponse } from "@/lib/ai/insights";
 
 const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing: "Pricing", cvc: "CVC" };
-type DiscoveryScope = "all" | "cross" | PerspectiveId;
+type DiscoveryScope = "all" | "cross" | "ai" | PerspectiveId;
 // Bump when generated finding semantics change so an older browser-saved run
 // cannot silently reintroduce superseded recommendations or source language.
 const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v2";
@@ -47,6 +48,8 @@ export type DiscoveryInvestigationContext = {
   recommendation: string;
   sourceIds: string[];
   teamLabel: string;
+  evidenceDetail: string;
+  limitations: string[];
 };
 
 const DEFAULT_VIEW_BY_DEPARTMENT: Record<PerspectiveId, PerspectiveViewId> = {
@@ -68,6 +71,8 @@ function autonomousInvestigationContext(finding: AutonomousInsight): DiscoveryIn
     recommendation: findingPresentation(finding).analystRecommendation,
     sourceIds: finding.sourceIds,
     teamLabel: LABELS[finding.department],
+    evidenceDetail: `${finding.headline}. ${finding.evidenceDetail}`,
+    limitations: [finding.valueTranslation.caveat, finding.applicability.approvalBoundary],
   };
 }
 
@@ -93,7 +98,55 @@ function adaptiveInvestigationContext(finding: CurrentDataDiscoveryRun["adaptive
     recommendation: finding.proposedAction,
     sourceIds: finding.sourceIds,
     teamLabel: finding.departments.map((item) => LABELS[item]).join(" + "),
+    evidenceDetail: finding.evidence.join(" "),
+    limitations: [finding.decisionBoundary, ...finding.limits],
   };
+}
+
+function supplementalInvestigationContext(finding: HybridSupplementalFinding): DiscoveryInvestigationContext {
+  const marketName = finding.marketIds.join(", ") || "National";
+  return {
+    insightId: finding.id,
+    department: finding.department,
+    viewId: DEFAULT_VIEW_BY_DEPARTMENT[finding.department],
+    marketIds: finding.marketIds,
+    marketName,
+    question: departmentDecisionQuestion(finding.department, marketName),
+    originatingQuestion: finding.question,
+    headline: finding.headline,
+    recommendation: finding.recommendation,
+    sourceIds: finding.sourceIds,
+    teamLabel: LABELS[finding.department],
+    evidenceDetail: `${finding.quantifiedEvidence} ${finding.comparison} ${finding.businessImplication}`,
+    limitations: finding.limitations,
+  };
+}
+
+function askAiContextForFinding(finding: DiscoveryInvestigationContext): AskAiContext {
+  return {
+    id: finding.insightId,
+    kind: "market",
+    title: finding.headline,
+    subtitle: `${finding.teamLabel} · ${finding.marketName}`,
+    overview: `The analysis tested: ${finding.originatingQuestion} The current recommendation is: ${finding.recommendation}`,
+    insights: [
+      { title: "Observed finding", detail: finding.evidenceDetail, status: "Derived", sourceIds: finding.sourceIds },
+      { title: "Current recommendation", detail: finding.recommendation, status: "Hypothesis", sourceIds: finding.sourceIds },
+    ],
+    warnings: finding.limitations,
+    limitations: finding.limitations,
+    suggestedQuestions: findingFollowUps(finding),
+  };
+}
+
+function PercentileHelp({ text }: { text: string }) {
+  if (!/\bP\d{1,3}\b|percentile/i.test(text)) return null;
+  return (
+    <details className="discovery-percentile-help">
+      <summary>How to read P81, P1, and other percentiles</summary>
+      <p><strong>P81</strong> means the value is higher than about 81% of measured regions. <strong>P1</strong> means it is near the lowest 1%. Direction depends on the metric: high conversion rate can be favorable, while high cost can be unfavorable. A percentile is a relative position, not statistical significance or certainty.</p>
+    </details>
+  );
 }
 
 function adaptiveMetricValue(value: number, unit: string) {
@@ -139,15 +192,15 @@ function CrossSourceFindings({ findings, onOpenInvestigation }: { findings: Curr
   );
 }
 
-function AiSupplementalFindings({ findings }: { findings: HybridSupplementalFinding[] }) {
+function AiSupplementalFindings({ findings, onOpenInvestigation }: { findings: HybridSupplementalFinding[]; onOpenInvestigation: (finding: DiscoveryInvestigationContext) => void }) {
   if (!findings.length) return null;
   return (
     <section className="discovery-ai-findings" aria-labelledby="discovery-ai-findings-title">
       <header>
         <div>
-          <div className="section-label">AI additional discovery</div>
-          <h2 id="discovery-ai-findings-title">New findings that cleared the evidence bar</h2>
-          <p>These were opened by the AI investigation, then promoted only after deterministic execution returned a quantified comparison, decision implication, sources, and limits.</p>
+          <div className="section-label">AI findings</div>
+          <h2 id="discovery-ai-findings-title">New patterns found beyond the repeatable scan</h2>
+          <p>AI proposed each investigation and interpreted the result. The numbers shown here come from an executed analysis with a traceable comparison, sources, and limits.</p>
         </div>
         <span>{findings.length} new</span>
       </header>
@@ -155,10 +208,12 @@ function AiSupplementalFindings({ findings }: { findings: HybridSupplementalFind
         {findings.map((finding) => (
           <article key={finding.id}>
             <div className="discovery-card-identity"><span>{LABELS[finding.department]}</span><small>{finding.marketIds.join(", ") || "National"}</small></div>
-            <div className="discovery-origin-question"><span>Decision question</span><p>{departmentDecisionQuestion(finding.department, finding.marketIds.join(", ") || "the national portfolio")}</p></div>
-            <section className="discovery-decision-first"><span>Recommended decision</span><h2>{finding.recommendation}</h2></section>
-            <div className="discovery-region-rationale"><span>What the analysis found</span><p>{finding.quantifiedEvidence} {finding.comparison}</p></div>
-            <div className="discovery-recommended-move"><span>Why it matters</span><p>{finding.businessImplication}</p><small><strong>Next action:</strong> {finding.nextAction}</small></div>
+            <div className="discovery-origin-question"><span>Investigation opened</span><p>{finding.question}</p></div>
+            <section className="discovery-decision-first"><span>AI interpretation</span><h2>{finding.headline}</h2></section>
+            <div className="discovery-region-rationale"><span>Validated result</span><p>{finding.quantifiedEvidence} {finding.comparison}</p></div>
+            <div className="discovery-recommended-move"><span>Why it may matter</span><p>{finding.businessImplication}</p><small><strong>Question to investigate next:</strong> {finding.nextAction}</small></div>
+            <PercentileHelp text={`${finding.quantifiedEvidence} ${finding.comparison}`} />
+            <div className="discovery-card-footer"><p><span>Evidence</span>{finding.sourceIds.length} source{finding.sourceIds.length === 1 ? "" : "s"}</p><button className="secondary-action" type="button" onClick={() => onOpenInvestigation(supplementalInvestigationContext(finding))}>Ask AI about this finding →</button></div>
             <details><summary>Analysis tested, sources, and limits</summary><p><strong>Analysis tested:</strong> {finding.question}</p><p><strong>Sources:</strong> {finding.sourceIds.join(", ")}</p><p><strong>Limits:</strong> {finding.limitations.join(" ")}</p></details>
           </article>
         ))}
@@ -220,6 +275,7 @@ function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false
             <h2>{presentation.analystRecommendation}</h2>
           </section>
           <div className="discovery-region-rationale"><span>Why this market</span><p>{presentation.analystRead}</p></div>
+          <PercentileHelp text={presentation.analystRead} />
           <div className="discovery-analyst-brief" aria-label="Analyst evidence summary">
             <div className="discovery-impact"><span>Business implication</span><strong>{presentation.valueStatus}</strong></div>
             <div><span>Evidence used</span><strong>{presentation.evidenceSummary}</strong></div>
@@ -289,6 +345,10 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const [railActionsTarget, setRailActionsTarget] = useState<HTMLElement | null>(null);
   const [followUpFinding, setFollowUpFinding] = useState<DiscoveryInvestigationContext | null>(null);
   const [followUpQuestion, setFollowUpQuestion] = useState("");
+  const [followUpMode, setFollowUpMode] = useState<"explain" | "investigate">("explain");
+  const [followUpAnswer, setFollowUpAnswer] = useState<AskAiResponse | null>(null);
+  const [followUpError, setFollowUpError] = useState<string | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
   const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
   const followUpRef = useRef<HTMLTextAreaElement | null>(null);
   const deliveryPanelRef = useRef<HTMLElement | null>(null);
@@ -473,7 +533,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   }
 
   const primaryFindings = useMemo(() => {
-    if (!run || department === "cross") return [];
+    if (!run || department === "cross" || department === "ai") return [];
     const candidates = department === "all"
       ? run.findings
       : run.findings.filter((finding) => finding.department === department);
@@ -483,7 +543,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       .slice(0, 5);
   }, [department, run]);
   const additionalFindings = useMemo(() => {
-    if (!run || department === "cross") return [];
+    if (!run || department === "cross" || department === "ai") return [];
     const primaryIds = new Set(primaryFindings.map((finding) => finding.insightId));
     return run.findings
       .filter((finding) => (department === "all" || finding.department === department) && !primaryIds.has(finding.insightId))
@@ -512,7 +572,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     cvc: run?.findings.filter((finding) => finding.department === "cvc").length ?? 0,
   }), [run]);
   const allFindingCount = run?.findings.length ?? 0;
-  const briefScope = department === "cross" ? "all" : department;
+  const briefScope = department === "cross" || department === "ai" ? "all" : department;
   const teamOpportunityBrief = useMemo(() => run ? buildTeamOpportunityBrief(run, briefScope) : null, [briefScope, run]);
   const emergingHypotheses = useMemo(() => run ? buildCrossSourceHypothesisBacklog(run) : [], [run]);
   const readyHypotheses = useMemo(() => emergingHypotheses.filter((lead) => lead.status === "ready_to_test"), [emergingHypotheses]);
@@ -524,8 +584,16 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   }, [department, run]);
   const promotedAiFindings = useMemo(() => supplementalInvestigations
     .flatMap((receipt) => receipt.supplementalFinding ? [receipt.supplementalFinding] : [])
-    .filter((finding) => department === "all" || (department !== "cross" && finding.department === department)), [department, supplementalInvestigations]);
+    .filter((finding) => department === "ai" || department === "all" || (!["cross", "ai"].includes(department) && finding.department === department)), [department, supplementalInvestigations]);
   const keyTakeaways = useMemo(() => {
+    if (department === "ai") {
+      const [lead, alternative] = promotedAiFindings;
+      return [
+        lead ? { id: `${lead.id}:lead`, label: "Strongest AI finding", finding: lead.headline, decision: lead.businessImplication } : null,
+        alternative ? { id: `${alternative.id}:next`, label: "Next AI finding", finding: alternative.headline, decision: alternative.businessImplication } : null,
+        lead ? { id: `${lead.id}:limit`, label: "Evidence boundary", finding: lead.limitations[0] ?? "Keep the result directional.", decision: "AI interpretation does not replace causal or statistical validation." } : null,
+      ].filter((item): item is NonNullable<typeof item> => Boolean(item));
+    }
     if (department === "cross") {
       const [lead, alternative] = adaptiveFindings;
       return [
@@ -544,7 +612,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       alternative && alternativePresentation ? { id: `${alternative.insightId}:next`, label: "Next opportunity", finding: alternativePresentation.analystRecommendation, decision: alternativePresentation.nextAction } : null,
       { id: `${lead.insightId}:limit`, label: "Do not over-read", finding: leadPresentation.confidenceStatement, decision: leadPresentation.reversalCondition },
     ].filter((item): item is NonNullable<typeof item> => Boolean(item));
-  }, [adaptiveFindings, department, primaryFindings]);
+  }, [adaptiveFindings, department, primaryFindings, promotedAiFindings]);
 
   function openAiAttemptRecord() {
     const target = document.getElementById("discovery-ai-attempts") as HTMLDetailsElement | null;
@@ -556,16 +624,39 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   function openInAskAi(finding: AutonomousInsight | DiscoveryInvestigationContext) {
     const context = "teamLabel" in finding ? finding : autonomousInvestigationContext(finding);
     setFollowUpFinding(context);
-    setFollowUpQuestion(context.question);
+    setFollowUpMode("explain");
+    setFollowUpAnswer(null);
+    setFollowUpError(null);
+    setFollowUpQuestion("Explain this finding in plain language. What does it mean, why is it interesting, and what should I take away?");
     requestAnimationFrame(() => {
       followUpRef.current?.focus({ preventScroll: true });
       followUpRef.current?.select();
     });
   }
 
-  function continueInvestigation() {
+  async function continueInvestigation() {
     const nextQuestion = followUpQuestion.trim();
     if (!nextQuestion || !followUpFinding) return;
+    if (followUpMode === "explain") {
+      setIsExplaining(true);
+      setFollowUpError(null);
+      setFollowUpAnswer(null);
+      try {
+        const response = await fetch("/api/ai/insights", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ question: nextQuestion, context: askAiContextForFinding(followUpFinding) }),
+        });
+        const payload = await response.json().catch(() => null) as AskAiResponse | { message?: string } | null;
+        if (!response.ok || !payload || !("answer" in payload)) throw new Error(payload && "message" in payload ? payload.message : "Ask AI could not explain this finding.");
+        setFollowUpAnswer(payload);
+      } catch (reason) {
+        setFollowUpError(reason instanceof Error ? reason.message : "Ask AI could not explain this finding.");
+      } finally {
+        setIsExplaining(false);
+      }
+      return;
+    }
     onInvestigate(followUpFinding, nextQuestion, run?.runId);
   }
 
@@ -634,24 +725,29 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
             ? "Top opportunities across the portfolio"
             : department === "cross"
               ? "Cross-department opportunities"
+              : department === "ai"
+                ? "AI findings beyond the repeatable scan"
               : `${LABELS[department]} opportunities to review`}</h1>
           <p>{department === "all"
             ? "The strongest evidence-backed opportunities, ranked together across Marketing, Pricing, and CVC."
             : department === "cross"
               ? "Joined signals that become more useful when evidence from two or more departments is evaluated together."
+              : department === "ai"
+                ? "Additional patterns proposed and interpreted by AI, shown only after an executed analysis returned traceable evidence."
               : `The strongest evidence-backed opportunities owned by ${LABELS[department]}.`}</p>
           <span className="discovery-run-completed">Run {run.runSequence} complete · {new Date(run.completedAt).toLocaleString()}</span>
         </div>
         <div className="discovery-department-tabs" role="tablist" aria-label="Filter findings by department">
           <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments <span>{allFindingCount}</span></button>
           <button type="button" role="tab" aria-selected={department === "cross"} onClick={() => setDepartment("cross")}>Cross-department <span>{run.adaptiveDiscovery.findings.filter((finding) => finding.departments.length > 1).length}</span></button>
+          <button type="button" role="tab" aria-selected={department === "ai"} onClick={() => setDepartment("ai")}>AI findings <span>{promotedAiFindings.length}</span></button>
           {(["marketing", "pricing", "cvc"] as const).map((item) => (
             <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>{LABELS[item]} <span>{departmentFindingCounts[item]}</span></button>
           ))}
         </div>
         <div className="discovery-hero-meta">
           <span className="discovery-method">{run.adaptiveDiscovery.generatedCount} hypotheses tested · {run.adaptiveDiscovery.testedCount} evidence-backed analyses</span>
-          <span>{department === "cross" ? adaptiveFindings.length : primaryFindings.length} top finding{(department === "cross" ? adaptiveFindings.length : primaryFindings.length) === 1 ? "" : "s"} shown</span>
+          <span>{department === "cross" ? adaptiveFindings.length : department === "ai" ? promotedAiFindings.length : primaryFindings.length} top finding{(department === "cross" ? adaptiveFindings.length : department === "ai" ? promotedAiFindings.length : primaryFindings.length) === 1 ? "" : "s"} shown</span>
         </div>
       </header>
 
@@ -717,7 +813,14 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </div>
       </details>
 
-      {department !== "cross" ? <AiSupplementalFindings findings={promotedAiFindings} /> : null}
+      {department === "ai" ? (
+        promotedAiFindings.length
+          ? <AiSupplementalFindings findings={promotedAiFindings} onOpenInvestigation={openInAskAi} />
+          : <section className="discovery-ai-findings discovery-ai-findings-empty" aria-live="polite">
+              <header><div><div className="section-label">AI findings</div><h2>No additional finding has cleared the evidence bar yet</h2><p>{hybridStatus === "running" ? "The AI investigator is still proposing and testing analyses. Supported findings will appear here as they complete." : "The repeatable findings remain valid. Review the analysis record to see what AI tried, or run another discovery pass."}</p></div><span>{hybridStatus === "running" ? "Investigating" : "0 new"}</span></header>
+              <div className="discovery-ai-empty-actions"><button type="button" onClick={openAiAttemptRecord}>Review analysis record</button><button type="button" onClick={() => void runAgain()} disabled={isRerunning}>{isRerunning ? "Finding signals…" : "Find next signal"}</button></div>
+            </section>
+      ) : null}
 
       <section className="discovery-executive-summary" aria-labelledby="discovery-executive-summary-title">
         <header>
@@ -753,7 +856,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </div>
       </section>
 
-      {department === "cross" ? <CrossSourceFindings findings={adaptiveFindings} onOpenInvestigation={openInAskAi} /> : (
+      {department === "cross" ? <CrossSourceFindings findings={adaptiveFindings} onOpenInvestigation={openInAskAi} /> : department === "ai" ? null : (
         <>
           <div className="discovery-findings-divider"><span>{department === "all" ? "Ranked portfolio findings" : `Ranked ${LABELS[department]} findings`}</span><small>{primaryFindings.length} shown</small></div>
           <div className="autonomous-insight-grid">
@@ -764,7 +867,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </>
       )}
 
-      {readyHypotheses.length ? (
+      {department !== "ai" && readyHypotheses.length ? (
         <section className="discovery-hypothesis-backlog" aria-labelledby="discovery-hypothesis-backlog-title">
           <header>
             <div>
@@ -825,7 +928,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </dl>
       </details>
 
-      {incompleteHypotheses.length ? (
+      {department !== "ai" && incompleteHypotheses.length ? (
         <details className="discovery-hypothesis-backlog discovery-hypothesis-backlog-pending">
           <summary>Incomplete cross-source questions · {incompleteHypotheses.length}</summary>
           <p>These are not findings. The system noticed signals from different teams in the same named market, but the geography, period, or business outcomes are not compatible enough to determine whether the signals are related.</p>
@@ -906,25 +1009,31 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       <section className="discovery-follow-up" aria-labelledby="discovery-follow-up-title">
         <div>
           <div className="section-label">Ask AI</div>
-          <h2 id="discovery-follow-up-title">Continue the investigation</h2>
-          <p>{followUpTarget ? "The exact finding, market, question, and evidence sources stay attached when you continue." : "Choose “Open in Ask AI” on a finding to carry its exact context into a follow-up."}</p>
+          <h2 id="discovery-follow-up-title">Ask about this finding</h2>
+          <p>{followUpTarget ? (followUpMode === "explain" ? "Ask for an explanation using the finding's attached evidence. This does not rerun the investigation." : "Run a new analysis while keeping the exact finding, market, question, and sources attached.") : "Choose “Ask AI” on a finding to carry its exact context into a follow-up."}</p>
         </div>
         {followUpTarget ? (
           <div className="discovery-follow-up-context" aria-label="Finding context sent to Ask AI">
-            <div><span>{followUpTarget.teamLabel} · {followUpTarget.marketName}</span><button type="button" onClick={() => { setFollowUpFinding(null); setFollowUpQuestion(""); }}>Clear</button></div>
+            <div><span>{followUpTarget.teamLabel} · {followUpTarget.marketName}</span><button type="button" onClick={() => { setFollowUpFinding(null); setFollowUpQuestion(""); setFollowUpAnswer(null); setFollowUpError(null); }}>Clear</button></div>
             <strong>{followUpTarget.recommendation}</strong>
             <p><b>Analysis that opened this finding:</b> {followUpTarget.originatingQuestion}</p>
             <small>{followUpTarget.sourceIds.length} evidence source{followUpTarget.sourceIds.length === 1 ? "" : "s"} · Finding {followUpTarget.insightId}</small>
           </div>
         ) : null}
+        {followUpTarget ? <div className="discovery-follow-up-mode" role="tablist" aria-label="Choose Ask AI mode">
+          <button type="button" role="tab" aria-selected={followUpMode === "explain"} onClick={() => { setFollowUpMode("explain"); setFollowUpAnswer(null); setFollowUpError(null); }}>Explain this finding</button>
+          <button type="button" role="tab" aria-selected={followUpMode === "investigate"} onClick={() => { setFollowUpMode("investigate"); setFollowUpAnswer(null); setFollowUpError(null); }}>Run a new analysis</button>
+        </div> : null}
         <div className="discovery-follow-up-suggestions" aria-label="Recommended follow-up questions">
           {followUpTarget ? followUpSuggestions.map((suggestion) => <button key={suggestion} type="button" title={suggestion} onClick={() => setFollowUpQuestion(suggestion)}>{suggestion}</button>) : null}
         </div>
         <div className="discovery-follow-up-composer">
           <textarea ref={followUpRef} value={followUpQuestion} onChange={(event) => setFollowUpQuestion(event.target.value)} placeholder="Ask a follow-up, add another factor, or request a different comparison…" aria-label="Ask AI about these findings" rows={2} />
-          <button className="primary-action" type="button" disabled={!followUpQuestion.trim() || !followUpFinding} onClick={continueInvestigation}>Continue investigation →</button>
+          <button className="primary-action" type="button" disabled={!followUpQuestion.trim() || !followUpFinding || isExplaining} onClick={() => void continueInvestigation()}>{isExplaining ? "Explaining…" : followUpMode === "explain" ? "Explain finding →" : "Run new analysis →"}</button>
         </div>
-        <small>This opens a new analysis plan without losing the original finding context.</small>
+        {followUpAnswer ? <div className="discovery-follow-up-answer" role="status"><span>AI explanation</span>{followUpAnswer.items.map((item, index) => <p key={`${item.answer}-${index}`}>{item.answer}</p>)}{followUpAnswer.limitations.length ? <small>Important limit: {followUpAnswer.limitations.join(" ")}</small> : null}</div> : null}
+        {followUpError ? <div className="discovery-follow-up-error" role="alert">{followUpError}</div> : null}
+        <small>{followUpMode === "explain" ? "Explanation mode uses the attached evidence and stays on this page." : "New-analysis mode opens the analysis flow with the original finding context attached."}</small>
       </section>
 
       <details className="discovery-data-expansion">
