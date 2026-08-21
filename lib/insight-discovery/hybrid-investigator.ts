@@ -76,6 +76,7 @@ const SYSTEM_INSTRUCTIONS = `You select the next bounded analysis for a geograph
 Return only the supplied structured action. Never write SQL, invent a table, source, metric, CBSA code, result, or business fact.
 Choose only from permittedMarketScreens, permittedRegisteredQueries, and permittedExploratoryTables. Use exploratory_query only when a new cross-source aggregate can add value. Never return SQL: select tables, columns, filters, aggregates, ordering, and CBSA joins through the supplied specification.
 Avoid repeating an invocation already represented in priorReceipts. Prefer an analysis likely to add a new market, source, measure, contradiction, or downstream business outcome.
+Use the run as an iterative investigation, not a one-shot selector. A registered or exploratory aggregate may identify a promising market; on the next step, use its returned marketIds in a focused approved market_screen when that can produce a quantified stakeholder finding. Prefer cross-source queries first when compatible tables are available, then challenge the strongest result with a focused market analysis. Do not finish immediately after an accepted aggregate when a non-duplicate focused screen can test its decision value.
 The application executes and evaluates every proposal. Choose finish when no permitted invocation is likely to add decision value.`;
 
 async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInvestigatorAction> {

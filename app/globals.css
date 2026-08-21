@@ -137,6 +137,20 @@
 .discovery-ai-result-status strong { color: #343a62; font-size: .78rem; }
 .discovery-ai-result-status small { color: #747c91; font-size: .68rem; line-height: 1.4; }
 .discovery-ai-result-status button { flex: none; border: 0; background: transparent; color: #4c5792; cursor: pointer; font: inherit; font-size: .68rem; font-weight: 800; }
+.discovery-ai-loop { display: grid; gap: 12px; padding: 18px 20px; border: 1px solid #c8d3ed; border-radius: 14px; background: rgba(248, 250, 255, .9); }
+.discovery-ai-loop > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.discovery-ai-loop h2 { margin: 4px 0 0; color: #263f78; font-size: 1rem; }
+.discovery-ai-loop > header > span { padding: 6px 9px; border-radius: 999px; background: #e4ebff; color: #3154a0; font-size: .64rem; font-weight: 850; }
+.discovery-ai-loop ol { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.discovery-ai-loop li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 10px; border: 1px solid #d9e1f3; border-radius: 10px; background: #fff; }
+.discovery-ai-loop li > b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #385fb4; color: #fff; font-size: .65rem; }
+.discovery-ai-loop li > div { display: grid; gap: 2px; }
+.discovery-ai-loop li strong { color: #263b68; font-size: .73rem; }
+.discovery-ai-loop li small { color: #72809a; font-size: .62rem; line-height: 1.35; }
+.discovery-ai-loop li > span { color: #5d6d8c; font-size: .6rem; font-weight: 850; text-transform: capitalize; }
+.discovery-ai-loop li[data-status="accepted"] > span { color: #16705b; }
+.discovery-ai-loop li[data-status="rejected"] > span, .discovery-ai-loop li[data-status="failed"] > span { color: #9b5542; }
+.discovery-ai-loop li[data-status="running"] > b { animation: discovery-ai-pulse 1.2s ease-in-out infinite; }
 .discovery-ai-findings { display: grid; gap: 14px; padding: 20px; border: 1px solid #a7b8eb; border-left: 5px solid #315dc8; border-radius: 14px; background: linear-gradient(135deg, #f8faff, #edf2ff); }
 .discovery-ai-findings > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .discovery-ai-findings > header h2 { margin: 5px 0; color: #183b83; font-size: 1.16rem; }
@@ -7238,7 +7252,7 @@ button {
 .adaptive-opening .unified-map-card { position: absolute; inset: 0; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .adaptive-opening .unified-map-canvas { position: absolute; inset: 0; min-height: 100vh; border-radius: 0; background: transparent; }
 .adaptive-opening .unified-maplibre { position: absolute; inset: 0; border-radius: 0; }
-.adaptive-opening-info-stack { position: absolute; top: 4.67rem; left: 1rem; z-index: 7; display: grid; gap: .42rem; width: min(48vw, 430px); }
+.adaptive-opening-info-stack { position: absolute; top: 4.67rem; left: clamp(1rem, 1.7vw, 1.5rem); z-index: 7; display: grid; gap: .42rem; width: min(48vw, 430px); }
 .adaptive-opening-disclosure { display: grid; gap: .42rem; align-items: start; }
 .adaptive-opening-toolbar { display: flex; align-items: center; gap: .35rem; width: max-content; max-width: calc(100vw - 2rem); }
 .adaptive-map-help-trigger { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid rgba(255,255,255,.95); border-radius: 50%; background: rgba(255,255,255,.86); box-shadow: 0 8px 18px rgba(45,72,108,.14); color: #2f6bdb; font: 850 .78rem inherit; cursor: pointer; backdrop-filter: blur(14px); }
