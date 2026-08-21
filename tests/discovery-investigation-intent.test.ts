@@ -78,6 +78,30 @@ test("URL-backed intent survives reload without trusting display labels", () => 
   assert.deepEqual(restored?.sourceIds, finding.sourceIds);
 });
 
+test("a national cross-functional finding can continue without inventing a market", () => {
+  const question = "Where should Marketing and Pricing coordinate acquisition strategy, assortment, and price tests first across regions?";
+  const intent = buildDiscoveryInvestigationIntent({
+    insightId: "adaptive:national-cross-functional",
+    department: "marketing",
+    viewId: "paid_search_response",
+    marketIds: [],
+    question,
+    originatingQuestion: "Does paid-media efficiency change after joining regional price position?",
+    findingHeadline: "Price position may change where media dollars work hardest.",
+    sourceIds: ["google-ads", "pricing-offers"],
+  });
+  assert.deepEqual(intent.selectedCbsaCodes, []);
+  assert.deepEqual(intent.selectedGeographicContexts, []);
+  assert.deepEqual(intent.marketNames, []);
+  assert.equal(intent.question, question);
+  assert.deepEqual(
+    discoveryInvestigationIntentFromSearchParams(discoveryInvestigationIntentSearchParams(intent)),
+    intent,
+  );
+  const plan = planEvaluation(intent.question, intent.perspectiveId, [], intent.viewId);
+  assert.deepEqual(plan.geographyResolution.selectedCbsaCodes, []);
+});
+
 test("invalid geography and cross-perspective views fail validation", () => {
   assert.throws(() => buildDiscoveryInvestigationIntent({
     insightId: "insight:invalid-geography",

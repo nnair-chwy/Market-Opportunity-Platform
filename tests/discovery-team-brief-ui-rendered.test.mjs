@@ -8,7 +8,7 @@ const presentation = await readFile(new URL("../lib/insight-discovery/finding-pr
 test("department toggles change which findings lead the readout and scope its brief", () => {
   assert.match(workspace, /role="tablist" aria-label="Filter findings by department"/);
   assert.match(workspace, /All departments/);
-  assert.match(workspace, /department === "cross" \? <CrossSourceFindings findings=\{adaptiveFindings\}/);
+  assert.match(workspace, /department === "cross" \? <CrossSourceFindings findings=\{adaptiveFindings\} onOpenInvestigation=\{openInAskAi\}/);
   assert.match(workspace, /buildTeamOpportunityBrief\(run, briefScope\)/);
   assert.match(workspace, /Shareable opportunity brief/);
   assert.match(workspace, /deliveryMode && teamOpportunityBrief/);
@@ -28,10 +28,18 @@ test("baseline, cross-functional, and AI-led discovery are visibly distinct", ()
 });
 
 test("Ask AI exposes exact finding context and no longer defaults to the first result", () => {
-  assert.match(workspace, /Question that opened this finding/);
+  assert.match(workspace, /Analysis that opened this finding/);
   assert.match(workspace, /Finding \{followUpTarget\.insightId\}/);
   assert.doesNotMatch(workspace, /followUpFinding \?\? primaryFindings\[0\]/);
   assert.match(workspace, /disabled=\{!followUpQuestion\.trim\(\) \|\| !followUpFinding\}/);
+});
+
+test("every cross-functional finding can carry its exact evidence into Ask AI", () => {
+  assert.match(workspace, /function adaptiveInvestigationContext/);
+  assert.match(workspace, /originatingQuestion: finding\.question/);
+  assert.match(workspace, /sourceIds: finding\.sourceIds/);
+  assert.match(workspace, /onOpenInvestigation\(adaptiveInvestigationContext\(finding\)\)/);
+  assert.match(workspace, /Open in Ask AI →/);
 });
 
 test("the repeated validation badge is removed", () => {

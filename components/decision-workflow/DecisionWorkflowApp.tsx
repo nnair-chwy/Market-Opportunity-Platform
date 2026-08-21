@@ -14,7 +14,7 @@ import { ResultOutputBuilder } from "@/components/decision-workflow/ResultOutput
 import { SisterGeographiesSection } from "@/components/decision-workflow/SisterGeographiesSection";
 import { ValidationWorkplanPanel } from "@/components/decision-workflow/ValidationWorkplanPanel";
 import { EvidenceBundlePanel } from "@/components/evidence/EvidenceBundlePanel";
-import { AutonomousDiscoveryWorkspace } from "@/components/insight-discovery/AutonomousDiscoveryWorkspace";
+import { AutonomousDiscoveryWorkspace, type DiscoveryInvestigationContext } from "@/components/insight-discovery/AutonomousDiscoveryWorkspace";
 import { EmailBriefControl } from "@/components/sharing/EmailBriefControl";
 import {
   buildDiscoveryInvestigationIntent,
@@ -22,7 +22,7 @@ import {
   discoveryInvestigationIntentSearchParams,
   type DiscoveryInvestigationIntent,
 } from "@/lib/insight-discovery/investigation-intent";
-import type { AutonomousInsight, CurrentDataDiscoveryRun } from "@/lib/insight-discovery/current-data-discovery";
+import type { CurrentDataDiscoveryRun } from "@/lib/insight-discovery/current-data-discovery";
 import { evidenceExecutionResponseSchema, type EvidenceExecutionResponse } from "@/lib/evidence-snapshot/contracts";
 import type { CompactSourceReadiness } from "@/lib/data-discovery/readiness-service";
 import { publicMarkets } from "@/lib/data/public-market-ui";
@@ -295,7 +295,7 @@ export function DecisionWorkflowApp() {
     return () => window.removeEventListener("popstate", syncDiscoveryIntentFromUrl);
   }, [applyDiscoveryInvestigationIntent]);
 
-  function openDiscoveryInvestigation(finding: AutonomousInsight, questionOverride?: string, sourceRunId?: string) {
+  function openDiscoveryInvestigation(finding: DiscoveryInvestigationContext, questionOverride?: string, sourceRunId?: string) {
     try {
       const intent = buildDiscoveryInvestigationIntent({
         insightId: finding.insightId,
@@ -304,8 +304,8 @@ export function DecisionWorkflowApp() {
         marketIds: finding.marketIds,
         question: questionOverride ?? finding.question,
         sourceRunId,
-        originatingQuestion: finding.question,
-        findingHeadline: finding.analystInterpretation?.analystConclusion ?? finding.headline,
+        originatingQuestion: finding.originatingQuestion,
+        findingHeadline: finding.headline,
         sourceIds: finding.sourceIds,
       });
       writeDiscoveryIntentUrl(intent);

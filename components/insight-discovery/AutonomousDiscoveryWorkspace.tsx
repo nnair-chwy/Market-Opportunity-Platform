@@ -7,7 +7,8 @@ import { buildFindingDecisionCase } from "@/lib/insight-discovery/decision-case"
 import { findingPresentation } from "@/lib/insight-discovery/finding-presentation";
 import { buildTeamOpportunityBrief } from "@/lib/insight-discovery/team-opportunity-brief";
 import { buildCrossSourceHypothesisBacklog } from "@/lib/insight-discovery/hypothesis-backlog";
-import type { PerspectiveId } from "@/lib/perspectives";
+import { publicMarkets } from "@/lib/data/public-market-ui";
+import type { PerspectiveId, PerspectiveViewId } from "@/lib/perspectives";
 
 const LABELS: Record<PerspectiveId, string> = { marketing: "Marketing", pricing: "Pricing", cvc: "CVC" };
 type DiscoveryScope = "all" | "cross" | PerspectiveId;
@@ -28,10 +29,72 @@ function findingDecisionQuestion(finding: AutonomousInsight) {
   return departmentDecisionQuestion(finding.department, finding.marketName);
 }
 
-function crossDepartmentDecisionQuestion(departments: PerspectiveId[]) {
-  if (departments.includes("marketing") && departments.includes("cvc")) return "Where should Marketing and CVC coordinate channel allocation, demand, and clinic capacity first?";
-  if (departments.includes("marketing") && departments.includes("pricing")) return "Where should Marketing and Pricing coordinate acquisition strategy, assortment, and price tests first?";
-  return "Which regional opportunity becomes actionable only when multiple departments coordinate?";
+function crossDepartmentDecisionQuestion(departments: PerspectiveId[], marketName?: string) {
+  const location = marketName && marketName !== "National" ? ` in ${marketName}` : " across regions";
+  if (departments.includes("marketing") && departments.includes("cvc")) return `Where should Marketing and CVC coordinate channel allocation, demand, and clinic capacity first${location}?`;
+  if (departments.includes("marketing") && departments.includes("pricing")) return `Where should Marketing and Pricing coordinate acquisition strategy, assortment, and price tests first${location}?`;
+  return `Which opportunity becomes actionable only when multiple departments coordinate${location}?`;
+}
+
+export type DiscoveryInvestigationContext = {
+  insightId: string;
+  department: PerspectiveId;
+  viewId: PerspectiveViewId;
+  marketIds: string[];
+  marketName: string;
+  question: string;
+  originatingQuestion: string;
+  headline: string;
+  recommendation: string;
+  sourceIds: string[];
+  teamLabel: string;
+};
+
+const DEFAULT_VIEW_BY_DEPARTMENT: Record<PerspectiveId, PerspectiveViewId> = {
+  marketing: "paid_search_response",
+  pricing: "competitor_availability",
+  cvc: "household_demand",
+};
+
+function autonomousInvestigationContext(finding: AutonomousInsight): DiscoveryInvestigationContext {
+  return {
+    insightId: finding.insightId,
+    department: finding.department,
+    viewId: finding.viewId,
+    marketIds: finding.marketIds,
+    marketName: finding.marketName,
+    question: findingDecisionQuestion(finding),
+    originatingQuestion: finding.question,
+    headline: finding.analystInterpretation?.analystConclusion ?? finding.headline,
+    recommendation: findingPresentation(finding).analystRecommendation,
+    sourceIds: finding.sourceIds,
+    teamLabel: LABELS[finding.department],
+  };
+}
+
+function adaptiveMarketIds(label: string) {
+  if (/national/i.test(label)) return [];
+  const target = label.split(",")[0]!.trim().toLowerCase();
+  const candidates = publicMarkets.filter((market) => market.cbsa_name.toLowerCase().includes(target));
+  const preferred = candidates.find((market) => market.cbsa_name.toLowerCase().startsWith(`${target}-`)) ?? candidates[0];
+  return preferred ? [preferred.cbsa_code] : [];
+}
+
+function adaptiveInvestigationContext(finding: CurrentDataDiscoveryRun["adaptiveDiscovery"]["findings"][number]): DiscoveryInvestigationContext {
+  const department = finding.departments[0] ?? "marketing";
+  return {
+    insightId: finding.id,
+    department,
+    viewId: DEFAULT_VIEW_BY_DEPARTMENT[department],
+    marketIds: adaptiveMarketIds(finding.geography.label),
+    marketName: finding.geography.label,
+    question: crossDepartmentDecisionQuestion(finding.departments, finding.geography.label),
+    originatingQuestion: finding.question,
+    headline: finding.implication,
+    recommendation: finding.proposedAction,
+    sourceIds: finding.sourceIds,
+    teamLabel: finding.departments.map((item) => LABELS[item]).join(" + "),
+  };
 }
 
 function adaptiveMetricValue(value: number, unit: string) {
@@ -40,7 +103,7 @@ function adaptiveMetricValue(value: number, unit: string) {
   return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
-function CrossSourceFindings({ findings }: { findings: CurrentDataDiscoveryRun["adaptiveDiscovery"]["findings"] }) {
+function CrossSourceFindings({ findings, onOpenInvestigation }: { findings: CurrentDataDiscoveryRun["adaptiveDiscovery"]["findings"]; onOpenInvestigation: (finding: DiscoveryInvestigationContext) => void }) {
   if (!findings.length) return null;
   return (
     <section className="adaptive-decision-findings" aria-labelledby="adaptive-decision-findings-title">
@@ -59,14 +122,15 @@ function CrossSourceFindings({ findings }: { findings: CurrentDataDiscoveryRun["
               <span>{finding.departments.map((item) => LABELS[item]).join(" + ")}</span>
               <small>{finding.confidence.level} descriptive confidence</small>
             </div>
-            <h3>{finding.implication}</h3>
-            <div className="adaptive-origin-question"><span>Decision question</span><p>{crossDepartmentDecisionQuestion(finding.departments)}</p></div>
+            <div className="discovery-origin-question"><span>Decision question</span><p>{crossDepartmentDecisionQuestion(finding.departments, finding.geography.label)}</p></div>
+            <section className="discovery-decision-first"><span>Cross-department finding</span><h2>{finding.implication}</h2></section>
             <div className="adaptive-decision-metrics">
               {finding.metrics.slice(0, 3).map((metric) => (
                 <div key={metric.id}><strong>{adaptiveMetricValue(metric.value, metric.unit)}</strong><span>{metric.label}</span>{metric.benchmark !== undefined ? <small>Peer benchmark {adaptiveMetricValue(Number(metric.benchmark), metric.unit)}</small> : null}</div>
               ))}
             </div>
-            <div className="adaptive-decision-action"><span>What this changes now</span><p>{finding.proposedAction}</p></div>
+            <div className="discovery-recommended-move"><span>What this changes now</span><p>{finding.proposedAction}</p></div>
+            <div className="discovery-card-footer"><p><span>Teams</span>{finding.departments.map((item) => LABELS[item]).join(" + ")}</p><button className="secondary-action" type="button" onClick={() => onOpenInvestigation(adaptiveInvestigationContext(finding))}>Open in Ask AI →</button></div>
             <details><summary>Analysis tested, evidence, and limits</summary><p><strong>Analysis tested:</strong> {finding.question}</p><p>{finding.evidence.join(" ")}</p><p><strong>Confidence:</strong> {finding.confidence.reason}</p><p><strong>Boundary:</strong> {finding.decisionBoundary}</p><p><strong>Limits:</strong> {finding.limits.join(" ")}</p></details>
           </article>
         ))}
@@ -103,7 +167,7 @@ function AiSupplementalFindings({ findings }: { findings: HybridSupplementalFind
   );
 }
 
-function findingFollowUps(finding: AutonomousInsight | null) {
+function findingFollowUps(finding: DiscoveryInvestigationContext | null) {
   if (!finding) return ["Which finding has the strongest business case after accounting for evidence quality?", "Which missing outcome would most change the current recommendation?"];
   if (finding.department === "marketing") return [
     `Does ${finding.marketName}'s attributed efficiency remain after joining new-customer and contribution outcomes?`,
@@ -207,7 +271,7 @@ function InsightCard({ finding, rankLabel, onOpenInvestigation, selected = false
 
 export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFindingId = null, initialRun = null }: {
   onBack: () => void;
-  onInvestigate: (finding: AutonomousInsight, question?: string, sourceRunId?: string) => void;
+  onInvestigate: (finding: DiscoveryInvestigationContext, question?: string, sourceRunId?: string) => void;
   initialFindingId?: string | null;
   initialRun?: CurrentDataDiscoveryRun | null;
 }) {
@@ -223,7 +287,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const [deliveryMode, setDeliveryMode] = useState<"email" | "download" | null>(null);
   const [emailRecipient, setEmailRecipient] = useState("");
   const [railActionsTarget, setRailActionsTarget] = useState<HTMLElement | null>(null);
-  const [followUpFinding, setFollowUpFinding] = useState<AutonomousInsight | null>(null);
+  const [followUpFinding, setFollowUpFinding] = useState<DiscoveryInvestigationContext | null>(null);
   const [followUpQuestion, setFollowUpQuestion] = useState("");
   const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
   const followUpRef = useRef<HTMLTextAreaElement | null>(null);
@@ -490,9 +554,10 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     target.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  function openInAskAi(finding: AutonomousInsight) {
-    setFollowUpFinding(finding);
-    setFollowUpQuestion(finding.question);
+  function openInAskAi(finding: AutonomousInsight | DiscoveryInvestigationContext) {
+    const context = "teamLabel" in finding ? finding : autonomousInvestigationContext(finding);
+    setFollowUpFinding(context);
+    setFollowUpQuestion(context.question);
     requestAnimationFrame(() => {
       followUpRef.current?.focus({ preventScroll: true });
       followUpRef.current?.select();
@@ -683,7 +748,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </div>
       </section>
 
-      {department === "cross" ? <CrossSourceFindings findings={adaptiveFindings} /> : (
+      {department === "cross" ? <CrossSourceFindings findings={adaptiveFindings} onOpenInvestigation={openInAskAi} /> : (
         <>
           <div className="discovery-findings-divider"><span>{department === "all" ? "Ranked portfolio findings" : `Ranked ${LABELS[department]} findings`}</span><small>{primaryFindings.length} shown</small></div>
           <div className="autonomous-insight-grid">
@@ -841,9 +906,9 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </div>
         {followUpTarget ? (
           <div className="discovery-follow-up-context" aria-label="Finding context sent to Ask AI">
-            <div><span>{LABELS[followUpTarget.department]} · {followUpTarget.marketName}</span><button type="button" onClick={() => { setFollowUpFinding(null); setFollowUpQuestion(""); }}>Clear</button></div>
-            <strong>{findingPresentation(followUpTarget).analystRecommendation}</strong>
-            <p><b>Question that opened this finding:</b> {followUpTarget.question}</p>
+            <div><span>{followUpTarget.teamLabel} · {followUpTarget.marketName}</span><button type="button" onClick={() => { setFollowUpFinding(null); setFollowUpQuestion(""); }}>Clear</button></div>
+            <strong>{followUpTarget.recommendation}</strong>
+            <p><b>Analysis that opened this finding:</b> {followUpTarget.originatingQuestion}</p>
             <small>{followUpTarget.sourceIds.length} evidence source{followUpTarget.sourceIds.length === 1 ? "" : "s"} · Finding {followUpTarget.insightId}</small>
           </div>
         ) : null}
