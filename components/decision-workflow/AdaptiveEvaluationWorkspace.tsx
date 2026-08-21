@@ -33,7 +33,11 @@ type AdaptiveEvaluationWorkspaceProps = {
   question: string;
   savedPackets: SavedPacketPreview[];
   onQuestionChange: (value: string) => void;
-  onSubmit: (perspectiveId?: PerspectiveId, activeViewId?: PerspectiveViewId) => void;
+  onSubmit: (
+    perspectiveId?: PerspectiveId,
+    activeViewId?: PerspectiveViewId,
+    geographicContexts?: readonly SelectedGeographicContext[],
+  ) => void;
   onDiscoverInsights: (findingId?: string, run?: CurrentDataDiscoveryRun) => void;
   onPerspectiveChange: (perspectiveId: PerspectiveId) => void;
   onOpenSaved: () => void;
@@ -117,6 +121,7 @@ export function AdaptiveEvaluationWorkspace({
     onSubmit(
       perspectiveExplicitlySelected ? perspectiveId : undefined,
       perspectiveExplicitlySelected ? activeView.viewId : undefined,
+      selectedGeographicContexts,
     );
   }
 

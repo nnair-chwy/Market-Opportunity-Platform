@@ -94,29 +94,24 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(investigationIntent, /viewId/);
 });
 
-test("request state is transparent before a plan is treated as final", () => {
+test("request state is transparent and the executable framing runs without a confirmation stop", () => {
   assert.match(workflow, /setPhase\("interpreting"\)/);
   assert.match(workflow, /data-plan-request-state=\{phase === "interpreting" \? "pending" : "ready"\}/);
   assert.match(workflow, /data-plan-request-state="error"/);
   assert.match(workflow, /Retry/);
   assert.match(workflow, /Edit question/);
   assert.match(workflow, /data-proposal-method/);
-  assert.match(workflow, /analysis-contract-page/);
-  assert.match(workflow, /Human checkpoint · before analysis/);
-  assert.match(workflow, /AnalysisBriefPanel/);
-  assert.match(workflow, /answerContract=\{plan\.answerContract\}/);
-  assert.match(workflow, /onUpdatePlan=\{updateAnalysisPlan\}/);
-  assert.match(workflow, /onConfirm=\{confirmAndRun\}/);
-  assert.match(workflow, /canRun onUpdatePlan/);
-  assert.match(workflow, /setPhase\("confirming"\)/);
+  assert.doesNotMatch(workflow, /analysis-contract-page/);
+  assert.doesNotMatch(workflow, /Human checkpoint · before analysis/);
+  assert.doesNotMatch(workflow, /setPhase\("confirming"\)/);
   assert.match(workflow, /buildAnalysisPlanRequest/);
-  assert.match(workflow, /perspectiveId: plan\.perspectiveId/);
-  assert.match(workflow, /activeViewId: plan\.evidenceSelection\.viewId/);
-  assert.match(workflow, /selectedCbsaCodes: selectedGeographicContexts/);
-  assert.match(workflow, /Regenerating the intent, metrics, geography, capability, and registered queries/);
-  assert.match(workflow, /Review the changed interpretation and confirm again before any query runs/);
+  assert.match(workflow, /submittedGeographicContexts/);
+  assert.match(workflow, /selectedCbsaCodes: submittedGeographicContexts/);
+  assert.match(workflow, /await confirmAndRun\(confirmedBrief, parsed\.data\.plan, nextEvidencePlan\)/);
+  assert.match(workflow, /Question reframed for analysis/);
+  assert.match(workflow, /What changed/);
+  assert.match(workflow, /Why/);
   assert.match(workflow, /validateAnalysisBriefConsistency/);
-  assert.match(workflow, /Execution was stopped before any query ran/);
 });
 
 test("analysis-plan review follows question, method, boundary, then action", () => {
@@ -157,7 +152,7 @@ test("confirmed analysis keeps evidence lineage and decision boundaries visible"
 test("result signals retain the user's exact question beside the investigation", () => {
   assert.match(workflow, /<span>Your question<\/span>/);
   assert.match(workflow, /<strong>\{plan\.originalQuestion\}<\/strong>/);
-  assert.match(workflow, /Investigation framing/);
+  assert.match(workflow, /Runnable investigation/);
   assert.match(investigationPanel, /Question being answered/);
   assert.match(investigationPanel, /investigation\.originalQuestion/);
 });

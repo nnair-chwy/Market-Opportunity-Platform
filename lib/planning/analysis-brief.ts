@@ -42,6 +42,34 @@ export type AnalysisBrief = {
   confirmedAt: string | null;
 };
 
+export type AnalysisReframeNote = {
+  changed: boolean;
+  summary: string;
+  reason: string;
+};
+
+export function describeAnalysisReframe(plan: EvaluationPlan, brief: AnalysisBrief): AnalysisReframeNote {
+  const changed = brief.originalQuestion.trim() !== brief.rewrittenQuestion.trim();
+  const markets = plan.geographyResolution.places
+    .filter((place) => place.status === "resolved")
+    .map((place) => place.cbsaName ?? place.requestedName);
+  const changes = [
+    markets.length ? `Applied the selected map context: ${markets.join(" and ")}.` : null,
+    changed ? "Translated the request into a specific investigation the evidence runner can execute." : null,
+    plan.intent.selectedQueries.length
+      ? `Bound the analysis to ${plan.intent.selectedQueries.length} registered evidence ${plan.intent.selectedQueries.length === 1 ? "query" : "queries"}.`
+      : null,
+  ].filter((item): item is string => Boolean(item));
+
+  return {
+    changed: changed || markets.length > 0,
+    summary: changes.join(" ") || "The question already matched an executable analysis.",
+    reason: markets.length
+      ? "The map selection is part of the analytical scope, so it must stay attached to the question, evidence queries, and result."
+      : "A runnable framing names the comparison, measures, and evidence boundaries without changing the business intent.",
+  };
+}
+
 function cvcExplorationConsiderations(): AnalysisConsideration[] {
   return [
     { id: "current_cvc_footprint", label: "Current CVC footprint", metric: "Published clinic locations mapped to metropolitan CBSAs", role: "context_only", evidenceStatus: "partial", weightPercent: 15, whyItMatters: "Shows where the published footprint differs without treating clinic count as capacity or access." },

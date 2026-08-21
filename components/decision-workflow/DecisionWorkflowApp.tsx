@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
-import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
 import { AnswerEvidenceTrail } from "@/components/decision-workflow/AnswerEvidenceTrail";
 import { AnswerCoveragePanel } from "@/components/decision-workflow/AnswerCoveragePanel";
 import { DecisionGraphAnimation, type DecisionGraphStep } from "@/components/decision-workflow/DecisionGraphAnimation";
@@ -29,7 +28,7 @@ import type { CompactSourceReadiness } from "@/lib/data-discovery/readiness-serv
 import { publicMarkets } from "@/lib/data/public-market-ui";
 import type { CbsaAcsMetricKey } from "@/lib/data/cbsa-acs";
 import type { PerspectiveId, PerspectiveViewId } from "@/lib/perspectives";
-import { buildAnalysisBrief, validateAnalysisBriefConsistency, type AnalysisBrief } from "@/lib/planning/analysis-brief";
+import { buildAnalysisBrief, describeAnalysisReframe, validateAnalysisBriefConsistency, type AnalysisBrief } from "@/lib/planning/analysis-brief";
 import { buildAnalysisPlanRequest } from "@/lib/planning/analysis-plan-review";
 import { restoreSavedInvestigation } from "@/lib/planning/saved-packet-state";
 import {
@@ -86,7 +85,7 @@ import {
   type ClinicSiteWorkflowResult,
 } from "@/lib/phoenix-retrieval/contracts";
 
-type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error" | "discovery";
+type Phase = "question" | "interpreting" | "running" | "packet" | "saved" | "error" | "discovery";
 
 const DISCOVERY_INTENT_QUERY_KEYS = ["finding", "perspective", "view", "cbsa", "question"] as const;
 
@@ -514,10 +513,12 @@ export function DecisionWorkflowApp() {
     nextQuestion = question,
     nextPerspectiveId?: PerspectiveId,
     activeViewId?: PerspectiveViewId,
+    submittedGeographicContexts: readonly SelectedGeographicContext[] = selectedGeographicContexts,
   ) {
     if (!nextQuestion.trim()) return;
     const normalizedQuestion = nextQuestion.trim();
     setQuestion(normalizedQuestion);
+    setSelectedGeographicContexts([...submittedGeographicContexts]);
     setPlan(null);
     setClinicWorkflow(null);
     setSelectedActionId("");
@@ -545,7 +546,7 @@ export function DecisionWorkflowApp() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(buildAnalysisPlanRequest({
           question: normalizedQuestion,
-          selectedCbsaCodes: selectedGeographicContexts.map((context) => context.cbsaCode),
+          selectedCbsaCodes: submittedGeographicContexts.map((context) => context.cbsaCode),
           perspectiveId: nextPerspectiveId,
           activeViewId,
         })),
@@ -562,79 +563,47 @@ export function DecisionWorkflowApp() {
       setSelectedContextMetric(questionMapMetric(parsed.data.plan));
       const nextInvestigation = runMarketInvestigation(parsed.data.plan);
       const nextBrief = buildAnalysisBrief(parsed.data.plan, nextInvestigation);
+      const confirmedBrief: AnalysisBrief = {
+        ...nextBrief,
+        status: "confirmed",
+        confirmedAt: new Date().toISOString(),
+      };
       const nextEvidencePlan = buildEvidencePlan(parsed.data.plan);
       setInvestigation(null);
-      setAnalysisBrief(nextBrief);
+      setAnalysisBrief(confirmedBrief);
       setEvidencePlan(nextEvidencePlan);
       setEvaluationDefinition(null);
       setSelectedLeadId(null);
       setSelectedActionId(proposedActionFromPlan(parsed.data.plan).id);
-      setPhase("confirming");
+      await confirmAndRun(confirmedBrief, parsed.data.plan, nextEvidencePlan);
     } catch {
       setRequestError("The evaluation plan service is unavailable. Retry or edit the question.");
       setPhase("error");
     }
   }
 
-  async function updateAnalysisPlan(rewrittenQuestion: string) {
-    if (!plan) return;
-    setRequestError(null);
-    setReplanNotice("The edited question changed the analysis contract. Regenerating the intent, metrics, geography, capability, and registered queries before execution.");
-    try {
-      const response = await fetch("/api/evaluation-plans", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(buildAnalysisPlanRequest({
-          question: rewrittenQuestion,
-          perspectiveId: plan.perspectiveId,
-          activeViewId: plan.evidenceSelection.viewId,
-          selectedCbsaCodes: selectedGeographicContexts.map((context) => context.cbsaCode),
-        })),
-      });
-      const payload: unknown = await response.json();
-      const parsed = evaluationPlanResponseSchema.safeParse(payload);
-      if (!response.ok || !parsed.success) {
-        const error = evaluationPlanErrorSchema.safeParse(payload);
-        setRequestError(error.success ? error.data.message : "The edited question could not be replanned.");
-        return;
-      }
-      const replanned = parsed.data.plan;
-      const nextInvestigation = runMarketInvestigation(replanned);
-      setQuestion(replanned.originalQuestion);
-      setPlan(replanned);
-      setAnalysisBrief(buildAnalysisBrief(replanned, nextInvestigation));
-      setEvidencePlan(buildEvidencePlan(replanned));
-      setEvaluationDefinition(null);
-      setEvidenceExecution(null);
-      setPersistedReviewablePacket(null);
-      setInvestigation(null);
-      setSelectedLeadId(null);
-      setSelectedActionId(proposedActionFromPlan(replanned).id);
-      setReplanNotice("Plan regenerated from the edited question. Review the changed interpretation and confirm again before any query runs.");
-      setPhase("confirming");
-    } catch {
-      setRequestError("The edited question could not be replanned because the planning service is unavailable.");
-    }
-  }
-
-  async function confirmAndRun(nextBrief: AnalysisBrief) {
-    if (!plan) return;
-    const briefConsistencyIssues = validateAnalysisBriefConsistency(plan, nextBrief);
+  async function confirmAndRun(
+    nextBrief: AnalysisBrief,
+    planToRun: EvaluationPlan | null = plan,
+    evidencePlanToRun?: EvidencePlan,
+  ) {
+    if (!planToRun) return;
+    const briefConsistencyIssues = validateAnalysisBriefConsistency(planToRun, nextBrief);
     if (briefConsistencyIssues.length) {
       setRequestError(`The analysis contract no longer matches the validated plan. ${briefConsistencyIssues.join(" ")}`);
       setReplanNotice("Execution was stopped before any query ran. Regenerate or edit the question to restore one consistent topic, geography, source, and query contract.");
       return;
     }
     setReplanNotice(null);
-    const nextInvestigation = runConfirmedMarketInvestigation(plan, nextBrief);
-    const normalizedEvidencePlan = plan.intent.selectedQueries.length > 0;
-    const nextEvidencePlan = evidencePlan ?? buildEvidencePlan(plan);
+    const nextInvestigation = runConfirmedMarketInvestigation(planToRun, nextBrief);
+    const normalizedEvidencePlan = planToRun.intent.selectedQueries.length > 0;
+    const nextEvidencePlan = evidencePlanToRun ?? evidencePlan ?? buildEvidencePlan(planToRun);
     setAnalysisBrief(nextBrief);
     setInvestigation(nextInvestigation);
     setEvidencePlan(nextEvidencePlan);
     setEvaluationDefinition(generateEvaluationDefinitionDraft(nextBrief, nextInvestigation, nextEvidencePlan));
     const reviewInvestigation = nextInvestigation;
-    const initialLeadId = reviewInvestigation ? defaultLeadForQuestion(plan, reviewInvestigation)?.id ?? null : null;
+    const initialLeadId = reviewInvestigation ? defaultLeadForQuestion(planToRun, reviewInvestigation)?.id ?? null : null;
     setSelectedLeadId(initialLeadId);
     if (reviewInvestigation) {
       const initialDraft: RecommendationDraft = {
@@ -661,14 +630,14 @@ export function DecisionWorkflowApp() {
       const response = await fetch("/api/evaluation-plans/execute", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ requestId: `workflow-${plan.planId}-${Date.now()}`, plan }),
+        body: JSON.stringify({ requestId: `workflow-${planToRun.planId}-${Date.now()}`, plan: planToRun }),
       });
       const payload: unknown = await response.json();
       const parsed = evidenceExecutionResponseSchema.safeParse(payload);
       if (parsed.success) {
         executedEvidence = parsed.data;
         setEvidenceExecution(parsed.data);
-        const executedPlan = effectivePlanForSourceAdaptation(plan, parsed.data.sourceAdaptation);
+        const executedPlan = effectivePlanForSourceAdaptation(planToRun, parsed.data.sourceAdaptation);
         const executedInvestigation = marketInvestigationFromEvidence(executedPlan, parsed.data) ?? nextInvestigation;
         if (executedInvestigation) {
           const executedLeadId = executedInvestigation.leads[0]?.id ?? null;
@@ -690,7 +659,7 @@ export function DecisionWorkflowApp() {
     } catch {
       // The review page retains the validated plan when local evidence execution is unavailable.
     }
-    if (plan.capabilityId !== "clinic_site_evaluation" || normalizedEvidencePlan || !executedEvidence || executedEvidence.status === "blocked" || executedEvidence.status === "failed") {
+    if (planToRun.capabilityId !== "clinic_site_evaluation" || normalizedEvidencePlan || !executedEvidence || executedEvidence.status === "blocked" || executedEvidence.status === "failed") {
       setPhase("packet");
       return;
     }
@@ -698,7 +667,7 @@ export function DecisionWorkflowApp() {
       const response = await fetch("/api/clinic-site-evaluation", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: plan.originalQuestion }),
+        body: JSON.stringify({ question: planToRun.originalQuestion }),
       });
       const payload: unknown = await response.json();
       const workflow = payload && typeof payload === "object" && "workflow" in payload
@@ -930,11 +899,11 @@ export function DecisionWorkflowApp() {
 
   const showPacket = phase === "packet" || phase === "saved";
   const isQuestionPage = activeView === "workflow" && phase === "question";
-  const isConfirmationPage = activeView === "workflow" && phase === "confirming";
   const isAnimationPage = activeView === "workflow" && (phase === "interpreting" || phase === "running");
   const isResultPage = activeView === "workflow" && showPacket;
   const isErrorPage = activeView === "workflow" && phase === "error";
   const isDiscoveryPage = activeView === "workflow" && phase === "discovery";
+  const analysisReframe = plan && analysisBrief ? describeAnalysisReframe(plan, analysisBrief) : null;
 
   useEffect(() => {
     if (!isResultPage) return;
@@ -956,8 +925,6 @@ export function DecisionWorkflowApp() {
     ? "saved-list"
     : isQuestionPage
       ? "question"
-      : isConfirmationPage
-        ? "confirmation"
       : isAnimationPage
         ? "animation"
         : isResultPage
@@ -969,8 +936,6 @@ export function DecisionWorkflowApp() {
             : "workspace";
   const workspaceLayoutClass = isQuestionPage
     ? "question-layout"
-    : isConfirmationPage
-      ? "confirmation-page-layout"
     : isAnimationPage
       ? "animation-page-layout"
       : isDiscoveryPage
@@ -1007,8 +972,8 @@ export function DecisionWorkflowApp() {
           <p>Move from a business question to a reviewable next step.</p>
           <ol className="rail-steps">
             <li className={phase === "question" ? "current" : "complete"}><span>1</span><div><strong>Ask</strong><small>State the decision</small></div></li>
-            <li className={phase === "interpreting" || phase === "confirming" ? "current" : phase === "running" || showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Confirm</strong><small>Set the analysis contract</small></div></li>
-            <li className={phase === "running" ? "current" : showPacket ? "complete" : ""}><span>3</span><div><strong>Run</strong><small>Calculate the confirmed model</small></div></li>
+            <li className={phase === "interpreting" ? "current" : phase === "running" || showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Frame</strong><small>Attach context and evidence</small></div></li>
+            <li className={phase === "running" ? "current" : showPacket ? "complete" : ""}><span>3</span><div><strong>Run</strong><small>Calculate the analysis</small></div></li>
             <li className={showPacket ? "current" : ""}><span>4</span><div><strong>Review</strong><small>Read and export results</small></div></li>
           </ol>
           <div className="rail-note"><strong>Decision boundary</strong><p>The workspace prepares evidence and next actions. An accountable owner makes the business decision.</p></div>
@@ -1050,10 +1015,11 @@ export function DecisionWorkflowApp() {
                 setQuestion(value);
                 if (sisterFollowUpNotice) setSisterFollowUpNotice(null);
               }}
-              onSubmit={(nextPerspectiveId, activeViewId) => void startWorkflow(
+              onSubmit={(nextPerspectiveId, activeViewId, geographicContexts) => void startWorkflow(
                 question,
                 discoveryInvestigationIntent?.perspectiveId ?? nextPerspectiveId,
                 discoveryInvestigationIntent?.viewId ?? activeViewId,
+                geographicContexts,
               )}
               onDiscoverInsights={(findingId, discoveryRun) => {
                 setSelectedDiscoveryFindingId(findingId ?? null);
@@ -1071,8 +1037,6 @@ export function DecisionWorkflowApp() {
                 if (packet) openSavedPacket(packet);
               }}
               selectedGeographicContexts={selectedGeographicContexts}
-              discoveryInvestigationIntent={discoveryInvestigationIntent}
-              onInvestigateFinding={openDiscoveryInvestigation}
               onGeographicContextSelect={(context) => {
                 detachDiscoveryInvestigationIntent();
                 setGeographicContextNotice(null);
@@ -1103,22 +1067,6 @@ export function DecisionWorkflowApp() {
               onBack={() => { setSelectedDiscoveryFindingId(null); setSelectedDiscoveryRun(null); setPhase("question"); }}
               onInvestigate={openDiscoveryInvestigation}
             />
-          </section>
-        ) : null}
-
-        {isConfirmationPage && plan && analysisBrief ? (
-          <section className="analysis-contract-page" aria-labelledby="analysis-brief-title">
-            <div className="analysis-contract-intro">
-              <div className="analysis-contract-nav">
-                <button className="text-action" type="button" onClick={restart}>← Edit original question</button>
-                <span>Human checkpoint · before analysis</span>
-              </div>
-              <h1>Review the analysis plan</h1>
-              <p>Confirm the question, method, and evidence boundaries before the analyst runs.</p>
-            </div>
-            {replanNotice ? <div className="sister-follow-up-notice" role="status"><strong>Plan updated</strong><p>{replanNotice}</p></div> : null}
-            {requestError ? <div className="packet-missing-gates" role="alert"><small>{requestError}</small></div> : null}
-            <AnalysisBriefPanel key={`${plan.planId}:${analysisBrief.originalQuestion}`} brief={analysisBrief} answerContract={plan.answerContract} canRun onUpdatePlan={updateAnalysisPlan} onConfirm={confirmAndRun} />
           </section>
         ) : null}
 
@@ -1153,6 +1101,14 @@ export function DecisionWorkflowApp() {
                 <>
                   <div className="eyebrow">Evidence graph in progress</div>
                   <h1 id="graph-title">Building the answer from checked evidence</h1>
+                  {analysisBrief && analysisReframe?.changed ? (
+                    <div className="analysis-reframe-note" role="status">
+                      <strong>Question reframed for analysis</strong>
+                      <p>{analysisBrief.rewrittenQuestion}</p>
+                      <small><b>What changed</b>{analysisReframe.summary}</small>
+                      <small><b>Why</b>{analysisReframe.reason}</small>
+                    </div>
+                  ) : null}
                   <p className="plan-method-ribbon" data-proposal-method={plan.proposalMethod}>
                     {proposalMethodLabel(plan.proposalMethod)} · {plan.capabilityId.replaceAll("_", " ")} · {plan.status === "blocked" ? "limited evidence — analysis continues" : plan.status.replaceAll("_", " ")}
                   </p>
@@ -1225,7 +1181,13 @@ export function DecisionWorkflowApp() {
                 <span>Your question</span>
                 <strong>{plan.originalQuestion}</strong>
                 {analysisBrief?.rewrittenQuestion && analysisBrief.rewrittenQuestion !== plan.originalQuestion ? (
-                  <small><b>Investigation framing</b>{analysisBrief.rewrittenQuestion}</small>
+                  <small><b>Runnable investigation</b>{analysisBrief.rewrittenQuestion}</small>
+                ) : null}
+                {analysisReframe?.changed ? (
+                  <div className="analysis-reframe-explanation">
+                    <small><b>What changed</b>{analysisReframe.summary}</small>
+                    <small><b>Why</b>{analysisReframe.reason}</small>
+                  </div>
                 ) : null}
               </div>
 

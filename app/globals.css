@@ -1072,6 +1072,23 @@
 .question-ribbon, .packet-question { background: #eef3ff; border: 1px solid #dce7ff; border-radius: 10px; display: grid; gap: 7px; margin-top: 30px; padding: 15px 17px; }
 .question-ribbon span, .packet-question span { color: #5e79b7; font-size: 11px; font-weight: 800; text-transform: uppercase; }
 .question-ribbon strong, .packet-question strong { color: #26385f; font-size: 14px; font-weight: 700; }
+.analysis-reframe-note {
+  background: #f3f8ff;
+  border: 1px solid #c9dcf7;
+  border-left: 4px solid #2f6ed7;
+  border-radius: 12px;
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 15px 16px;
+}
+.analysis-reframe-note > strong { color: #183a6b; font-size: 13px; }
+.analysis-reframe-note p { color: #263f65; font-size: 14px; line-height: 1.45; margin: 0; }
+.analysis-reframe-note small,
+.analysis-reframe-explanation small { color: #5b6f8e; display: grid; font-size: 11px; gap: 2px; line-height: 1.4; }
+.analysis-reframe-note small b,
+.analysis-reframe-explanation small b { color: #2f67c9; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.analysis-reframe-explanation { border-top: 1px solid #d4e0f2; display: grid; gap: 7px; margin-top: 4px; padding-top: 9px; }
 .packet-question small { border-top: 1px solid #d6e2f7; color: #526883; display: grid; font-size: 11px; gap: 3px; line-height: 1.45; padding-top: 8px; }
 .packet-question small b { color: #5e79b7; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analysisBriefWeightTotal, buildAnalysisBrief, validateAnalysisBriefConsistency } from "../lib/planning/analysis-brief.ts";
+import { analysisBriefWeightTotal, buildAnalysisBrief, describeAnalysisReframe, validateAnalysisBriefConsistency } from "../lib/planning/analysis-brief.ts";
 import { runMarketInvestigation } from "../lib/planning/market-investigation.ts";
 import { planEvaluation } from "../lib/planning/planner.ts";
 
@@ -29,6 +29,21 @@ test("named-market CVC location brief preserves Phoenix and uses the executable 
   assert.deepEqual(brief.queryContract?.geographyIds, ["cbsa:38060"]);
   assert.deepEqual(brief.queryContract?.registeredQueries, ["regional_context_by_cbsa", "clinic_context_by_cbsa"]);
   assert.deepEqual(validateAnalysisBriefConsistency(plan, brief), []);
+});
+
+test("selected map geography is explained as part of the automatic runnable reframe", () => {
+  const plan = planEvaluation(
+    "Where should Marketing spend more on ads?",
+    "marketing",
+    [{ cbsaCode: "47930", cbsaName: "Waterbury-Shelton, CT" }],
+    "paid_search_cpc",
+  );
+  const brief = buildAnalysisBrief(plan, runMarketInvestigation(plan));
+  const note = describeAnalysisReframe(plan, brief);
+  assert.match(brief.rewrittenQuestion, /Waterbury-Shelton, CT/i);
+  assert.equal(note.changed, true);
+  assert.match(note.summary, /selected map context: Waterbury-Shelton, CT/i);
+  assert.match(note.reason, /map selection.*analytical scope/i);
 });
 
 test("analysis brief consistency rejects geography, query, and unsupported ranking drift", () => {
