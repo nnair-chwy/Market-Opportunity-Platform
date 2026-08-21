@@ -31,7 +31,8 @@ test("the AI expansion exposes its iterative execution trail even when no extra 
   assert.match(workspace, /AI investigation loop/);
   assert.match(workspace, /hybridReceipts\.map/);
   assert.match(workspace, /No additional AI analysis has completed/);
-  assert.match(workspace, /normalizedSnapshotVersion: NORMALIZED_DISCOVERY_SNAPSHOT/);
+  assert.doesNotMatch(workspace, /normalizedSnapshotVersion: NORMALIZED_DISCOVERY_SNAPSHOT/);
+  assert.match(workspace, /Failed before a usable result was produced/);
 });
 
 test("baseline and AI execution details are collapsed below the portfolio filters by default", () => {

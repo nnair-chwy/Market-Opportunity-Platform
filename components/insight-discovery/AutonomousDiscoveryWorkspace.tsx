@@ -16,7 +16,6 @@ type DiscoveryScope = "all" | "cross" | PerspectiveId;
 // cannot silently reintroduce superseded recommendations or source language.
 const DISCOVERY_HISTORY_KEY = "market-opportunity:discovery-run-history:v2";
 const DISCOVERY_HISTORY_LIMIT = 5;
-const NORMALIZED_DISCOVERY_SNAPSHOT = "normalized-market-data-2026-08-17-v1";
 
 function departmentDecisionQuestion(department: PerspectiveId, marketName?: string) {
   const location = marketName ? ` in ${marketName}` : " across regions";
@@ -369,7 +368,6 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         ...(["marketing", "pricing", "cvc"].includes(scope) ? { department: scope } : {}),
         maxSteps: 5,
         maxResultRows: 50,
-        normalizedSnapshotVersion: NORMALIZED_DISCOVERY_SNAPSHOT,
       }),
     });
     const payload = await response.json() as HybridDiscoveryRun | { message?: string };
@@ -708,7 +706,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
             {hybridReceipts.map((receipt, index) => (
               <li key={`${receipt.fingerprint}:${index}`} data-status={receipt.status}>
                 <b>{index + 1}</b>
-                <div><strong>{receipt.objective}</strong><small>{receipt.kind === "exploratory_query" ? "New cross-source aggregate" : receipt.kind === "registered_query" ? "Approved aggregate query" : "Focused market analysis"} · {receipt.rowCount || receipt.leadCount} result{(receipt.rowCount || receipt.leadCount) === 1 ? "" : "s"} · {receipt.marketIds.length} market{receipt.marketIds.length === 1 ? "" : "s"}</small></div>
+                <div><strong>{receipt.objective}</strong><small>{receipt.kind === "exploratory_query" ? "New cross-source aggregate" : receipt.kind === "registered_query" ? "Approved aggregate query" : "Focused market analysis"}{receipt.status === "failed" ? " · Failed before a usable result was produced" : ` · ${receipt.rowCount || receipt.leadCount} result${(receipt.rowCount || receipt.leadCount) === 1 ? "" : "s"} · ${receipt.marketIds.length} market${receipt.marketIds.length === 1 ? "" : "s"}`}</small></div>
                 <span>{receipt.supplementalFinding ? "Promoted" : receipt.status === "accepted" ? "Evidence added" : receipt.status}</span>
               </li>
             ))}

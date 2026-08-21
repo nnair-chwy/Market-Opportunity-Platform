@@ -60,7 +60,9 @@ export type HybridInvestigatorContext = {
   permittedMarketScreens: Array<{ perspectiveId: string; viewId: string }>;
   permittedRegisteredQueries: string[];
   permittedExploratoryTables: Array<{ tableId: string; grain: string; columns: string[] }>;
+  candidateMarketIds: string[];
   priorReceipts: HybridInvestigationReceipt[];
+  lastFailure: string | null;
   remainingSteps: number;
 };
 
@@ -78,6 +80,8 @@ Return only the supplied structured action. Never write SQL, invent a table, sou
 Choose only from permittedMarketScreens, permittedRegisteredQueries, and permittedExploratoryTables. Use exploratory_query only when a new cross-source aggregate can add value. Never return SQL: select tables, columns, filters, aggregates, ordering, and CBSA joins through the supplied specification.
 For exploratory_query, exploratorySpecJson must encode exactly this object shape: {"version":"normalized-exploratory-query-v1","tables":[approved tableId],"joins":[{"leftTableId":approved tableId,"rightTableId":approved tableId,"on":"cbsaCode"}],"groupBy":["cbsaCode","cbsaName"],"measures":[{"tableId":approved tableId,"column":approved column,"aggregation":"sum|avg|min|max|count|count_distinct"}],"filters":[],"orderBy":[{"kind":"measure","measureIndex":0,"direction":"desc"}],"limit":25}. Use the short tableId values supplied in permittedExploratoryTables, not physical normalized table names. Every selected table after the first requires one connected cbsaCode join.
 Avoid repeating an invocation already represented in priorReceipts. Prefer an analysis likely to add a new market, source, measure, contradiction, or downstream business outcome.
+When a registered query requires a CBSA code, select one from candidateMarketIds. Never omit a required CBSA code and never invent one.
+If lastFailure is present, correct that specific issue in the next action instead of repeating the failed proposal.
 Use the run as an iterative investigation, not a one-shot selector. A registered or exploratory aggregate may identify a promising market; on the next step, use its returned marketIds in a focused approved market_screen when that can produce a quantified stakeholder finding. Prefer cross-source queries first when compatible tables are available, then challenge the strongest result with a focused market analysis. Do not finish immediately after an accepted aggregate when a non-duplicate focused screen can test its decision value.
 The application executes and evaluates every proposal. Choose finish when no permitted invocation is likely to add decision value.`;
 
@@ -108,7 +112,9 @@ async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInv
         permittedMarketScreens: context.permittedMarketScreens,
         permittedRegisteredQueries: context.permittedRegisteredQueries,
         permittedExploratoryTables: context.permittedExploratoryTables,
+        candidateMarketIds: context.candidateMarketIds,
         priorReceipts: context.priorReceipts,
+        lastFailure: context.lastFailure,
         remainingSteps: context.remainingSteps,
       }) },
     ],
@@ -120,6 +126,7 @@ async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInv
     return hybridInvestigatorActionSchema.parse({ action: "finish", summary: parsed.summary });
   }
   if (!parsed.invocationKind) throw new Error("OpenAI returned an execute action without an invocation kind.");
+  const queryNeedsCbsa = parsed.registeredQuery && ["regional_context_by_cbsa", "clinic_context_by_cbsa", "google_ads_context_by_cbsa"].includes(parsed.registeredQuery);
   const invocation: HybridInvestigatorInvocation = parsed.invocationKind === "market_screen"
     ? {
         kind: "market_screen",
@@ -131,7 +138,9 @@ async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInv
       ? {
           kind: "registered_query",
           query: parsed.registeredQuery ?? (() => { throw new Error("A registered query name is required."); })(),
-          ...(parsed.registeredCbsaCode ? { cbsaCode: parsed.registeredCbsaCode } : {}),
+          ...(queryNeedsCbsa
+            ? { cbsaCode: parsed.registeredCbsaCode ?? context.candidateMarketIds[0] ?? (() => { throw new Error("The selected registered query requires a market from candidateMarketIds."); })() }
+            : {}),
         }
       : (() => {
           try {
@@ -161,6 +170,16 @@ function invocationFingerprint(invocation: HybridInvestigatorInvocation) {
 
 function unique(values: readonly string[]) {
   return [...new Set(values)].sort();
+}
+
+function conciseError(error: unknown, fallback: string) {
+  if (error && typeof error === "object" && "issues" in error && Array.isArray((error as { issues?: unknown[] }).issues)) {
+    const messages = (error as { issues: Array<{ message?: unknown }> }).issues
+      .map((issue) => typeof issue.message === "string" ? issue.message : "")
+      .filter(Boolean);
+    if (messages.length) return unique(messages).join(" ").slice(0, 300);
+  }
+  return error instanceof Error ? error.message.slice(0, 300) : fallback;
 }
 
 function permittedRegisteredQueries(request: HybridDiscoveryRequest): string[] {
@@ -432,6 +451,8 @@ export async function runHybridInsightDiscovery(
   const receipts: HybridInvestigationReceipt[] = [];
   const priorFingerprints = baselineFingerprints(request);
   let failures = 0;
+  let attempts = 0;
+  let lastFailure: string | null = null;
   let terminationReason: HybridDiscoveryAudit["terminationReason"] = "step_limit";
   let fallbackReason: string | null = null;
   const permittedMarketScreens = CURRENT_DATA_HYPOTHESES
@@ -440,21 +461,33 @@ export async function runHybridInsightDiscovery(
   const registeredQueries = permittedRegisteredQueries(request);
 
   for (let step = 1; step <= request.maxSteps; step += 1) {
+    attempts += 1;
     let action: HybridInvestigatorAction;
     try {
+      const candidateMarketIds = unique([
+        ...receipts.flatMap((receipt) => receipt.marketIds),
+        ...baseline.primaryFindings.flatMap((finding) => finding.marketIds),
+      ]).slice(0, 25);
       action = hybridInvestigatorActionSchema.parse(await callModel({
         baseline,
         department: request.department,
         permittedMarketScreens,
         permittedRegisteredQueries: registeredQueries,
         permittedExploratoryTables: request.normalizedSnapshotVersion ? Object.entries(EXPLORATORY_TABLE_CATALOG).map(([tableId, table]) => ({ tableId, grain: table.grain, columns: Object.keys(table.columns) })) : [],
+        candidateMarketIds,
         priorReceipts: receipts,
+        lastFailure,
         remainingSteps: request.maxSteps - step + 1,
       }));
     } catch (error) {
-      terminationReason = "model_error";
-      fallbackReason = error instanceof Error ? error.message.slice(0, 240) : "The investigator returned an invalid action.";
-      break;
+      failures += 1;
+      lastFailure = conciseError(error, "The investigator returned an invalid action.");
+      if (failures >= 2) {
+        terminationReason = "model_error";
+        fallbackReason = `The AI investigator could not produce a valid bounded action after a correction attempt: ${lastFailure}`.slice(0, 360);
+        break;
+      }
+      continue;
     }
     if (action.action === "finish") {
       terminationReason = "model_finished";
@@ -474,12 +507,19 @@ export async function runHybridInsightDiscovery(
       });
       receipts.push(receipt);
       priorFingerprints.add(receipt.fingerprint);
-      if (receipt.status === "failed") failures += 1;
+      if (receipt.status === "failed") {
+        failures += 1;
+        lastFailure = receipt.reason;
+      } else {
+        lastFailure = null;
+      }
     } catch (error) {
-      const receipt = rejectedReceipt(action.invocation, action.objective, error instanceof Error ? error.message.slice(0, 300) : "The proposed invocation failed validation.");
+      const reason = conciseError(error, "The proposed invocation failed validation.");
+      const receipt = rejectedReceipt(action.invocation, action.objective, reason);
       receipt.status = "failed";
       receipts.push(receipt);
       failures += 1;
+      lastFailure = reason;
     }
     if (failures >= 2) {
       terminationReason = "failure_limit";
@@ -496,7 +536,7 @@ export async function runHybridInsightDiscovery(
     modelVersion: process.env.OPENAI_HYBRID_DISCOVERY_MODEL?.trim() || ASK_AI_MODEL,
     promptVersion: HYBRID_DISCOVERY_PROMPT_VERSION,
     maxSteps: request.maxSteps,
-    stepsAttempted: receipts.length,
+    stepsAttempted: attempts,
     acceptedInvestigationCount: accepted.length,
     terminationReason,
     fallbackReason,

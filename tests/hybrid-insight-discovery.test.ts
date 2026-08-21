@@ -51,6 +51,52 @@ test("missing model configuration degrades to the deterministic baseline", async
   }
 });
 
+test("hosted-style runs without a validated normalized snapshot advertise only executable market screens", async () => {
+  let observedContext: Parameters<NonNullable<Parameters<typeof runHybridInsightDiscovery>[1]>["callModel"]>[0] | undefined;
+  const run = await runHybridInsightDiscovery({ mode: "hybrid", maxSteps: 1 }, {
+    ...fixed,
+    callModel: async (context) => {
+      observedContext = context;
+      return { action: "finish", summary: "No additional executable screen is likely to add value." };
+    },
+  });
+  assert.ok(observedContext);
+  assert.deepEqual(observedContext.permittedRegisteredQueries, []);
+  assert.deepEqual(observedContext.permittedExploratoryTables, []);
+  assert.ok(observedContext.permittedMarketScreens.length > 0);
+  assert.ok(observedContext.candidateMarketIds.length > 0);
+  assert.equal(observedContext.lastFailure, null);
+  assert.equal(run.hybridAudit.terminationReason, "model_finished");
+});
+
+test("the loop gives one malformed model proposal a corrective retry and then executes a valid screen", async () => {
+  let calls = 0;
+  const seenFailures: Array<string | null> = [];
+  const run = await runHybridInsightDiscovery({ mode: "hybrid", maxSteps: 3 }, {
+    ...fixed,
+    callModel: async (context) => {
+      calls += 1;
+      seenFailures.push(context.lastFailure);
+      if (calls === 1) return { action: "execute" } as unknown as HybridInvestigatorAction;
+      if (calls === 2) {
+        return {
+          action: "execute",
+          objective: "Test a focused paid-search market signal after correcting the invalid action.",
+          decisionValueHypothesis: "A bounded market screen can add a quantified stakeholder result.",
+          invocation: { kind: "market_screen", perspectiveId: "marketing", viewId: "paid_search_response", cbsaCodes: [context.candidateMarketIds[0]!] },
+        };
+      }
+      return { action: "finish", summary: "The corrected bounded screen completed." };
+    },
+  });
+  assert.equal(calls, 3);
+  assert.equal(seenFailures[0], null);
+  assert.match(seenFailures[1] ?? "", /invalid input|expected/i);
+  assert.equal(run.hybridAudit.terminationReason, "model_finished");
+  assert.equal(run.hybridAudit.stepsAttempted, 3);
+  assert.ok(run.hybridAudit.receipts.some((receipt) => receipt.status !== "failed"));
+});
+
 test("a registered aggregate query is capped, scored, and appended only as an evidence receipt", async () => {
   const mockResponse: NormalizedQueryResponse = {
     requestId: "ignored",
