@@ -21,7 +21,8 @@ test("the portfolio count and AI result status use honest comparable definitions
   assert.match(workspace, /const allFindingCount = run\?\.findings\.length \?\? 0/);
   assert.match(workspace, /All departments <span>\{allFindingCount\}<\/span>/);
   assert.match(workspace, /No additional AI finding was produced in this run/);
-  assert.match(workspace, /none has been promoted into a finding yet/);
+  assert.match(workspace, /none cleared the finding bar/);
+  assert.match(workspace, /new AI finding/);
   assert.match(workspace, /Review analysis record/);
 });
 

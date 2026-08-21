@@ -75,6 +75,22 @@ export const hybridInvestigatorResponseSchema = z.object({
   exploratorySpecJson: z.string().max(12_000).nullable(),
 }).strict();
 
+export const hybridSupplementalFindingSchema = z.object({
+  id: z.string(),
+  department: perspectiveIdSchema,
+  question: z.string(),
+  headline: z.string(),
+  recommendation: z.string(),
+  quantifiedEvidence: z.string(),
+  comparison: z.string(),
+  businessImplication: z.string(),
+  nextAction: z.string(),
+  marketIds: z.array(z.string()),
+  sourceIds: z.array(z.string()),
+  limitations: z.array(z.string()),
+}).strict();
+export type HybridSupplementalFinding = z.infer<typeof hybridSupplementalFindingSchema>;
+
 const investigationReceiptSchema = z.object({
   kind: z.enum(["market_screen", "registered_query", "exploratory_query"]),
   fingerprint: z.string(),
@@ -89,6 +105,7 @@ const investigationReceiptSchema = z.object({
   sourceIds: z.array(z.string()),
   measureLabels: z.array(z.string()),
   warnings: z.array(z.string()),
+  supplementalFinding: hybridSupplementalFindingSchema.nullable(),
   lineage: z.object({
     queryFingerprint: z.string(),
     tableIds: z.array(z.string()),

@@ -27,6 +27,7 @@ import {
   type HybridDiscoveryAudit,
   type HybridDiscoveryRequest,
   type HybridInvestigationReceipt,
+  type HybridSupplementalFinding,
   type HybridInvestigatorAction,
   type HybridInvestigatorInvocation,
 } from "./hybrid-contracts.ts";
@@ -49,7 +50,7 @@ const GUARANTEES = [
   "The model can select only registered market screens or registered aggregate queries; arbitrary SQL is not accepted.",
   "Novel queries use an application-compiled aggregate specification over at most three approved tables joined only by CBSA code.",
   "The application validates every invocation, caps steps and returned rows, and records rejected and failed attempts.",
-  "Model-written prose never becomes an evidence finding; only deterministic operator receipts are appended.",
+  "A model-selected analysis becomes a finding only when deterministic execution returns a quantified result, comparison, business implication, sources, and limits.",
 ] as const;
 
 export type HybridInvestigatorContext = {
@@ -235,7 +236,40 @@ function rejectedReceipt(invocation: HybridInvestigatorInvocation, objective: st
     sourceIds: [],
     measureLabels: [],
     warnings: [],
+    supplementalFinding: null,
     lineage: null,
+  };
+}
+
+function marketScreenFinding(input: {
+  investigation: MarketInvestigation;
+  objective: string;
+  fingerprint: string;
+}): HybridSupplementalFinding | null {
+  const lead = input.investigation.leads.find((candidate) => candidate.measureValue || candidate.supportingMeasures?.length);
+  if (!lead || !input.investigation.sourceIds.length) return null;
+  const quantifiedEvidence = lead.measureValue
+    ? `${lead.measureValue.label}: ${lead.measureValue.formattedValue} (${lead.measureValue.rangeMeaning}; percentile ${lead.measureValue.percentile.toFixed(1)}).`
+    : (lead.supportingMeasures ?? []).slice(0, 3).map((measure) => `${measure.label}: ${measure.formattedValue} (${measure.rangeMeaning}; percentile ${measure.percentile.toFixed(1)})`).join(" ");
+  const marketName = lead.marketIds.map((marketId) => publicMarkets.find((market) => market.cbsa_code === marketId)?.cbsa_name).filter(Boolean).join(", ") || lead.title.split(":")[0] || "This market";
+  const recommendation = input.investigation.perspectiveId === "marketing"
+    ? `Put ${marketName} first in the next campaign-and-outcome review; keep live spend unchanged until the observed response is joined to new-customer, sales, and contribution outcomes.`
+    : input.investigation.perspectiveId === "pricing"
+      ? `Put ${marketName} first in the next matched-SKU pricing review; keep live price unchanged until coverage, margin, and expected unit response are verified.`
+      : `Put ${marketName} first in the next clinic demand-and-capacity review; do not change footprint or media until appointments, staffed capacity, and mature-clinic economics are joined.`;
+  return {
+    id: `ai:${input.fingerprint}`,
+    department: input.investigation.perspectiveId,
+    question: input.investigation.originalQuestion,
+    headline: lead.title,
+    recommendation,
+    quantifiedEvidence,
+    comparison: lead.observation,
+    businessImplication: lead.businessMeaning,
+    nextAction: lead.nextEvidence,
+    marketIds: lead.marketIds,
+    sourceIds: input.investigation.sourceIds,
+    limitations: [lead.challenge, ...input.investigation.limitations].filter(Boolean).slice(0, 5),
   };
 }
 
@@ -265,20 +299,23 @@ async function executeInvocation(input: {
     const sourceIds = unique(investigation.sourceIds);
     const novelty = noveltyScore({ fingerprint, priorFingerprints: input.priorFingerprints, baseline: input.baseline, sourceIds, marketIds });
     const value = marketDecisionValue(investigation);
+    const supplementalFinding = marketScreenFinding({ investigation, objective: input.objective, fingerprint });
+    const accepted = novelty >= 45 && value >= 35 && Boolean(supplementalFinding);
     return {
       kind: "market_screen",
       fingerprint,
       objective: input.objective,
-      status: novelty >= 45 && value >= 35 ? "accepted" : "rejected",
+      status: accepted ? "accepted" : "rejected",
       noveltyScore: novelty,
       decisionValueScore: value,
-      reason: novelty < 45 ? "The screen did not add enough evidence beyond prior analyses." : value < 35 ? "The screen returned too little decision-relevant evidence." : "The approved screen added a non-duplicative evidence lead.",
+      reason: novelty < 45 ? "The screen did not add enough evidence beyond prior analyses." : value < 35 ? "The screen returned too little decision-relevant evidence." : !supplementalFinding ? "The screen did not return the quantified comparison required for a stakeholder finding." : "The approved screen produced a non-duplicative, quantified finding.",
       rowCount: 0,
       leadCount: investigation.leads.length,
       marketIds,
       sourceIds,
       measureLabels: unique(investigation.measuresExamined),
       warnings: unique([...investigation.limitations, ...investigation.readiness.missing]).slice(0, 8),
+      supplementalFinding,
       lineage: null,
     };
   }
@@ -304,6 +341,7 @@ async function executeInvocation(input: {
       sourceIds,
       measureLabels: response.lineage.selectedColumns,
       warnings: response.rows.length > cappedRows.length ? [`Result capped at ${input.request.maxResultRows} aggregate rows.`] : [],
+      supplementalFinding: null,
       lineage: response.lineage,
     };
   }
@@ -336,6 +374,7 @@ async function executeInvocation(input: {
       ...response.warnings,
       ...(response.rows.length > cappedRows.length ? [`Result capped at ${input.request.maxResultRows} aggregate rows.`] : []),
     ]).slice(0, 8),
+    supplementalFinding: null,
     lineage: null,
   };
 }

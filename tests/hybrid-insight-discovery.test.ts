@@ -161,6 +161,30 @@ test("baseline duplicate screens are rejected and never presented as supplementa
   assert.deepEqual(run.supplementalInvestigations, []);
 });
 
+test("a novel AI-selected market screen is promoted only with a complete stakeholder finding", async () => {
+  const run = await runHybridInsightDiscovery({ mode: "hybrid", maxSteps: 2 }, {
+    ...fixed,
+    callModel: actions([
+      {
+        action: "execute",
+        objective: "Find a new regional paid-search opportunity.",
+        decisionValueHypothesis: "A focused market screen may add a quantified result beyond the national scan.",
+        invocation: { kind: "market_screen", perspectiveId: "marketing", viewId: "paid_search_response", cbsaCodes: ["35620"] },
+      },
+      { action: "finish", summary: "The focused screen returned the only new decision-ready result." },
+    ]),
+  });
+  const promoted = run.supplementalInvestigations[0]?.supplementalFinding;
+  assert.ok(promoted);
+  assert.match(promoted.recommendation, /New York-Newark-Jersey City/i);
+  assert.match(promoted.quantifiedEvidence, /percentile/i);
+  assert.ok(promoted.comparison.length > 40);
+  assert.ok(promoted.businessImplication.length > 20);
+  assert.ok(promoted.nextAction.length > 20);
+  assert.ok(promoted.sourceIds.length > 0);
+  assert.ok(promoted.limitations.length > 0);
+});
+
 test("department scope rejects an unrelated registered query and stops after the hard failure limit", async () => {
   let modelCalls = 0;
   const run = await runHybridInsightDiscovery({
