@@ -613,9 +613,6 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       ) : null}
       <div className="discovery-page-nav">
         <button className="text-action discovery-back" type="button" onClick={onBack}>← Back to questions</button>
-        <div className="discovery-run-controls">
-          <span>Run {run.runSequence} complete · {new Date(run.completedAt).toLocaleString()}</span>
-        </div>
       </div>
       {runHistory.some((item) => item.runId !== run.runId) ? (
         <details className="discovery-run-history">
@@ -644,6 +641,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
             : department === "cross"
               ? "Joined signals that become more useful when evidence from two or more departments is evaluated together."
               : `The strongest evidence-backed opportunities owned by ${LABELS[department]}.`}</p>
+          <span className="discovery-run-completed">Run {run.runSequence} complete · {new Date(run.completedAt).toLocaleString()}</span>
         </div>
         <div className="discovery-department-tabs" role="tablist" aria-label="Filter findings by department">
           <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments <span>{allFindingCount}</span></button>

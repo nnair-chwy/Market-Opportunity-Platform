@@ -79,8 +79,10 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(workflow, /Show workflow/);
   assert.match(globalStyles, /\.discovery-rail-actions\s*\{[^}]*justify-content:\s*flex-start/s);
   assert.match(globalStyles, /\.discovery-rail-actions\s*\{[^}]*position:\s*sticky;[^}]*top:\s*16px/s);
-  assert.match(globalStyles, /\.discovery-back\s*\{[^}]*align-self:\s*flex-start;[^}]*width:\s*auto;[^}]*text-align:\s*left/s);
-  assert.match(globalStyles, /\.discovery-page-nav\s*\{[^}]*position:\s*sticky;[^}]*top:\s*10px/s);
+  assert.match(globalStyles, /\.discovery-back\s*\{[^}]*align-self:\s*flex-start;[^}]*width:\s*auto;[^}]*border-radius:\s*999px;[^}]*text-align:\s*left/s);
+  assert.match(globalStyles, /\.discovery-page-nav\s*\{[^}]*position:\s*sticky;[^}]*top:\s*10px;[^}]*width:\s*max-content/s);
+  assert.match(discoveryWorkspace, /className="discovery-run-completed">Run \{run\.runSequence\} complete/);
+  assert.doesNotMatch(discoveryWorkspace, /className="discovery-run-controls"/);
   assert.match(workflow, /AI draft did not pass evidence checks · verified synthesis shown/);
   assert.match(discoveryWorkspace, /Find next signal/);
   assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
