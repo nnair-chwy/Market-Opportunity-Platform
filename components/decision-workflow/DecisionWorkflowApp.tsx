@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdaptiveEvaluationWorkspace } from "@/components/decision-workflow/AdaptiveEvaluationWorkspace";
-import { AnalysisBriefPanel } from "@/components/decision-workflow/AnalysisBriefPanel";
 import { AnswerEvidenceTrail } from "@/components/decision-workflow/AnswerEvidenceTrail";
 import { AnswerCoveragePanel } from "@/components/decision-workflow/AnswerCoveragePanel";
 import { DecisionGraphAnimation, type DecisionGraphStep } from "@/components/decision-workflow/DecisionGraphAnimation";
@@ -86,7 +85,7 @@ import {
   type ClinicSiteWorkflowResult,
 } from "@/lib/phoenix-retrieval/contracts";
 
-type Phase = "question" | "interpreting" | "confirming" | "running" | "packet" | "saved" | "error" | "discovery";
+type Phase = "question" | "interpreting" | "running" | "packet" | "saved" | "error" | "discovery";
 
 const DISCOVERY_INTENT_QUERY_KEYS = ["finding", "perspective", "view", "cbsa", "question"] as const;
 
@@ -564,68 +563,22 @@ export function DecisionWorkflowApp() {
       setSelectedContextMetric(questionMapMetric(parsed.data.plan));
       const nextInvestigation = runMarketInvestigation(parsed.data.plan);
       const nextBrief = buildAnalysisBrief(parsed.data.plan, nextInvestigation);
+      const confirmedBrief: AnalysisBrief = {
+        ...nextBrief,
+        status: "confirmed",
+        confirmedAt: new Date().toISOString(),
+      };
       const nextEvidencePlan = buildEvidencePlan(parsed.data.plan);
       setInvestigation(null);
-      setAnalysisBrief(nextBrief);
+      setAnalysisBrief(confirmedBrief);
       setEvidencePlan(nextEvidencePlan);
       setEvaluationDefinition(null);
       setSelectedLeadId(null);
       setSelectedActionId(proposedActionFromPlan(parsed.data.plan).id);
-      if (discoveryInvestigationIntent) {
-        const confirmedBrief: AnalysisBrief = {
-          ...nextBrief,
-          status: "confirmed",
-          confirmedAt: new Date().toISOString(),
-        };
-        setAnalysisBrief(confirmedBrief);
-        await confirmAndRun(confirmedBrief, parsed.data.plan, nextEvidencePlan);
-      } else {
-        setPhase("confirming");
-      }
+      await confirmAndRun(confirmedBrief, parsed.data.plan, nextEvidencePlan);
     } catch {
       setRequestError("The evaluation plan service is unavailable. Retry or edit the question.");
       setPhase("error");
-    }
-  }
-
-  async function updateAnalysisPlan(rewrittenQuestion: string) {
-    if (!plan) return;
-    setRequestError(null);
-    setReplanNotice("The edited question changed the analysis contract. Regenerating the intent, metrics, geography, capability, and registered queries before execution.");
-    try {
-      const response = await fetch("/api/evaluation-plans", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(buildAnalysisPlanRequest({
-          question: rewrittenQuestion,
-          perspectiveId: plan.perspectiveId,
-          activeViewId: plan.evidenceSelection.viewId,
-          selectedCbsaCodes: selectedGeographicContexts.map((context) => context.cbsaCode),
-        })),
-      });
-      const payload: unknown = await response.json();
-      const parsed = evaluationPlanResponseSchema.safeParse(payload);
-      if (!response.ok || !parsed.success) {
-        const error = evaluationPlanErrorSchema.safeParse(payload);
-        setRequestError(error.success ? error.data.message : "The edited question could not be replanned.");
-        return;
-      }
-      const replanned = parsed.data.plan;
-      const nextInvestigation = runMarketInvestigation(replanned);
-      setQuestion(replanned.originalQuestion);
-      setPlan(replanned);
-      setAnalysisBrief(buildAnalysisBrief(replanned, nextInvestigation));
-      setEvidencePlan(buildEvidencePlan(replanned));
-      setEvaluationDefinition(null);
-      setEvidenceExecution(null);
-      setPersistedReviewablePacket(null);
-      setInvestigation(null);
-      setSelectedLeadId(null);
-      setSelectedActionId(proposedActionFromPlan(replanned).id);
-      setReplanNotice("Plan regenerated from the edited question. Review the changed interpretation and confirm again before any query runs.");
-      setPhase("confirming");
-    } catch {
-      setRequestError("The edited question could not be replanned because the planning service is unavailable.");
     }
   }
 
@@ -946,7 +899,6 @@ export function DecisionWorkflowApp() {
 
   const showPacket = phase === "packet" || phase === "saved";
   const isQuestionPage = activeView === "workflow" && phase === "question";
-  const isConfirmationPage = activeView === "workflow" && phase === "confirming";
   const isAnimationPage = activeView === "workflow" && (phase === "interpreting" || phase === "running");
   const isResultPage = activeView === "workflow" && showPacket;
   const isErrorPage = activeView === "workflow" && phase === "error";
@@ -973,8 +925,6 @@ export function DecisionWorkflowApp() {
     ? "saved-list"
     : isQuestionPage
       ? "question"
-      : isConfirmationPage
-        ? "confirmation"
       : isAnimationPage
         ? "animation"
         : isResultPage
@@ -986,8 +936,6 @@ export function DecisionWorkflowApp() {
             : "workspace";
   const workspaceLayoutClass = isQuestionPage
     ? "question-layout"
-    : isConfirmationPage
-      ? "confirmation-page-layout"
     : isAnimationPage
       ? "animation-page-layout"
       : isDiscoveryPage
@@ -1025,7 +973,7 @@ export function DecisionWorkflowApp() {
           <p>Move from a business question to a reviewable next step.</p>
           <ol className="rail-steps">
             <li className={phase === "question" ? "current" : "complete"}><span>1</span><div><strong>Ask</strong><small>State the decision</small></div></li>
-            <li className={phase === "interpreting" || phase === "confirming" ? "current" : phase === "running" || showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Frame</strong><small>Attach context and evidence</small></div></li>
+            <li className={phase === "interpreting" ? "current" : phase === "running" || showPacket || phase === "error" ? "complete" : ""}><span>2</span><div><strong>Frame</strong><small>Attach context and evidence</small></div></li>
             <li className={phase === "running" ? "current" : showPacket ? "complete" : ""}><span>3</span><div><strong>Run</strong><small>Calculate the analysis</small></div></li>
             <li className={showPacket ? "current" : ""}><span>4</span><div><strong>Review</strong><small>Read and export results</small></div></li>
           </ol>
@@ -1119,29 +1067,6 @@ export function DecisionWorkflowApp() {
               initialRun={selectedDiscoveryRun}
               onBack={() => { setSelectedDiscoveryFindingId(null); setSelectedDiscoveryRun(null); setPhase("question"); }}
               onInvestigate={openDiscoveryInvestigation}
-            />
-          </section>
-        ) : null}
-
-        {isConfirmationPage && plan && analysisBrief ? (
-          <section className="analysis-contract-page" aria-labelledby="analysis-brief-title">
-            <div className="analysis-contract-intro">
-              <div className="analysis-contract-nav">
-                <button className="text-action" type="button" onClick={restart}>← Edit original question</button>
-                <span>Review before analysis</span>
-              </div>
-              <h1>Review the analysis plan</h1>
-              <p>Confirm how the question was translated, along with the method and evidence boundaries, before the analysis runs.</p>
-            </div>
-            {replanNotice ? <div className="sister-follow-up-notice" role="status"><strong>Plan updated</strong><p>{replanNotice}</p></div> : null}
-            {requestError ? <div className="packet-missing-gates" role="alert"><small>{requestError}</small></div> : null}
-            <AnalysisBriefPanel
-              key={`${plan.planId}:${analysisBrief.originalQuestion}`}
-              brief={analysisBrief}
-              answerContract={plan.answerContract}
-              canRun
-              onUpdatePlan={updateAnalysisPlan}
-              onConfirm={confirmAndRun}
             />
           </section>
         ) : null}
