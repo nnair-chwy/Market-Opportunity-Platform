@@ -57,6 +57,24 @@ export const hybridInvestigatorActionSchema = z.discriminatedUnion("action", [
 ]);
 export type HybridInvestigatorAction = z.infer<typeof hybridInvestigatorActionSchema>;
 
+// The model-facing contract is deliberately flat and fully required. OpenAI
+// Structured Outputs requires an object root and does not accept optional
+// properties; the application converts this envelope into the stricter
+// discriminated action contract before anything can execute.
+export const hybridInvestigatorResponseSchema = z.object({
+  action: z.enum(["execute", "finish"]),
+  objective: z.string().max(240),
+  decisionValueHypothesis: z.string().max(360),
+  summary: z.string().max(360),
+  invocationKind: z.enum(["market_screen", "registered_query", "exploratory_query"]).nullable(),
+  perspectiveId: perspectiveIdSchema.nullable(),
+  viewId: perspectiveViewIdSchema.nullable(),
+  cbsaCodes: z.array(z.string().regex(/^\d{5}$/)).max(5),
+  registeredQuery: normalizedQueryNameSchema.nullable(),
+  registeredCbsaCode: z.string().regex(/^\d{5}$/).nullable(),
+  exploratorySpecJson: z.string().max(12_000).nullable(),
+}).strict();
+
 const investigationReceiptSchema = z.object({
   kind: z.enum(["market_screen", "registered_query", "exploratory_query"]),
   fingerprint: z.string(),

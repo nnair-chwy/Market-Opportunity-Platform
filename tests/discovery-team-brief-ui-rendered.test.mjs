@@ -6,18 +6,19 @@ const workspace = await readFile(new URL("../components/insight-discovery/Autono
 const presentation = await readFile(new URL("../lib/insight-discovery/finding-presentation.ts", import.meta.url), "utf8");
 
 test("department toggles change which findings lead the readout and scope its brief", () => {
-  assert.match(workspace, /Choose which opportunities lead the readout/);
   assert.match(workspace, /role="tablist" aria-label="Filter findings by department"/);
   assert.match(workspace, /All departments/);
   assert.match(workspace, /department === "all" \? <CrossSourceFindings findings=\{adaptiveFindings\}/);
   assert.match(workspace, /department !== "all" \? <CrossSourceFindings findings=\{adaptiveFindings\}/);
   assert.match(workspace, /buildTeamOpportunityBrief\(run, department\)/);
-  assert.match(workspace, /Download \$\{department === "all" \? "portfolio" : LABELS\[department\]\} brief/);
+  assert.match(workspace, /Shareable opportunity brief/);
+  assert.match(workspace, /deliveryMode && teamOpportunityBrief/);
+  assert.match(workspace, /Choose brief audience/);
 });
 
 test("baseline, cross-functional, and AI-led discovery are visibly distinct", () => {
   assert.match(workspace, /Ranked baseline findings/);
-  assert.match(workspace, /The blue cards are the strongest supported findings/);
+  assert.doesNotMatch(workspace, /The blue cards are the strongest supported findings/);
   assert.match(workspace, /Cross-functional opportunities/);
   assert.match(workspace, /The green section combines evidence owned by more than one team/);
   assert.match(workspace, /AI additional discovery/);

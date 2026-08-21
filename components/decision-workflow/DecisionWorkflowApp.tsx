@@ -963,6 +963,7 @@ export function DecisionWorkflowApp() {
                 <li className="complete"><span>3</span><div><strong>Challenge</strong><small>Retain limits and alternatives</small></div></li>
                 <li className="current"><span>4</span><div><strong>Discover</strong><small>Review the strongest leads</small></div></li>
               </ol>
+              <div id="discovery-rail-run-actions" className="discovery-rail-run-actions" />
               <div className="rail-note"><strong>Current method</strong><p>Data-generated hypotheses are tested with reusable cohort, contradiction, channel-mix, and matched-SKU analyses. Findings do not authorize material action.</p></div>
             </>
           ) : (

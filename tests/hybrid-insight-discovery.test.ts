@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { zodTextFormat } from "openai/helpers/zod";
 import {
   EXPLORATORY_QUERY_VERSION,
   HYBRID_DISCOVERY_MAX_STEPS,
   hybridInvestigatorActionSchema,
+  hybridInvestigatorResponseSchema,
   runHybridInsightDiscovery,
   type ExploratoryQuerySpec,
   type HybridInvestigatorAction,
@@ -194,6 +196,12 @@ test("the action contract rejects arbitrary SQL and the request enforces hard li
     invocation: { kind: "sql", sql: "DELETE FROM findings" },
   }).success, false);
   assert.equal(HYBRID_DISCOVERY_MAX_STEPS, 5);
+});
+
+test("the model response contract compiles to a required object-root schema", () => {
+  const format = zodTextFormat(hybridInvestigatorResponseSchema, "hybrid_discovery_next_action");
+  assert.equal(format.schema.type, "object");
+  assert.deepEqual(format.schema.required, Object.keys(format.schema.properties ?? {}));
 });
 
 test("model failures return the deterministic baseline with a bounded audit", async () => {

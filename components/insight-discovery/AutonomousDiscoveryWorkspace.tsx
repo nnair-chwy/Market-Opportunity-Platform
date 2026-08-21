@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { AutonomousInsight, CurrentDataDiscoveryRun, HybridDiscoveryRun, HybridInvestigationReceipt } from "@/lib/insight-discovery";
 import { buildFindingDecisionCase } from "@/lib/insight-discovery/decision-case";
 import { findingPresentation } from "@/lib/insight-discovery/finding-presentation";
@@ -179,14 +180,16 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
   const [hybridStatus, setHybridStatus] = useState<"idle" | "running" | "completed" | "fallback">("idle");
   const [supplementalInvestigations, setSupplementalInvestigations] = useState<HybridInvestigationReceipt[]>([]);
   const [hybridMessage, setHybridMessage] = useState<string | null>(null);
-  const [isSending, setIsSending] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [deliveryMode, setDeliveryMode] = useState<"email" | "download" | null>(null);
+  const [emailRecipient, setEmailRecipient] = useState("");
+  const [railActionsTarget, setRailActionsTarget] = useState<HTMLElement | null>(null);
   const [followUpFinding, setFollowUpFinding] = useState<AutonomousInsight | null>(null);
   const [followUpQuestion, setFollowUpQuestion] = useState("");
-  const [slackConfig, setSlackConfig] = useState<{ configured: boolean; destination: string } | null>(null);
   const resultsHeadingRef = useRef<HTMLDivElement | null>(null);
   const followUpRef = useRef<HTMLTextAreaElement | null>(null);
+  const deliveryPanelRef = useRef<HTMLElement | null>(null);
   const hybridStartedRunRef = useRef<string | null>(null);
   const [department, setDepartment] = useState<"all" | PerspectiveId>("all");
   const [runHistory, setRunHistory] = useState<CurrentDataDiscoveryRun[]>(() => {
@@ -202,6 +205,24 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       ? [initialRun, ...storedRuns.filter((item) => item.runId !== initialRun.runId)].slice(0, DISCOVERY_HISTORY_LIMIT)
       : storedRuns.slice(0, DISCOVERY_HISTORY_LIMIT);
   });
+
+  useEffect(() => {
+    setRailActionsTarget(document.getElementById("discovery-rail-run-actions"));
+  }, []);
+
+  useEffect(() => {
+    if (!deliveryMode) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    deliveryPanelRef.current?.focus();
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setDeliveryMode(null);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      previousFocus?.focus();
+    };
+  }, [deliveryMode]);
 
   const rememberRun = useCallback((completedRun: CurrentDataDiscoveryRun) => {
     setRunHistory((history) => {
@@ -291,33 +312,8 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
     }
   }
 
-  async function sendAllFindings() {
-    if (!run || isSending) return;
-    setIsSending(true);
-    setShareStatus("Sending every qualified finding…");
-    try {
-      const config = slackConfig ?? await (await fetch("/api/share/slack", { cache: "no-store" })).json() as { configured: boolean; destination: string };
-      setSlackConfig(config);
-      if (!config.configured) {
-        setShareStatus("Slack needs an administrator to connect the destination before findings can be sent.");
-        return;
-      }
-      const response = await fetch("/api/share/slack/discovery", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ run }),
-      });
-      const payload = await response.json() as { message?: string };
-      setShareStatus(payload.message ?? (response.ok ? "Findings sent." : "Slack delivery did not complete."));
-    } catch {
-      setShareStatus("Slack delivery did not complete. The findings remain available here.");
-    } finally {
-      setIsSending(false);
-    }
-  }
-
   async function downloadFindings(scope: "all" | PerspectiveId, format: "csv" | "docx") {
-    if (!run || isExporting) return;
+    if (!run || isExporting) return false;
     const exportKey = `${scope}:${format}`;
     setIsExporting(exportKey);
     setShareStatus(null);
@@ -343,11 +339,30 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
+      return true;
     } catch (reason) {
       setShareStatus(reason instanceof Error ? reason.message : "The findings export did not complete.");
+      return false;
     } finally {
       setIsExporting(null);
     }
+  }
+
+  async function emailFindings() {
+    if (!run || !teamOpportunityBrief) return;
+    if (!emailRecipient.trim() || !emailRecipient.includes("@")) {
+      setShareStatus("Enter the email address that should receive the findings.");
+      return;
+    }
+    const downloaded = await downloadFindings(department, "docx");
+    if (!downloaded) return;
+    const audience = department === "all" ? "Cross-team" : LABELS[department];
+    const highlights = teamOpportunityBrief.opportunityMoves.slice(0, 3)
+      .map((move) => `• ${move.market}: ${move.decision}. ${move.evidence}`)
+      .join("\n");
+    const body = `${audience.toUpperCase()} OPPORTUNITY BRIEF\n\n${teamOpportunityBrief.recommendation}\n\nWhy it matters\n${teamOpportunityBrief.why}\n\nTop opportunities\n${highlights}\n\nA Word brief has been downloaded. Attach it after reviewing the findings.`;
+    window.location.href = `mailto:${encodeURIComponent(emailRecipient.trim())}?subject=${encodeURIComponent(`${audience} market opportunity findings`)}&body=${encodeURIComponent(body)}`;
+    setShareStatus("The Word brief was downloaded and an addressed email draft was opened. Attach the file, review, and send.");
   }
 
   const primaryFindings = useMemo(() => (run?.primaryFindings
@@ -446,28 +461,18 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
 
   return (
     <section className="autonomous-discovery-page" aria-labelledby="autonomous-discovery-title" aria-busy={isRerunning}>
+      {railActionsTarget ? createPortal(
+        <div className="discovery-rail-action-stack" aria-label="Discovery actions">
+          <button type="button" onClick={() => setDeliveryMode("email")}>Email findings</button>
+          <button type="button" onClick={() => setDeliveryMode("download")}>Download findings</button>
+          <button type="button" onClick={() => void runAgain()} disabled={isRerunning}>{isRerunning ? "Finding signals…" : "Find next signal"}</button>
+        </div>,
+        railActionsTarget,
+      ) : null}
       <div className="discovery-page-nav">
         <button className="text-action discovery-back" type="button" onClick={onBack}>← Back to questions</button>
         <div className="discovery-run-controls">
           <span>Run {run.runSequence} complete · {new Date(run.completedAt).toLocaleString()}</span>
-          <button className="discovery-share-all" type="button" onClick={() => void sendAllFindings()} disabled={isSending}>
-            {isSending ? "Sending…" : "Send all to Slack"}
-          </button>
-          <details className="discovery-export-menu">
-            <summary>{isExporting ? "Preparing download…" : "Download findings"}</summary>
-            <div>
-              {(["all", "marketing", "pricing", "cvc"] as const).map((scope) => (
-                <section key={scope} aria-label={`${scope === "all" ? "All teams" : LABELS[scope]} exports`}>
-                  <strong>{scope === "all" ? "All teams" : LABELS[scope]}</strong>
-                  <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(scope, "csv")}>Full data (CSV)</button>
-                  <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(scope, "docx")}>Stakeholder brief (Word)</button>
-                </section>
-              ))}
-            </div>
-          </details>
-          <button className="discovery-run-again" type="button" onClick={() => void runAgain()} disabled={isRerunning}>
-            {isRerunning ? `Testing ${run.analysesRun} analyses…` : "Find next signals"}
-          </button>
         </div>
       </div>
       {runHistory.some((item) => item.runId !== run.runId) ? (
@@ -483,7 +488,7 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
           </div>
         </details>
       ) : null}
-      {shareStatus ? <div className="discovery-share-status" role="status"><span>{shareStatus}</span><button type="button" aria-label="Dismiss Slack delivery status" onClick={() => setShareStatus(null)}>×</button></div> : null}
+      {shareStatus ? <div className="discovery-share-status" role="status"><span>{shareStatus}</span><button type="button" aria-label="Dismiss delivery status" onClick={() => setShareStatus(null)}>×</button></div> : null}
       <header className="discovery-hero">
         <div>
           <div className="section-label">Autonomous insight discovery</div>
@@ -511,23 +516,6 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </div>
       </div>
       {error ? <div className="discovery-rerun-error" role="alert"><span>{error} The completed run remains visible.</span><button type="button" onClick={() => void runAgain()}>Try run again</button></div> : null}
-
-      <section className="discovery-team-scope" aria-labelledby="discovery-team-scope-title">
-        <div>
-          <div className="section-label">Brief audience</div>
-          <h2 id="discovery-team-scope-title">Choose which opportunities lead the readout</h2>
-          <p>All departments leads with cross-source signals. A team selection leads with that team’s strongest findings.</p>
-        </div>
-        <div className="discovery-department-tabs" role="tablist" aria-label="Filter findings by department">
-          <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments <span>{adaptiveFindings.length}</span></button>
-          {(["marketing", "pricing", "cvc"] as const).map((item) => (
-            <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>{LABELS[item]} <span>{departmentFindingCounts[item]}</span></button>
-          ))}
-        </div>
-        <button type="button" onClick={() => void downloadFindings(department, "docx")} disabled={Boolean(isExporting)}>
-          {isExporting === `${department}:docx` ? "Preparing…" : `Download ${department === "all" ? "portfolio" : LABELS[department]} brief`}
-        </button>
-      </section>
 
       {department === "all" ? <CrossSourceFindings findings={adaptiveFindings} /> : null}
 
@@ -594,7 +582,16 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
       </dl>
 
       <div className="discovery-results-heading" ref={resultsHeadingRef} tabIndex={-1}>
-        <div><div className="section-label">Ranked baseline findings</div><h2>Top findings for {department === "all" ? "the portfolio" : LABELS[department]}</h2><p>The blue cards are the strongest supported findings from the fast, repeatable scan.</p></div>
+        <div>
+          <div className="section-label">Ranked baseline findings</div>
+          <h2>Top findings for {department === "all" ? "the portfolio" : LABELS[department]}</h2>
+          <div className="discovery-department-tabs" role="tablist" aria-label="Filter findings by department">
+            <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments <span>{adaptiveFindings.length}</span></button>
+            {(["marketing", "pricing", "cvc"] as const).map((item) => (
+              <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>{LABELS[item]} <span>{departmentFindingCounts[item]}</span></button>
+            ))}
+          </div>
+        </div>
         <span>{primaryFindings.length} shown{department === "all" ? " across the portfolio" : ` for ${LABELS[department]}`}</span>
       </div>
 
@@ -648,34 +645,40 @@ export function AutonomousDiscoveryWorkspace({ onBack, onInvestigate, initialFin
         </details>
       ) : null}
 
-      {teamOpportunityBrief ? (
-        <section className="pricing-geo-test-handoff" aria-labelledby="team-opportunity-brief-title">
-          <header>
-            <div>
-              <div className="section-label">Shareable {department === "all" ? "cross-team" : LABELS[department]} opportunity brief</div>
-              <h2 id="team-opportunity-brief-title">{teamOpportunityBrief.title}</h2>
-              <p>Relevant teams: {teamOpportunityBrief.primaryTeam} · {teamOpportunityBrief.partnerTeams.join(" · ")}</p>
+      {deliveryMode && teamOpportunityBrief ? (
+        <div className="discovery-delivery-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setDeliveryMode(null); }}>
+          <section ref={deliveryPanelRef} className="discovery-delivery-panel" role="dialog" aria-modal="true" aria-labelledby="discovery-delivery-title" tabIndex={-1}>
+            <header>
+              <div><div className="section-label">Shareable opportunity brief</div><h2 id="discovery-delivery-title">{deliveryMode === "email" ? "Email findings" : "Download findings"}</h2></div>
+              <button type="button" aria-label="Close findings delivery" onClick={() => setDeliveryMode(null)}>×</button>
+            </header>
+            <div className="discovery-delivery-audience">
+              <strong>Brief audience</strong>
+              <p>Choose who should receive the readout. The brief will lead with the most relevant findings for that audience.</p>
+              <div className="discovery-department-tabs" role="tablist" aria-label="Choose brief audience">
+                <button type="button" role="tab" aria-selected={department === "all"} onClick={() => setDepartment("all")}>All departments</button>
+                {(["marketing", "pricing", "cvc"] as const).map((item) => <button key={item} type="button" role="tab" aria-selected={department === item} onClick={() => setDepartment(item)}>{LABELS[item]}</button>)}
+              </div>
             </div>
-            <button type="button" onClick={() => void downloadFindings(department, "docx")} disabled={Boolean(isExporting)}>
-              {isExporting === `${department}:docx` ? "Preparing…" : "Download Word brief"}
-            </button>
-          </header>
-          <div className="pricing-geo-test-recommendation">
-            <span>Portfolio recommendation</span>
-            <strong>{teamOpportunityBrief.recommendation}</strong>
-            <p>{teamOpportunityBrief.why}</p>
-          </div>
-          <div className="pricing-geo-test-grid">
-            {teamOpportunityBrief.opportunityMoves.slice(0, 3).map((move) => <article key={move.findingId}><span>{move.market}</span><p><strong>{move.decision}.</strong> {move.evidence}</p></article>)}
-          </div>
-          <details>
-            <summary>All opportunity moves, success measures, and limits</summary>
-            {teamOpportunityBrief.opportunityMoves.map((move) => <div key={move.findingId}><strong>{move.market}: {move.decision}</strong><p>{move.action}</p></div>)}
-            <p><strong>Measure:</strong> {teamOpportunityBrief.primaryOutcomes.join("; ")}.</p>
-            <ul>{teamOpportunityBrief.evidenceNeededToScale.map((input) => <li key={input}>{input}</li>)}</ul>
-            <strong>{teamOpportunityBrief.evidenceBoundary}</strong>
-          </details>
-        </section>
+            <div className="discovery-delivery-preview">
+              <span>{department === "all" ? "Cross-team" : LABELS[department]} brief preview</span>
+              <strong>{teamOpportunityBrief.recommendation}</strong>
+              <p>{teamOpportunityBrief.why}</p>
+            </div>
+            {deliveryMode === "email" ? (
+              <div className="discovery-delivery-email">
+                <label><span>Send to</span><input type="email" value={emailRecipient} onChange={(event) => setEmailRecipient(event.target.value)} placeholder="you@company.com" autoComplete="email" /></label>
+                <button type="button" onClick={() => void emailFindings()} disabled={Boolean(isExporting)}>{isExporting ? "Preparing…" : "Download brief & open email"}</button>
+                <small>The Word brief downloads first; an addressed email draft then opens for review and attachment.</small>
+              </div>
+            ) : (
+              <div className="discovery-delivery-downloads">
+                <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(department, "docx")}>{isExporting === `${department}:docx` ? "Preparing Word brief…" : "Stakeholder brief (Word)"}</button>
+                <button type="button" disabled={Boolean(isExporting)} onClick={() => void downloadFindings(department, "csv")}>{isExporting === `${department}:csv` ? "Preparing data…" : "Full findings data (CSV)"}</button>
+              </div>
+            )}
+          </section>
+        </div>
       ) : null}
 
       {additionalOpportunities.length > 0 ? (

@@ -22,6 +22,7 @@ import {
   hybridDiscoveryAuditSchema,
   hybridDiscoveryRequestSchema,
   hybridInvestigatorActionSchema,
+  hybridInvestigatorResponseSchema,
   hybridInvestigatorInvocationSchema,
   type HybridDiscoveryAudit,
   type HybridDiscoveryRequest,
@@ -107,10 +108,37 @@ async function callOpenAi(context: HybridInvestigatorContext): Promise<HybridInv
         remainingSteps: context.remainingSteps,
       }) },
     ],
-    text: { format: zodTextFormat(hybridInvestigatorActionSchema, "hybrid_discovery_next_action") },
+    text: { format: zodTextFormat(hybridInvestigatorResponseSchema, "hybrid_discovery_next_action") },
   });
   if (!response.output_parsed) throw new Error("OpenAI returned no structured hybrid-discovery action.");
-  return hybridInvestigatorActionSchema.parse(response.output_parsed);
+  const parsed = hybridInvestigatorResponseSchema.parse(response.output_parsed);
+  if (parsed.action === "finish") {
+    return hybridInvestigatorActionSchema.parse({ action: "finish", summary: parsed.summary });
+  }
+  if (!parsed.invocationKind) throw new Error("OpenAI returned an execute action without an invocation kind.");
+  const invocation: HybridInvestigatorInvocation = parsed.invocationKind === "market_screen"
+    ? {
+        kind: "market_screen",
+        perspectiveId: parsed.perspectiveId ?? (() => { throw new Error("A market screen requires a perspective."); })(),
+        viewId: parsed.viewId ?? (() => { throw new Error("A market screen requires a view."); })(),
+        cbsaCodes: parsed.cbsaCodes,
+      }
+    : parsed.invocationKind === "registered_query"
+      ? {
+          kind: "registered_query",
+          query: parsed.registeredQuery ?? (() => { throw new Error("A registered query name is required."); })(),
+          ...(parsed.registeredCbsaCode ? { cbsaCode: parsed.registeredCbsaCode } : {}),
+        }
+      : {
+          kind: "exploratory_query",
+          spec: exploratoryQuerySpecSchema.parse(JSON.parse(parsed.exploratorySpecJson ?? "null")),
+        };
+  return hybridInvestigatorActionSchema.parse({
+    action: "execute",
+    objective: parsed.objective,
+    decisionValueHypothesis: parsed.decisionValueHypothesis,
+    invocation,
+  });
 }
 
 function invocationFingerprint(invocation: HybridInvestigatorInvocation) {

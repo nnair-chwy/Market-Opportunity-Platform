@@ -81,7 +81,7 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(globalStyles, /\.discovery-back\s*\{[^}]*align-self:\s*flex-start;[^}]*width:\s*auto;[^}]*text-align:\s*left/s);
   assert.match(globalStyles, /\.discovery-page-nav\s*\{[^}]*position:\s*sticky;[^}]*top:\s*10px/s);
   assert.match(workflow, /AI draft did not pass evidence checks · verified synthesis shown/);
-  assert.match(discoveryWorkspace, /Find next signals/);
+  assert.match(discoveryWorkspace, /Find next signal/);
   assert.match(discoveryWorkspace, /Same snapshots · next qualified findings/);
   assert.match(discoveryWorkspace, /no data refresh is claimed/i);
   assert.match(discoveryWorkspace, /generated hypotheses ·.*evidence-backed/i);
