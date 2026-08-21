@@ -98,20 +98,22 @@ test("opening experience offers a question-free autonomous insight path", () => 
   assert.match(investigationIntent, /viewId/);
 });
 
-test("request state is transparent and the executable framing runs without a confirmation stop", () => {
+test("new questions stop for framing review while discovery findings retain direct execution", () => {
   assert.match(workflow, /setPhase\("interpreting"\)/);
   assert.match(workflow, /data-plan-request-state=\{phase === "interpreting" \? "pending" : "ready"\}/);
   assert.match(workflow, /data-plan-request-state="error"/);
   assert.match(workflow, /Retry/);
   assert.match(workflow, /Edit question/);
   assert.match(workflow, /data-proposal-method/);
-  assert.doesNotMatch(workflow, /analysis-contract-page/);
-  assert.doesNotMatch(workflow, /Human checkpoint · before analysis/);
-  assert.doesNotMatch(workflow, /setPhase\("confirming"\)/);
+  assert.match(workflow, /analysis-contract-page/);
+  assert.match(workflow, /Review the analysis plan/);
+  assert.match(workflow, /setPhase\("confirming"\)/);
   assert.match(workflow, /buildAnalysisPlanRequest/);
   assert.match(workflow, /submittedGeographicContexts/);
   assert.match(workflow, /selectedCbsaCodes: submittedGeographicContexts/);
+  assert.match(workflow, /if \(discoveryInvestigationIntent\)/);
   assert.match(workflow, /await confirmAndRun\(confirmedBrief, parsed\.data\.plan, nextEvidencePlan\)/);
+  assert.match(workflow, /else \{\s*setPhase\("confirming"\)/);
   assert.match(workflow, /Question reframed for analysis/);
   assert.match(workflow, /What changed/);
   assert.match(workflow, /Why/);
